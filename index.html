@@ -3,19 +3,88 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Taronga Zoo - Animal Geocache Hunt</title>
+  <title>Taronga Tracka - Animal Discovery Experience</title>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --jungle-deep: #0A2F1F;
+      --jungle-mid: #1A5238;
+      --jungle-light: #2E7D55;
+      --safari-gold: #D4A574;
+      --sunset-orange: #E86A33;
+      --earth-clay: #8B5A3C;
+      --mist-light: #F5F3EE;
+      --discovery-blue: #4A9FD8;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      overflow-x: hidden;
+      background: var(--mist-light);
+    }
+
+    .heading-display {
+      font-family: 'Bebas Neue', sans-serif;
+      letter-spacing: 0.08em;
+    }
+
+    .serif-accent {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes scaleIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -1000px 0; }
+      100% { background-position: 1000px 0; }
+    }
+
+    .animate-fade-in-up {
+      animation: fadeInUp 0.8s ease-out forwards;
+    }
+
+    .animate-scale-in {
+      animation: scaleIn 0.6s ease-out forwards;
+    }
+  </style>
 </head>
 <body>
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState } = React;
+    const { useState, useEffect } = React;
 
-    const ZooSoundsApp = () => {
+    const TarongaTracka = () => {
       const [currentScreen, setCurrentScreen] = useState('home');
       const [userLocation, setUserLocation] = useState(null);
       const [locationEnabled, setLocationEnabled] = useState(false);
@@ -24,7 +93,6 @@
       const [quizAnswers, setQuizAnswers] = useState({});
       const [observation, setObservation] = useState('');
       const [totalPoints, setTotalPoints] = useState(0);
-      const [currentAudio, setCurrentAudio] = useState(null);
       const [badges, setBadges] = useState([]);
 
       const animals = [
@@ -32,12 +100,12 @@
           id: 'chimpanzee',
           name: 'Chimpanzee',
           scientificName: 'Pan troglodytes',
-          image: 'images/chimpanzee.jpg',
-          audioUrl: 'sounds/chimpanzee.mp3',
+          image: 'https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=800&h=600&fit=crop',
           latitude: -33.8428,
           longitude: 151.2401,
           radius: 50,
           emoji: '🐵',
+          color: '#8B5A3C',
           questions: [
             {
               q: 'What do chimpanzees use tools for?',
@@ -55,19 +123,19 @@
               correct: 1
             }
           ],
-          observationPrompt: 'Observe the chimpanzees for 2 minutes. What behaviors did you see? (e.g., grooming, playing, eating, vocalizing, tool use)',
+          observationPrompt: 'Observe the chimpanzees for 2 minutes. What behaviors did you see?',
           pointValue: 50
         },
         { 
           id: 'gorilla',
           name: 'Western Lowland Gorilla',
           scientificName: 'Gorilla gorilla gorilla',
-          image: 'images/gorilla.jpg',
-          audioUrl: 'sounds/gorilla.mp3',
+          image: 'https://images.unsplash.com/photo-1551969014-7d2c4cddf0b6?w=800&h=600&fit=crop',
           latitude: -33.8443,
           longitude: 151.2413,
           radius: 50,
           emoji: '🦍',
+          color: '#2E2E2E',
           questions: [
             {
               q: 'What is the alpha male gorilla called?',
@@ -78,26 +146,21 @@
               q: 'What percentage of a gorilla\'s diet is plant-based?',
               options: ['50%', '75%', '95%+', '100%'],
               correct: 2
-            },
-            {
-              q: 'How do gorillas communicate?',
-              options: ['Only through sounds', 'Vocalizations, gestures, and body language', 'Telepathy', 'Writing'],
-              correct: 1
             }
           ],
-          observationPrompt: 'Watch the gorillas carefully. Describe their social interactions and family structure. What behaviors show their intelligence?',
+          observationPrompt: 'Watch the gorillas carefully. Describe their social interactions.',
           pointValue: 50
         },
         { 
           id: 'lion',
           name: 'African Lion',
           scientificName: 'Panthera leo',
-          image: 'images/lion.jpg',
-          audioUrl: 'sounds/lion.mp3',
+          image: 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=800&h=600&fit=crop',
           latitude: -33.8427,
           longitude: 151.2393,
           radius: 50,
           emoji: '🦁',
+          color: '#D4A574',
           questions: [
             {
               q: 'How far can a lion\'s roar be heard?',
@@ -108,41 +171,26 @@
               q: 'Who does most of the hunting in a lion pride?',
               options: ['Male lions', 'Female lions', 'Cubs', 'All equally'],
               correct: 1
-            },
-            {
-              q: 'How many hours a day do lions typically rest?',
-              options: ['5 hours', '10 hours', '16-20 hours', '24 hours'],
-              correct: 2
             }
           ],
-          observationPrompt: 'Watch the lions. Describe their behavior and social interactions. Are they resting, active, or interacting with each other?',
+          observationPrompt: 'Watch the lions. Describe their behavior and social interactions.',
           pointValue: 50
         },
         { 
           id: 'giraffe',
           name: 'Giraffe',
           scientificName: 'Giraffa camelopardalis',
-          image: 'images/giraffe.jpg',
-          audioUrl: 'sounds/giraffe.mp3',
+          image: 'https://images.unsplash.com/photo-1564760055775-d63b17a55c44?w=800&h=600&fit=crop',
           latitude: -33.8431,
           longitude: 151.2404,
           radius: 50,
           emoji: '🦒',
+          color: '#E86A33',
           questions: [
             {
               q: 'How do giraffes sleep?',
               options: ['Standing up for short periods', 'Lying down for 8 hours', 'They never sleep', 'Hanging from trees'],
               correct: 0
-            },
-            {
-              q: 'What is unique about a giraffe\'s tongue?',
-              options: ['It\'s blue-black and up to 50cm long', 'It glows in the dark', 'It\'s forked like a snake', 'It\'s covered in scales'],
-              correct: 0
-            },
-            {
-              q: 'How do giraffes drink water?',
-              options: ['Using their long tongue', 'Through their nose', 'By spreading their front legs apart', 'They don\'t drink water'],
-              correct: 2
             }
           ],
           observationPrompt: 'Observe how the giraffes move and eat. What feeding behaviors do you notice?',
@@ -152,60 +200,40 @@
           id: 'koala',
           name: 'Koala',
           scientificName: 'Phascolarctos cinereus',
-          image: 'images/koala.jpg',
-          audioUrl: 'sounds/koala.mp3',
+          image: 'https://images.unsplash.com/photo-1459262838948-3e2de6c1ec80?w=800&h=600&fit=crop',
           latitude: -34.2068,
           longitude: 150.5799,
           radius: 50,
           emoji: '🐨',
+          color: '#7A8B6F',
           questions: [
             {
               q: 'Without intervention, by what year could koalas become extinct in NSW?',
               options: ['2030', '2040', '2050', '2060'],
               correct: 2
-            },
-            {
-              q: 'Which adaptation helps koalas climb and grip tree trunks effectively?',
-              options: ['Sharp claws and opposable toes', 'Long tails for balance', 'Webbed feet for swimming', 'Flexible spines for jumping'],
-              correct: 0
-            },
-            {
-              q: 'Why do koalas spend up to 18–20 hours a day sleeping?',
-              options: ['They are nocturnal predators', 'Their fur causes them to overheat', 'They are avoiding competition with other animals', 'Their diet is low in energy, requiring energy conservation'],
-              correct: 3
             }
           ],
-          observationPrompt: 'Watch the koala carefully. What position is it in? Is it active or resting? Describe what you see.',
+          observationPrompt: 'Watch the koala carefully. What position is it in?',
           pointValue: 50
         },
         { 
           id: 'tiger',
           name: 'Sumatran Tiger',
           scientificName: 'Panthera tigris sumatrae',
-          image: 'images/tiger.jpg',
-          audioUrl: 'sounds/tiger.mp3',
+          image: 'https://images.unsplash.com/photo-1437622368342-7a3d73a34c8f?w=800&h=600&fit=crop',
           latitude: -33.8433,
           longitude: 151.2394,
           radius: 50,
           emoji: '🐯',
+          color: '#E86A33',
           questions: [
             {
               q: 'How many Sumatran tigers are left in the wild?',
               options: ['Over 10,000', '5,000-7,000', 'Fewer than 400', 'They are extinct'],
               correct: 2
-            },
-            {
-              q: 'What makes Sumatran tigers different from other tigers?',
-              options: ['They are the smallest tiger subspecies', 'They are the largest', 'They can fly', 'They are herbivores'],
-              correct: 0
-            },
-            {
-              q: 'Why are Sumatran tigers endangered?',
-              options: ['Climate change only', 'Habitat loss and poaching', 'Disease', 'Natural predators'],
-              correct: 1
             }
           ],
-          observationPrompt: 'Watch the tiger\'s behavior. Describe how it moves, where it rests, and any territorial behaviors.',
+          observationPrompt: 'Watch the tiger\'s behavior. Describe how it moves.',
           pointValue: 50
         }
       ];
@@ -262,20 +290,16 @@
       };
 
       const discoverAnimal = (animal, event) => {
-        // Prevent event propagation and default behavior
         if (event) {
-          event.preventDefault();
           event.stopPropagation();
         }
 
         if (foundAnimals.has(animal.id)) {
-          alert('You\'ve already found this animal! Try finding another one.');
           return;
         }
 
         const { nearby } = checkAnimalProximity(animal);
         if (!nearby) {
-          alert('You\'re not close enough to this animal yet! Get within ' + animal.radius + 'm.');
           return;
         }
 
@@ -283,14 +307,6 @@
         setQuizAnswers({});
         setObservation('');
         setCurrentScreen('animal');
-        
-        const audio = new Audio(animal.audioUrl);
-        setCurrentAudio(audio);
-        audio.play().catch(err => console.error('Audio error:', err));
-        
-        audio.onended = () => {
-          setCurrentAudio(null);
-        };
       };
 
       const handleQuizAnswer = (questionIndex, answerIndex) => {
@@ -304,7 +320,7 @@
         const wordCount = observation.trim().split(/\s+/).length;
         
         if (wordCount < 10) {
-          alert('Your observation needs at least 10 words. You have ' + wordCount + ' words. Please add more detail!');
+          alert('Your observation needs at least 10 words. You have ' + wordCount + ' words.');
           return;
         }
 
@@ -331,125 +347,398 @@
 
       const wordCount = observation.trim().split(/\s+/).filter(w => w).length;
 
+      // HOME SCREEN
       if (currentScreen === 'home') {
         return (
-          <div className="min-h-screen bg-gradient-to-br from-emerald-900 via-green-800 to-teal-900 flex items-center justify-center p-4">
-            <div className="max-w-lg w-full bg-white rounded-3xl shadow-2xl p-8 text-center">
-              <div className="mb-3">
+          <div style={{
+            position: 'relative',
+            width: '100%',
+            height: '100vh',
+            overflow: 'hidden',
+            background: 'var(--jungle-deep)'
+          }}>
+            {/* Video Background */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              overflow: 'hidden'
+            }}>
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  opacity: 0.4
+                }}
+              >
+                <source src="https://cdn.coverr.co/videos/coverr-african-wildlife-safari-6263/1080p.mp4" type="video/mp4" />
+              </video>
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                background: 'linear-gradient(180deg, rgba(10,47,31,0.6) 0%, rgba(10,47,31,0.9) 100%)'
+              }} />
+            </div>
+
+            {/* Content */}
+            <div style={{
+              position: 'relative',
+              zIndex: 10,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              padding: '2rem',
+              textAlign: 'center'
+            }}>
+              <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                 <img 
                   src="images/logo.png" 
-                  alt="Taronga Zoo Logo"
-                  className="mx-auto"
-                  style={{width: '350px', maxWidth: '90%', height: 'auto'}}
+                  alt="Taronga Zoo"
+                  style={{
+                    width: '200px',
+                    marginBottom: '2rem',
+                    filter: 'brightness(0) invert(1)',
+                    opacity: 0.95
+                  }}
+                  onError={(e) => e.target.style.display = 'none'}
                 />
               </div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-3">Taronga Zoo</h1>
-              <h2 className="text-2xl font-semibold text-emerald-600 mb-6">Animal Geocache Hunt</h2>
-              <p className="text-gray-600 mb-8 leading-relaxed">
-                Explore the zoo and discover animal locations! Learn about each animal through sounds, 
-                questions, and behavioral observations. Earn badges and points!
+
+              <h1 className="heading-display animate-fade-in-up" style={{
+                fontSize: 'clamp(3rem, 8vw, 6rem)',
+                color: 'white',
+                marginBottom: '1rem',
+                textShadow: '0 4px 20px rgba(0,0,0,0.5)',
+                animationDelay: '0.4s'
+              }}>
+                TARONGA TRACKA
+              </h1>
+
+              <p className="serif-accent animate-fade-in-up" style={{
+                fontSize: 'clamp(1.2rem, 3vw, 1.8rem)',
+                color: 'var(--safari-gold)',
+                marginBottom: '3rem',
+                maxWidth: '600px',
+                lineHeight: 1.4,
+                animationDelay: '0.6s'
+              }}>
+                Discover wildlife through exploration & observation
               </p>
-              <div className="bg-emerald-50 rounded-xl p-4 mb-8">
-                <h3 className="font-semibold text-emerald-900 mb-2">How to Play:</h3>
-                <ul className="text-sm text-emerald-800 space-y-1 text-left">
-                  <li>✓ Enable location to find geocache spots</li>
-                  <li>✓ Get close to animals to unlock them</li>
-                  <li>✓ Answer 3 questions about each animal</li>
-                  <li>✓ Write a 10+ word observation</li>
-                  <li>✓ Earn badges and points!</li>
-                </ul>
+
+              <div className="animate-fade-in-up" style={{
+                background: 'rgba(255,255,255,0.1)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '20px',
+                padding: '2rem',
+                marginBottom: '3rem',
+                border: '1px solid rgba(255,255,255,0.2)',
+                maxWidth: '500px',
+                animationDelay: '0.8s'
+              }}>
+                <h3 style={{
+                  color: 'white',
+                  fontSize: '1.2rem',
+                  marginBottom: '1rem',
+                  fontWeight: 600
+                }}>Your Adventure Awaits</h3>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.8rem',
+                  textAlign: 'left',
+                  color: 'rgba(255,255,255,0.9)',
+                  fontSize: '0.95rem'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                    <span style={{ fontSize: '1.5rem' }}>📍</span>
+                    <span>Use GPS to discover nearby animals</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                    <span style={{ fontSize: '1.5rem' }}>🎯</span>
+                    <span>Answer questions & make observations</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                    <span style={{ fontSize: '1.5rem' }}>🏆</span>
+                    <span>Collect badges & earn points</span>
+                  </div>
+                </div>
               </div>
+
               <button
                 onClick={enableLocation}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-8 rounded-full text-xl shadow-lg transform hover:scale-105 transition-all"
+                className="animate-scale-in"
+                style={{
+                  background: 'linear-gradient(135deg, var(--sunset-orange) 0%, var(--earth-clay) 100%)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '1.2rem 3rem',
+                  fontSize: '1.3rem',
+                  fontWeight: 700,
+                  borderRadius: '50px',
+                  cursor: 'pointer',
+                  boxShadow: '0 10px 30px rgba(232,106,51,0.4)',
+                  transition: 'all 0.3s ease',
+                  animationDelay: '1s',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = 'translateY(-3px)';
+                  e.target.style.boxShadow = '0 15px 40px rgba(232,106,51,0.5)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 10px 30px rgba(232,106,51,0.4)';
+                }}
               >
-                🚀 Start Adventure
+                Begin Exploration
               </button>
             </div>
           </div>
         );
       }
 
+      // MAP/DISCOVERY SCREEN - Tile Layout
       if (currentScreen === 'map') {
         return (
-          <div className="min-h-screen bg-gradient-to-br from-emerald-900 via-green-800 to-teal-900">
-            <div className="bg-emerald-950 bg-opacity-50 backdrop-blur-sm border-b border-emerald-700 sticky top-0 z-50">
-              <div className="max-w-7xl mx-auto px-4 py-4">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-4">
-                    <img 
-                      src="images/logo.png" 
-                      alt="Taronga Zoo Logo"
-                      style={{height: '48px', width: 'auto'}}
-                    />
-                    <div>
-                      <h1 className="text-2xl font-bold text-white">Find Animals</h1>
-                      <p className="text-emerald-200 text-sm">Get within range to discover</p>
-                    </div>
+          <div style={{
+            minHeight: '100vh',
+            background: 'var(--mist-light)'
+          }}>
+            {/* Header */}
+            <div style={{
+              background: 'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)',
+              padding: '1.5rem 1rem',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+              position: 'sticky',
+              top: 0,
+              zIndex: 100
+            }}>
+              <div style={{
+                maxWidth: '1400px',
+                margin: '0 auto',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div>
+                  <h1 className="heading-display" style={{
+                    fontSize: 'clamp(1.8rem, 4vw, 2.5rem)',
+                    color: 'white',
+                    marginBottom: '0.3rem'
+                  }}>
+                    DISCOVER ANIMALS
+                  </h1>
+                  <p className="serif-accent" style={{
+                    color: 'var(--safari-gold)',
+                    fontSize: '1rem'
+                  }}>
+                    Get within range to unlock
+                  </p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{
+                    fontSize: '2rem',
+                    color: 'var(--safari-gold)',
+                    fontWeight: 700,
+                    marginBottom: '0.2rem'
+                  }}>
+                    {totalPoints}
                   </div>
-                  <div className="text-right">
-                    <div className="text-yellow-400 font-bold text-2xl">⭐ {totalPoints}</div>
-                    <div className="text-emerald-200 text-xs">{foundAnimals.size}/{animals.length} Found</div>
+                  <div style={{
+                    color: 'rgba(255,255,255,0.8)',
+                    fontSize: '0.85rem'
+                  }}>
+                    {foundAnimals.size}/{animals.length} Found
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 py-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {animals.map((animal) => {
+            {/* Tile Grid */}
+            <div style={{
+              maxWidth: '1400px',
+              margin: '0 auto',
+              padding: '2rem 1rem'
+            }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                gap: '1.5rem'
+              }}>
+                {animals.map((animal, index) => {
                   const { nearby, distance } = checkAnimalProximity(animal);
                   const alreadyFound = foundAnimals.has(animal.id);
 
                   return (
                     <div
                       key={animal.id}
-                      onTouchStart={(e) => {
-                        if (!alreadyFound) {
-                          e.preventDefault();
-                          discoverAnimal(animal, e);
-                        }
-                      }}
                       onClick={(e) => {
                         if (!alreadyFound) {
                           discoverAnimal(animal, e);
                         }
                       }}
-                      className={'bg-white rounded-xl p-6 shadow-lg transition-all touch-manipulation ' + 
-                        (alreadyFound ? 'opacity-50' : 'hover:scale-105 active:scale-95 cursor-pointer') + ' ' +
-                        (nearby && !alreadyFound ? 'ring-4 ring-green-400 animate-pulse' : '')}
+                      className="animate-fade-in-up"
+                      style={{
+                        position: 'relative',
+                        height: '400px',
+                        borderRadius: '16px',
+                        overflow: 'hidden',
+                        cursor: alreadyFound ? 'default' : 'pointer',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                        transition: 'all 0.4s ease',
+                        animationDelay: `${index * 0.1}s`,
+                        transform: nearby && !alreadyFound ? 'scale(1.03)' : 'scale(1)'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!alreadyFound) {
+                          e.currentTarget.style.transform = 'translateY(-8px)';
+                          e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.2)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = nearby && !alreadyFound ? 'scale(1.03)' : 'scale(1)';
+                        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)';
+                      }}
                     >
-                      <div className="relative w-full h-32 mb-3 rounded-lg overflow-hidden bg-gray-200">
-                        <img 
-                          src={animal.image} 
-                          alt={animal.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }}
-                        />
-                        <div style={{display: 'none'}} className="w-full h-full flex items-center justify-center text-6xl">
+                      {/* Background Image */}
+                      <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        backgroundImage: `url(${animal.image})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        filter: alreadyFound ? 'grayscale(50%)' : 'none',
+                        opacity: alreadyFound ? 0.6 : 1
+                      }} />
+
+                      {/* Gradient Overlay */}
+                      <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        background: `linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.7) 100%)`
+                      }} />
+
+                      {/* Content */}
+                      <div style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        padding: '2rem',
+                        color: 'white',
+                        zIndex: 10
+                      }}>
+                        <div style={{
+                          fontSize: '3rem',
+                          marginBottom: '0.5rem'
+                        }}>
                           {animal.emoji}
                         </div>
+                        <h3 className="heading-display" style={{
+                          fontSize: '2rem',
+                          marginBottom: '0.3rem',
+                          textShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                        }}>
+                          {animal.name}
+                        </h3>
+                        <p className="serif-accent" style={{
+                          fontSize: '1rem',
+                          opacity: 0.9,
+                          marginBottom: '1rem'
+                        }}>
+                          {animal.scientificName}
+                        </p>
+
+                        {/* Status Badge */}
+                        {alreadyFound ? (
+                          <div style={{
+                            display: 'inline-block',
+                            background: 'rgba(46,125,85,0.9)',
+                            backdropFilter: 'blur(10px)',
+                            padding: '0.6rem 1.5rem',
+                            borderRadius: '30px',
+                            fontWeight: 600,
+                            fontSize: '0.95rem',
+                            border: '2px solid rgba(255,255,255,0.3)'
+                          }}>
+                            ✓ Discovered
+                          </div>
+                        ) : nearby ? (
+                          <div style={{
+                            display: 'inline-block',
+                            background: 'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))',
+                            padding: '0.8rem 2rem',
+                            borderRadius: '30px',
+                            fontWeight: 700,
+                            fontSize: '1rem',
+                            animation: 'pulse 2s infinite',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.08em',
+                            boxShadow: '0 4px 15px rgba(232,106,51,0.5)'
+                          }}>
+                            📍 Tap to Discover
+                          </div>
+                        ) : distance !== null ? (
+                          <div style={{
+                            display: 'inline-block',
+                            background: 'rgba(74,159,216,0.2)',
+                            backdropFilter: 'blur(10px)',
+                            padding: '0.6rem 1.5rem',
+                            borderRadius: '30px',
+                            fontWeight: 600,
+                            fontSize: '0.95rem',
+                            border: '1px solid rgba(255,255,255,0.3)'
+                          }}>
+                            {distance}m away
+                          </div>
+                        ) : (
+                          <div style={{
+                            display: 'inline-block',
+                            background: 'rgba(139,90,60,0.3)',
+                            backdropFilter: 'blur(10px)',
+                            padding: '0.6rem 1.5rem',
+                            borderRadius: '30px',
+                            fontWeight: 600,
+                            fontSize: '0.95rem',
+                            border: '1px solid rgba(255,255,255,0.3)'
+                          }}>
+                            🔒 Locked
+                          </div>
+                        )}
                       </div>
-                      <h3 className="font-bold text-gray-900 text-center mb-2">{animal.name}</h3>
-                      {alreadyFound ? (
-                        <div className="bg-green-100 text-green-800 text-center py-2 rounded-lg font-semibold">
-                          ✓ Completed
-                        </div>
-                      ) : nearby ? (
-                        <div className="bg-green-500 text-white text-center py-2 rounded-lg font-bold animate-bounce">
-                          📍 TAP TO DISCOVER!
-                        </div>
-                      ) : distance !== null ? (
-                        <div className="bg-gray-100 text-gray-600 text-center py-2 rounded-lg text-sm">
-                          {distance}m away
-                        </div>
-                      ) : (
-                        <div className="bg-gray-100 text-gray-400 text-center py-2 rounded-lg text-sm">
-                          🔒 Locked
-                        </div>
+
+                      {/* Pulse Animation for Nearby */}
+                      {nearby && !alreadyFound && (
+                        <div style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          border: '4px solid var(--sunset-orange)',
+                          borderRadius: '16px',
+                          animation: 'pulse 2s infinite',
+                          pointerEvents: 'none'
+                        }} />
                       )}
                     </div>
                   );
@@ -460,108 +749,348 @@
         );
       }
 
+      // ANIMAL DETAIL SCREEN
       if (currentScreen === 'animal' && currentAnimal) {
         const allQuestionsAnswered = currentAnimal.questions.every((_, i) => quizAnswers[i] !== undefined);
 
         return (
-          <div className="min-h-screen bg-gradient-to-br from-emerald-900 via-green-800 to-teal-900 py-8 px-4">
-            <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
-              <div className="relative h-64">
-                <img
-                  src={currentAnimal.image}
-                  alt={currentAnimal.name}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-4 right-4 bg-black bg-opacity-70 text-white px-4 py-2 rounded-full">
-                  {currentAnimal.emoji} {currentAnimal.name}
-                </div>
-              </div>
-
-              <div className="p-6">
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">{currentAnimal.name}</h2>
-                <p className="text-gray-500 italic mb-6">{currentAnimal.scientificName}</p>
-
-                <div className="mb-8">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">📚 Answer These Questions:</h3>
-                  {currentAnimal.questions.map((q, qIndex) => (
-                    <div key={qIndex} className="mb-6 bg-gray-50 p-4 rounded-lg">
-                      <p className="font-semibold text-gray-800 mb-3">{qIndex + 1}. {q.q}</p>
-                      <div className="space-y-2">
-                        {q.options.map((option, oIndex) => (
-                          <button
-                            key={oIndex}
-                            onClick={() => handleQuizAnswer(qIndex, oIndex)}
-                            className={'w-full text-left p-3 rounded-lg border-2 transition-all touch-manipulation ' +
-                              (quizAnswers[qIndex] === oIndex
-                                ? 'border-emerald-500 bg-emerald-50'
-                                : 'border-gray-200 hover:border-emerald-300 active:bg-gray-50')}
-                          >
-                            {option}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mb-6">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">🔍 Behavioral Observation</h3>
-                  <p className="text-gray-600 mb-3">{currentAnimal.observationPrompt}</p>
-                  <textarea
-                    value={observation}
-                    onChange={(e) => setObservation(e.target.value)}
-                    placeholder="Describe what you observe... (minimum 10 words)"
-                    className="w-full h-32 p-4 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"
-                  />
-                  <div className="flex justify-between items-center mt-2">
-                    <span className={'text-sm font-semibold ' + (wordCount >= 10 ? 'text-green-600' : 'text-red-500')}>
-                      {wordCount}/10 words {wordCount >= 10 ? '✓' : ''}
-                    </span>
+          <div style={{
+            minHeight: '100vh',
+            background: 'var(--mist-light)',
+            paddingBottom: '4rem'
+          }}>
+            {/* Hero Image */}
+            <div style={{
+              position: 'relative',
+              height: '50vh',
+              backgroundImage: `url(${currentAnimal.image})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}>
+              <div style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                background: 'linear-gradient(180deg, transparent 0%, rgba(10,47,31,0.95) 100%)',
+                padding: '3rem 2rem 2rem'
+              }}>
+                <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+                  <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>
+                    {currentAnimal.emoji}
                   </div>
+                  <h1 className="heading-display" style={{
+                    fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+                    color: 'white',
+                    marginBottom: '0.5rem'
+                  }}>
+                    {currentAnimal.name}
+                  </h1>
+                  <p className="serif-accent" style={{
+                    fontSize: '1.3rem',
+                    color: 'var(--safari-gold)'
+                  }}>
+                    {currentAnimal.scientificName}
+                  </p>
                 </div>
-
-                <button
-                  onClick={submitObservation}
-                  disabled={!allQuestionsAnswered || wordCount < 10}
-                  className={'w-full py-4 rounded-xl font-bold text-lg touch-manipulation ' +
-                    (allQuestionsAnswered && wordCount >= 10
-                      ? 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white cursor-pointer'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed')}
-                >
-                  {!allQuestionsAnswered ? '⚠️ Answer all questions first' : wordCount < 10 ? '⚠️ Write more observations' : '🎉 Submit & Earn Badge!'}
-                </button>
               </div>
+            </div>
+
+            {/* Content */}
+            <div style={{
+              maxWidth: '900px',
+              margin: '0 auto',
+              padding: '3rem 2rem'
+            }}>
+              {/* Questions */}
+              <div style={{ marginBottom: '3rem' }}>
+                <h2 className="heading-display" style={{
+                  fontSize: '2rem',
+                  color: 'var(--jungle-deep)',
+                  marginBottom: '2rem'
+                }}>
+                  Test Your Knowledge
+                </h2>
+                
+                {currentAnimal.questions.map((q, qIndex) => (
+                  <div key={qIndex} style={{
+                    background: 'white',
+                    borderRadius: '16px',
+                    padding: '2rem',
+                    marginBottom: '1.5rem',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+                  }}>
+                    <p style={{
+                      fontSize: '1.2rem',
+                      fontWeight: 600,
+                      color: 'var(--jungle-deep)',
+                      marginBottom: '1.5rem'
+                    }}>
+                      {qIndex + 1}. {q.q}
+                    </p>
+                    <div style={{
+                      display: 'grid',
+                      gap: '1rem'
+                    }}>
+                      {q.options.map((option, oIndex) => (
+                        <button
+                          key={oIndex}
+                          onClick={() => handleQuizAnswer(qIndex, oIndex)}
+                          style={{
+                            textAlign: 'left',
+                            padding: '1rem 1.5rem',
+                            borderRadius: '12px',
+                            border: quizAnswers[qIndex] === oIndex 
+                              ? `3px solid ${currentAnimal.color}` 
+                              : '2px solid #E5E5E5',
+                            background: quizAnswers[qIndex] === oIndex 
+                              ? `${currentAnimal.color}15` 
+                              : 'white',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            fontSize: '1rem',
+                            fontWeight: quizAnswers[qIndex] === oIndex ? 600 : 400
+                          }}
+                          onMouseEnter={(e) => {
+                            if (quizAnswers[qIndex] !== oIndex) {
+                              e.target.style.background = '#F5F5F5';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (quizAnswers[qIndex] !== oIndex) {
+                              e.target.style.background = 'white';
+                            }
+                          }}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Observation */}
+              <div style={{
+                background: 'white',
+                borderRadius: '16px',
+                padding: '2rem',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                marginBottom: '2rem'
+              }}>
+                <h2 className="heading-display" style={{
+                  fontSize: '2rem',
+                  color: 'var(--jungle-deep)',
+                  marginBottom: '1rem'
+                }}>
+                  Your Observations
+                </h2>
+                <p style={{
+                  color: '#666',
+                  marginBottom: '1.5rem',
+                  lineHeight: 1.6
+                }}>
+                  {currentAnimal.observationPrompt}
+                </p>
+                <textarea
+                  value={observation}
+                  onChange={(e) => setObservation(e.target.value)}
+                  placeholder="Describe what you observe in detail..."
+                  style={{
+                    width: '100%',
+                    minHeight: '150px',
+                    padding: '1.5rem',
+                    borderRadius: '12px',
+                    border: '2px solid #E5E5E5',
+                    fontSize: '1rem',
+                    fontFamily: 'DM Sans, sans-serif',
+                    resize: 'vertical',
+                    transition: 'border-color 0.2s ease'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = currentAnimal.color}
+                  onBlur={(e) => e.target.style.borderColor = '#E5E5E5'}
+                />
+                <div style={{
+                  marginTop: '1rem',
+                  fontSize: '0.95rem',
+                  color: wordCount >= 10 ? 'var(--jungle-light)' : '#E86A33',
+                  fontWeight: 600
+                }}>
+                  {wordCount}/10 words {wordCount >= 10 ? '✓' : ''}
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                onClick={submitObservation}
+                disabled={!allQuestionsAnswered || wordCount < 10}
+                style={{
+                  width: '100%',
+                  padding: '1.5rem',
+                  borderRadius: '50px',
+                  border: 'none',
+                  background: allQuestionsAnswered && wordCount >= 10
+                    ? 'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))'
+                    : '#CCC',
+                  color: 'white',
+                  fontSize: '1.3rem',
+                  fontWeight: 700,
+                  cursor: allQuestionsAnswered && wordCount >= 10 ? 'pointer' : 'not-allowed',
+                  transition: 'all 0.3s ease',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  boxShadow: allQuestionsAnswered && wordCount >= 10 
+                    ? '0 8px 24px rgba(232,106,51,0.4)' 
+                    : 'none'
+                }}
+                onMouseEnter={(e) => {
+                  if (allQuestionsAnswered && wordCount >= 10) {
+                    e.target.style.transform = 'translateY(-2px)';
+                    e.target.style.boxShadow = '0 12px 32px rgba(232,106,51,0.5)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = allQuestionsAnswered && wordCount >= 10 
+                    ? '0 8px 24px rgba(232,106,51,0.4)' 
+                    : 'none';
+                }}
+              >
+                {!allQuestionsAnswered 
+                  ? 'Complete All Questions First' 
+                  : wordCount < 10 
+                  ? 'Add More Details to Observation' 
+                  : '🏆 Submit & Earn Badge'}
+              </button>
             </div>
           </div>
         );
       }
 
+      // BADGE EARNED SCREEN
       if (currentScreen === 'badge') {
         const lastBadge = badges[badges.length - 1];
 
         return (
-          <div className="min-h-screen bg-gradient-to-br from-yellow-400 via-orange-400 to-pink-500 flex items-center justify-center p-4">
-            <div className="max-w-lg w-full bg-white rounded-3xl shadow-2xl p-8 text-center">
-              <div className="text-8xl mb-4 animate-bounce">{lastBadge.emoji}</div>
-              <h2 className="text-4xl font-bold text-gray-900 mb-2">Badge Earned!</h2>
-              <h3 className="text-2xl font-semibold text-emerald-600 mb-6">{lastBadge.animal}</h3>
+          <div style={{
+            minHeight: '100vh',
+            background: 'linear-gradient(135deg, var(--sunset-orange) 0%, var(--earth-clay) 50%, var(--jungle-mid) 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '2rem'
+          }}>
+            <div className="animate-scale-in" style={{
+              background: 'white',
+              borderRadius: '24px',
+              padding: '3rem 2rem',
+              maxWidth: '500px',
+              width: '100%',
+              textAlign: 'center',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+            }}>
+              <div style={{
+                fontSize: '6rem',
+                marginBottom: '1rem',
+                animation: 'bounce 1s ease-in-out infinite'
+              }}>
+                {lastBadge.emoji}
+              </div>
               
-              <div className="bg-yellow-50 rounded-xl p-6 mb-6">
-                <p className="text-5xl font-bold text-yellow-600 mb-2">+{lastBadge.points}</p>
-                <p className="text-gray-600">Points Earned</p>
+              <h2 className="heading-display" style={{
+                fontSize: '3rem',
+                color: 'var(--jungle-deep)',
+                marginBottom: '0.5rem'
+              }}>
+                BADGE EARNED!
+              </h2>
+              
+              <p className="serif-accent" style={{
+                fontSize: '1.5rem',
+                color: 'var(--sunset-orange)',
+                marginBottom: '2rem'
+              }}>
+                {lastBadge.animal}
+              </p>
+
+              <div style={{
+                background: 'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)',
+                borderRadius: '16px',
+                padding: '2rem',
+                marginBottom: '2rem'
+              }}>
+                <div style={{
+                  fontSize: '3.5rem',
+                  fontWeight: 700,
+                  color: 'var(--earth-clay)',
+                  marginBottom: '0.5rem'
+                }}>
+                  +{lastBadge.points}
+                </div>
+                <div style={{
+                  color: '#666',
+                  fontSize: '1rem'
+                }}>
+                  Points Earned
+                </div>
               </div>
 
-              <div className="bg-gray-50 rounded-xl p-4 mb-6">
-                <p className="text-gray-600">Total Progress</p>
-                <p className="text-3xl font-bold text-gray-900">{foundAnimals.size}/{animals.length} Animals</p>
-                <p className="text-2xl font-bold text-emerald-600 mt-2">⭐ {totalPoints} Points</p>
+              <div style={{
+                background: '#F5F3EE',
+                borderRadius: '16px',
+                padding: '1.5rem',
+                marginBottom: '2rem'
+              }}>
+                <div style={{
+                  color: '#666',
+                  fontSize: '0.95rem',
+                  marginBottom: '0.5rem'
+                }}>
+                  Total Progress
+                </div>
+                <div style={{
+                  fontSize: '2rem',
+                  fontWeight: 700,
+                  color: 'var(--jungle-deep)',
+                  marginBottom: '0.5rem'
+                }}>
+                  {foundAnimals.size}/{animals.length} Animals
+                </div>
+                <div style={{
+                  fontSize: '1.5rem',
+                  fontWeight: 700,
+                  color: 'var(--sunset-orange)'
+                }}>
+                  ⭐ {totalPoints} Points
+                </div>
               </div>
 
               <button
                 onClick={() => setCurrentScreen('map')}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold py-4 px-8 rounded-full text-xl shadow-lg touch-manipulation"
+                style={{
+                  width: '100%',
+                  padding: '1.2rem',
+                  borderRadius: '50px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, var(--jungle-mid), var(--jungle-deep))',
+                  color: 'white',
+                  fontSize: '1.2rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = 'none';
+                }}
               >
-                {foundAnimals.size === animals.length ? '🎉 Complete! View Map' : '🗺️ Find Next Animal'}
+                {foundAnimals.size === animals.length ? '🎉 View All Discoveries' : '🗺️ Find Next Animal'}
               </button>
             </div>
           </div>
@@ -571,7 +1100,27 @@
       return null;
     };
 
-    ReactDOM.render(<ZooSoundsApp />, document.getElementById('root'));
+    ReactDOM.render(<TarongaTracka />, document.getElementById('root'));
   </script>
+
+  <style>
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.6;
+      }
+    }
+
+    @keyframes bounce {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-20px);
+      }
+    }
+  </style>
 </body>
 </html>
