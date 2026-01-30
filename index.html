@@ -378,7 +378,7 @@
                   opacity: 0.4
                 }}
               >
-                <source src="https://cdn.coverr.co/videos/coverr-african-wildlife-safari-6263/1080p.mp4" type="video/mp4" />
+                <source src="images/background-video.mp4" type="video/mp4" />
               </video>
               <div style={{
                 position: 'absolute',
@@ -399,57 +399,38 @@
               alignItems: 'center',
               justifyContent: 'center',
               height: '100%',
-              padding: '2rem',
+              padding: '1rem',
               textAlign: 'center'
             }}>
-              <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+              <div className="animate-fade-in-up" style={{ 
+                animationDelay: '0.2s',
+                marginBottom: '2rem'
+              }}>
                 <img 
                   src="images/logo.png" 
                   alt="Taronga Zoo"
                   style={{
-                    width: '200px',
-                    marginBottom: '2rem',
-                    filter: 'brightness(0) invert(1)',
-                    opacity: 0.95
+                    width: 'min(80vw, 350px)',
+                    maxWidth: '350px',
+                    height: 'auto'
                   }}
-                  onError={(e) => e.target.style.display = 'none'}
                 />
               </div>
-
-              <h1 className="heading-display animate-fade-in-up" style={{
-                fontSize: 'clamp(3rem, 8vw, 6rem)',
-                color: 'white',
-                marginBottom: '1rem',
-                textShadow: '0 4px 20px rgba(0,0,0,0.5)',
-                animationDelay: '0.4s'
-              }}>
-                TARONGA TRACKA
-              </h1>
-
-              <p className="serif-accent animate-fade-in-up" style={{
-                fontSize: 'clamp(1.2rem, 3vw, 1.8rem)',
-                color: 'var(--safari-gold)',
-                marginBottom: '3rem',
-                maxWidth: '600px',
-                lineHeight: 1.4,
-                animationDelay: '0.6s'
-              }}>
-                Discover wildlife through exploration & observation
-              </p>
 
               <div className="animate-fade-in-up" style={{
                 background: 'rgba(255,255,255,0.1)',
                 backdropFilter: 'blur(10px)',
                 borderRadius: '20px',
-                padding: '2rem',
-                marginBottom: '3rem',
+                padding: '1.5rem',
+                marginBottom: '2rem',
                 border: '1px solid rgba(255,255,255,0.2)',
                 maxWidth: '500px',
-                animationDelay: '0.8s'
+                width: '100%',
+                animationDelay: '0.4s'
               }}>
                 <h3 style={{
                   color: 'white',
-                  fontSize: '1.2rem',
+                  fontSize: 'clamp(1rem, 4vw, 1.2rem)',
                   marginBottom: '1rem',
                   fontWeight: 600
                 }}>Your Adventure Awaits</h3>
@@ -459,7 +440,7 @@
                   gap: '0.8rem',
                   textAlign: 'left',
                   color: 'rgba(255,255,255,0.9)',
-                  fontSize: '0.95rem'
+                  fontSize: 'clamp(0.85rem, 2.5vw, 0.95rem)'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
                     <span style={{ fontSize: '1.5rem' }}>📍</span>
@@ -483,16 +464,17 @@
                   background: 'linear-gradient(135deg, var(--sunset-orange) 0%, var(--earth-clay) 100%)',
                   color: 'white',
                   border: 'none',
-                  padding: '1.2rem 3rem',
-                  fontSize: '1.3rem',
+                  padding: '1rem 2.5rem',
+                  fontSize: 'clamp(1rem, 3.5vw, 1.3rem)',
                   fontWeight: 700,
                   borderRadius: '50px',
                   cursor: 'pointer',
                   boxShadow: '0 10px 30px rgba(232,106,51,0.4)',
                   transition: 'all 0.3s ease',
-                  animationDelay: '1s',
+                  animationDelay: '0.6s',
                   textTransform: 'uppercase',
-                  letterSpacing: '0.1em'
+                  letterSpacing: '0.1em',
+                  width: 'min(90vw, 400px)'
                 }}
                 onMouseEnter={(e) => {
                   e.target.style.transform = 'translateY(-3px)';
