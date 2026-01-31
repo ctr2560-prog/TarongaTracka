@@ -435,67 +435,68 @@ body {
         return (
           <div style={{
             position: 'fixed',
-            width: '100vw',
-            height: '100vh',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
             overflow: 'hidden',
-            background: 'var(--jungle-deep)'
+            background: 'var(--jungle-deep)',
+            zIndex: 1
           }}>
             {/* Video Background */}
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                opacity: 0.7
+              }}
+              onError={(e) => {
+                console.log('Video failed to load');
+                e.target.style.display = 'none';
+              }}
+            >
+              <source src="images/background-video.mp4" type="video/mp4" />
+            </video>
+
+            {/* Overlay */}
             <div style={{
               position: 'absolute',
               top: 0,
               left: 0,
               width: '100%',
               height: '100%',
-              overflow: 'hidden',
-              background: 'var(--jungle-deep)'
-            }}>
-              <video
-                autoPlay
-                loop
-                muted
-                playsInline
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  opacity: 0.7
-                }}
-                onError={(e) => {
-                  console.log('Video failed to load from images/background-video.mp4');
-                  e.target.style.display = 'none';
-                }}
-              >
-                <source src="images/background-video.mp4" type="video/mp4" />
-              </video>
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                background: 'linear-gradient(180deg, rgba(10,47,31,0.3) 0%, rgba(10,47,31,0.6) 100%)'
-              }} />
-            </div>
+              background: 'linear-gradient(180deg, rgba(10,47,31,0.3) 0%, rgba(10,47,31,0.6) 100%)',
+              zIndex: 2
+            }} />
 
             {/* Content */}
             <div style={{
-              position: 'relative',
-              zIndex: 10,
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              height: '100%',
               padding: '1rem',
-              textAlign: 'center'
+              textAlign: 'center',
+              zIndex: 10
             }}>
               
               {/* Logo */}
               <div className="animate-fade-in-up" style={{ 
                 animationDelay: '0.2s',
-                marginBottom: '1rem',
-                flex: '0 0 auto'
+                marginBottom: '1rem'
               }}>
                 <img 
                   src="images/logo.png" 
@@ -521,8 +522,7 @@ body {
                 border: '1px solid rgba(255,255,255,0.2)',
                 maxWidth: '500px',
                 width: '90%',
-                animationDelay: '0.4s',
-                flex: '0 0 auto'
+                animationDelay: '0.4s'
               }}>
                 <h3 style={{
                   color: 'white',
@@ -570,8 +570,7 @@ body {
                   animationDelay: '0.6s',
                   textTransform: 'uppercase',
                   letterSpacing: '0.1em',
-                  width: 'min(90vw, 350px)',
-                  flex: '0 0 auto'
+                  width: 'min(90vw, 350px)'
                 }}
                 onMouseEnter={(e) => {
                   e.target.style.transform = 'translateY(-3px)';
