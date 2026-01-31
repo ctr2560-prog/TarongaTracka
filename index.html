@@ -114,6 +114,33 @@
       const [totalPoints, setTotalPoints] = useState(0);
       const [badges, setBadges] = useState([]);
 
+      // Keep screen awake during quiz (only when on animal screen)
+      useEffect(() => {
+        if (currentScreen !== 'animal') return;
+        
+        let wakeLock = null;
+        
+        const requestWakeLock = async () => {
+          try {
+            if ('wakeLock' in navigator) {
+              wakeLock = await navigator.wakeLock.request('screen');
+              console.log('Wake lock active');
+            }
+          } catch (err) {
+            console.log('Wake lock error:', err);
+          }
+        };
+        
+        requestWakeLock();
+        
+        return () => {
+          if (wakeLock) {
+            wakeLock.release();
+            console.log('Wake lock released');
+          }
+        };
+      }, [currentScreen]);
+
       const animals = [
         { 
           id: 'chimpanzee',
@@ -857,31 +884,6 @@
       // ANIMAL DETAIL SCREEN - ONE QUESTION AT A TIME
       if (currentScreen === 'animal' && currentAnimal) {
         const currentQuestion = currentAnimal.questions[currentQuestionIndex];
-
-        // Keep screen awake during quiz
-        React.useEffect(() => {
-          let wakeLock = null;
-          
-          const requestWakeLock = async () => {
-            try {
-              if ('wakeLock' in navigator) {
-                wakeLock = await navigator.wakeLock.request('screen');
-                console.log('Wake lock active');
-              }
-            } catch (err) {
-              console.log('Wake lock error:', err);
-            }
-          };
-          
-          requestWakeLock();
-          
-          return () => {
-            if (wakeLock) {
-              wakeLock.release();
-              console.log('Wake lock released');
-            }
-          };
-        }, []);
 
         return (
           <div style={{
