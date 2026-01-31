@@ -833,7 +833,8 @@
                 margin: '0 auto',
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'center'
+                alignItems: 'center',
+                marginBottom: '1rem'
               }}>
                 <button
                   onClick={() => setCurrentScreen('map')}
@@ -864,39 +865,22 @@
                 />
                 <div style={{ width: '80px' }}></div>
               </div>
-            </div>
-
-            {/* Hero Image */}
-            <div style={{
-              position: 'relative',
-              height: '50vh',
-              backgroundImage: `url(${currentAnimal.image})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center'
-            }}>
-              <div style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                background: 'linear-gradient(180deg, transparent 0%, rgba(10,47,31,0.95) 100%)',
-                padding: '3rem 2rem 2rem'
-              }}>
-                <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-                  <h1 className="heading-display" style={{
-                    fontSize: 'clamp(2rem, 5vw, 3.5rem)',
-                    color: 'white',
-                    marginBottom: '0.5rem'
-                  }}>
-                    {currentAnimal.name}
-                  </h1>
-                  <p className="serif-accent" style={{
-                    fontSize: '1.3rem',
-                    color: 'var(--safari-gold)'
-                  }}>
-                    {currentAnimal.scientificName}
-                  </p>
-                </div>
+              
+              {/* Animal Title in Header */}
+              <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center' }}>
+                <h1 className="heading-display" style={{
+                  fontSize: 'clamp(1.8rem, 5vw, 2.5rem)',
+                  color: 'white',
+                  marginBottom: '0.3rem'
+                }}>
+                  {currentAnimal.name}
+                </h1>
+                <p className="serif-accent" style={{
+                  fontSize: '1.1rem',
+                  color: 'var(--safari-gold)'
+                }}>
+                  {currentAnimal.scientificName}
+                </p>
               </div>
             </div>
 
