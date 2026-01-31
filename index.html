@@ -453,13 +453,13 @@
               }}>
                 <img 
                   src="images/logo.png" 
-                  alt="Taronga Tracka"
+                  alt="Taronga Zoo"
                   style={{
                     width: 'min(80vw, 350px)',
                     maxWidth: '350px',
                     height: 'auto',
-                    filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.6)) drop-shadow(0 0 40px rgba(139,195,74,0.4))',
-                    imageRendering: 'crisp-edges'
+                    filter: 'brightness(0) invert(1)',
+                    opacity: 0.95
                   }}
                 />
               </div>
@@ -799,9 +799,6 @@
                 padding: '3rem 2rem 2rem'
               }}>
                 <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-                  <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>
-                    {currentAnimal.emoji}
-                  </div>
                   <h1 className="heading-display" style={{
                     fontSize: 'clamp(2rem, 5vw, 3.5rem)',
                     color: 'white',
