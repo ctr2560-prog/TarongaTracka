@@ -130,6 +130,13 @@
       console.log('If you see old version, clear cache: Command + Shift + R');
       console.log('Component loading...');
       
+      // DIAGNOSTIC: Alert to confirm this is the right file
+      React.useEffect(() => {
+        setTimeout(() => {
+          alert('VERSION 2.2 LOADED - FILE IS CORRECT');
+        }, 1000);
+      }, []);
+      
       // Load saved progress from localStorage
       const loadProgress = () => {
         try {
