@@ -177,6 +177,7 @@
 
       // Save progress whenever key data changes
       useEffect(() => {
+        console.log('Screen changed to:', currentScreen);
         const progress = {
           currentScreen: currentScreen === 'animal' || currentScreen === 'observation' ? 'map' : currentScreen,
           locationEnabled,
@@ -214,6 +215,27 @@
             console.log('Wake lock released');
           }
         };
+      }, [currentScreen]);
+
+      // Prevent browser back button during quiz
+      useEffect(() => {
+        if (currentScreen === 'animal' || currentScreen === 'observation') {
+          const handleBackButton = (e) => {
+            e.preventDefault();
+            if (window.confirm('Leave quiz and go back to map?')) {
+              setCurrentScreen('map');
+            } else {
+              window.history.pushState(null, '', window.location.href);
+            }
+          };
+          
+          window.history.pushState(null, '', window.location.href);
+          window.addEventListener('popstate', handleBackButton);
+          
+          return () => {
+            window.removeEventListener('popstate', handleBackButton);
+          };
+        }
       }, [currentScreen]);
 
       const animals = [
@@ -518,11 +540,13 @@
       };
       
       const handleNextQuestion = () => {
+        console.log('handleNextQuestion called');
         setShowResult(false);
         if (currentQuestionIndex < currentAnimal.questions.length - 1) {
+          console.log('Moving to next question:', currentQuestionIndex + 1);
           setCurrentQuestionIndex(currentQuestionIndex + 1);
         } else {
-          // All questions done, go to observation
+          console.log('All questions done, going to observation');
           setCurrentScreen('observation');
         }
       };
@@ -625,7 +649,7 @@
             overflow: 'hidden',
             background: 'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)'
           }}>
-            {/* Video Background - Desktop only */}
+            {/* Video Background - Desktop/Tablet only */}
             <video
               autoPlay
               loop
@@ -648,6 +672,24 @@
             >
               <source src="images/background-video.mp4" type="video/mp4" />
             </video>
+
+            {/* Animated Background Images - Mobile only */}
+            <div className="mobile-bg-images" style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              display: 'none',
+              zIndex: 0
+            }}>
+              <img src="images/chimpanzee.jpg" className="bg-image" alt="" />
+              <img src="images/gorilla.jpg" className="bg-image" alt="" />
+              <img src="images/lion.jpg" className="bg-image" alt="" />
+              <img src="images/giraffe.jpg" className="bg-image" alt="" />
+              <img src="images/koala.jpg" className="bg-image" alt="" />
+              <img src="images/tiger.jpg" className="bg-image" alt="" />
+            </div>
 
             {/* Dark Overlay */}
             <div style={{
