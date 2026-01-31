@@ -154,7 +154,7 @@
 
       // ---------- DATA ----------
       const animals = [
-        { 
+        {
           id: 'chimpanzee',
           name: 'Chimpanzee',
           scientificName: 'Pan troglodytes',
@@ -181,7 +181,7 @@
           observationPrompt: 'Observe the chimpanzees for 2 minutes. What behaviors did you see?',
           pointValue: 50
         },
-        { 
+        {
           id: 'gorilla',
           name: 'Western Lowland Gorilla',
           scientificName: 'Gorilla gorilla gorilla',
@@ -208,7 +208,7 @@
           observationPrompt: 'Watch the gorillas carefully. Describe their social interactions.',
           pointValue: 50
         },
-        { 
+        {
           id: 'lion',
           name: 'African Lion',
           scientificName: 'Panthera leo',
@@ -235,7 +235,7 @@
           observationPrompt: 'Watch the lions. Describe their behavior and social interactions.',
           pointValue: 50
         },
-        { 
+        {
           id: 'giraffe',
           name: 'Giraffe',
           scientificName: 'Giraffa camelopardalis',
@@ -262,7 +262,7 @@
           observationPrompt: 'Observe how the giraffes move and eat. What feeding behaviors do you notice?',
           pointValue: 50
         },
-        { 
+        {
           id: 'koala',
           name: 'Koala',
           scientificName: 'Phascolarctos cinereus',
@@ -289,7 +289,7 @@
           observationPrompt: 'Watch the koala carefully. What position is it in?',
           pointValue: 50
         },
-        { 
+        {
           id: 'tiger',
           name: 'Sumatran Tiger',
           scientificName: 'Panthera tigris sumatrae',
@@ -509,12 +509,12 @@
         setTotalPoints(p => p + totalEarned);
         setFoundAnimals(prev => new Set([...prev, currentAnimal.id]));
 
+        // ✅ CHANGED: removed emoji from stored badge data
         setBadges(prev => ([
           ...prev,
           {
             animalId: currentAnimal.id,
             animal: currentAnimal.name,
-            emoji: currentAnimal.emoji,
             points: totalEarned,
             behaviorScore: behaviorBonus,
             detailScore: detailBonus,
@@ -1316,7 +1316,7 @@
               maxWidth: '900px',
               margin: '0 auto',
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
               gap: '1.5rem',
               padding: '1rem'
             }}>
@@ -1336,20 +1336,21 @@
                       boxShadow: earned ? '0 8px 24px rgba(0,0,0,0.2)' : 'none'
                     }}
                   >
+                    {/* ✅ CHANGED: bigger badge icon */}
                     <div style={{
-                      width: '100px',
-                      height: '100px',
-                      margin: '0 auto 1rem',
+                      width: '150px',
+                      height: '150px',
+                      margin: '0 auto 1.2rem',
                       backgroundImage: earned ? `url(images/badge-${animal.id}.png)` : 'none',
-                      backgroundColor: earned ? 'transparent' : 'rgba(255,255,255,0.1)',
+                      backgroundColor: earned ? 'transparent' : 'rgba(255,255,255,0.15)',
                       backgroundSize: 'contain',
                       backgroundRepeat: 'no-repeat',
                       backgroundPosition: 'center',
-                      borderRadius: '50%',
+                      borderRadius: '20px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '3rem'
+                      fontSize: '2.5rem'
                     }}>
                       {!earned && '🔒'}
                     </div>
@@ -1458,23 +1459,16 @@
               textAlign: 'center',
               boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
             }}>
+              {/* ✅ CHANGED: bigger badge + removed emoji overlay */}
               <div style={{
-                height: 'clamp(100px, 25vh, 150px)',
-                width: 'clamp(100px, 25vh, 150px)',
-                margin: '0 auto clamp(1rem, 2vh, 1.5rem)',
+                height: 'clamp(180px, 40vh, 260px)',
+                width: 'clamp(180px, 40vh, 260px)',
+                margin: '0 auto clamp(1.5rem, 3vh, 2rem)',
                 backgroundImage: `url(images/badge-${lastBadge.animalId}.png)`,
                 backgroundSize: 'contain',
                 backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'center',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '5rem'
-              }}>
-                <span style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))' }}>
-                  {lastBadge.emoji}
-                </span>
-              </div>
+                backgroundPosition: 'center'
+              }} />
 
               <h2 className="heading-display" style={{
                 fontSize: 'clamp(1.8rem, 4vh, 2.5rem)',
