@@ -88,6 +88,13 @@
     .animate-scale-in {
       animation: scaleIn 0.6s ease-out forwards;
     }
+
+    /* Hide video on mobile for performance and compatibility */
+    @media (max-width: 768px) {
+      .desktop-only-video {
+        display: none !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -130,6 +137,16 @@
       const [observation, setObservation] = useState('');
       const [totalPoints, setTotalPoints] = useState(savedProgress?.totalPoints || 0);
       const [badges, setBadges] = useState(savedProgress?.badges || []);
+      const [answerTimeoutId, setAnswerTimeoutId] = useState(null);
+
+      // Clear timeout when leaving animal screen
+      useEffect(() => {
+        return () => {
+          if (answerTimeoutId) {
+            clearTimeout(answerTimeoutId);
+          }
+        };
+      }, [answerTimeoutId]);
 
       // Save progress whenever key data changes
       useEffect(() => {
@@ -455,6 +472,11 @@
         const question = currentAnimal.questions[questionIndex];
         const correct = answerIndex === question.correct;
         
+        // Clear any existing timeout first
+        if (answerTimeoutId) {
+          clearTimeout(answerTimeoutId);
+        }
+        
         setIsCorrect(correct);
         setShowResult(true);
         
@@ -470,7 +492,7 @@
           });
           
           // Move to next question after delay (with confetti)
-          setTimeout(() => {
+          const timeoutId = setTimeout(() => {
             setShowResult(false);
             if (currentQuestionIndex < currentAnimal.questions.length - 1) {
               setCurrentQuestionIndex(currentQuestionIndex + 1);
@@ -478,12 +500,16 @@
               // All questions done, go to observation
               setCurrentScreen('observation');
             }
+            setAnswerTimeoutId(null);
           }, 3000);
+          setAnswerTimeoutId(timeoutId);
         } else {
           // Wrong answer - return to question after brief delay
-          setTimeout(() => {
+          const timeoutId = setTimeout(() => {
             setShowResult(false);
+            setAnswerTimeoutId(null);
           }, 2000);
+          setAnswerTimeoutId(timeoutId);
         }
       };
 
@@ -585,12 +611,13 @@
             overflow: 'hidden',
             background: 'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)'
           }}>
-            {/* Video Background */}
+            {/* Video Background - Desktop only */}
             <video
               autoPlay
               loop
               muted
               playsInline
+              className="desktop-only-video"
               style={{
                 position: 'absolute',
                 top: 0,
