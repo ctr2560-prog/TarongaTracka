@@ -583,51 +583,41 @@
             width: '100%',
             height: '100vh',
             overflow: 'hidden',
-            background: 'var(--jungle-deep)'
+            background: 'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)'
           }}>
             {/* Video Background */}
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                zIndex: 0
+              }}
+              onError={(e) => {
+                console.log('Video failed to load');
+                e.target.style.display = 'none';
+              }}
+            >
+              <source src="images/background-video.mp4" type="video/mp4" />
+            </video>
+
+            {/* Dark Overlay */}
             <div style={{
               position: 'absolute',
               top: 0,
               left: 0,
               width: '100%',
               height: '100%',
-              overflow: 'hidden',
-              background: 'var(--jungle-deep)'
-            }}>
-              <video
-                autoPlay
-                loop
-                muted
-                playsInline
-                webkit-playsinline="true"
-                x5-playsinline="true"
-                preload="auto"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  opacity: 0.7
-                }}
-                onLoadedData={(e) => {
-                  e.target.play().catch(err => console.log('Video autoplay failed:', err));
-                }}
-                onError={(e) => {
-                  console.log('Video failed to load from images/background-video.mp4');
-                  e.target.style.display = 'none';
-                }}
-              >
-                <source src="images/background-video.mp4" type="video/mp4" />
-              </video>
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                background: 'linear-gradient(180deg, rgba(10,47,31,0.3) 0%, rgba(10,47,31,0.6) 100%)'
-              }} />
-            </div>
+              background: 'rgba(10,47,31,0.5)',
+              zIndex: 1
+            }} />
 
             {/* Content */}
             <div style={{
@@ -1031,12 +1021,16 @@
                 : 'var(--mist-light)',
               transition: 'background 0.5s ease',
               display: 'flex',
-              flexDirection: 'column'
+              flexDirection: 'column',
+              pointerEvents: 'none'
             }}
-            onTouchStart={(e) => e.stopPropagation()}
-            onTouchMove={(e) => e.stopPropagation()}
-            onTouchEnd={(e) => e.stopPropagation()}
           >
+            {/* Re-enable pointer events for interactive elements */}
+            <style>{`
+              #question-screen button { pointer-events: auto !important; }
+              #question-screen textarea { pointer-events: auto !important; }
+            `}</style>
+            <div id="question-screen" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
             {/* Confetti Effect */}
             {showResult && isCorrect && (
               <div style={{
@@ -1201,38 +1195,47 @@
               {showResult && (
                 <div className="animate-scale-in" style={{
                   textAlign: 'center',
-                  padding: 'clamp(1.5rem, 4vh, 2rem)',
+                  padding: 'clamp(1.5rem, 3vh, 2rem)',
                   background: 'rgba(255,255,255,0.95)',
                   borderRadius: '20px',
                   boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
-                  margin: 'auto',
-                  maxWidth: '90%'
+                  margin: 'clamp(1rem, 2vh, 1.5rem)',
+                  maxWidth: '90%',
+                  marginLeft: 'auto',
+                  marginRight: 'auto'
                 }}>
-                  <div style={{ fontSize: 'clamp(2.5rem, 7vh, 4rem)', marginBottom: '0.5rem' }}>
+                  <div style={{ fontSize: 'clamp(3rem, 8vh, 4.5rem)', marginBottom: '0.5rem' }}>
                     {isCorrect ? '🎉' : '❌'}
                   </div>
                   <h2 className="heading-display" style={{
-                    fontSize: 'clamp(1.5rem, 4vh, 2.5rem)',
+                    fontSize: 'clamp(2rem, 5vh, 3rem)',
                     color: isCorrect ? '#10b981' : '#ef4444',
-                    marginBottom: '0.5rem'
+                    marginBottom: '0.8rem',
+                    lineHeight: 1.1
                   }}>
                     {isCorrect ? 'CORRECT!' : 'TRY AGAIN'}
                   </h2>
                   
                   {isCorrect && currentQuestion.fact && (
-                    <p style={{ 
-                      color: '#333', 
-                      fontSize: 'clamp(0.85rem, 1.8vh, 1rem)', 
-                      marginTop: '1rem',
-                      lineHeight: 1.4,
-                      fontStyle: 'italic'
+                    <div style={{
+                      background: 'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)',
+                      borderRadius: '12px',
+                      padding: 'clamp(1rem, 2vh, 1.5rem)',
+                      marginTop: '0.8rem'
                     }}>
-                      💡 Fun Fact: {currentQuestion.fact}
-                    </p>
+                      <p style={{ 
+                        color: '#333', 
+                        fontSize: 'clamp(0.9rem, 2vh, 1.1rem)', 
+                        lineHeight: 1.5,
+                        fontWeight: 500
+                      }}>
+                        💡 {currentQuestion.fact}
+                      </p>
+                    </div>
                   )}
                   
                   {!isCorrect && (
-                    <p style={{ color: '#666', fontSize: 'clamp(0.9rem, 2vh, 1.1rem)', marginTop: '0.5rem' }}>
+                    <p style={{ color: '#666', fontSize: 'clamp(0.95rem, 2vh, 1.1rem)' }}>
                       Give it another try!
                     </p>
                   )}
@@ -1312,6 +1315,7 @@
                   </div>
                 </div>
               )}
+            </div>
             </div>
           </div>
         );
