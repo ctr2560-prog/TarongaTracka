@@ -148,6 +148,15 @@
         };
       }, [answerTimeoutId]);
 
+      // Clear timeout immediately when screen changes
+      useEffect(() => {
+        if (currentScreen !== 'animal' && answerTimeoutId) {
+          console.log('Screen changed to:', currentScreen, '- clearing timeout');
+          clearTimeout(answerTimeoutId);
+          setAnswerTimeoutId(null);
+        }
+      }, [currentScreen, answerTimeoutId]);
+
       // Save progress whenever key data changes
       useEffect(() => {
         const progress = {
@@ -493,6 +502,12 @@
           
           // Move to next question after delay (with confetti)
           const timeoutId = setTimeout(() => {
+            // CRITICAL: Only proceed if still on animal screen
+            if (currentScreen !== 'animal') {
+              console.log('Screen changed, canceling navigation');
+              return;
+            }
+            
             setShowResult(false);
             if (currentQuestionIndex < currentAnimal.questions.length - 1) {
               setCurrentQuestionIndex(currentQuestionIndex + 1);
@@ -506,6 +521,12 @@
         } else {
           // Wrong answer - return to question after brief delay
           const timeoutId = setTimeout(() => {
+            // CRITICAL: Only proceed if still on animal screen
+            if (currentScreen !== 'animal') {
+              console.log('Screen changed, canceling navigation');
+              return;
+            }
+            
             setShowResult(false);
             setAnswerTimeoutId(null);
           }, 2000);
@@ -1106,20 +1127,31 @@
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    if (showResult) {
+                      // Don't allow back during result screen
+                      return;
+                    }
                     if (window.confirm('Leave this question and go back to the map?')) {
+                      // Clear timeout before leaving
+                      if (answerTimeoutId) {
+                        clearTimeout(answerTimeoutId);
+                        setAnswerTimeoutId(null);
+                      }
                       setCurrentScreen('map');
                     }
                   }}
+                  disabled={showResult}
                   style={{
-                    background: 'rgba(255,255,255,0.2)',
+                    background: showResult ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)',
                     border: 'none',
                     color: 'white',
                     padding: '0.5rem 1rem',
                     borderRadius: '20px',
-                    cursor: 'pointer',
+                    cursor: showResult ? 'not-allowed' : 'pointer',
                     fontSize: '0.85rem',
                     fontWeight: 600,
-                    touchAction: 'manipulation'
+                    touchAction: 'manipulation',
+                    opacity: showResult ? 0.5 : 1
                   }}
                 >
                   ← Back
