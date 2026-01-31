@@ -162,6 +162,7 @@
           latitude: -33.8428,
           longitude: 151.2401,
           radius: 50,
+          emoji: '🐵',
           color: '#8B5A3C',
           questions: [
             { q: 'What do chimpanzees use tools for?',
@@ -188,6 +189,7 @@
           latitude: -33.8443,
           longitude: 151.2413,
           radius: 50,
+          emoji: '🦍',
           color: '#2E2E2E',
           questions: [
             { q: 'What is the alpha male gorilla called?',
@@ -214,6 +216,7 @@
           latitude: -33.8427,
           longitude: 151.2393,
           radius: 50,
+          emoji: '🦁',
           color: '#D4A574',
           questions: [
             { q: 'How far can a lion\'s roar be heard?',
@@ -240,6 +243,7 @@
           latitude: -33.8431,
           longitude: 151.2404,
           radius: 50,
+          emoji: '🦒',
           color: '#E86A33',
           questions: [
             { q: 'How do giraffes sleep?',
@@ -266,6 +270,7 @@
           latitude: -34.2068,
           longitude: 150.5799,
           radius: 50,
+          emoji: '🐨',
           color: '#7A8B6F',
           questions: [
             { q: 'Without intervention, by what year could koalas become extinct in NSW?',
@@ -292,6 +297,7 @@
           latitude: -33.8433,
           longitude: 151.2394,
           radius: 50,
+          emoji: '🐯',
           color: '#E86A33',
           questions: [
             { q: 'How many Sumatran tigers are left in the wild?',
@@ -508,6 +514,7 @@
           {
             animalId: currentAnimal.id,
             animal: currentAnimal.name,
+            emoji: currentAnimal.emoji,
             points: totalEarned,
             behaviorScore: behaviorBonus,
             detailScore: detailBonus,
@@ -558,93 +565,94 @@
               top: 0, left: 0,
               width: '100%',
               height: '100%',
-              background: 'linear-gradient(135deg, rgba(10,47,31,0.9) 0%, rgba(46,125,85,0.85) 100%)',
+              background: 'rgba(10,47,31,0.5)',
               zIndex: 1
             }} />
 
+            {/* Content */}
             <div style={{
               position: 'relative',
-              zIndex: 2,
-              height: '100%',
+              zIndex: 10,
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '2rem'
+              height: '100%',
+              padding: '1rem',
+              textAlign: 'center'
             }}>
-              <div style={{
-                textAlign: 'center',
-                color: 'white',
-                maxWidth: '600px',
-                animation: 'fadeInUp 1s ease-out'
-              }}>
-                <div style={{
-                  width: '140px',
-                  height: '140px',
-                  margin: '0 auto 2rem',
-                  background: 'rgba(255,255,255,0.15)',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backdropFilter: 'blur(10px)'
-                }}>
-                  <img
-                    src="images/logo.png"
-                    alt="Taronga Tracka"
-                    style={{ width: '80px', height: 'auto' }}
-                    onError={(e) => { e.target.style.display = 'none'; }}
-                  />
-                </div>
-
-                <h1 className="heading-display" style={{
-                  fontSize: 'clamp(2.5rem, 6vw, 4rem)',
-                  marginBottom: '1rem',
-                  color: 'var(--safari-gold)'
-                }}>
-                  TARONGA TRACKA
-                </h1>
-
-                <p style={{
-                  fontSize: 'clamp(1.1rem, 2.5vw, 1.3rem)',
-                  marginBottom: '2.5rem',
-                  lineHeight: 1.6,
-                  opacity: 0.9
-                }}>
-                  Embark on a journey to discover amazing animals and earn badges along the way!
-                </p>
-
-                <button
-                  onClick={() => {
-                    enableLocation();
-                  }}
-                  style={{
-                    background: 'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))',
-                    color: 'white',
-                    border: 'none',
-                    padding: '1.2rem 2.5rem',
-                    fontSize: '1.2rem',
-                    fontWeight: 700,
-                    borderRadius: '50px',
-                    cursor: 'pointer',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                    boxShadow: '0 8px 24px rgba(232,106,51,0.4)',
-                    transition: 'all 0.3s ease'
-                  }}
-                >
-                  Start Your Adventure
-                </button>
-
-                {!locationEnabled && (
-                  <p style={{
-                    fontSize: '0.9rem',
-                    marginTop: '1.5rem',
-                    opacity: 0.7
-                  }}>
-                    Location access required for animal discovery
-                  </p>
-                )}
+              <div className="animate-fade-in-up" style={{ animationDelay: '0.2s', marginBottom: 'clamp(1rem, 3vh, 2rem)' }}>
+                <img
+                  src="images/logo.png"
+                  alt="Taronga Tracka"
+                  style={{ width: 'clamp(200px, 50vw, 300px)', height: 'auto', display: 'block' }}
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
               </div>
+
+              <div className="animate-fade-in-up" style={{
+                background: 'rgba(255,255,255,0.1)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '20px',
+                padding: 'clamp(1rem, 2vh, 1.5rem)',
+                marginBottom: 'clamp(1rem, 3vh, 2rem)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                maxWidth: '500px',
+                width: '90%',
+                animationDelay: '0.4s'
+              }}>
+                <h3 style={{
+                  color: 'white',
+                  fontSize: 'clamp(0.95rem, 2.5vh, 1.2rem)',
+                  marginBottom: 'clamp(0.6rem, 1.5vh, 1rem)',
+                  fontWeight: 600
+                }}>Your Adventure Awaits</h3>
+
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 'clamp(0.5rem, 1vh, 0.8rem)',
+                  textAlign: 'left',
+                  color: 'rgba(255,255,255,0.9)',
+                  fontSize: 'clamp(0.8rem, 2vh, 0.95rem)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <span style={{ fontSize: 'clamp(1.2rem, 2.5vh, 1.5rem)' }}>📍</span>
+                    <span>Use GPS to discover nearby animals</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <span style={{ fontSize: 'clamp(1.2rem, 2.5vh, 1.5rem)' }}>📋</span>
+                    <span>Answer questions & make observations</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <span style={{ fontSize: 'clamp(1.2rem, 2.5vh, 1.5rem)' }}>🏆</span>
+                    <span>Collect badges & earn points</span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={enableLocation}
+                className="animate-scale-in"
+                style={{
+                  background: 'linear-gradient(135deg, var(--sunset-orange) 0%, var(--earth-clay) 100%)',
+                  color: 'white',
+                  border: 'none',
+                  padding: 'clamp(0.8rem, 2vh, 1rem) clamp(2rem, 5vw, 2.5rem)',
+                  fontSize: 'clamp(0.95rem, 2.5vh, 1.3rem)',
+                  fontWeight: 700,
+                  borderRadius: '50px',
+                  cursor: 'pointer',
+                  boxShadow: '0 10px 30px rgba(232,106,51,0.4)',
+                  transition: 'all 0.3s ease',
+                  animationDelay: '0.6s',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  width: 'min(90vw, 400px)'
+                }}
+              >
+                Begin Exploration
+              </button>
             </div>
           </div>
         );
@@ -653,128 +661,232 @@
       // MAP
       if (currentScreen === 'map') {
         return (
-          <div style={{ position: 'relative', minHeight: '100vh' }}>
+          <div style={{ minHeight: '100vh', background: 'var(--mist-light)' }}>
+            {/* Header */}
             <div style={{
               background: 'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)',
-              padding: '1.5rem',
-              textAlign: 'center',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+              padding: '1.5rem 1rem',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+              position: 'sticky',
+              top: 0,
+              zIndex: 100
             }}>
-              <h1 className="heading-display" style={{ fontSize: '2rem', color: 'white' }}>
-                Animal Discovery Map
-              </h1>
-              <p style={{ color: 'rgba(255,255,255,0.8)', marginTop: '0.5rem' }}>
-                Find animals by getting close to their habitats
-              </p>
-            </div>
-
-            <div style={{ padding: '2rem 1rem' }}>
               <div style={{
                 maxWidth: '1400px',
-                margin: '0 auto 2rem',
+                margin: '0 auto',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center'
               }}>
-                <h2 className="heading-display" style={{ fontSize: '2.2rem', color: 'var(--jungle-deep)' }}>
-                  Nearby Animals
-                </h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <img
+                    src="images/logo.png"
+                    alt="Taronga Tracka"
+                    style={{ height: '90px', width: 'auto', display: 'block' }}
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                  <div>
+                    <h1 className="heading-display" style={{
+                      fontSize: 'clamp(1.8rem, 4vw, 2.5rem)',
+                      color: 'white',
+                      marginBottom: '0.3rem'
+                    }}>
+                      DISCOVER ANIMALS
+                    </h1>
+                    <p className="serif-accent" style={{ color: 'var(--safari-gold)', fontSize: '1rem' }}>
+                      Get within range to unlock
+                    </p>
+                  </div>
+                </div>
 
                 <button
                   onClick={() => setCurrentScreen('collection')}
                   style={{
-                    background: 'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))',
-                    border: 'none',
+                    background: 'rgba(255,255,255,0.2)',
+                    border: '2px solid rgba(255,255,255,0.4)',
                     color: 'white',
-                    padding: '0.8rem 1.5rem',
-                    borderRadius: '30px',
+                    padding: '0.8rem',
+                    borderRadius: '16px',
                     cursor: 'pointer',
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                    boxShadow: '0 4px 15px rgba(232,106,51,0.3)'
+                    textAlign: 'right'
                   }}
                 >
-                  View Badge Collection
+                  <div style={{
+                    fontSize: '2rem',
+                    color: 'var(--safari-gold)',
+                    fontWeight: 700,
+                    marginBottom: '0.2rem'
+                  }}>
+                    {totalPoints}
+                  </div>
+                  <div style={{
+                    color: 'rgba(255,255,255,0.9)',
+                    fontSize: '0.85rem',
+                    fontWeight: 600
+                  }}>
+                    🏆 {foundAnimals.size}/{animals.length} Badges
+                  </div>
                 </button>
               </div>
+            </div>
 
+            {/* Tiles */}
+            <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem 1rem' }}>
               <div style={{
-                maxWidth: '1400px',
-                margin: '0 auto',
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                gap: '2rem'
+                gap: '1.5rem'
               }}>
-                {animals.map(animal => {
-                  const { nearby, distance } = checkAnimalProximity(animal);
-                  const isFound = foundAnimals.has(animal.id);
+                {animals
+                  .map(animal => ({ ...animal, ...checkAnimalProximity(animal) }))
+                  .sort((a, b) => {
+                    if (foundAnimals.has(a.id) && !foundAnimals.has(b.id)) return 1;
+                    if (!foundAnimals.has(a.id) && foundAnimals.has(b.id)) return -1;
+                    if (a.distance === null) return 1;
+                    if (b.distance === null) return -1;
+                    return a.distance - b.distance;
+                  })
+                  .map((animal, index) => {
+                    const { nearby, distance } = animal;
+                    const alreadyFound = foundAnimals.has(animal.id);
 
-                  return (
-                    <div
-                      key={animal.id}
-                      onClick={(e) => { if (!isFound) discoverAnimal(animal, e); }}
-                      style={{
-                        background: 'white',
-                        borderRadius: '20px',
-                        overflow: 'hidden',
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-                        cursor: isFound ? 'default' : (nearby ? 'pointer' : 'not-allowed'),
-                        opacity: isFound ? 0.7 : 1,
-                        position: 'relative',
-                        transition: 'transform 0.3s ease'
-                      }}
-                    >
-                      <div style={{
-                        height: '200px',
-                        backgroundImage: `url(${animal.image})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        position: 'relative'
-                      }}>
+                    return (
+                      <div
+                        key={animal.id}
+                        onClick={(e) => { if (!alreadyFound) discoverAnimal(animal, e); }}
+                        className="animate-fade-in-up"
+                        style={{
+                          position: 'relative',
+                          height: '400px',
+                          borderRadius: '16px',
+                          overflow: 'hidden',
+                          cursor: alreadyFound ? 'default' : 'pointer',
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                          transition: 'all 0.4s ease',
+                          animationDelay: `${index * 0.1}s`,
+                          transform: nearby && !alreadyFound ? 'scale(1.03)' : 'scale(1)'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!alreadyFound) {
+                            e.currentTarget.style.transform = 'translateY(-8px)';
+                            e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.2)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = nearby && !alreadyFound ? 'scale(1.03)' : 'scale(1)';
+                          e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)';
+                        }}
+                      >
                         <div style={{
                           position: 'absolute',
                           inset: 0,
-                          background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 100%)'
+                          backgroundImage: `url(${animal.image})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          filter: alreadyFound ? 'grayscale(50%)' : 'none',
+                          opacity: alreadyFound ? 0.6 : 1
                         }} />
-                      </div>
 
-                      <div style={{ padding: '1.5rem' }}>
-                        <h3 className="heading-display" style={{ fontSize: '1.8rem', color: 'var(--jungle-deep)', marginBottom: '0.5rem' }}>
-                          {animal.name}
-                        </h3>
-                        <p className="serif-accent" style={{ color: '#666', marginBottom: '1rem' }}>
-                          {animal.scientificName}
-                        </p>
-
-                        {isFound ? (
-                          <div style={{ color: 'var(--jungle-light)', fontWeight: 600 }}>✓ Discovered</div>
-                        ) : nearby ? (
-                          <div style={{ color: 'var(--sunset-orange)', fontWeight: 600 }}>📍 In range! Tap to discover</div>
-                        ) : (
-                          <div style={{ color: '#999', fontWeight: 600 }}>
-                            {distance ? `${distance}m away` : 'Location required'}
-                          </div>
-                        )}
-                      </div>
-
-                      {!isFound && !nearby && (
                         <div style={{
                           position: 'absolute',
-                          top: '1rem',
-                          right: '1rem',
-                          background: 'rgba(0,0,0,0.7)',
+                          inset: 0,
+                          background: 'linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.7) 100%)'
+                        }} />
+
+                        <div style={{
+                          position: 'absolute',
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          padding: '2rem',
                           color: 'white',
-                          padding: '0.4rem 0.8rem',
-                          borderRadius: '20px',
-                          fontSize: '0.8rem',
-                          fontWeight: 600
+                          zIndex: 10
                         }}>
-                          🔒 Locked
+                          <h3 className="heading-display" style={{
+                            fontSize: '2rem',
+                            marginBottom: '0.3rem',
+                            textShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                          }}>
+                            {animal.name}
+                          </h3>
+                          <p className="serif-accent" style={{
+                            fontSize: '1rem',
+                            opacity: 0.9,
+                            marginBottom: '1rem'
+                          }}>
+                            {animal.scientificName}
+                          </p>
+
+                          {alreadyFound ? (
+                            <div style={{
+                              display: 'inline-block',
+                              background: 'rgba(46,125,85,0.9)',
+                              backdropFilter: 'blur(10px)',
+                              padding: '0.6rem 1.5rem',
+                              borderRadius: '30px',
+                              fontWeight: 600,
+                              fontSize: '0.95rem',
+                              border: '2px solid rgba(255,255,255,0.3)'
+                            }}>
+                              ✓ Discovered
+                            </div>
+                          ) : nearby ? (
+                            <div style={{
+                              display: 'inline-block',
+                              background: 'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))',
+                              padding: '0.8rem 2rem',
+                              borderRadius: '30px',
+                              fontWeight: 700,
+                              fontSize: '1rem',
+                              animation: 'pulse 2s infinite',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.08em',
+                              boxShadow: '0 4px 15px rgba(232,106,51,0.5)'
+                            }}>
+                              📍 Tap to Discover
+                            </div>
+                          ) : distance !== null ? (
+                            <div style={{
+                              display: 'inline-block',
+                              background: 'rgba(74,159,216,0.2)',
+                              backdropFilter: 'blur(10px)',
+                              padding: '0.6rem 1.5rem',
+                              borderRadius: '30px',
+                              fontWeight: 600,
+                              fontSize: '0.95rem',
+                              border: '1px solid rgba(255,255,255,0.3)'
+                            }}>
+                              {distance}m away
+                            </div>
+                          ) : (
+                            <div style={{
+                              display: 'inline-block',
+                              background: 'rgba(139,90,60,0.3)',
+                              backdropFilter: 'blur(10px)',
+                              padding: '0.6rem 1.5rem',
+                              borderRadius: '30px',
+                              fontWeight: 600,
+                              fontSize: '0.95rem',
+                              border: '1px solid rgba(255,255,255,0.3)'
+                            }}>
+                              🔒 Locked
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
+
+                        {nearby && !alreadyFound && (
+                          <div style={{
+                            position: 'absolute',
+                            inset: 0,
+                            border: '4px solid var(--sunset-orange)',
+                            borderRadius: '16px',
+                            animation: 'pulse 2s infinite',
+                            pointerEvents: 'none'
+                          }} />
+                        )}
+                      </div>
+                    );
+                  })}
               </div>
             </div>
           </div>
@@ -1204,7 +1316,7 @@
               maxWidth: '900px',
               margin: '0 auto',
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
               gap: '1.5rem',
               padding: '1rem'
             }}>
@@ -1225,8 +1337,8 @@
                     }}
                   >
                     <div style={{
-                      width: '130px',
-                      height: '130px',
+                      width: '100px',
+                      height: '100px',
                       margin: '0 auto 1rem',
                       backgroundImage: earned ? `url(images/badge-${animal.id}.png)` : 'none',
                       backgroundColor: earned ? 'transparent' : 'rgba(255,255,255,0.1)',
@@ -1237,7 +1349,7 @@
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '3.5rem'
+                      fontSize: '3rem'
                     }}>
                       {!earned && '🔒'}
                     </div>
@@ -1347,15 +1459,21 @@
               boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
             }}>
               <div style={{
-                height: 'clamp(140px, 28vh, 200px)',
-                width: 'clamp(140px, 28vh, 200px)',
+                height: 'clamp(100px, 25vh, 150px)',
+                width: 'clamp(100px, 25vh, 150px)',
                 margin: '0 auto clamp(1rem, 2vh, 1.5rem)',
                 backgroundImage: `url(images/badge-${lastBadge.animalId}.png)`,
                 backgroundSize: 'contain',
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'center',
-                filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.25))'
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '5rem'
               }}>
+                <span style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))' }}>
+                  {lastBadge.emoji}
+                </span>
               </div>
 
               <h2 className="heading-display" style={{
@@ -1401,7 +1519,7 @@
                   {foundAnimals.size}/{animals.length} Animals
                 </div>
                 <div style={{ fontSize: 'clamp(1.2rem, 2.5vh, 1.5rem)', fontWeight: 700, color: 'var(--sunset-orange)' }}>
-                  {totalPoints} Points
+                  ⭐ {totalPoints} Points
                 </div>
               </div>
 
