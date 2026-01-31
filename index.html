@@ -347,6 +347,11 @@
         setQuizAnswers({});
         setObservation('');
         setCurrentScreen('animal');
+        
+        // Scroll to top after state update
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'instant' });
+        }, 0);
       };
 
       const handleQuizAnswer = (questionIndex, answerIndex) => {
@@ -807,11 +812,6 @@
       // ANIMAL DETAIL SCREEN
       if (currentScreen === 'animal' && currentAnimal) {
         const allQuestionsAnswered = currentAnimal.questions.every((_, i) => quizAnswers[i] !== undefined);
-
-        // Scroll to top when screen loads
-        React.useEffect(() => {
-          window.scrollTo(0, 0);
-        }, []);
 
         return (
           <div style={{
