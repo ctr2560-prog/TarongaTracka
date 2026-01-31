@@ -220,17 +220,20 @@
             {
               q: 'What is the alpha male gorilla called?',
               options: ['King Kong', 'Silverback', 'Alpha', 'Chief'],
-              correct: 1
+              correct: 1,
+              fact: 'The leader of a gorilla family is called a silverback because of the silver hair on his back!'
             },
             {
               q: 'What percentage of a gorilla\'s diet is plant-based?',
               options: ['50%', '75%', '95%+', '100%'],
-              correct: 2
+              correct: 2,
+              fact: 'Gorillas are mostly herbivores! Over 95% of their diet is plants, leaves, and fruits.'
             },
             {
               q: 'How do gorillas communicate?',
               options: ['Only through sounds', 'Vocalizations, gestures, and body language', 'Telepathy', 'Writing'],
-              correct: 1
+              correct: 1,
+              fact: 'Gorillas communicate using sounds, facial expressions, and body language. They can even beat their chest to show strength!'
             }
           ],
           observationPrompt: 'Watch the gorillas carefully. Describe their social interactions.',
@@ -250,17 +253,20 @@
             {
               q: 'How far can a lion\'s roar be heard?',
               options: ['500 meters', '2 kilometers', '8 kilometers', '20 kilometers'],
-              correct: 2
+              correct: 2,
+              fact: 'A lion\'s roar can be heard up to 8 kilometers away! They use it to communicate with their pride and warn other lions.'
             },
             {
               q: 'Who does most of the hunting in a lion pride?',
               options: ['Male lions', 'Female lions', 'Cubs', 'All equally'],
-              correct: 1
+              correct: 1,
+              fact: 'Female lions do most of the hunting! They work together as a team to catch prey for the whole pride.'
             },
             {
               q: 'How many hours a day do lions typically rest?',
               options: ['5 hours', '10 hours', '16-20 hours', '24 hours'],
-              correct: 2
+              correct: 2,
+              fact: 'Lions rest for 16-20 hours a day! They conserve energy and sleep during the hot daytime hours.'
             }
           ],
           observationPrompt: 'Watch the lions. Describe their behavior and social interactions.',
@@ -280,17 +286,20 @@
             {
               q: 'How do giraffes sleep?',
               options: ['Standing up for short periods', 'Lying down for 8 hours', 'They never sleep', 'Hanging from trees'],
-              correct: 0
+              correct: 0,
+              fact: 'Giraffes sleep standing up for only 5-30 minutes a day! They take short naps to stay alert for predators.'
             },
             {
               q: 'What is unique about a giraffe\'s tongue?',
               options: ['It\'s blue-black and up to 50cm long', 'It glows in the dark', 'It\'s forked like a snake', 'It\'s covered in scales'],
-              correct: 0
+              correct: 0,
+              fact: 'A giraffe\'s tongue can be up to 50cm long and is dark purple-black to protect from sunburn while eating!'
             },
             {
               q: 'How do giraffes drink water?',
               options: ['Using their long tongue', 'Through their nose', 'By spreading their front legs apart', 'They don\'t drink water'],
-              correct: 2
+              correct: 2,
+              fact: 'Giraffes have to spread their front legs wide apart to reach down to drink water - it looks very awkward!'
             }
           ],
           observationPrompt: 'Observe how the giraffes move and eat. What feeding behaviors do you notice?',
@@ -310,17 +319,20 @@
             {
               q: 'Without intervention, by what year could koalas become extinct in NSW?',
               options: ['2030', '2040', '2050', '2060'],
-              correct: 2
+              correct: 2,
+              fact: 'Koalas could become extinct in NSW by 2050 without urgent conservation action! Habitat loss and disease are the biggest threats.'
             },
             {
               q: 'Which adaptation helps koalas climb and grip tree trunks effectively?',
               options: ['Sharp claws and opposable toes', 'Long tails for balance', 'Webbed feet for swimming', 'Flexible spines for jumping'],
-              correct: 0
+              correct: 0,
+              fact: 'Koalas have sharp claws and two opposable toes on each paw - perfect for gripping tree trunks and branches!'
             },
             {
               q: 'Why do koalas spend up to 18–20 hours a day sleeping?',
               options: ['They are nocturnal predators', 'Their fur causes them to overheat', 'They are avoiding competition with other animals', 'Their diet is low in energy, requiring energy conservation'],
-              correct: 3
+              correct: 3,
+              fact: 'Koalas sleep 18-22 hours a day because eucalyptus leaves don\'t provide much energy! They need lots of rest to digest their food.'
             }
           ],
           observationPrompt: 'Watch the koala carefully. What position is it in?',
@@ -340,17 +352,20 @@
             {
               q: 'How many Sumatran tigers are left in the wild?',
               options: ['Over 10,000', '5,000-7,000', 'Fewer than 400', 'They are extinct'],
-              correct: 2
+              correct: 2,
+              fact: 'There are fewer than 400 Sumatran tigers left in the wild! They are critically endangered and need our help.'
             },
             {
               q: 'What makes Sumatran tigers different from other tigers?',
               options: ['They are the smallest tiger subspecies', 'They are the largest', 'They can fly', 'They are herbivores'],
-              correct: 0
+              correct: 0,
+              fact: 'Sumatran tigers are the smallest tiger subspecies! This helps them move through dense rainforest.'
             },
             {
               q: 'Why are Sumatran tigers endangered?',
               options: ['Climate change only', 'Habitat loss and poaching', 'Disease', 'Natural predators'],
-              correct: 1
+              correct: 1,
+              fact: 'Sumatran tigers are endangered because of habitat loss and illegal poaching. Conservation efforts are working to protect them!'
             }
           ],
           observationPrompt: 'Watch the tiger\'s behavior. Describe how it moves.',
@@ -585,11 +600,17 @@
                 loop
                 muted
                 playsInline
+                webkit-playsinline="true"
+                x5-playsinline="true"
+                preload="auto"
                 style={{
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
                   opacity: 0.7
+                }}
+                onLoadedData={(e) => {
+                  e.target.play().catch(err => console.log('Video autoplay failed:', err));
                 }}
                 onError={(e) => {
                   console.log('Video failed to load from images/background-video.mp4');
@@ -743,7 +764,7 @@
                     src="images/logo.png" 
                     alt="Taronga Tracka"
                     style={{
-                      height: '70px',
+                      height: '90px',
                       width: 'auto',
                       display: 'block'
                     }}
@@ -995,22 +1016,27 @@
         const currentQuestion = currentAnimal.questions[currentQuestionIndex];
 
         return (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100vh',
-            overflow: 'hidden',
-            background: showResult 
-              ? (isCorrect 
-                ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' 
-                : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)')
-              : 'var(--mist-light)',
-            transition: 'background 0.5s ease',
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
+          <div 
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100vh',
+              overflow: 'hidden',
+              background: showResult 
+                ? (isCorrect 
+                  ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' 
+                  : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)')
+                : 'var(--mist-light)',
+              transition: 'background 0.5s ease',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+          >
             {/* Confetti Effect */}
             {showResult && isCorrect && (
               <div style={{
