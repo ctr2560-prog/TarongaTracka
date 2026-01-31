@@ -447,6 +447,8 @@
               padding: '1rem',
               textAlign: 'center'
             }}>
+              
+              {/* Logo */}
               <div className="animate-fade-in-up" style={{ 
                 animationDelay: '0.2s',
                 marginBottom: '2rem'
@@ -496,7 +498,7 @@
                     <span>Use GPS to discover nearby animals</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                    <span style={{ fontSize: '1.5rem' }}>🎯</span>
+                    <span style={{ fontSize: '1.5rem' }}>📋</span>
                     <span>Answer questions & make observations</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
@@ -564,20 +566,34 @@
                 justifyContent: 'space-between',
                 alignItems: 'center'
               }}>
-                <div>
-                  <h1 className="heading-display" style={{
-                    fontSize: 'clamp(1.8rem, 4vw, 2.5rem)',
-                    color: 'white',
-                    marginBottom: '0.3rem'
-                  }}>
-                    DISCOVER ANIMALS
-                  </h1>
-                  <p className="serif-accent" style={{
-                    color: 'var(--safari-gold)',
-                    fontSize: '1rem'
-                  }}>
-                    Get within range to unlock
-                  </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <img 
+                    src="images/logo.png" 
+                    alt="Taronga Tracka"
+                    style={{
+                      height: '48px',
+                      width: 'auto',
+                      display: 'block'
+                    }}
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                  <div>
+                    <h1 className="heading-display" style={{
+                      fontSize: 'clamp(1.8rem, 4vw, 2.5rem)',
+                      color: 'white',
+                      marginBottom: '0.3rem'
+                    }}>
+                      DISCOVER ANIMALS
+                    </h1>
+                    <p className="serif-accent" style={{
+                      color: 'var(--safari-gold)',
+                      fontSize: '1rem'
+                    }}>
+                      Get within range to unlock
+                    </p>
+                  </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{
@@ -609,8 +625,22 @@
                 gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
                 gap: '1.5rem'
               }}>
-                {animals.map((animal, index) => {
-                  const { nearby, distance } = checkAnimalProximity(animal);
+                {animals
+                  .map(animal => ({
+                    ...animal,
+                    ...checkAnimalProximity(animal)
+                  }))
+                  .sort((a, b) => {
+                    // Already found animals go to bottom
+                    if (foundAnimals.has(a.id) && !foundAnimals.has(b.id)) return 1;
+                    if (!foundAnimals.has(a.id) && foundAnimals.has(b.id)) return -1;
+                    // Sort by distance (closest first)
+                    if (a.distance === null) return 1;
+                    if (b.distance === null) return -1;
+                    return a.distance - b.distance;
+                  })
+                  .map((animal, index) => {
+                  const { nearby, distance } = animal;
                   const alreadyFound = foundAnimals.has(animal.id);
 
                   return (
@@ -778,12 +808,64 @@
       if (currentScreen === 'animal' && currentAnimal) {
         const allQuestionsAnswered = currentAnimal.questions.every((_, i) => quizAnswers[i] !== undefined);
 
+        // Scroll to top when screen loads
+        React.useEffect(() => {
+          window.scrollTo(0, 0);
+        }, []);
+
         return (
           <div style={{
             minHeight: '100vh',
             background: 'var(--mist-light)',
             paddingBottom: '4rem'
           }}>
+            {/* Header with Back Button */}
+            <div style={{
+              background: 'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)',
+              padding: '1rem',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+              position: 'sticky',
+              top: 0,
+              zIndex: 100
+            }}>
+              <div style={{
+                maxWidth: '900px',
+                margin: '0 auto',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <button
+                  onClick={() => setCurrentScreen('map')}
+                  style={{
+                    background: 'rgba(255,255,255,0.2)',
+                    border: 'none',
+                    color: 'white',
+                    padding: '0.6rem 1.2rem',
+                    borderRadius: '20px',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: 600
+                  }}
+                >
+                  ← Back
+                </button>
+                <img 
+                  src="images/logo.png" 
+                  alt="Taronga Tracka"
+                  style={{
+                    height: '40px',
+                    width: 'auto',
+                    display: 'block'
+                  }}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+                <div style={{ width: '80px' }}></div>
+              </div>
+            </div>
+
             {/* Hero Image */}
             <div style={{
               position: 'relative',
