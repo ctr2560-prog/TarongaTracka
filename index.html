@@ -1,264 +1,1411 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Taronga Tracka</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Taronga Tracka v2.3 - Animal Discovery</title>
 
   <!-- React -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f5f3ee;
+    :root {
+      --jungle-deep: #0A2F1F;
+      --jungle-mid: #1A5238;
+      --jungle-light: #2E7D55;
+      --safari-gold: #D4A574;
+      --sunset-orange: #E86A33;
+      --earth-clay: #8B5A3C;
+      --mist-light: #F5F3EE;
+      --discovery-blue: #4A9FD8;
     }
-    button {
-      cursor: pointer;
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      overflow-x: hidden;
+      background: var(--mist-light);
+      touch-action: pan-y;
+      overscroll-behavior: contain;
+    }
+
+    .heading-display {
+      font-family: 'Bebas Neue', sans-serif;
+      letter-spacing: 0.08em;
+    }
+
+    .serif-accent {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes fall {
+      to { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+    }
+
+    .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
+    .animate-scale-in { animation: scaleIn 0.6s ease-out forwards; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    /* Small helper */
+    .btn-reset {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
   </style>
 </head>
+
 <body>
+  <div id="root"></div>
 
-<div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useRef } = React;
 
-<script type="text/babel">
-const { useState, useEffect } = React;
-
-function TarongaTracka() {
-
-  /* -----------------------------
-     STATE
-  ----------------------------- */
-  const saved = JSON.parse(localStorage.getItem("trackaSave") || "{}");
-
-  const [screen, setScreen] = useState(saved.screen || "home");
-  const [currentAnimal, setCurrentAnimal] = useState(saved.currentAnimal || null);
-  const [questionIndex, setQuestionIndex] = useState(0);
-  const [showResult, setShowResult] = useState(false);
-  const [isCorrect, setIsCorrect] = useState(false);
-  const [observation, setObservation] = useState("");
-  const [found, setFound] = useState(saved.found || []);
-  const [points, setPoints] = useState(saved.points || 0);
-
-  /* -----------------------------
-     SAVE STATE (FIXED)
-  ----------------------------- */
-  useEffect(() => {
-    localStorage.setItem("trackaSave", JSON.stringify({
-      screen,
-      currentAnimal,
-      found,
-      points
-    }));
-  }, [screen, currentAnimal, found, points]);
-
-  /* -----------------------------
-     DATA
-  ----------------------------- */
-  const animals = [
-    {
-      id: "chimpanzee",
-      name: "Chimpanzee",
-      image: "images/chimpanzee.jpg",
-      questions: [
-        {
-          q: "What do chimpanzees use tools for?",
-          options: ["Cracking nuts", "Cooking food", "Building houses", "Swimming"],
-          correct: 0
+    const TarongaTracka = () => {
+      // ---- Load saved progress safely
+      const loadProgress = () => {
+        try {
+          const raw = localStorage.getItem('tarongaTrackaProgress');
+          if (!raw) return null;
+          const data = JSON.parse(raw);
+          return data && typeof data === 'object' ? data : null;
+        } catch (e) {
+          console.log('Progress load error:', e);
+          return null;
         }
-      ],
-      observationPrompt: "Describe what the chimpanzee is doing."
-    },
-    {
-      id: "koala",
-      name: "Koala",
-      image: "images/koala.jpg",
-      questions: [
+      };
+
+      const savedProgress = loadProgress();
+
+      // ---- State
+      const [currentScreen, setCurrentScreen] = useState(savedProgress?.currentScreen || 'home');
+      const [userLocation, setUserLocation] = useState(null);
+      const [locationEnabled, setLocationEnabled] = useState(savedProgress?.locationEnabled || false);
+      const [foundAnimals, setFoundAnimals] = useState(new Set(savedProgress?.foundAnimals || []));
+      const [currentAnimal, setCurrentAnimal] = useState(null);
+      const [quizAnswers, setQuizAnswers] = useState({});
+      const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+      const [showResult, setShowResult] = useState(false);
+      const [isCorrect, setIsCorrect] = useState(false);
+      const [observation, setObservation] = useState('');
+      const [totalPoints, setTotalPoints] = useState(savedProgress?.totalPoints || 0);
+      const [badges, setBadges] = useState(savedProgress?.badges || []);
+      const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
+
+      // ---- IMPORTANT FIX: prevent watchPosition forcing map repeatedly
+      const hasSetInitialMapAfterGPS = useRef(false);
+      const geoWatchId = useRef(null);
+
+      // ---- Video refs for mobile start
+      const homeVideoRef = useRef(null);
+      const [videoFailed, setVideoFailed] = useState(false);
+
+      // ---- Animals
+      const animals = useMemo(() => ([
         {
-          q: "Why do koalas sleep so much?",
-          options: ["They are lazy", "Low-energy diet", "Cold weather", "Avoid predators"],
-          correct: 1
+          id: 'chimpanzee',
+          name: 'Chimpanzee',
+          scientificName: 'Pan troglodytes',
+          image: 'images/chimpanzee.jpg',
+          latitude: -33.8428,
+          longitude: 151.2401,
+          radius: 50,
+          color: '#8B5A3C',
+          questions: [
+            {
+              q: 'What do chimpanzees use tools for?',
+              options: ['Cracking nuts and fishing for termites', 'Building houses', 'Playing music', 'Swimming'],
+              correct: 0,
+              fact: 'Chimpanzees use tools like sticks to fish for termites and stones to crack nuts.'
+            },
+            {
+              q: 'How similar is chimpanzee DNA to human DNA?',
+              options: ['50%', '75%', '98-99%', '100%'],
+              correct: 2,
+              fact: 'Chimpanzees share about 98–99% of their DNA with humans.'
+            },
+            {
+              q: 'What is a group of chimpanzees called?',
+              options: ['A pack', 'A community', 'A herd', 'A school'],
+              correct: 1,
+              fact: 'A group of chimpanzees is called a community.'
+            }
+          ],
+          observationPrompt: 'Observe the chimpanzees for 2 minutes. What behaviours did you see?',
+          pointValue: 50
+        },
+        {
+          id: 'gorilla',
+          name: 'Western Lowland Gorilla',
+          scientificName: 'Gorilla gorilla gorilla',
+          image: 'images/gorilla.jpg',
+          latitude: -33.8443,
+          longitude: 151.2413,
+          radius: 50,
+          color: '#2E2E2E',
+          questions: [
+            {
+              q: 'What is the alpha male gorilla called?',
+              options: ['King Kong', 'Silverback', 'Alpha', 'Chief'],
+              correct: 1,
+              fact: 'The leader is called a silverback (silver hair on his back).'
+            },
+            {
+              q: 'What percentage of a gorilla’s diet is plant-based?',
+              options: ['50%', '75%', '95%+', '100%'],
+              correct: 2,
+              fact: 'Over 95% of a gorilla’s diet is plant-based.'
+            },
+            {
+              q: 'How do gorillas communicate?',
+              options: ['Only through sounds', 'Vocalisations, gestures, and body language', 'Telepathy', 'Writing'],
+              correct: 1,
+              fact: 'They use vocal sounds, gestures, facial expressions, and body language.'
+            }
+          ],
+          observationPrompt: 'Watch the gorillas carefully. Describe their social interactions.',
+          pointValue: 50
+        },
+        {
+          id: 'lion',
+          name: 'African Lion',
+          scientificName: 'Panthera leo',
+          image: 'images/lion.jpg',
+          latitude: -33.8427,
+          longitude: 151.2393,
+          radius: 50,
+          color: '#D4A574',
+          questions: [
+            {
+              q: 'How far can a lion’s roar be heard?',
+              options: ['500m', '2km', '8km', '20km'],
+              correct: 2,
+              fact: 'A lion’s roar can carry up to around 8km.'
+            },
+            {
+              q: 'Who does most of the hunting in a pride?',
+              options: ['Males', 'Females', 'Cubs', 'All equally'],
+              correct: 1,
+              fact: 'Lionesses do most of the hunting.'
+            },
+            {
+              q: 'How many hours a day do lions typically rest?',
+              options: ['5', '10', '16–20', '24'],
+              correct: 2,
+              fact: 'Lions can rest 16–20 hours per day to conserve energy.'
+            }
+          ],
+          observationPrompt: 'Watch the lions. Describe their behaviour and interactions.',
+          pointValue: 50
+        },
+        {
+          id: 'giraffe',
+          name: 'Giraffe',
+          scientificName: 'Giraffa camelopardalis',
+          image: 'images/giraffe.jpg',
+          latitude: -33.8431,
+          longitude: 151.2404,
+          radius: 50,
+          color: '#E86A33',
+          questions: [
+            {
+              q: 'How do giraffes sleep?',
+              options: ['Standing up for short periods', 'Lying down for 8 hours', 'They never sleep', 'Hanging from trees'],
+              correct: 0,
+              fact: 'Giraffes sleep in short bursts, often standing up.'
+            },
+            {
+              q: 'What is unique about a giraffe’s tongue?',
+              options: ['Blue-black and up to ~50cm', 'Glows in the dark', 'Forked like a snake', 'Covered in scales'],
+              correct: 0,
+              fact: 'Their tongues can be very long and dark-coloured to help protect from sun.'
+            },
+            {
+              q: 'How do giraffes drink water?',
+              options: ['Using their tongue', 'Through their nose', 'By spreading front legs apart', 'They don’t drink'],
+              correct: 2,
+              fact: 'They spread their front legs wide to reach the water.'
+            }
+          ],
+          observationPrompt: 'Observe how the giraffes move and eat. What feeding behaviours do you notice?',
+          pointValue: 50
+        },
+        {
+          id: 'koala',
+          name: 'Koala',
+          scientificName: 'Phascolarctos cinereus',
+          image: 'images/koala.jpg',
+          latitude: -34.2068,
+          longitude: 150.5799,
+          radius: 50,
+          color: '#7A8B6F',
+          questions: [
+            {
+              q: 'Without intervention, by what year could koalas become extinct in NSW?',
+              options: ['2030', '2040', '2050', '2060'],
+              correct: 2,
+              fact: 'Koala populations can be heavily impacted by habitat loss, disease, and climate pressures.'
+            },
+            {
+              q: 'Which adaptation helps koalas climb effectively?',
+              options: ['Sharp claws and opposable toes', 'Long tails', 'Webbed feet', 'Flexible spines for jumping'],
+              correct: 0,
+              fact: 'They have sharp claws and opposable digits for gripping trunks.'
+            },
+            {
+              q: 'Why do koalas sleep 18–20 hours a day?',
+              options: ['They are predators', 'Their fur overheats them', 'Avoiding competition', 'Low-energy diet'],
+              correct: 3,
+              fact: 'Eucalyptus leaves are low-energy, so koalas conserve energy by resting.'
+            }
+          ],
+          observationPrompt: 'Watch the koala carefully. What position is it in?',
+          pointValue: 50
+        },
+        {
+          id: 'tiger',
+          name: 'Sumatran Tiger',
+          scientificName: 'Panthera tigris sumatrae',
+          image: 'images/tiger.jpg',
+          latitude: -33.8433,
+          longitude: 151.2394,
+          radius: 50,
+          color: '#E86A33',
+          questions: [
+            {
+              q: 'How many Sumatran tigers are left in the wild?',
+              options: ['Over 10,000', '5,000–7,000', 'Fewer than 400', 'They are extinct'],
+              correct: 2,
+              fact: 'Sumatran tigers are critically endangered with a very small remaining wild population.'
+            },
+            {
+              q: 'What makes Sumatran tigers different?',
+              options: ['Smallest subspecies', 'Largest subspecies', 'They can fly', 'They are herbivores'],
+              correct: 0,
+              fact: 'They are the smallest tiger subspecies, suited for dense rainforest.'
+            },
+            {
+              q: 'Why are they endangered?',
+              options: ['Climate change only', 'Habitat loss and poaching', 'Disease', 'Natural predators'],
+              correct: 1,
+              fact: 'Major threats include habitat loss and poaching.'
+            }
+          ],
+          observationPrompt: 'Watch the tiger’s behaviour. Describe how it moves.',
+          pointValue: 50
         }
-      ],
-      observationPrompt: "Describe the koala’s position and behaviour."
-    }
-  ];
+      ]), []);
 
-  /* -----------------------------
-     VIDEO PLAY (MOBILE SAFE)
-  ----------------------------- */
-  function startExperience() {
-    const video = document.getElementById("bg-video");
-    if (video) video.play().catch(() => {});
-    setScreen("map");
-  }
+      // ---- Distance calc (kept)
+      const calculateDistance = (lat1, lon1, lat2, lon2) => {
+        const R = 6371e3;
+        const φ1 = lat1 * Math.PI/180;
+        const φ2 = lat2 * Math.PI/180;
+        const Δφ = (lat2-lat1) * Math.PI/180;
+        const Δλ = (lon2-lon1) * Math.PI/180;
 
-  /* -----------------------------
-     QUIZ HANDLERS
-  ----------------------------- */
-  function answerQuestion(index) {
-    const correct = index === currentAnimal.questions[questionIndex].correct;
-    setIsCorrect(correct);
-    setShowResult(true);
-  }
+        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                  Math.cos(φ1) * Math.cos(φ2) *
+                  Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+      };
 
-  function nextStep() {
-    setShowResult(false);
-    if (questionIndex < currentAnimal.questions.length - 1) {
-      setQuestionIndex(questionIndex + 1);
-    } else {
-      setScreen("observation");
-    }
-  }
+      // ---- Testing mode: set nearby true
+      const checkAnimalProximity = (animal) => {
+        if (!userLocation) return { nearby: true, distance: null }; // testing at home
+        const distance = calculateDistance(
+          userLocation.latitude, userLocation.longitude,
+          animal.latitude, animal.longitude
+        );
+        return { nearby: true, distance: Math.round(distance) }; // still testing
+      };
 
-  function submitObservation() {
-    if (observation.trim().split(/\s+/).length < 10) {
-      alert("Write at least 10 words");
-      return;
-    }
-    setFound([...found, currentAnimal.id]);
-    setPoints(points + 100);
-    setScreen("badge");
-  }
+      // ---- SAVE progress (do NOT rewrite screens!)
+      useEffect(() => {
+        try {
+          const progress = {
+            currentScreen,
+            locationEnabled,
+            foundAnimals: Array.from(foundAnimals),
+            totalPoints,
+            badges
+          };
+          localStorage.setItem('tarongaTrackaProgress', JSON.stringify(progress));
+        } catch (e) {
+          console.log('Progress save error:', e);
+        }
+      }, [currentScreen, locationEnabled, foundAnimals, totalPoints, badges]);
 
-  /* -----------------------------
-     SCREENS
-  ----------------------------- */
+      // ---- Clean up GPS watch on unmount
+      useEffect(() => {
+        return () => {
+          if (geoWatchId.current !== null && navigator.geolocation) {
+            navigator.geolocation.clearWatch(geoWatchId.current);
+          }
+        };
+      }, []);
 
-  /* HOME */
-  if (screen === "home") {
-    return (
-      <div style={{ position:"relative", height:"100vh" }}>
-        <video
-          id="bg-video"
-          muted
-          loop
-          playsInline
-          preload="auto"
-          poster="images/video-poster.jpg"
-          style={{
-            position:"absolute",
+      // ---- Enable location (FIXED so it doesn't force map over and over)
+      const enableLocation = async () => {
+        // Mobile autoplay: must be triggered by user gesture
+        if (homeVideoRef.current) {
+          try { await homeVideoRef.current.play(); } catch (e) {}
+        }
+
+        if (!('geolocation' in navigator)) {
+          alert('Geolocation not supported on this device.');
+          return;
+        }
+
+        // If already enabled, just go map
+        if (locationEnabled) {
+          setCurrentScreen('map');
+          return;
+        }
+
+        // Start watchPosition but DO NOT keep changing screen
+        geoWatchId.current = navigator.geolocation.watchPosition(
+          (position) => {
+            setUserLocation({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy: position.coords.accuracy
+            });
+
+            // Mark enabled
+            setLocationEnabled(true);
+
+            // Only set map ONCE (this stops the “jump back to tiles” bug)
+            if (!hasSetInitialMapAfterGPS.current) {
+              hasSetInitialMapAfterGPS.current = true;
+              setCurrentScreen('map');
+            }
+          },
+          () => {
+            alert('Unable to get location. Please enable location services.');
+          },
+          { enableHighAccuracy: true, maximumAge: 5000 }
+        );
+
+        // If GPS takes time, still let them enter map for testing
+        if (!hasSetInitialMapAfterGPS.current) {
+          hasSetInitialMapAfterGPS.current = true;
+          setCurrentScreen('map');
+        }
+      };
+
+      const discoverAnimal = (animal, event) => {
+        if (event) event.stopPropagation();
+        if (foundAnimals.has(animal.id)) return;
+
+        const { nearby } = checkAnimalProximity(animal);
+        if (!nearby) return;
+
+        setCurrentAnimal(animal);
+        setQuizAnswers({});
+        setCurrentQuestionIndex(0);
+        setShowResult(false);
+        setIsCorrect(false);
+        setObservation('');
+        setIsProcessingAnswer(false);
+        setCurrentScreen('animal');
+
+        setTimeout(() => window.scrollTo({ top: 0, behavior: 'auto' }), 0);
+      };
+
+      const handleQuizAnswer = (questionIndex, answerIndex) => {
+        if (isProcessingAnswer) return;
+        setIsProcessingAnswer(true);
+
+        const question = currentAnimal.questions[questionIndex];
+        const correct = answerIndex === question.correct;
+
+        setIsCorrect(correct);
+        setShowResult(true);
+
+        if (correct) {
+          setQuizAnswers(prev => ({
+            ...prev,
+            [questionIndex]: answerIndex
+          }));
+        }
+      };
+
+      const handleNextQuestion = () => {
+        setIsProcessingAnswer(false);
+        setShowResult(false);
+
+        if (currentQuestionIndex < currentAnimal.questions.length - 1) {
+          setCurrentQuestionIndex(i => i + 1);
+        } else {
+          setCurrentScreen('observation');
+        }
+      };
+
+      const submitObservation = () => {
+        const wc = observation.trim().split(/\s+/).filter(Boolean).length;
+        if (wc < 10) {
+          alert(`Your observation needs at least 10 words. You have ${wc}.`);
+          return;
+        }
+
+        // quiz points
+        let correctCount = 0;
+        currentAnimal.questions.forEach((q, i) => {
+          if (quizAnswers[i] === q.correct) correctCount++;
+        });
+        const quizPoints = correctCount * 10;
+
+        // observation scoring (kept similar)
+        const text = observation.trim();
+        const lower = text.toLowerCase();
+
+        const behaviorWords = [
+          'sleeping','eating','walking','climbing','jumping','playing','sitting',
+          'running','resting','moving','looking','watching','grooming','scratching',
+          'lying','standing','hanging','swinging','chewing','drinking','hiding',
+          'stretching','yawning','sniffing','touching','holding','grabbing'
+        ];
+        let behaviorCount = 0;
+        behaviorWords.forEach(w => { if (lower.includes(w)) behaviorCount++; });
+        const behaviorBonus = Math.min(behaviorCount * 5, 25);
+
+        const detailWords = [
+          'fur','color','eyes','ears','tail','paws','claws','nose','mouth','teeth',
+          'stripes','spots','pattern','size','big','small','long','short','thick','thin',
+          'soft','rough','dark','light','brown','black','white','orange','grey','gray',
+          'quietly','slowly','quickly'
+        ];
+        let detailCount = 0;
+        detailWords.forEach(w => { if (lower.includes(w)) detailCount++; });
+        const detailBonus = Math.min(detailCount * 3, 15);
+
+        let literacyBonus = 0;
+        if (/^[A-Z]/.test(text)) literacyBonus += 3;
+        if (/[.!?]$/.test(text)) literacyBonus += 2;
+        const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+        if (sentences.length >= 2) literacyBonus += 3;
+        const uniqueWords = new Set(lower.split(/\s+/));
+        if ((uniqueWords.size / Math.max(1, wc)) > 0.6) literacyBonus += 2;
+
+        const observationScore = 30;
+        const totalEarned = quizPoints + observationScore + behaviorBonus + detailBonus + literacyBonus + currentAnimal.pointValue;
+
+        setTotalPoints(p => p + totalEarned);
+        setFoundAnimals(prev => new Set([...prev, currentAnimal.id]));
+
+        // IMPORTANT: store badge with animalId so file name is always correct
+        setBadges(prev => ([
+          ...prev,
+          {
+            animalId: currentAnimal.id,
+            animalName: currentAnimal.name,
+            points: totalEarned,
+            behaviorScore: behaviorBonus,
+            detailScore: detailBonus,
+            literacyScore: literacyBonus,
+            timestamp: new Date().toISOString()
+          }
+        ]));
+
+        setCurrentScreen('badge');
+      };
+
+      // -------------------------------
+      // HOME SCREEN
+      // -------------------------------
+      if (currentScreen === 'home') {
+        return (
+          <div style={{
+            position: 'relative',
+            width: '100%',
+            height: '100vh',
+            overflow: 'hidden',
+            background: 'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)'
+          }}>
+            {/* Video background */}
+            {!videoFailed && (
+              <video
+                ref={homeVideoRef}
+                muted
+                loop
+                playsInline
+                preload="auto"
+                poster="images/video-poster.jpg"
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  zIndex: 0
+                }}
+                onError={() => setVideoFailed(true)}
+              >
+                <source src="images/background-video.mp4" type="video/mp4" />
+              </video>
+            )}
+
+            {/* Fallback background if video fails */}
+            {videoFailed && (
+              <div style={{
+                position:'absolute',
+                inset:0,
+                backgroundImage:'url(images/video-poster.jpg)',
+                backgroundSize:'cover',
+                backgroundPosition:'center'
+              }} />
+            )}
+
+            {/* Dark overlay */}
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(10,47,31,0.55)',
+              zIndex: 1
+            }} />
+
+            {/* Content */}
+            <div style={{
+              position: 'relative',
+              zIndex: 2,
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '1rem',
+              textAlign: 'center'
+            }}>
+              <img
+                src="images/logo.png"
+                alt="Taronga Tracka"
+                style={{ width: 'min(320px, 70vw)', height: 'auto', marginBottom: '1.2rem' }}
+                onError={(e) => (e.target.style.display = 'none')}
+              />
+
+              <div style={{
+                maxWidth: 520,
+                width: '92%',
+                background: 'rgba(255,255,255,0.12)',
+                border: '1px solid rgba(255,255,255,0.22)',
+                borderRadius: 18,
+                padding: '1rem 1.2rem',
+                color: 'rgba(255,255,255,0.92)',
+                marginBottom: '1.2rem'
+              }}>
+                <div style={{ display:'grid', gap: 10, textAlign:'left' }}>
+                  <div>📍 Use GPS to discover nearby animals</div>
+                  <div>🧠 Answer questions & make observations</div>
+                  <div>🏆 Collect badges & earn points</div>
+                </div>
+              </div>
+
+              {/* Tap-to-start button (mobile autoplay fix) */}
+              <button
+                className="btn-reset"
+                onClick={enableLocation}
+                style={{
+                  background: 'linear-gradient(135deg, var(--sunset-orange) 0%, var(--earth-clay) 100%)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '1rem 2.2rem',
+                  fontSize: '1.1rem',
+                  fontWeight: 800,
+                  borderRadius: 999,
+                  boxShadow: '0 10px 30px rgba(232,106,51,0.35)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em'
+                }}
+              >
+                Tap to Start
+              </button>
+
+              <div style={{ marginTop: 14, fontSize: 12, color: 'rgba(255,255,255,0.8)' }}>
+                (If video doesn’t move on iPhone, that’s normal — Safari blocks autoplay until you tap.)
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // -------------------------------
+      // MAP SCREEN
+      // -------------------------------
+      if (currentScreen === 'map') {
+        return (
+          <div style={{ minHeight: '100vh', background: 'var(--mist-light)' }}>
+            {/* Header */}
+            <div style={{
+              background: 'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)',
+              padding: '1.2rem 1rem',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+              position: 'sticky',
+              top: 0,
+              zIndex: 100
+            }}>
+              <div style={{
+                maxWidth: 1200,
+                margin: '0 auto',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 12
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <img
+                    src="images/logo.png"
+                    alt="Taronga Tracka"
+                    style={{ height: 70, width: 'auto' }}
+                    onError={(e) => (e.target.style.display = 'none')}
+                  />
+                  <div>
+                    <h1 className="heading-display" style={{ color: 'white', fontSize: '2rem', marginBottom: 2 }}>
+                      DISCOVER ANIMALS
+                    </h1>
+                    <div className="serif-accent" style={{ color: 'var(--safari-gold)', fontSize: 14 }}>
+                      Testing mode: all animals unlocked
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  className="btn-reset"
+                  onClick={() => setCurrentScreen('collection')}
+                  style={{
+                    background: 'rgba(255,255,255,0.18)',
+                    border: '1px solid rgba(255,255,255,0.35)',
+                    color: 'white',
+                    padding: '0.7rem 0.9rem',
+                    borderRadius: 16,
+                    textAlign: 'right',
+                    minWidth: 120
+                  }}
+                >
+                  <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--safari-gold)' }}>{totalPoints}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.9 }}>
+                    🏆 {foundAnimals.size}/{animals.length} Badges
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Tiles */}
+            <div style={{ maxWidth: 1200, margin: '0 auto', padding: '1.2rem 1rem 2rem' }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '1rem'
+              }}>
+                {animals
+                  .map(a => ({ ...a, ...checkAnimalProximity(a) }))
+                  .sort((a, b) => {
+                    if (foundAnimals.has(a.id) && !foundAnimals.has(b.id)) return 1;
+                    if (!foundAnimals.has(a.id) && foundAnimals.has(b.id)) return -1;
+                    if (a.distance === null) return 1;
+                    if (b.distance === null) return -1;
+                    return a.distance - b.distance;
+                  })
+                  .map((animal) => {
+                    const alreadyFound = foundAnimals.has(animal.id);
+                    const { nearby, distance } = animal;
+
+                    return (
+                      <div
+                        key={animal.id}
+                        className="animate-fade-in-up"
+                        onClick={(e) => { if (!alreadyFound) discoverAnimal(animal, e); }}
+                        style={{
+                          position: 'relative',
+                          height: 360,
+                          borderRadius: 16,
+                          overflow: 'hidden',
+                          boxShadow: '0 10px 28px rgba(0,0,0,0.12)',
+                          cursor: alreadyFound ? 'default' : 'pointer',
+                          transform: nearby && !alreadyFound ? 'scale(1.01)' : 'scale(1)'
+                        }}
+                      >
+                        <div style={{
+                          position:'absolute', inset:0,
+                          backgroundImage: `url(${animal.image})`,
+                          backgroundSize:'cover',
+                          backgroundPosition:'center',
+                          filter: alreadyFound ? 'grayscale(50%)' : 'none',
+                          opacity: alreadyFound ? 0.65 : 1
+                        }} />
+                        <div style={{
+                          position:'absolute', inset:0,
+                          background:'linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.75) 100%)'
+                        }} />
+                        <div style={{
+                          position:'absolute',
+                          left:0, right:0, bottom:0,
+                          padding:'1.4rem',
+                          color:'white',
+                          zIndex:2
+                        }}>
+                          <div className="heading-display" style={{ fontSize: 28, marginBottom: 3 }}>
+                            {animal.name}
+                          </div>
+                          <div className="serif-accent" style={{ opacity: 0.9, marginBottom: 12 }}>
+                            {animal.scientificName}
+                          </div>
+
+                          {alreadyFound ? (
+                            <div style={{
+                              display:'inline-block',
+                              background:'rgba(46,125,85,0.92)',
+                              border:'1px solid rgba(255,255,255,0.25)',
+                              padding:'0.55rem 1.1rem',
+                              borderRadius:999,
+                              fontWeight:800
+                            }}>
+                              ✓ Discovered
+                            </div>
+                          ) : nearby ? (
+                            <div style={{
+                              display:'inline-block',
+                              background:'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))',
+                              padding:'0.65rem 1.2rem',
+                              borderRadius:999,
+                              fontWeight:900,
+                              textTransform:'uppercase',
+                              letterSpacing:'0.06em',
+                              boxShadow:'0 6px 16px rgba(232,106,51,0.35)'
+                            }}>
+                              Tap to Discover
+                            </div>
+                          ) : (
+                            <div style={{
+                              display:'inline-block',
+                              background:'rgba(74,159,216,0.22)',
+                              border:'1px solid rgba(255,255,255,0.25)',
+                              padding:'0.55rem 1.1rem',
+                              borderRadius:999,
+                              fontWeight:800
+                            }}>
+                              {distance !== null ? `${distance}m away` : 'Locked'}
+                            </div>
+                          )}
+                        </div>
+
+                        {nearby && !alreadyFound && (
+                          <div style={{
+                            position:'absolute', inset:0,
+                            border:'3px solid var(--sunset-orange)',
+                            borderRadius:16,
+                            animation:'pulse 2s infinite',
+                            pointerEvents:'none'
+                          }} />
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // -------------------------------
+      // QUIZ SCREEN
+      // -------------------------------
+      if (currentScreen === 'animal' && currentAnimal) {
+        const currentQuestion = currentAnimal.questions[currentQuestionIndex];
+
+        return (
+          <div style={{
+            position:'fixed',
             inset:0,
-            width:"100%",
-            height:"100%",
-            objectFit:"cover"
-          }}
-        >
-          <source src="images/background-video.mp4" type="video/mp4" />
-        </video>
+            background: showResult
+              ? (isCorrect ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                           : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)')
+              : 'var(--mist-light)',
+            transition:'background 0.35s ease',
+            display:'flex',
+            flexDirection:'column'
+          }}>
+            {/* confetti */}
+            {showResult && isCorrect && (
+              <div style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:1000 }}>
+                {[...Array(40)].map((_, i) => (
+                  <div key={i} style={{
+                    position:'absolute',
+                    left:`${Math.random()*100}%`,
+                    top:'-20px',
+                    width:'10px',
+                    height:'10px',
+                    background:['#FFD700','#FF6B6B','#4ECDC4','#45B7D1','#FFA07A'][Math.floor(Math.random()*5)],
+                    animation:`fall ${2 + Math.random()*2}s linear forwards`,
+                    animationDelay:`${Math.random()*0.4}s`
+                  }} />
+                ))}
+              </div>
+            )}
 
-        <div style={{
-          position:"relative",
-          zIndex:1,
-          height:"100%",
-          display:"flex",
-          flexDirection:"column",
-          justifyContent:"center",
-          alignItems:"center",
-          background:"rgba(0,0,0,0.5)",
-          color:"white"
-        }}>
-          <h1>Taronga Tracka</h1>
-          <button onClick={startExperience} style={{ padding:"1rem 2rem" }}>
-            Begin Exploration
-          </button>
-        </div>
-      </div>
-    );
-  }
+            {/* header */}
+            <div style={{
+              background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)',
+              padding:'0.6rem 0.9rem',
+              boxShadow:'0 4px 20px rgba(0,0,0,0.12)',
+              flex:'0 0 auto',
+              zIndex:10
+            }}>
+              <div style={{
+                maxWidth:900,
+                margin:'0 auto',
+                display:'flex',
+                justifyContent:'space-between',
+                alignItems:'center'
+              }}>
+                <button
+                  className="btn-reset"
+                  disabled={showResult}
+                  onClick={() => {
+                    if (showResult) return;
+                    if (window.confirm('Leave this question and go back to the map?')) {
+                      setCurrentScreen('map');
+                    }
+                  }}
+                  style={{
+                    background: showResult ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.18)',
+                    border:'none',
+                    color:'white',
+                    padding:'0.55rem 0.9rem',
+                    borderRadius:999,
+                    fontWeight:800,
+                    opacity: showResult ? 0.55 : 1
+                  }}
+                >
+                  ← Back
+                </button>
 
-  /* MAP */
-  if (screen === "map") {
-    return (
-      <div style={{ padding:"2rem" }}>
-        <h2>Discover Animals</h2>
-        <p>Points: {points}</p>
+                <img
+                  src="images/logo.png"
+                  alt="Taronga Tracka"
+                  style={{ height: 44 }}
+                  onError={(e) => (e.target.style.display = 'none')}
+                />
+                <div style={{ width: 80 }} />
+              </div>
+            </div>
 
-        {animals.map(a => (
-          <div key={a.id}
-            style={{
-              margin:"1rem 0",
-              padding:"1rem",
-              background:"#fff",
-              borderRadius:"10px"
-            }}
-            onClick={() => {
-              if (!found.includes(a.id)) {
-                setCurrentAnimal(a);
-                setQuestionIndex(0);
-                setScreen("quiz");
-              }
-            }}
-          >
-            {a.name} {found.includes(a.id) && "✓"}
+            {/* image strip */}
+            <div style={{
+              height:'14vh',
+              minHeight:100,
+              maxHeight:140,
+              backgroundImage:`url(${currentAnimal.image})`,
+              backgroundSize:'cover',
+              backgroundPosition:'center',
+              position:'relative',
+              flex:'0 0 auto'
+            }}>
+              <div style={{
+                position:'absolute', left:0, right:0, bottom:0,
+                background:'linear-gradient(180deg, transparent 0%, rgba(10,47,31,0.95) 100%)',
+                padding:'0.8rem 1rem 0.5rem'
+              }}>
+                <div style={{ maxWidth:900, margin:'0 auto', textAlign:'center' }}>
+                  <div className="heading-display" style={{ color:'white', fontSize:'1.6rem', lineHeight:1.1 }}>
+                    {currentAnimal.name}
+                  </div>
+                  <div className="serif-accent" style={{ color:'var(--safari-gold)', fontSize:14 }}>
+                    {currentAnimal.scientificName}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* content */}
+            <div style={{
+              flex:'1 1 auto',
+              overflowY:'auto',
+              WebkitOverflowScrolling:'touch',
+              padding:'1rem',
+              maxWidth:900,
+              margin:'0 auto',
+              width:'100%'
+            }}>
+              <div style={{ textAlign:'center', marginBottom: 10 }}>
+                <div style={{ fontWeight:800, color: showResult ? 'white' : 'var(--jungle-mid)' }}>
+                  Question {currentQuestionIndex + 1} of {currentAnimal.questions.length}
+                </div>
+                {!showResult && (
+                  <div style={{ marginTop:6, color:'var(--sunset-orange)', fontWeight:800, fontStyle:'italic' }}>
+                    💡 Read the signs for clues!
+                  </div>
+                )}
+              </div>
+
+              {showResult ? (
+                <div className="animate-scale-in" style={{
+                  background:'rgba(255,255,255,0.95)',
+                  borderRadius:20,
+                  padding:'1.4rem',
+                  boxShadow:'0 10px 34px rgba(0,0,0,0.2)',
+                  textAlign:'center',
+                  margin:'0.8rem auto',
+                  maxWidth: 620
+                }}>
+                  <div style={{ fontSize:'3.2rem', marginBottom:6 }}>{isCorrect ? '🎉' : '❌'}</div>
+                  <div className="heading-display" style={{
+                    fontSize:'2.6rem',
+                    color: isCorrect ? '#10b981' : '#ef4444',
+                    marginBottom: 10
+                  }}>
+                    {isCorrect ? 'CORRECT!' : 'TRY AGAIN'}
+                  </div>
+
+                  {isCorrect && currentQuestion.fact && (
+                    <div style={{
+                      background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)',
+                      borderRadius:14,
+                      padding:'1rem',
+                      margin:'0.6rem 0 0.8rem'
+                    }}>
+                      <div style={{ color:'#333', fontWeight:700, lineHeight:1.45 }}>
+                        💡 {currentQuestion.fact}
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    className="btn-reset"
+                    onClick={() => {
+                      if (isCorrect) handleNextQuestion();
+                      else {
+                        setIsProcessingAnswer(false);
+                        setShowResult(false);
+                      }
+                    }}
+                    style={{
+                      background: isCorrect
+                        ? 'linear-gradient(135deg, #10b981, #059669)'
+                        : 'linear-gradient(135deg, #ef4444, #dc2626)',
+                      color:'white',
+                      border:'none',
+                      padding:'0.95rem 2.2rem',
+                      borderRadius:999,
+                      fontWeight:900,
+                      textTransform:'uppercase',
+                      letterSpacing:'0.05em',
+                      boxShadow:'0 6px 18px rgba(0,0,0,0.2)'
+                    }}
+                  >
+                    {isCorrect
+                      ? (currentQuestionIndex < currentAnimal.questions.length - 1 ? 'Next Question →' : 'Continue to Observation →')
+                      : 'Try Again'}
+                  </button>
+                </div>
+              ) : (
+                <div style={{
+                  background:'white',
+                  borderRadius:16,
+                  padding:'1.1rem',
+                  boxShadow:'0 10px 32px rgba(0,0,0,0.1)',
+                  maxWidth: 720,
+                  margin:'0 auto'
+                }}>
+                  <div style={{
+                    fontWeight:900,
+                    color:'var(--jungle-deep)',
+                    textAlign:'center',
+                    marginBottom: 12,
+                    lineHeight:1.3,
+                    fontSize:'1.05rem'
+                  }}>
+                    {currentQuestion.q}
+                  </div>
+
+                  <div style={{
+                    display:'grid',
+                    gridTemplateColumns:'1fr 1fr',
+                    gap:'0.7rem'
+                  }}>
+                    {currentQuestion.options.map((option, oIndex) => (
+                      <button
+                        key={oIndex}
+                        className="btn-reset"
+                        onClick={() => handleQuizAnswer(currentQuestionIndex, oIndex)}
+                        style={{
+                          borderRadius:12,
+                          border:'3px solid var(--jungle-light)',
+                          background:'white',
+                          padding:'1rem 0.7rem',
+                          fontWeight:800,
+                          color:'var(--jungle-deep)',
+                          minHeight:76
+                        }}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        ))}
-      </div>
-    );
-  }
+        );
+      }
 
-  /* QUIZ */
-  if (screen === "quiz" && currentAnimal) {
-    const q = currentAnimal.questions[questionIndex];
-    return (
-      <div style={{ padding:"2rem" }}>
-        <h2>{currentAnimal.name}</h2>
-        <p>{q.q}</p>
+      // -------------------------------
+      // OBSERVATION SCREEN
+      // -------------------------------
+      if (currentScreen === 'observation' && currentAnimal) {
+        const wordCount = observation.trim().split(/\s+/).filter(Boolean).length;
 
-        {q.options.map((o,i) => (
-          <button key={i} onClick={() => answerQuestion(i)} style={{ display:"block", margin:"0.5rem 0" }}>
-            {o}
-          </button>
-        ))}
+        return (
+          <div style={{ minHeight:'100vh', background:'var(--mist-light)', paddingBottom:'4rem' }}>
+            <div style={{
+              background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)',
+              padding:'1rem',
+              boxShadow:'0 4px 20px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ maxWidth:900, margin:'0 auto', display:'flex', justifyContent:'center' }}>
+                <img
+                  src="images/logo.png"
+                  alt="Taronga Tracka"
+                  style={{ height:60 }}
+                  onError={(e) => (e.target.style.display = 'none')}
+                />
+              </div>
+            </div>
 
-        {showResult && (
-          <div>
-            <h3>{isCorrect ? "Correct!" : "Try again"}</h3>
-            {isCorrect && <button onClick={nextStep}>Continue</button>}
-            {!isCorrect && <button onClick={() => setShowResult(false)}>Retry</button>}
+            <div style={{ maxWidth:900, margin:'0 auto', padding:'2rem 1.2rem' }}>
+              <div style={{
+                background:'white',
+                borderRadius:20,
+                padding:'1.6rem',
+                boxShadow:'0 10px 32px rgba(0,0,0,0.1)'
+              }}>
+                <div className="heading-display" style={{ fontSize:'2.2rem', color:'var(--jungle-deep)', textAlign:'center' }}>
+                  Your Observations
+                </div>
+
+                <div style={{ color:'#666', textAlign:'center', margin:'0.8rem 0 1.2rem', lineHeight:1.5 }}>
+                  {currentAnimal.observationPrompt}
+                </div>
+
+                <textarea
+                  value={observation}
+                  onChange={(e) => setObservation(e.target.value)}
+                  placeholder="Describe what you observe in detail..."
+                  style={{
+                    width:'100%',
+                    minHeight:180,
+                    padding:'1rem',
+                    borderRadius:14,
+                    border:'3px solid #E5E5E5',
+                    fontSize:'1.05rem',
+                    fontFamily:'DM Sans, sans-serif',
+                    resize:'vertical'
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = currentAnimal.color)}
+                  onBlur={(e) => (e.target.style.borderColor = '#E5E5E5')}
+                />
+
+                <div style={{
+                  marginTop: 10,
+                  fontWeight: 900,
+                  color: wordCount >= 10 ? 'var(--jungle-light)' : 'var(--sunset-orange)'
+                }}>
+                  {wordCount}/10 words {wordCount >= 10 ? '✓' : ''}
+                </div>
+
+                <button
+                  className="btn-reset"
+                  onClick={submitObservation}
+                  disabled={wordCount < 10}
+                  style={{
+                    width:'100%',
+                    marginTop:'1.2rem',
+                    padding:'1.1rem',
+                    borderRadius:999,
+                    border:'none',
+                    background: wordCount >= 10
+                      ? 'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))'
+                      : '#CCC',
+                    color:'white',
+                    fontWeight: 950,
+                    textTransform:'uppercase',
+                    letterSpacing:'0.08em',
+                    boxShadow: wordCount >= 10 ? '0 10px 26px rgba(232,106,51,0.35)' : 'none'
+                  }}
+                >
+                  {wordCount < 10 ? 'Write More to Continue' : 'Submit & Earn Badge'}
+                </button>
+              </div>
+            </div>
           </div>
-        )}
-      </div>
-    );
-  }
+        );
+      }
 
-  /* OBSERVATION */
-  if (screen === "observation") {
-    return (
-      <div style={{ padding:"2rem" }}>
-        <h2>Observation</h2>
-        <p>{currentAnimal.observationPrompt}</p>
-        <textarea
-          value={observation}
-          onChange={e => setObservation(e.target.value)}
-          style={{ width:"100%", height:"150px" }}
-        />
-        <button onClick={submitObservation}>Submit</button>
-      </div>
-    );
-  }
+      // -------------------------------
+      // COLLECTION SCREEN
+      // -------------------------------
+      if (currentScreen === 'collection') {
+        return (
+          <div style={{
+            minHeight:'100vh',
+            background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)',
+            padding:'1rem'
+          }}>
+            <div style={{
+              maxWidth: 900,
+              margin:'0 auto 1rem',
+              display:'flex',
+              justifyContent:'space-between',
+              alignItems:'center'
+            }}>
+              <button
+                className="btn-reset"
+                onClick={() => setCurrentScreen('map')}
+                style={{
+                  background:'rgba(255,255,255,0.18)',
+                  border:'none',
+                  color:'white',
+                  padding:'0.6rem 1rem',
+                  borderRadius:999,
+                  fontWeight:900
+                }}
+              >
+                ← Back
+              </button>
 
-  /* BADGE */
-  if (screen === "badge") {
-    return (
-      <div style={{ padding:"2rem", textAlign:"center" }}>
-        <h1>Badge Earned!</h1>
-        <img src={`images/badge-${currentAnimal.id}.png`} style={{ width:"150px" }} />
-        <p>+100 points</p>
-        <button onClick={() => setScreen("map")}>Continue</button>
-      </div>
-    );
-  }
+              <div className="heading-display" style={{ color:'white', fontSize:'2.2rem' }}>
+                BADGE COLLECTION
+              </div>
+              <div style={{ width: 90 }} />
+            </div>
 
-  return null;
-}
+            <div style={{
+              maxWidth:900,
+              margin:'0 auto',
+              display:'grid',
+              gridTemplateColumns:'repeat(auto-fill, minmax(160px, 1fr))',
+              gap:'1rem'
+            }}>
+              {animals.map(animal => {
+                const earned = foundAnimals.has(animal.id);
+                const badge = badges.find(b => b.animalId === animal.id);
 
-ReactDOM.render(<TarongaTracka />, document.getElementById("root"));
-</script>
+                return (
+                  <div key={animal.id} style={{
+                    background: earned ? 'white' : 'rgba(255,255,255,0.10)',
+                    borderRadius:16,
+                    padding:'1rem',
+                    textAlign:'center',
+                    opacity: earned ? 1 : 0.5
+                  }}>
+                    <div style={{
+                      width: 100,
+                      height: 100,
+                      margin:'0 auto 0.7rem',
+                      backgroundImage: earned ? `url(images/badge-${animal.id}.png)` : 'none',
+                      backgroundSize:'contain',
+                      backgroundRepeat:'no-repeat',
+                      backgroundPosition:'center',
+                      backgroundColor: earned ? 'transparent' : 'rgba(255,255,255,0.08)',
+                      borderRadius:'50%'
+                    }} />
 
+                    <div style={{ fontWeight: 950, color: earned ? 'var(--jungle-deep)' : 'white' }}>
+                      {animal.name}
+                    </div>
+
+                    {earned && badge ? (
+                      <div style={{ marginTop: 6 }}>
+                        <div style={{ fontWeight: 950, color:'var(--sunset-orange)' }}>
+                          {badge.points} pts
+                        </div>
+                        <div style={{ fontSize: 11, color:'#666', marginTop: 6, lineHeight: 1.35 }}>
+                          Behaviour: +{badge.behaviorScore}<br>
+                          Detail: +{badge.detailScore}<br>
+                          Writing: +{badge.literacyScore}
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 12, color:'rgba(255,255,255,0.75)', marginTop: 6 }}>
+                        Not yet discovered
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{
+              maxWidth:900,
+              margin:'1.2rem auto 0',
+              background:'rgba(255,255,255,0.10)',
+              borderRadius:18,
+              padding:'1rem',
+              textAlign:'center'
+            }}>
+              <div style={{ color:'var(--safari-gold)', fontWeight: 950, fontSize: 30 }}>
+                ⭐ {totalPoints}
+              </div>
+              <div style={{ color:'white', fontWeight: 900, marginTop: 4 }}>Total Points</div>
+
+              <button
+                className="btn-reset"
+                onClick={() => {
+                  if (window.confirm('Reset all progress? This cannot be undone.')) {
+                    localStorage.removeItem('tarongaTrackaProgress');
+                    window.location.reload();
+                  }
+                }}
+                style={{
+                  marginTop: 10,
+                  background:'rgba(239, 68, 68, 0.85)',
+                  border:'none',
+                  color:'white',
+                  padding:'0.6rem 1rem',
+                  borderRadius:999,
+                  fontWeight: 950
+                }}
+              >
+                Reset Progress
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      // -------------------------------
+      // BADGE SCREEN (NO EMOJI)
+      // -------------------------------
+      if (currentScreen === 'badge') {
+        const lastBadge = badges[badges.length - 1];
+        if (!lastBadge) return null;
+
+        return (
+          <div style={{
+            position:'fixed',
+            inset:0,
+            background:'linear-gradient(135deg, var(--sunset-orange) 0%, var(--earth-clay) 50%, var(--jungle-mid) 100%)',
+            display:'flex',
+            alignItems:'center',
+            justifyContent:'center',
+            padding:'1.2rem'
+          }}>
+            <div className="animate-scale-in" style={{
+              background:'white',
+              borderRadius:24,
+              padding:'1.6rem',
+              maxWidth:520,
+              width:'100%',
+              textAlign:'center',
+              boxShadow:'0 22px 60px rgba(0,0,0,0.3)'
+            }}>
+              <div style={{
+                width: 160,
+                height: 160,
+                margin:'0 auto 1rem',
+                backgroundImage: `url(images/badge-${lastBadge.animalId}.png)`,
+                backgroundSize:'contain',
+                backgroundRepeat:'no-repeat',
+                backgroundPosition:'center'
+              }} />
+
+              {/* If badge image missing, show clean placeholder (no emoji) */}
+              <div style={{
+                marginTop:-10,
+                marginBottom: 6,
+                fontSize: 12,
+                color:'#888'
+              }}>
+                (If you don’t see the badge image, check you have: <b>images/badge-{lastBadge.animalId}.png</b>)
+              </div>
+
+              <div className="heading-display" style={{ fontSize:'2.2rem', color:'var(--jungle-deep)' }}>
+                BADGE EARNED!
+              </div>
+
+              <div className="serif-accent" style={{ color:'var(--sunset-orange)', fontSize:'1.1rem', marginTop: 4 }}>
+                {lastBadge.animalName}
+              </div>
+
+              <div style={{
+                background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)',
+                borderRadius:16,
+                padding:'1rem',
+                margin:'1rem 0'
+              }}>
+                <div style={{ fontSize:'2.2rem', fontWeight: 950, color:'var(--earth-clay)' }}>
+                  +{lastBadge.points}
+                </div>
+                <div style={{ color:'#666', fontWeight:800 }}>Points</div>
+              </div>
+
+              <div style={{
+                background:'#F5F3EE',
+                borderRadius:16,
+                padding:'1rem',
+                marginBottom:'1rem'
+              }}>
+                <div style={{ color:'#666', fontWeight:800, marginBottom: 6 }}>
+                  Total Progress
+                </div>
+                <div style={{ fontWeight: 950, color:'var(--jungle-deep)', fontSize:'1.2rem' }}>
+                  {foundAnimals.size}/{animals.length} Animals
+                </div>
+                <div style={{ fontWeight: 950, color:'var(--sunset-orange)', fontSize:'1.2rem', marginTop: 4 }}>
+                  ⭐ {totalPoints} Points
+                </div>
+              </div>
+
+              <button
+                className="btn-reset"
+                onClick={() => setCurrentScreen('map')}
+                style={{
+                  background:'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))',
+                  color:'white',
+                  border:'none',
+                  padding:'0.9rem 1.6rem',
+                  borderRadius:999,
+                  fontWeight:950,
+                  textTransform:'uppercase',
+                  letterSpacing:'0.08em'
+                }}
+              >
+                Continue Exploring
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      return null;
+    };
+
+    // React 18 root
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<TarongaTracka />);
+  </script>
 </body>
 </html>
