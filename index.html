@@ -340,7 +340,7 @@ body {
         );
         
         return {
-          nearby: distance <= animal.radius,
+          nearby: true, // TESTING MODE - all animals nearby
           distance: Math.round(distance)
         };
       };
