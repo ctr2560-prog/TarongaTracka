@@ -443,6 +443,16 @@
       };
 
       const enableLocation = () => {
+        // Try to play video on user interaction (required for mobile)
+        const video = document.querySelector('video');
+        if (video) {
+          video.play().then(() => {
+            console.log('Video playing after user interaction');
+          }).catch(err => {
+            console.log('Video play still failed:', err);
+          });
+        }
+        
         if ('geolocation' in navigator) {
           navigator.geolocation.watchPosition(
             (position) => {
@@ -1076,20 +1086,6 @@
 
         return (
           <div 
-            onClick={(e) => {
-              // Prevent any clicks on the container from doing anything
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('Background clicked - blocked');
-            }}
-            onTouchStart={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            onTouchEnd={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
             style={{
               position: 'fixed',
               top: 0,
@@ -1107,7 +1103,6 @@
               flexDirection: 'column'
             }}
           >
-            <div id="question-screen" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
             {/* Confetti Effect */}
             {showResult && isCorrect && (
               <div style={{
@@ -1403,21 +1398,8 @@
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          WebkitTapHighlightColor: 'rgba(46, 125, 85, 0.3)',
-                          userSelect: 'none',
-                          WebkitUserSelect: 'none'
-                        }}
-                        onMouseDown={(e) => {
-                          e.currentTarget.style.background = 'var(--jungle-light)';
-                          e.currentTarget.style.color = 'white';
-                        }}
-                        onMouseUp={(e) => {
-                          e.currentTarget.style.background = 'white';
-                          e.currentTarget.style.color = 'var(--jungle-deep)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'white';
-                          e.currentTarget.style.color = 'var(--jungle-deep)';
+                          touchAction: 'manipulation',
+                          WebkitTapHighlightColor: 'transparent'
                         }}
                       >
                         {option}
@@ -1426,8 +1408,6 @@
                   </div>
                 </div>
               )}
-            </div>
-            </div>
           </div>
         );
       }
