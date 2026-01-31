@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -14,9 +13,7 @@
   <title>Taronga Tracka v2.2 - Animal Discovery</title>
 
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
@@ -75,7 +72,6 @@
     .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
     .animate-scale-in   { animation: scaleIn 0.6s ease-out forwards; }
   </style>
-
 </head>
 
 <body>
@@ -145,6 +141,14 @@
           window.history.pushState(null, '', window.location.href);
           window.addEventListener('popstate', handleBackButton);
           return () => window.removeEventListener('popstate', handleBackButton);
+        }
+      }, [currentScreen]);
+
+      useEffect(() => {
+        if (currentScreen === 'badge' && badges.length > 0) {
+          const lastBadge = badges[badges.length - 1];
+          const audio = new Audio(`images/sound-${lastBadge.animalId}.mp3`);
+          audio.play().catch(() => {});
         }
       }, [currentScreen]);
 
@@ -325,8 +329,20 @@
 
         if (correct) {
           setQuizAnswers(prev => ({ ...prev, [questionIndex]: answerIndex }));
-          const audio = new Audio(`images/sound-${currentAnimal.id}.mp3`);
-          audio.play().catch(() => {});
+          try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.4, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.4);
+          } catch(e) {}
         }
       };
 
@@ -628,6 +644,5 @@
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<TarongaTracka />);
   </script>
-
 </body>
 </html>
