@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Taronga Tracka - Animal Discovery Experience</title>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -855,6 +858,31 @@
       if (currentScreen === 'animal' && currentAnimal) {
         const currentQuestion = currentAnimal.questions[currentQuestionIndex];
 
+        // Keep screen awake during quiz
+        React.useEffect(() => {
+          let wakeLock = null;
+          
+          const requestWakeLock = async () => {
+            try {
+              if ('wakeLock' in navigator) {
+                wakeLock = await navigator.wakeLock.request('screen');
+                console.log('Wake lock active');
+              }
+            } catch (err) {
+              console.log('Wake lock error:', err);
+            }
+          };
+          
+          requestWakeLock();
+          
+          return () => {
+            if (wakeLock) {
+              wakeLock.release();
+              console.log('Wake lock released');
+            }
+          };
+        }, []);
+
         return (
           <div style={{
             position: 'fixed',
@@ -870,7 +898,8 @@
               : 'var(--mist-light)',
             transition: 'background 0.5s ease',
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            touchAction: 'pan-y pinch-zoom'
           }}>
             {/* Confetti Effect */}
             {showResult && isCorrect && (
@@ -920,7 +949,9 @@
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    setCurrentScreen('map');
+                    if (window.confirm('Leave this question and go back to the map?')) {
+                      setCurrentScreen('map');
+                    }
                   }}
                   style={{
                     background: 'rgba(255,255,255,0.2)',
@@ -930,7 +961,8 @@
                     borderRadius: '20px',
                     cursor: 'pointer',
                     fontSize: '0.85rem',
-                    fontWeight: 600
+                    fontWeight: 600,
+                    touchAction: 'manipulation'
                   }}
                 >
                   ← Back
