@@ -211,27 +211,6 @@
         };
       }, [currentScreen]);
 
-      // Prevent browser back button during quiz
-      useEffect(() => {
-        if (currentScreen === 'animal' || currentScreen === 'observation') {
-          const handleBackButton = (e) => {
-            e.preventDefault();
-            if (window.confirm('Leave quiz and go back to map?')) {
-              setCurrentScreen('map');
-            } else {
-              window.history.pushState(null, '', window.location.href);
-            }
-          };
-          
-          window.history.pushState(null, '', window.location.href);
-          window.addEventListener('popstate', handleBackButton);
-          
-          return () => {
-            window.removeEventListener('popstate', handleBackButton);
-          };
-        }
-      }, [currentScreen]);
-
       const animals = [
         { 
           id: 'chimpanzee',
@@ -674,6 +653,14 @@
               playsInline
               preload="auto"
               id="background-video"
+              ref={(el) => {
+                if (el) {
+                  // Try to autoplay immediately (works on desktop)
+                  el.play().catch(() => {
+                    console.log('Autoplay blocked - will play on first user interaction');
+                  });
+                }
+              }}
               style={{
                 position: 'absolute',
                 top: 0,
