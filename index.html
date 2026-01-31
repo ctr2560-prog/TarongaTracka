@@ -494,14 +494,13 @@
               {/* Logo */}
               <div className="animate-fade-in-up" style={{ 
                 animationDelay: '0.2s',
-                marginBottom: '2rem'
+                marginBottom: 'clamp(1rem, 3vh, 2rem)'
               }}>
                 <img 
                   src="images/logo.png" 
                   alt="Taronga Tracka"
                   style={{
-                    width: 'min(80vw, 350px)',
-                    maxWidth: '350px',
+                    width: 'clamp(200px, 50vw, 300px)',
                     height: 'auto',
                     display: 'block'
                   }}
@@ -515,37 +514,37 @@
                 background: 'rgba(255,255,255,0.1)',
                 backdropFilter: 'blur(10px)',
                 borderRadius: '20px',
-                padding: '1.5rem',
-                marginBottom: '3rem',
+                padding: 'clamp(1rem, 2vh, 1.5rem)',
+                marginBottom: 'clamp(1rem, 3vh, 2rem)',
                 border: '1px solid rgba(255,255,255,0.2)',
                 maxWidth: '500px',
-                width: '100%',
+                width: '90%',
                 animationDelay: '0.4s'
               }}>
                 <h3 style={{
                   color: 'white',
-                  fontSize: 'clamp(1rem, 4vw, 1.2rem)',
-                  marginBottom: '1rem',
+                  fontSize: 'clamp(0.95rem, 2.5vh, 1.2rem)',
+                  marginBottom: 'clamp(0.6rem, 1.5vh, 1rem)',
                   fontWeight: 600
                 }}>Your Adventure Awaits</h3>
                 <div style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '0.8rem',
+                  gap: 'clamp(0.5rem, 1vh, 0.8rem)',
                   textAlign: 'left',
                   color: 'rgba(255,255,255,0.9)',
-                  fontSize: 'clamp(0.85rem, 2.5vw, 0.95rem)'
+                  fontSize: 'clamp(0.8rem, 2vh, 0.95rem)'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                    <span style={{ fontSize: '1.5rem' }}>📍</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <span style={{ fontSize: 'clamp(1.2rem, 2.5vh, 1.5rem)' }}>📍</span>
                     <span>Use GPS to discover nearby animals</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                    <span style={{ fontSize: '1.5rem' }}>📋</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <span style={{ fontSize: 'clamp(1.2rem, 2.5vh, 1.5rem)' }}>📋</span>
                     <span>Answer questions & make observations</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                    <span style={{ fontSize: '1.5rem' }}>🏆</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <span style={{ fontSize: 'clamp(1.2rem, 2.5vh, 1.5rem)' }}>🏆</span>
                     <span>Collect badges & earn points</span>
                   </div>
                 </div>
@@ -558,8 +557,8 @@
                   background: 'linear-gradient(135deg, var(--sunset-orange) 0%, var(--earth-clay) 100%)',
                   color: 'white',
                   border: 'none',
-                  padding: '1rem 2.5rem',
-                  fontSize: 'clamp(1rem, 3.5vw, 1.3rem)',
+                  padding: 'clamp(0.8rem, 2vh, 1rem) clamp(2rem, 5vw, 2.5rem)',
+                  fontSize: 'clamp(0.95rem, 2.5vh, 1.3rem)',
                   fontWeight: 700,
                   borderRadius: '50px',
                   cursor: 'pointer',
@@ -1305,44 +1304,40 @@
               {/* Submit Button */}
               <button
                 onClick={submitObservation}
-                disabled={!allQuestionsAnswered || wordCount < 10}
+                disabled={wordCount < 10}
                 style={{
                   width: '100%',
                   padding: '1.5rem',
                   borderRadius: '50px',
                   border: 'none',
-                  background: allQuestionsAnswered && wordCount >= 10
+                  background: wordCount >= 10
                     ? 'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))'
                     : '#CCC',
                   color: 'white',
                   fontSize: '1.3rem',
                   fontWeight: 700,
-                  cursor: allQuestionsAnswered && wordCount >= 10 ? 'pointer' : 'not-allowed',
+                  cursor: wordCount >= 10 ? 'pointer' : 'not-allowed',
                   transition: 'all 0.3s ease',
                   textTransform: 'uppercase',
                   letterSpacing: '0.1em',
-                  boxShadow: allQuestionsAnswered && wordCount >= 10 
+                  boxShadow: wordCount >= 10 
                     ? '0 8px 24px rgba(232,106,51,0.4)' 
                     : 'none'
                 }}
                 onMouseEnter={(e) => {
-                  if (allQuestionsAnswered && wordCount >= 10) {
+                  if (wordCount >= 10) {
                     e.target.style.transform = 'translateY(-2px)';
                     e.target.style.boxShadow = '0 12px 32px rgba(232,106,51,0.5)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = allQuestionsAnswered && wordCount >= 10 
+                  e.target.style.boxShadow = wordCount >= 10 
                     ? '0 8px 24px rgba(232,106,51,0.4)' 
                     : 'none';
                 }}
               >
-                {!allQuestionsAnswered 
-                  ? 'Complete All Questions First' 
-                  : wordCount < 10 
-                  ? 'Add More Details to Observation' 
-                  : '🏆 Submit & Earn Badge'}
+                {wordCount < 10 ? 'Write More to Continue' : '🏆 Submit & Earn Badge'}
               </button>
             </div>
           </div>
