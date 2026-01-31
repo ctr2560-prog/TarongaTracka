@@ -154,7 +154,7 @@
       
       const savedProgress = loadProgress();
       
-      const [currentScreen, setCurrentScreen] = useState(savedProgress?.currentScreen || 'home');
+      const [currentScreen, setCurrentScreen] = useState('home');
       console.log('Current screen:', currentScreen);
       
       const [userLocation, setUserLocation] = useState(null);
@@ -174,7 +174,6 @@
       useEffect(() => {
         console.log('Screen changed to:', currentScreen);
         const progress = {
-          currentScreen: currentScreen === 'animal' || currentScreen === 'observation' ? 'map' : currentScreen,
           locationEnabled,
           foundAnimals: Array.from(foundAnimals),
           totalPoints,
@@ -451,12 +450,12 @@
 
       const enableLocation = () => {
         // Try to play video on user interaction (required for mobile)
-        const video = document.querySelector('video');
+        const video = document.getElementById('background-video');
         if (video) {
           video.play().then(() => {
-            console.log('Video playing after user interaction');
+            console.log('✅ Video playing after user click');
           }).catch(err => {
-            console.log('Video play still failed:', err);
+            console.log('❌ Video play failed:', err);
           });
         }
         
@@ -674,6 +673,7 @@
               muted
               playsInline
               preload="auto"
+              id="background-video"
               style={{
                 position: 'absolute',
                 top: 0,
@@ -682,13 +682,6 @@
                 height: '100%',
                 objectFit: 'cover',
                 zIndex: 0
-              }}
-              onLoadedData={(e) => {
-                console.log('Video loaded, attempting play');
-                e.target.play().catch(err => console.log('Video autoplay blocked:', err));
-              }}
-              onError={(e) => {
-                console.log('Video failed to load');
               }}
             >
               <source src="images/background-video.mp4" type="video/mp4" />
