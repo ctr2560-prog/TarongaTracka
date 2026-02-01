@@ -307,27 +307,41 @@
           alert('Desktop browsers require HTTPS for location. Host this page on HTTPS (GitHub Pages/Netlify) or run locally.');
           return;
         }
-        const video = document.querySelector('video');
-        if (video) { try { video.muted = true; video.playsInline = true; video.play().catch(() => {}); } catch(_){} }
+        const video = document.getElementById('bgVideo');
+        if (video) { video.muted = true; video.playsInline = true; video.play().catch(() => {}); }
 
         if (!('geolocation' in navigator)) { alert('Geolocation not supported.'); return; }
         if (geoWatchIdRef.current !== null) return;
 
-        geoWatchIdRef.current = navigator.geolocation.watchPosition(
-          (position) => {
-            setUserLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy });
-            setLocationEnabled(true);
-            if (!hasEnteredMapRef.current) {
-              hasEnteredMapRef.current = true;
-              setCurrentScreen(prev => (prev === 'home' ? 'map' : prev));
+        const startWatch = () => {
+          geoWatchIdRef.current = navigator.geolocation.watchPosition(
+            (position) => {
+              setUserLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy });
+              setLocationEnabled(true);
+              if (!hasEnteredMapRef.current) {
+                hasEnteredMapRef.current = true;
+                setCurrentScreen(prev => (prev === 'home' ? 'map' : prev));
+              }
+            },
+            (error) => {
+              alert('Unable to get location. Please enable location services.');
+              if (geoWatchIdRef.current !== null) { navigator.geolocation.clearWatch(geoWatchIdRef.current); geoWatchIdRef.current = null; }
+            },
+            { enableHighAccuracy: true, maximumAge: 5000 }
+          );
+        };
+
+        if (navigator.permissions) {
+          navigator.permissions.query({ name: 'geolocation' }).then(result => {
+            if (result.state === 'denied') {
+              alert('Location permission was denied. Please allow location access in your browser settings for the app to work.');
+              return;
             }
-          },
-          (error) => {
-            alert('Unable to get location. Please enable location services.');
-            if (geoWatchIdRef.current !== null) { navigator.geolocation.clearWatch(geoWatchIdRef.current); geoWatchIdRef.current = null; }
-          },
-          { enableHighAccuracy: true, maximumAge: 5000 }
-        );
+            startWatch();
+          });
+        } else {
+          startWatch();
+        }
       };
 
       const checkAnimalProximity = (animal) => {
@@ -422,7 +436,7 @@
       if (currentScreen === 'home') {
         return (
           <div style={{ position:'relative', width:'100%', height:'100vh', overflow:'hidden', background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)' }}>
-            <video autoPlay loop muted playsInline webkit-playsinline="true" preload="metadata"
+            <video id="bgVideo" autoPlay loop muted playsInline webkit-playsinline="true" preload="metadata"
               style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', objectFit:'cover', zIndex:0 }}>
               <source src="images/background-video.mp4" type="video/mp4" />
             </video>
