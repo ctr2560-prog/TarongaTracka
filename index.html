@@ -103,6 +103,62 @@
     @media (pointer: fine) {
       body { touch-action: auto; }
     }
+
+    /* Mobile student banner — map screen */
+    @media (max-width: 600px) {
+      .student-banner-mobile {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.65rem !important;
+        padding: 0.9rem 1rem !important;
+      }
+      .student-banner-mobile > .logo-title-block {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .student-banner-mobile > .logo-title-block img {
+        height: 52px !important;
+      }
+      .student-banner-mobile > .logo-title-block h1 {
+        font-size: 1.25rem !important;
+      }
+      .student-banner-mobile > .logo-title-block p {
+        font-size: 0.78rem !important;
+      }
+      .student-banner-mobile > .student-name-pill {
+        align-self: flex-start;
+        padding: 0.45rem 0.85rem !important;
+      }
+      .student-banner-mobile > .submit-btn {
+        align-self: stretch;
+        text-align: center;
+        padding: 0.6rem 1rem !important;
+      }
+      .student-banner-mobile > .points-card {
+        align-self: flex-start;
+      }
+
+      /* Mobile student banner — collection screen */
+      .collection-header-mobile {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.6rem !important;
+        padding: 0.75rem 0.6rem !important;
+      }
+      .collection-header-mobile > h1 {
+        text-align: center;
+        font-size: 1.5rem !important;
+      }
+      .collection-header-mobile > .submit-btn {
+        align-self: stretch;
+        text-align: center;
+        padding: 0.6rem 1rem !important;
+      }
+      .collection-header-mobile > .back-btn {
+        align-self: flex-start;
+      }
+    }
   </style>
 </head>
 
@@ -129,6 +185,7 @@
       const [foundAnimals, setFoundAnimals] = useState(new Set(savedProgress?.foundAnimals || []));
       const [currentAnimal, setCurrentAnimal] = useState(null);
       const [quizAnswers, setQuizAnswers] = useState({});
+      const [firstAttemptResults, setFirstAttemptResults] = useState({});
       const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
       const [showResult, setShowResult] = useState(false);
       const [isCorrect, setIsCorrect] = useState(false);
@@ -157,6 +214,7 @@
       // Step 5 – Firestore live student data for teacher classDetails
       const [firestoreStudents, setFirestoreStudents] = useState([]);
       const [firestoreLoading, setFirestoreLoading] = useState(true);
+      const [observationsModal, setObservationsModal] = useState(null);
 
       useEffect(() => { localStorage.setItem('tarongaStudentName', JSON.stringify(studentName)); }, [studentName]);
       useEffect(() => { localStorage.setItem('tarongaClassCode', JSON.stringify(classCode)); }, [classCode]);
@@ -500,6 +558,7 @@
 
         setCurrentAnimal(animal);
         setQuizAnswers({});
+        setFirstAttemptResults({});
         setCurrentQuestionIndex(0);
         setShowResult(false);
         setIsCorrect(false);
@@ -516,6 +575,12 @@
         const correct = answerIndex === currentAnimal.questions[questionIndex].correct;
         setIsCorrect(correct);
         setShowResult(true);
+
+        // Lock in first-attempt result — never overwritten if already set
+        setFirstAttemptResults(prev => {
+          if (prev[questionIndex] !== undefined) return prev;
+          return { ...prev, [questionIndex]: correct };
+        });
 
         if (correct) {
           setQuizAnswers(prev => ({ ...prev, [questionIndex]: answerIndex }));
@@ -539,8 +604,14 @@
         const wc = observation.trim().split(/\s+/).filter(Boolean).length;
         if (wc < 10) { alert(`Your observation needs at least 10 words. You have ${wc}.`); return; }
 
+        // Quiz score = questions correct on first attempt only
         let correctCount = 0;
-        currentAnimal.questions.forEach((q, i) => { if (quizAnswers[i] === q.correct) correctCount++; });
+        const totalQuestions = currentAnimal.questions.length;
+        const quizResults = currentAnimal.questions.map((q, i) => {
+          const wasCorrect = firstAttemptResults[i] === true;
+          if (wasCorrect) correctCount++;
+          return { question: q.question, correctOnFirstAttempt: wasCorrect };
+        });
         const quizPoints = correctCount * 10;
 
         const text = observation.trim();
@@ -570,6 +641,8 @@
         setBadges(prev => ([...prev, {
           animalId: currentAnimal.id, animal: currentAnimal.name, points: totalEarned,
           behaviorScore: behaviorBonus, detailScore: detailBonus, literacyScore: literacyBonus,
+          quizResults: quizResults,
+          observation: text,
           timestamp: new Date().toISOString()
         }]));
         setCurrentScreen('badge');
@@ -646,8 +719,8 @@
         return (
           <div style={{ minHeight:'100vh', background:'var(--mist-light)' }}>
             <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1.5rem 1rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', position:'sticky', top:0, zIndex:100 }}>
-              <div style={{ maxWidth:'1400px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                <div style={{ display:'flex', alignItems:'center', gap:'1rem' }}>
+              <div className="student-banner-mobile" style={{ maxWidth:'1400px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <div className="logo-title-block" style={{ display:'flex', alignItems:'center', gap:'1rem' }}>
                   <img src="images/logo.png" alt="Taronga Tracka" style={{ height:'90px', width:'auto' }} onError={(e)=>{ e.target.style.display='none'; }} />
                   <div>
                     <h1 className="heading-display" style={{ fontSize:'clamp(1.8rem, 4vw, 2.5rem)', color:'white', marginBottom:'0.3rem' }}>DISCOVER ANIMALS</h1>
@@ -655,17 +728,17 @@
                   </div>
                 </div>
                 {studentName && (
-                  <div style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', borderRadius:'20px', padding:'0.4rem 0.85rem', backdropFilter:'blur(6px)' }}>
+                  <div className="student-name-pill" style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', borderRadius:'20px', padding:'0.4rem 0.85rem', backdropFilter:'blur(6px)' }}>
                     <span style={{ color:'white', fontSize:'0.82rem', fontWeight:600 }}>👋 {studentName}</span>
                   </div>
                 )}
                 {studentName && classCode && (
-                  <button onClick={completeActivity} disabled={activityCompleted || isSubmittingActivity}
+                  <button className="submit-btn" onClick={completeActivity} disabled={activityCompleted || isSubmittingActivity}
                     style={{ background: activityCompleted ? 'rgba(46,125,85,0.5)' : 'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))', border: activityCompleted ? '1px solid rgba(255,255,255,0.3)' : 'none', color:'white', padding:'0.55rem 1rem', borderRadius:'30px', cursor: activityCompleted || isSubmittingActivity ? 'not-allowed' : 'pointer', fontSize:'0.82rem', fontWeight:700, opacity: activityCompleted || isSubmittingActivity ? 0.6 : 1, textTransform:'uppercase', letterSpacing:'0.06em', whiteSpace:'nowrap', boxShadow: activityCompleted ? 'none' : '0 4px 12px rgba(232,106,51,0.4)', transition:'all 0.2s' }}>
                     {activityCompleted ? '✓ Submitted' : isSubmittingActivity ? '⏳ Submitting…' : '📤 Complete Activity'}
                   </button>
                 )}
-                <button onClick={()=>setCurrentScreen('collection')} style={{ background:'rgba(255,255,255,0.2)', border:'2px solid rgba(255,255,255,0.4)', color:'white', padding:'0.8rem', borderRadius:'16px', cursor:'pointer', textAlign:'right' }}>
+                <button className="points-card" onClick={()=>setCurrentScreen('collection')} style={{ background:'rgba(255,255,255,0.2)', border:'2px solid rgba(255,255,255,0.4)', color:'white', padding:'0.8rem', borderRadius:'16px', cursor:'pointer', textAlign:'right' }}>
                   <div style={{ fontSize:'2rem', color:'var(--safari-gold)', fontWeight:700, marginBottom:'0.2rem' }}>{totalPoints}</div>
                   <div style={{ color:'rgba(255,255,255,0.9)', fontSize:'0.85rem', fontWeight:600 }}>🏆 {foundAnimals.size}/{animals.length} Badges</div>
                 </button>
@@ -815,11 +888,11 @@
       if (currentScreen === 'collection') {
         return (
           <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', overflow:'auto', padding:'1rem' }}>
-            <div style={{ maxWidth:'900px', margin:'0 auto 2rem', display:'flex', justifyContent:'space-between', alignItems:'center', padding:'1rem' }}>
-              <button onClick={()=>setCurrentScreen('map')} style={{ background:'rgba(255,255,255,0.2)', border:'none', color:'white', padding:'0.6rem 1.2rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.9rem', fontWeight:600 }}>← Back</button>
+            <div className="collection-header-mobile" style={{ maxWidth:'900px', margin:'0 auto 2rem', display:'flex', justifyContent:'space-between', alignItems:'center', padding:'1rem' }}>
+              <button className="back-btn" onClick={()=>setCurrentScreen('map')} style={{ background:'rgba(255,255,255,0.2)', border:'none', color:'white', padding:'0.6rem 1.2rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.9rem', fontWeight:600 }}>← Back</button>
               <h1 className="heading-display" style={{ fontSize:'clamp(1.8rem, 4vw, 2.5rem)', color:'white' }}>BADGE COLLECTION</h1>
               {studentName && classCode ? (
-                <button onClick={completeActivity} disabled={activityCompleted || isSubmittingActivity}
+                <button className="submit-btn" onClick={completeActivity} disabled={activityCompleted || isSubmittingActivity}
                   style={{ background: activityCompleted ? 'rgba(46,125,85,0.5)' : 'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))', border: activityCompleted ? '1px solid rgba(255,255,255,0.3)' : 'none', color:'white', padding:'0.55rem 1rem', borderRadius:'30px', cursor: activityCompleted || isSubmittingActivity ? 'not-allowed' : 'pointer', fontSize:'0.82rem', fontWeight:700, opacity: activityCompleted || isSubmittingActivity ? 0.6 : 1, textTransform:'uppercase', letterSpacing:'0.06em', whiteSpace:'nowrap', boxShadow: activityCompleted ? 'none' : '0 4px 12px rgba(232,106,51,0.4)', transition:'all 0.2s' }}>
                   {activityCompleted ? '✓ Submitted' : isSubmittingActivity ? '⏳ Submitting…' : '📤 Complete Activity'}
                 </button>
@@ -1119,15 +1192,30 @@
         const completedCount = firestoreStudents.filter(s => s.completed).length;
 
         const downloadCSV = () => {
-          const header = ['Name','Points','Badges Earned','Completed','Last Active'];
+          const header = ['Name','Points','Badges Earned','Quiz Score','Completed','Last Active','Observations'];
           const rows = firestoreStudents.map(s => {
             const lastBadge = s.badges && s.badges.length > 0 ? s.badges[s.badges.length - 1] : null;
+            // Quiz score: aggregate first-attempt correctness across all badges
+            let totalQ = 0, correctQ = 0;
+            (s.badges || []).forEach(b => {
+              if (b.quizResults) {
+                b.quizResults.forEach(r => { totalQ++; if (r.correctOnFirstAttempt) correctQ++; });
+              }
+            });
+            const quizScoreStr = totalQ > 0 ? `${Math.round((correctQ / totalQ) * 100)}%` : '—';
+            // Observations: one label per animal
+            const obsStr = (s.badges || [])
+              .filter(b => b.observation)
+              .map(b => `${b.animal}: ${b.observation}`)
+              .join(' | ');
             return [
               s.name,
               s.totalPoints || 0,
               s.badges ? s.badges.length : 0,
+              quizScoreStr,
               s.completed ? 'Yes' : 'No',
-              s.completedAt ? s.completedAt.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : (lastBadge && lastBadge.timestamp ? new Date(lastBadge.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '—')
+              s.completedAt ? s.completedAt.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : (lastBadge && lastBadge.timestamp ? new Date(lastBadge.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '—'),
+              obsStr || '—'
             ];
           });
           const csv = [header, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
@@ -1212,8 +1300,8 @@
                   <div style={{ maxWidth:'720px', margin:'0 auto' }}>
                     <div style={{ background:'white', borderRadius:'16px', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', overflow:'hidden' }}>
                       {/* Table header */}
-                      <div style={{ display:'grid', gridTemplateColumns:'1.6fr 0.7fr 0.7fr 0.7fr 1fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
-                        {['Student','Points','Badges','Done','Last Active'].map(h => (
+                      <div style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 0.85fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
+                        {['Student','Points','Badges','Done','Last Active','Observations'].map(h => (
                           <div key={h} style={{ color:'rgba(255,255,255,0.8)', fontSize:'0.72rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>{h}</div>
                         ))}
                       </div>
@@ -1229,8 +1317,9 @@
                           const lastActiveDate = s.completedAt
                             ? s.completedAt
                             : lastBadge && lastBadge.timestamp ? new Date(lastBadge.timestamp) : null;
+                          const hasObservations = (s.badges || []).some(b => b.observation);
                           return (
-                            <div key={s.name} style={{ display:'grid', gridTemplateColumns:'1.6fr 0.7fr 0.7fr 0.7fr 1fr', padding:'0.7rem 1rem', borderTop:'1px solid #F0EDE8', alignItems:'center', background: i % 2 === 0 ? 'white' : '#FAFAF8' }}>
+                            <div key={s.name} style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 0.85fr', padding:'0.7rem 1rem', borderTop:'1px solid #F0EDE8', alignItems:'center', background: i % 2 === 0 ? 'white' : '#FAFAF8' }}>
                               <div style={{ display:'flex', alignItems:'center', gap:'0.55rem' }}>
                                 <div style={{ width:'28px', height:'28px', borderRadius:'50%', background: s.completed ? 'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))' : 'linear-gradient(135deg, #aaa, #ccc)', display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontSize:'0.72rem', fontWeight:700, flexShrink:0 }}>
                                   {s.name.charAt(0).toUpperCase()}
@@ -1247,6 +1336,12 @@
                               </div>
                               <div style={{ color: lastActiveDate ? 'var(--jungle-mid)' : '#bbb', fontSize:'0.75rem', fontWeight: lastActiveDate ? 600 : 400 }}>
                                 {lastActiveDate ? lastActiveDate.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '—'}
+                              </div>
+                              <div>
+                                {hasObservations
+                                  ? <button onClick={() => setObservationsModal(s)} style={{ background:'var(--jungle-deep)', color:'white', border:'none', padding:'0.25rem 0.6rem', borderRadius:'6px', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' }}>View</button>
+                                  : <span style={{ color:'#bbb', fontSize:'0.75rem' }}>—</span>
+                                }
                               </div>
                             </div>
                           );
@@ -1272,6 +1367,34 @@
               </>
             )}
           </div>
+
+          {/* Observations modal */}
+          {observationsModal && (
+            <div onClick={() => setObservationsModal(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'1.5rem' }}>
+              <div onClick={(e) => e.stopPropagation()} style={{ background:'white', borderRadius:'18px', width:'100%', maxWidth:'480px', maxHeight:'80vh', overflowY:'auto', boxShadow:'0 24px 60px rgba(0,0,0,0.25)' }}>
+                {/* Modal header */}
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'1.2rem 1.4rem 0.8rem', borderBottom:'1px solid #F0EDE8', position:'sticky', top:0, background:'white', zIndex:1 }}>
+                  <div>
+                    <h3 style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)', margin:0 }}>📋 Observations</h3>
+                    <p style={{ fontSize:'0.78rem', color:'#888', margin:'0.15rem 0 0' }}>{observationsModal.name}</p>
+                  </div>
+                  <button onClick={() => setObservationsModal(null)} style={{ background:'none', border:'none', fontSize:'1.4rem', color:'#aaa', cursor:'pointer', lineHeight:1, padding:'0.2rem 0.4rem' }}>×</button>
+                </div>
+                {/* Observation list */}
+                <div style={{ padding:'1rem 1.4rem 1.4rem' }}>
+                  {(observationsModal.badges || []).filter(b => b.observation).map((b, idx, arr) => (
+                    <div key={idx} style={{ borderLeft:'3px solid var(--jungle-mid)', background:'#F7FAF8', borderRadius:'0 10px 10px 0', padding:'0.75rem 1rem', marginBottom: idx < arr.length - 1 ? '0.75rem' : 0 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.35rem' }}>
+                        <span style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{b.animal}</span>
+                        {b.timestamp && <span style={{ fontSize:'0.65rem', color:'#aaa' }}>· {new Date(b.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short' })}</span>}
+                      </div>
+                      <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.55, margin:0 }}>{b.observation}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         );
       }
 
