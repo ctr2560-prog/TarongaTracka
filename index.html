@@ -121,6 +121,7 @@
       const [studentJoinError, setStudentJoinError] = useState('');
       const [newYearGroup, setNewYearGroup] = useState('');
       const [newClassName, setNewClassName] = useState('');
+      const [selectedClass, setSelectedClass] = useState(null);
 
       useEffect(() => { localStorage.setItem('tarongaStudentName', JSON.stringify(studentName)); }, [studentName]);
       useEffect(() => { localStorage.setItem('tarongaClassCode', JSON.stringify(classCode)); }, [classCode]);
@@ -175,6 +176,20 @@
         };
         localStorage.setItem('tarongaTrackaProgress', JSON.stringify(progress));
       }, [currentScreen, foundAnimals, totalPoints, badges, locationEnabled]);
+
+      // Sync student progress back into teacherClasses for the teacher dashboard
+      useEffect(() => {
+        if (!studentName || !classCode) return;
+        const code = classCode.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6);
+        setTeacherClasses(prev => prev.map(cls => {
+          if (cls.classCode.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6) !== code) return cls;
+          const idx = cls.students.findIndex(s => s.name === studentName);
+          if (idx === -1) return cls;
+          const updated = [...cls.students];
+          updated[idx] = { ...updated[idx], progress: { ...updated[idx].progress, badges: badges, quizScore: totalPoints } };
+          return { ...cls, students: updated };
+        }));
+      }, [badges, totalPoints]);
 
       useEffect(() => {
         return () => {
@@ -867,23 +882,28 @@
                 {/* Class List */}
                 <div>
                   <h3 className="heading-display" style={{ fontSize:'1.1rem', color:'var(--jungle-deep)', marginBottom:'0.7rem' }}>
-                    Your Classes <span style={{ fontFamily:'DM Sans, sans-serif', fontWeight:600, fontSize:'0.78rem', color:'var(--jungle-light)', textTransform:'none', letterSpacing:0 }}>({teacherClasses.filter(c => c.teacherEmail === teacherEmail).length})</span>
+                    Your Classes <span style={{ fontFamily:'DM Sans, sans-serif', fontWeight:600, fontSize:'0.78rem', color:'var(--jungle-light)', textTransform:'none', letterSpacing:0 }}>({teacherClasses.filter(c => c.teacherEmail === teacherEmail && !c.archived).length})</span>
                   </h3>
-                  {teacherClasses.filter(c => c.teacherEmail === teacherEmail).length === 0 ? (
+                  {teacherClasses.filter(c => c.teacherEmail === teacherEmail && !c.archived).length === 0 ? (
                     <div style={{ background:'#F5F3EE', borderRadius:'14px', padding:'1.2rem', textAlign:'center' }}>
                       <p style={{ color:'#999', fontSize:'0.85rem', fontStyle:'italic' }}>No classes yet. Create one above to get started.</p>
                     </div>
                   ) : (
                     <div style={{ display:'flex', flexDirection:'column', gap:'0.7rem' }}>
-                      {teacherClasses.filter(c => c.teacherEmail === teacherEmail).map((cls, i) => (
-                        <div key={cls.classCode} className="animate-fade-in-up" style={{ background:'white', borderRadius:'14px', padding:'1rem 1.2rem', boxShadow:'0 4px 12px rgba(0,0,0,0.07)', display:'flex', justifyContent:'space-between', alignItems:'center', animationDelay:`${i*0.06}s` }}>
+                      {teacherClasses.filter(c => c.teacherEmail === teacherEmail && !c.archived).map((cls, i) => (
+                        <div key={cls.classCode} onClick={()=>{ setSelectedClass(cls.classCode); setCurrentScreen('classDetails'); }} className="animate-fade-in-up" style={{ background:'white', borderRadius:'14px', padding:'1rem 1.2rem', boxShadow:'0 4px 12px rgba(0,0,0,0.07)', display:'flex', justifyContent:'space-between', alignItems:'center', animationDelay:`${i*0.06}s`, cursor:'pointer', transition:'box-shadow 0.2s, transform 0.2s' }}
+                          onMouseEnter={(e)=>{ e.currentTarget.style.boxShadow='0 8px 24px rgba(0,0,0,0.13)'; e.currentTarget.style.transform='translateY(-2px)'; }}
+                          onMouseLeave={(e)=>{ e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,0.07)'; e.currentTarget.style.transform='translateY(0)'; }}>
                           <div>
                             <p style={{ fontWeight:700, color:'var(--jungle-deep)', fontSize:'0.95rem', marginBottom:'0.15rem' }}>{cls.className}</p>
                             <p style={{ color:'#888', fontSize:'0.78rem' }}>{cls.yearGroup} · {cls.students.length} student{cls.students.length !== 1 ? 's' : ''}</p>
                           </div>
-                          <div style={{ textAlign:'right' }}>
-                            <p style={{ fontFamily:'monospace', fontWeight:700, fontSize:'0.9rem', color:'var(--jungle-mid)', letterSpacing:'0.05em', marginBottom:'0.15rem' }}>{cls.classCode}</p>
-                            <p style={{ color:'#aaa', fontSize:'0.7rem' }}>class code</p>
+                          <div style={{ display:'flex', alignItems:'center', gap:'0.75rem' }}>
+                            <div style={{ textAlign:'right' }}>
+                              <p style={{ fontFamily:'monospace', fontWeight:700, fontSize:'0.9rem', color:'var(--jungle-mid)', letterSpacing:'0.05em', marginBottom:'0.15rem' }}>{cls.classCode}</p>
+                              <p style={{ color:'#aaa', fontSize:'0.7rem' }}>class code</p>
+                            </div>
+                            <span style={{ color:'var(--jungle-mid)', fontSize:'1.1rem', fontWeight:700 }}>›</span>
                           </div>
                         </div>
                       ))}
@@ -892,6 +912,137 @@
                 </div>
 
                 <button onClick={()=>setCurrentScreen('home')} style={{ display:'block', width:'100%', background:'none', border:'none', color:'#999', fontSize:'0.82rem', cursor:'pointer', marginTop:'1.8rem', padding:'0.4rem' }}>← Back to Home</button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (currentScreen === 'classDetails' && selectedClass) {
+        const cls = teacherClasses.find(c => c.classCode === selectedClass);
+        if (!cls) { setCurrentScreen('teacherDashboard'); return null; }
+
+        const totalStudents = cls.students.length;
+        const avgPoints = totalStudents > 0 ? Math.round(cls.students.reduce((sum, s) => sum + (s.progress.quizScore || 0), 0) / totalStudents) : 0;
+        const totalBadges = cls.students.reduce((sum, s) => sum + (s.progress.badges ? s.progress.badges.length : 0), 0);
+        const activeCount = cls.students.filter(s => s.joinedAt).length;
+
+        const downloadCSV = () => {
+          const header = ['Name','Points','Badges Earned','Joined','Last Active'];
+          const rows = cls.students.map(s => {
+            const lastBadge = s.progress.badges && s.progress.badges.length > 0 ? s.progress.badges[s.progress.badges.length - 1] : null;
+            return [
+              s.name,
+              s.progress.quizScore || 0,
+              s.progress.badges ? s.progress.badges.length : 0,
+              s.joinedAt ? new Date(s.joinedAt).toLocaleDateString('en-AU') : '—',
+              lastBadge ? new Date(lastBadge.timestamp).toLocaleDateString('en-AU') : '—'
+            ];
+          });
+          const csv = [header, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
+          const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a'); a.href = url; a.download = `${cls.className}-${cls.classCode}-results.csv`; a.click();
+          URL.revokeObjectURL(url);
+        };
+
+        const resetClass = () => {
+          if (!window.confirm(`Reset all student data for ${cls.className}? This cannot be undone.`)) return;
+          setTeacherClasses(teacherClasses.map(c => c.classCode === selectedClass ? { ...c, students: [] } : c));
+        };
+
+        const archiveClass = () => {
+          if (!window.confirm(`Archive ${cls.className}? It will be hidden from your active classes.`)) return;
+          setTeacherClasses(teacherClasses.map(c => c.classCode === selectedClass ? { ...c, archived: true } : c));
+          setCurrentScreen('teacherDashboard');
+        };
+
+        return (
+          <div style={{ position:'fixed', inset:0, background:'var(--mist-light)', display:'flex', flexDirection:'column' }}>
+            {/* Header */}
+            <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1rem 1.5rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', flexShrink:0 }}>
+              <div style={{ maxWidth:'720px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:'0.7rem' }}>
+                  <button onClick={()=>setCurrentScreen('teacherDashboard')} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', width:'34px', height:'34px', borderRadius:'50%', cursor:'pointer', fontSize:'1.1rem', display:'flex', alignItems:'center', justifyContent:'center' }}>←</button>
+                  <div>
+                    <h1 className="heading-display" style={{ fontSize:'clamp(1.1rem, 2.8vw, 1.45rem)', color:'white', lineHeight:1.2 }}>{cls.className}</h1>
+                    <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.75rem' }}>{cls.yearGroup} · Code: <span style={{ fontFamily:'monospace', fontWeight:700 }}>{cls.classCode}</span></p>
+                  </div>
+                </div>
+                <button onClick={downloadCSV} style={{ background:'rgba(255,255,255,0.18)', border:'1px solid rgba(255,255,255,0.35)', color:'white', padding:'0.45rem 0.85rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.78rem', fontWeight:600, display:'flex', alignItems:'center', gap:'0.35rem' }}>
+                  ⬇ CSV
+                </button>
+              </div>
+            </div>
+
+            {/* Stats row */}
+            <div style={{ flexShrink:0, padding:'1rem 1.5rem 0' }}>
+              <div style={{ maxWidth:'720px', margin:'0 auto', display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:'0.7rem' }}>
+                {[
+                  { label:'Students', value:totalStudents, icon:'👥' },
+                  { label:'Avg Points', value:avgPoints, icon:'⭐' },
+                  { label:'Total Badges', value:totalBadges, icon:'🏆' },
+                  { label:'Active', value:activeCount, icon:'✓' }
+                ].map(stat => (
+                  <div key={stat.label} style={{ background:'white', borderRadius:'12px', padding:'0.7rem 0.5rem', textAlign:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
+                    <div style={{ fontSize:'1.3rem', marginBottom:'0.15rem' }}>{stat.icon}</div>
+                    <div style={{ fontWeight:700, color:'var(--jungle-deep)', fontSize:'1.1rem', lineHeight:1.2 }}>{stat.value}</div>
+                    <div style={{ color:'#999', fontSize:'0.68rem', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.04em' }}>{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Student table */}
+            <div style={{ flex:1, overflowY:'auto', padding:'1rem 1.5rem 1.5rem' }}>
+              <div style={{ maxWidth:'720px', margin:'0 auto' }}>
+                <div style={{ background:'white', borderRadius:'16px', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', overflow:'hidden' }}>
+                  {/* Table header */}
+                  <div style={{ display:'grid', gridTemplateColumns:'1.6fr 0.7fr 0.7fr 1fr 1fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
+                    {['Student','Points','Badges','Joined','Last Active'].map(h => (
+                      <div key={h} style={{ color:'rgba(255,255,255,0.8)', fontSize:'0.72rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>{h}</div>
+                    ))}
+                  </div>
+
+                  {/* Table body */}
+                  {cls.students.length === 0 ? (
+                    <div style={{ padding:'2rem 1rem', textAlign:'center' }}>
+                      <p style={{ color:'#999', fontSize:'0.85rem', fontStyle:'italic' }}>No students have joined yet.</p>
+                    </div>
+                  ) : (
+                    cls.students.map((s, i) => {
+                      const lastBadge = s.progress.badges && s.progress.badges.length > 0 ? s.progress.badges[s.progress.badges.length - 1] : null;
+                      return (
+                        <div key={`${s.name}-${i}`} style={{ display:'grid', gridTemplateColumns:'1.6fr 0.7fr 0.7fr 1fr 1fr', padding:'0.7rem 1rem', borderTop:'1px solid #F0EDE8', alignItems:'center', background: i % 2 === 0 ? 'white' : '#FAFAF8' }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:'0.55rem' }}>
+                            <div style={{ width:'28px', height:'28px', borderRadius:'50%', background:'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))', display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontSize:'0.72rem', fontWeight:700, flexShrink:0 }}>
+                              {s.name.charAt(0).toUpperCase()}
+                            </div>
+                            <span style={{ fontWeight:600, color:'var(--jungle-deep)', fontSize:'0.88rem' }}>{s.name}</span>
+                          </div>
+                          <div style={{ fontWeight:700, color:'var(--sunset-orange)', fontSize:'0.9rem' }}>{s.progress.quizScore || 0}</div>
+                          <div style={{ fontSize:'0.88rem' }}>{s.progress.badges && s.progress.badges.length > 0 ? '🏆'.repeat(s.progress.badges.length) : <span style={{ color:'#bbb', fontSize:'0.75rem' }}>—</span>}</div>
+                          <div style={{ color:'#888', fontSize:'0.75rem' }}>{s.joinedAt ? new Date(s.joinedAt).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '—'}</div>
+                          <div style={{ color: lastBadge ? 'var(--jungle-mid)' : '#bbb', fontSize:'0.75rem', fontWeight: lastBadge ? 600 : 400 }}>{lastBadge ? new Date(lastBadge.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '—'}</div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div style={{ display:'flex', gap:'0.7rem', marginTop:'1.5rem', flexWrap:'wrap' }}>
+                  <button onClick={resetClass} style={{ flex:'1 1 auto', minWidth:'140px', padding:'0.6rem 1rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', background:'white', color:'#888', fontSize:'0.8rem', fontWeight:600, cursor:'pointer', transition:'all 0.2s' }}
+                    onMouseEnter={(e)=>{ e.currentTarget.style.borderColor='#ef4444'; e.currentTarget.style.color='#ef4444'; }}
+                    onMouseLeave={(e)=>{ e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.color='#888'; }}>
+                    🗑 Reset class data
+                  </button>
+                  <button onClick={archiveClass} style={{ flex:'1 1 auto', minWidth:'140px', padding:'0.6rem 1rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', background:'white', color:'#888', fontSize:'0.8rem', fontWeight:600, cursor:'pointer', transition:'all 0.2s' }}
+                    onMouseEnter={(e)=>{ e.currentTarget.style.borderColor='var(--jungle-mid)'; e.currentTarget.style.color='var(--jungle-mid)'; }}
+                    onMouseLeave={(e)=>{ e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.color='#888'; }}>
+                    📦 Archive class
+                  </button>
+                </div>
               </div>
             </div>
           </div>
