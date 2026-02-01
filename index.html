@@ -145,6 +145,7 @@
       // Step 2 – Class creation state
       const [teacherClasses, setTeacherClasses] = useState(() => { try { return JSON.parse(localStorage.getItem('tarongaTeacherClasses')) || []; } catch(e) { return []; } });
       const [studentJoinError, setStudentJoinError] = useState('');
+      const [lookedUpClass, setLookedUpClass] = useState(null);
       const [newYearGroup, setNewYearGroup] = useState('');
       const [newClassName, setNewClassName] = useState('');
       const [selectedClass, setSelectedClass] = useState(null);
@@ -161,14 +162,23 @@
       useEffect(() => { localStorage.setItem('tarongaClassCode', JSON.stringify(classCode)); }, [classCode]);
       useEffect(() => { localStorage.setItem('tarongaTeacherClasses', JSON.stringify(teacherClasses)); }, [teacherClasses]);
 
+      // Firestore class-code lookup: drives the live preview banner as the student types
       useEffect(() => {
-        if (currentScreen === 'studentJoin') {
-          try {
-            const saved = localStorage.getItem('tarongaTeacherClasses');
-            if (saved) setTeacherClasses(JSON.parse(saved));
-          } catch(e) {}
-        }
-      }, [currentScreen]);
+        if (currentScreen !== 'studentJoin') { setLookedUpClass(null); return; }
+        const code = normaliseCode(classCode);
+        if (code.length !== 6) { setLookedUpClass(null); return; }
+        let cancelled = false;
+        db.collection('classes').doc(code).get().then((doc) => {
+          if (cancelled) return;
+          if (doc.exists) {
+            const d = doc.data();
+            setLookedUpClass({ className: d.className, yearGroup: d.yearGroup });
+          } else {
+            setLookedUpClass(null);
+          }
+        }).catch(() => { if (!cancelled) setLookedUpClass(null); });
+        return () => { cancelled = true; };
+      }, [classCode, currentScreen]);
 
       // Step 5 – Real-time listener: fetch students from Firestore when teacher opens a class
       useEffect(() => {
@@ -228,6 +238,15 @@
         setTeacherClasses(prev => [...prev, newClass]);
         setNewYearGroup('');
         setNewClassName('');
+
+        // Persist class definition to Firestore
+        db.collection('classes').doc(code).set({
+          classCode: code,
+          yearGroup: newClass.yearGroup,
+          className: newClass.className,
+          teacherEmail: teacherEmail,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch((err) => console.error('Failed to save class to Firestore:', err));
       };
 
       const geoWatchIdRef = useRef(null);
@@ -920,24 +939,28 @@
       // ---------- STEP 1 SCREENS ----------
 
       if (currentScreen === 'studentJoin') {
-        const cleanedCode = normaliseCode(classCode);
-        const joinedClass = cleanedCode.length === 6 ? teacherClasses.find(c => normaliseCode(c.classCode) === cleanedCode) : null;
-        const handleJoin = () => {
+        const handleJoin = async () => {
           if (!classCode.trim() || !studentName.trim()) return;
           const code = normaliseCode(classCode);
           if (code.length !== 6) { setStudentJoinError('Code not found — check with your teacher.'); return; }
-          const classIndex = teacherClasses.findIndex(c => normaliseCode(c.classCode) === code);
-          if (classIndex === -1) { setStudentJoinError('Code not found — check with your teacher.'); return; }
-          const updatedClasses = [...teacherClasses];
-          const cls = updatedClasses[classIndex];
-          if (!cls.students.some(s => s.name === studentName)) {
-            cls.students.push({
-              name: studentName,
-              joinedAt: new Date().toISOString(),
-              progress: { badges: [], quizScore: 0, observations: [] }
-            });
+          try {
+            const doc = await db.collection('classes').doc(code).get();
+            if (!doc.exists) { setStudentJoinError('Code not found — check with your teacher.'); return; }
+          } catch (err) {
+            console.error('Firestore join check failed:', err);
+            setStudentJoinError('Could not verify code — please try again.');
+            return;
           }
-          setTeacherClasses(updatedClasses);
+          // Class exists in Firestore — record student locally for dashboard card count
+          const classIndex = teacherClasses.findIndex(c => normaliseCode(c.classCode) === code);
+          if (classIndex !== -1) {
+            const updatedClasses = [...teacherClasses];
+            const cls = updatedClasses[classIndex];
+            if (!cls.students.some(s => s.name === studentName)) {
+              cls.students.push({ name: studentName, joinedAt: new Date().toISOString(), progress: { badges: [], quizScore: 0, observations: [] } });
+            }
+            setTeacherClasses(updatedClasses);
+          }
           localStorage.setItem('tarongaStudentName', JSON.stringify(studentName));
           localStorage.setItem('tarongaClassCode', JSON.stringify(code));
           setStudentJoinError('');
@@ -954,16 +977,16 @@
               </div>
               <label style={{ display:'block', fontSize:'0.82rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.35rem' }}>Class Code</label>
               <input type="text" value={classCode} onChange={(e)=>{ setClassCode(e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6)); setStudentJoinError(''); }} placeholder="Enter 6-character code (e.g. A7K2Q9)"
-                style={{ width:'100%', padding:'0.75rem 1rem', borderRadius:'12px', border:`2px solid ${studentJoinError ? '#ef4444' : joinedClass ? '#22c55e' : '#E5E5E5'}`, fontSize:'1.15rem', fontFamily:'monospace', fontWeight:700, marginBottom: joinedClass || studentJoinError ? '0.4rem' : '1rem', boxSizing:'border-box', transition:'border-color 0.2s', letterSpacing:'0.2em', textAlign:'center' }}
-                onFocus={(e)=>{ if(!studentJoinError && !joinedClass) e.target.style.borderColor='var(--jungle-mid)'; }} onBlur={(e)=>{ if(!studentJoinError && !joinedClass) e.target.style.borderColor='#E5E5E5'; }} />
+                style={{ width:'100%', padding:'0.75rem 1rem', borderRadius:'12px', border:`2px solid ${studentJoinError ? '#ef4444' : lookedUpClass ? '#22c55e' : '#E5E5E5'}`, fontSize:'1.15rem', fontFamily:'monospace', fontWeight:700, marginBottom: lookedUpClass || studentJoinError ? '0.4rem' : '1rem', boxSizing:'border-box', transition:'border-color 0.2s', letterSpacing:'0.2em', textAlign:'center' }}
+                onFocus={(e)=>{ if(!studentJoinError && !lookedUpClass) e.target.style.borderColor='var(--jungle-mid)'; }} onBlur={(e)=>{ if(!studentJoinError && !lookedUpClass) e.target.style.borderColor='#E5E5E5'; }} />
               {studentJoinError && (
                 <div style={{ background:'#FEF2F2', border:'1px solid #FECACA', borderRadius:'10px', padding:'0.55rem 0.75rem', marginBottom:'0.8rem' }}>
                   <p style={{ color:'#DC2626', fontSize:'0.8rem', fontWeight:600 }}>⚠️ {studentJoinError}</p>
                 </div>
               )}
-              {joinedClass && !studentJoinError && (
+              {lookedUpClass && !studentJoinError && (
                 <div style={{ background:'#F0FDF4', border:'1px solid #BBF7D0', borderRadius:'10px', padding:'0.55rem 0.75rem', marginBottom:'0.8rem' }}>
-                  <p style={{ color:'#16A34A', fontSize:'0.8rem', fontWeight:600 }}>✓ {joinedClass.className} — {joinedClass.yearGroup}</p>
+                  <p style={{ color:'#16A34A', fontSize:'0.8rem', fontWeight:600 }}>✓ {lookedUpClass.className} — {lookedUpClass.yearGroup}</p>
                 </div>
               )}
               <label style={{ display:'block', fontSize:'0.82rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.35rem' }}>First Name</label>
