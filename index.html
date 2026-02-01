@@ -449,11 +449,6 @@
                   <div style={{ display:'flex', alignItems:'center', gap:'0.6rem' }}><span style={{ fontSize:'clamp(1.2rem, 2.5vh, 1.5rem)' }}>🏆</span><span>Collect badges & earn points</span></div>
                 </div>
               </div>
-              {window.matchMedia('(pointer: fine)').matches && (
-                <div className="animate-fade-in-up" style={{ background:'rgba(74,159,216,0.15)', border:'1px solid rgba(74,159,216,0.35)', borderRadius:'14px', padding:'0.6rem 1rem', maxWidth:'420px', width:'90%', marginBottom:'clamp(0.8rem, 2vh, 1.2rem)', animationDelay:'0.5s' }}>
-                  <p style={{ color:'rgba(74,159,216,0.95)', fontSize:'0.8rem', fontWeight:600, lineHeight:1.4 }}>🖥️ Desktop preview mode — GPS unlock works on mobile devices at Taronga Zoo.</p>
-                </div>
-              )}
               <button onClick={enableLocation} className="animate-scale-in" style={{ background:'linear-gradient(135deg, var(--sunset-orange) 0%, var(--earth-clay) 100%)', color:'white', border:'none', padding:'clamp(0.8rem, 2vh, 1rem) clamp(2rem, 5vw, 2.5rem)', fontSize:'clamp(0.95rem, 2.5vh, 1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', boxShadow:'0 10px 30px rgba(232,106,51,0.4)', animationDelay:'0.6s', textTransform:'uppercase', letterSpacing:'0.1em', width:'min(90vw, 400px)' }}>
                 Begin Exploration
               </button>
