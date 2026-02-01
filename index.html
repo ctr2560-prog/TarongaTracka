@@ -126,6 +126,8 @@
       useEffect(() => { localStorage.setItem('tarongaClassCode', JSON.stringify(classCode)); }, [classCode]);
       useEffect(() => { localStorage.setItem('tarongaTeacherClasses', JSON.stringify(teacherClasses)); }, [teacherClasses]);
 
+      const normaliseCode = (code) => code.replace(/[-\s]/g, '').toUpperCase();
+
       const generateClassCode = (yearGroup, className) => {
         const yearPart = yearGroup.replace(/[^0-9]/g, '');
         const namePart = className.replace(/[^A-Za-z0-9]/g, '').slice(0, 2).toUpperCase();
@@ -136,7 +138,7 @@
       const createClass = () => {
         if (!newYearGroup.trim() || !newClassName.trim()) return;
         let code = generateClassCode(newYearGroup, newClassName);
-        while (teacherClasses.some(c => c.classCode === code)) {
+        while (teacherClasses.some(c => normaliseCode(c.classCode) === normaliseCode(code))) {
           code = generateClassCode(newYearGroup, newClassName);
         }
         const newClass = {
@@ -509,6 +511,11 @@
                     <p className="serif-accent" style={{ color:'var(--safari-gold)', fontSize:'1rem' }}>Get within range to unlock</p>
                   </div>
                 </div>
+                {studentName && (
+                  <div style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', borderRadius:'20px', padding:'0.4rem 0.85rem', backdropFilter:'blur(6px)' }}>
+                    <span style={{ color:'white', fontSize:'0.82rem', fontWeight:600 }}>👋 {studentName}</span>
+                  </div>
+                )}
                 <button onClick={()=>setCurrentScreen('collection')} style={{ background:'rgba(255,255,255,0.2)', border:'2px solid rgba(255,255,255,0.4)', color:'white', padding:'0.8rem', borderRadius:'16px', cursor:'pointer', textAlign:'right' }}>
                   <div style={{ fontSize:'2rem', color:'var(--safari-gold)', fontWeight:700, marginBottom:'0.2rem' }}>{totalPoints}</div>
                   <div style={{ color:'rgba(255,255,255,0.9)', fontSize:'0.85rem', fontWeight:600 }}>🏆 {foundAnimals.size}/{animals.length} Badges</div>
@@ -722,13 +729,19 @@
       // ---------- STEP 1 SCREENS ----------
 
       if (currentScreen === 'studentJoin') {
-        const joinedClass = teacherClasses.find(c => c.classCode === classCode.trim().toUpperCase());
+        const joinedClass = teacherClasses.find(c => normaliseCode(c.classCode) === normaliseCode(classCode));
         const handleJoin = () => {
           if (!classCode.trim() || !studentName.trim()) return;
-          const match = teacherClasses.find(c => c.classCode === classCode.trim().toUpperCase());
+          const match = teacherClasses.find(c => normaliseCode(c.classCode) === normaliseCode(classCode));
           if (!match) { setStudentJoinError('That class code isn\'t valid. Check with your teacher and try again.'); return; }
           setStudentJoinError('');
-          setCurrentScreen(locationEnabled ? 'map' : 'home');
+          setCurrentScreen('map');
+        };
+        const formatClassCode = (raw) => {
+          const stripped = raw.replace(/[-\s]/g, '').toUpperCase().slice(0, 10);
+          if (stripped.length <= 3) return stripped;
+          if (stripped.length <= 7) return stripped.slice(0,3) + '-' + stripped.slice(3);
+          return stripped.slice(0,3) + '-' + stripped.slice(3,7) + '-' + stripped.slice(7);
         };
         return (
           <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'clamp(1rem, 5vw, 2rem)', overflow:'auto' }}>
@@ -739,8 +752,8 @@
                 <p style={{ color:'#666', fontSize:'0.9rem' }}>Enter your class code and first name to join</p>
               </div>
               <label style={{ display:'block', fontSize:'0.82rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.35rem' }}>Class Code</label>
-              <input type="text" value={classCode} onChange={(e)=>{ setClassCode(e.target.value); setStudentJoinError(''); }} placeholder="e.g. TAR-7A-482"
-                style={{ width:'100%', padding:'0.75rem 1rem', borderRadius:'12px', border:`2px solid ${studentJoinError ? '#ef4444' : '#E5E5E5'}`, fontSize:'1rem', fontFamily:'DM Sans, sans-serif', marginBottom: joinedClass ? '0.4rem' : '1rem', boxSizing:'border-box', transition:'border-color 0.2s', textTransform:'uppercase', letterSpacing:'0.05em' }}
+              <input type="text" value={formatClassCode(classCode)} onChange={(e)=>{ setClassCode(e.target.value); setStudentJoinError(''); }} placeholder="e.g. TAR-7A-482"
+                style={{ width:'100%', padding:'0.75rem 1rem', borderRadius:'12px', border:`2px solid ${studentJoinError ? '#ef4444' : '#E5E5E5'}`, fontSize:'1rem', fontFamily:'monospace', fontWeight:600, marginBottom: joinedClass ? '0.4rem' : '1rem', boxSizing:'border-box', transition:'border-color 0.2s', letterSpacing:'0.08em' }}
                 onFocus={(e)=>{ if(!studentJoinError) e.target.style.borderColor='var(--jungle-mid)'; }} onBlur={(e)=>{ if(!studentJoinError) e.target.style.borderColor='#E5E5E5'; }} />
               {studentJoinError && (
                 <div style={{ background:'#FEF2F2', border:'1px solid #FECACA', borderRadius:'10px', padding:'0.55rem 0.75rem', marginBottom:'0.8rem' }}>
