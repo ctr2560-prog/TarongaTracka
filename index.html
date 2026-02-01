@@ -734,9 +734,21 @@
         const handleJoin = () => {
           if (!classCode.trim() || !studentName.trim()) return;
           const code = normaliseCode(classCode);
-          if (code.length < 6) { setStudentJoinError('Code not found — check with your teacher.'); return; }
-          const match = teacherClasses.find(c => normaliseCode(c.classCode) === code);
-          if (!match) { setStudentJoinError('Code not found — check with your teacher.'); return; }
+          if (code.length !== 6) { setStudentJoinError('Code not found — check with your teacher.'); return; }
+          const classIndex = teacherClasses.findIndex(c => normaliseCode(c.classCode) === code);
+          if (classIndex === -1) { setStudentJoinError('Code not found — check with your teacher.'); return; }
+          const updatedClasses = [...teacherClasses];
+          const cls = updatedClasses[classIndex];
+          if (!cls.students.some(s => s.name === studentName)) {
+            cls.students.push({
+              name: studentName,
+              joinedAt: new Date().toISOString(),
+              progress: { badges: [], quizScore: 0, observations: [] }
+            });
+          }
+          setTeacherClasses(updatedClasses);
+          localStorage.setItem('tarongaStudentName', JSON.stringify(studentName));
+          localStorage.setItem('tarongaClassCode', JSON.stringify(code));
           setStudentJoinError('');
           setCurrentScreen('map');
         };
