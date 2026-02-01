@@ -126,6 +126,15 @@
       useEffect(() => { localStorage.setItem('tarongaClassCode', JSON.stringify(classCode)); }, [classCode]);
       useEffect(() => { localStorage.setItem('tarongaTeacherClasses', JSON.stringify(teacherClasses)); }, [teacherClasses]);
 
+      useEffect(() => {
+        if (currentScreen === 'studentJoin') {
+          try {
+            const saved = localStorage.getItem('tarongaTeacherClasses');
+            if (saved) setTeacherClasses(JSON.parse(saved));
+          } catch(e) {}
+        }
+      }, [currentScreen]);
+
       const normaliseCode = (code) => code.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6);
 
       const generateClassCode = () => {
