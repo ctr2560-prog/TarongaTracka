@@ -91,6 +91,10 @@
       50% { opacity: 0.6; }
     }
 
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
     .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
     .animate-scale-in   { animation: scaleIn 0.6s ease-out forwards; }
 
@@ -149,6 +153,10 @@
       const [activityCompleted, setActivityCompleted] = useState(savedProgress?.activityCompleted || false);
       const [isSubmittingActivity, setIsSubmittingActivity] = useState(false);
 
+      // Step 5 – Firestore live student data for teacher classDetails
+      const [firestoreStudents, setFirestoreStudents] = useState([]);
+      const [firestoreLoading, setFirestoreLoading] = useState(true);
+
       useEffect(() => { localStorage.setItem('tarongaStudentName', JSON.stringify(studentName)); }, [studentName]);
       useEffect(() => { localStorage.setItem('tarongaClassCode', JSON.stringify(classCode)); }, [classCode]);
       useEffect(() => { localStorage.setItem('tarongaTeacherClasses', JSON.stringify(teacherClasses)); }, [teacherClasses]);
@@ -161,6 +169,39 @@
           } catch(e) {}
         }
       }, [currentScreen]);
+
+      // Step 5 – Real-time listener: fetch students from Firestore when teacher opens a class
+      useEffect(() => {
+        if (!selectedClass || currentScreen !== 'classDetails') {
+          setFirestoreStudents([]);
+          setFirestoreLoading(true);
+          return;
+        }
+
+        setFirestoreLoading(true);
+        const unsubscribe = db.collection('classes').doc(selectedClass)
+          .collection('students')
+          .onSnapshot((snapshot) => {
+            const students = snapshot.docs.map(doc => {
+              const d = doc.data();
+              return {
+                name: d.name || doc.id,
+                totalPoints: d.totalPoints || 0,
+                badges: d.badges || [],
+                completed: d.completed || false,
+                completedAt: d.completedAt ? d.completedAt.toDate() : null
+              };
+            });
+            setFirestoreStudents(students);
+            setFirestoreLoading(false);
+          }, (err) => {
+            console.error('Firestore listener error:', err);
+            setFirestoreStudents([]);
+            setFirestoreLoading(false);
+          });
+
+        return () => unsubscribe();
+      }, [selectedClass, currentScreen]);
 
       const normaliseCode = (code) => code.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6);
 
@@ -1048,21 +1089,22 @@
         const cls = teacherClasses.find(c => c.classCode === selectedClass);
         if (!cls) { setCurrentScreen('teacherDashboard'); return null; }
 
-        const totalStudents = cls.students.length;
-        const avgPoints = totalStudents > 0 ? Math.round(cls.students.reduce((sum, s) => sum + (s.progress.quizScore || 0), 0) / totalStudents) : 0;
-        const totalBadges = cls.students.reduce((sum, s) => sum + (s.progress.badges ? s.progress.badges.length : 0), 0);
-        const activeCount = cls.students.filter(s => s.joinedAt).length;
+        // All student data now comes from Firestore via the live listener
+        const totalStudents = firestoreStudents.length;
+        const avgPoints = totalStudents > 0 ? Math.round(firestoreStudents.reduce((sum, s) => sum + (s.totalPoints || 0), 0) / totalStudents) : 0;
+        const totalBadges = firestoreStudents.reduce((sum, s) => sum + (s.badges ? s.badges.length : 0), 0);
+        const completedCount = firestoreStudents.filter(s => s.completed).length;
 
         const downloadCSV = () => {
-          const header = ['Name','Points','Badges Earned','Joined','Last Active'];
-          const rows = cls.students.map(s => {
-            const lastBadge = s.progress.badges && s.progress.badges.length > 0 ? s.progress.badges[s.progress.badges.length - 1] : null;
+          const header = ['Name','Points','Badges Earned','Completed','Last Active'];
+          const rows = firestoreStudents.map(s => {
+            const lastBadge = s.badges && s.badges.length > 0 ? s.badges[s.badges.length - 1] : null;
             return [
               s.name,
-              s.progress.quizScore || 0,
-              s.progress.badges ? s.progress.badges.length : 0,
-              s.joinedAt ? new Date(s.joinedAt).toLocaleDateString('en-AU') : '—',
-              lastBadge ? new Date(lastBadge.timestamp).toLocaleDateString('en-AU') : '—'
+              s.totalPoints || 0,
+              s.badges ? s.badges.length : 0,
+              s.completed ? 'Yes' : 'No',
+              s.completedAt ? s.completedAt.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : (lastBadge && lastBadge.timestamp ? new Date(lastBadge.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '—')
             ];
           });
           const csv = [header, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
@@ -1072,9 +1114,16 @@
           URL.revokeObjectURL(url);
         };
 
-        const resetClass = () => {
+        const resetClass = async () => {
           if (!window.confirm(`Reset all student data for ${cls.className}? This cannot be undone.`)) return;
-          setTeacherClasses(teacherClasses.map(c => c.classCode === selectedClass ? { ...c, students: [] } : c));
+          try {
+            const snapshot = await db.collection('classes').doc(selectedClass).collection('students').get();
+            const batch = db.batch();
+            snapshot.docs.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+          } catch (err) {
+            alert('Failed to reset class data. Please check your connection.');
+          }
         };
 
         const archiveClass = () => {
@@ -1095,82 +1144,110 @@
                     <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.75rem' }}>{cls.yearGroup} · Code: <span style={{ fontFamily:'monospace', fontWeight:700 }}>{cls.classCode}</span></p>
                   </div>
                 </div>
-                <button onClick={downloadCSV} style={{ background:'rgba(255,255,255,0.18)', border:'1px solid rgba(255,255,255,0.35)', color:'white', padding:'0.45rem 0.85rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.78rem', fontWeight:600, display:'flex', alignItems:'center', gap:'0.35rem' }}>
-                  ⬇ CSV
-                </button>
+                <div style={{ display:'flex', alignItems:'center', gap:'0.5rem' }}>
+                  {!firestoreLoading && (
+                    <div style={{ display:'flex', alignItems:'center', gap:'0.3rem', background:'rgba(46,125,85,0.3)', border:'1px solid rgba(46,125,85,0.5)', borderRadius:'14px', padding:'0.25rem 0.55rem' }}>
+                      <div style={{ width:'7px', height:'7px', borderRadius:'50%', background:'#34d399', boxShadow:'0 0 6px rgba(52,211,153,0.6)' }} />
+                      <span style={{ color:'#34d399', fontSize:'0.68rem', fontWeight:600 }}>LIVE</span>
+                    </div>
+                  )}
+                  <button onClick={downloadCSV} disabled={firestoreLoading} style={{ background:'rgba(255,255,255,0.18)', border:'1px solid rgba(255,255,255,0.35)', color:'white', padding:'0.45rem 0.85rem', borderRadius:'20px', cursor:firestoreLoading?'not-allowed':'pointer', fontSize:'0.78rem', fontWeight:600, display:'flex', alignItems:'center', gap:'0.35rem', opacity:firestoreLoading?0.5:1 }}>
+                    ⬇ CSV
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Stats row */}
-            <div style={{ flexShrink:0, padding:'1rem 1.5rem 0' }}>
-              <div style={{ maxWidth:'720px', margin:'0 auto', display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:'0.7rem' }}>
-                {[
-                  { label:'Students', value:totalStudents, icon:'👥' },
-                  { label:'Avg Points', value:avgPoints, icon:'⭐' },
-                  { label:'Total Badges', value:totalBadges, icon:'🏆' },
-                  { label:'Active', value:activeCount, icon:'✓' }
-                ].map(stat => (
-                  <div key={stat.label} style={{ background:'white', borderRadius:'12px', padding:'0.7rem 0.5rem', textAlign:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
-                    <div style={{ fontSize:'1.3rem', marginBottom:'0.15rem' }}>{stat.icon}</div>
-                    <div style={{ fontWeight:700, color:'var(--jungle-deep)', fontSize:'1.1rem', lineHeight:1.2 }}>{stat.value}</div>
-                    <div style={{ color:'#999', fontSize:'0.68rem', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.04em' }}>{stat.label}</div>
-                  </div>
-                ))}
+            {/* Loading state — shown only until the first snapshot arrives */}
+            {firestoreLoading ? (
+              <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'1rem' }}>
+                <div style={{ width:'40px', height:'40px', border:'3px solid rgba(26,82,56,0.15)', borderTop:'3px solid var(--jungle-mid)', borderRadius:'50%', animation:'spin 0.7s linear infinite' }} />
+                <p style={{ color:'#888', fontSize:'0.85rem' }}>Fetching student data…</p>
               </div>
-            </div>
-
-            {/* Student table */}
-            <div style={{ flex:1, overflowY:'auto', padding:'1rem 1.5rem 1.5rem' }}>
-              <div style={{ maxWidth:'720px', margin:'0 auto' }}>
-                <div style={{ background:'white', borderRadius:'16px', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', overflow:'hidden' }}>
-                  {/* Table header */}
-                  <div style={{ display:'grid', gridTemplateColumns:'1.6fr 0.7fr 0.7fr 1fr 1fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
-                    {['Student','Points','Badges','Joined','Last Active'].map(h => (
-                      <div key={h} style={{ color:'rgba(255,255,255,0.8)', fontSize:'0.72rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>{h}</div>
+            ) : (
+              <>
+                {/* Stats row */}
+                <div style={{ flexShrink:0, padding:'1rem 1.5rem 0' }}>
+                  <div style={{ maxWidth:'720px', margin:'0 auto', display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:'0.7rem' }}>
+                    {[
+                      { label:'Students', value:totalStudents, icon:'👥' },
+                      { label:'Avg Points', value:avgPoints, icon:'⭐' },
+                      { label:'Total Badges', value:totalBadges, icon:'🏆' },
+                      { label:'Completed', value:completedCount, icon:'✓' }
+                    ].map(stat => (
+                      <div key={stat.label} style={{ background:'white', borderRadius:'12px', padding:'0.7rem 0.5rem', textAlign:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
+                        <div style={{ fontSize:'1.3rem', marginBottom:'0.15rem' }}>{stat.icon}</div>
+                        <div style={{ fontWeight:700, color:'var(--jungle-deep)', fontSize:'1.1rem', lineHeight:1.2 }}>{stat.value}</div>
+                        <div style={{ color:'#999', fontSize:'0.68rem', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.04em' }}>{stat.label}</div>
+                      </div>
                     ))}
                   </div>
+                </div>
 
-                  {/* Table body */}
-                  {cls.students.length === 0 ? (
-                    <div style={{ padding:'2rem 1rem', textAlign:'center' }}>
-                      <p style={{ color:'#999', fontSize:'0.85rem', fontStyle:'italic' }}>No students have joined yet.</p>
-                    </div>
-                  ) : (
-                    cls.students.map((s, i) => {
-                      const lastBadge = s.progress.badges && s.progress.badges.length > 0 ? s.progress.badges[s.progress.badges.length - 1] : null;
-                      return (
-                        <div key={`${s.name}-${i}`} style={{ display:'grid', gridTemplateColumns:'1.6fr 0.7fr 0.7fr 1fr 1fr', padding:'0.7rem 1rem', borderTop:'1px solid #F0EDE8', alignItems:'center', background: i % 2 === 0 ? 'white' : '#FAFAF8' }}>
-                          <div style={{ display:'flex', alignItems:'center', gap:'0.55rem' }}>
-                            <div style={{ width:'28px', height:'28px', borderRadius:'50%', background:'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))', display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontSize:'0.72rem', fontWeight:700, flexShrink:0 }}>
-                              {s.name.charAt(0).toUpperCase()}
-                            </div>
-                            <span style={{ fontWeight:600, color:'var(--jungle-deep)', fontSize:'0.88rem' }}>{s.name}</span>
-                          </div>
-                          <div style={{ fontWeight:700, color:'var(--sunset-orange)', fontSize:'0.9rem' }}>{s.progress.quizScore || 0}</div>
-                          <div style={{ fontSize:'0.88rem' }}>{s.progress.badges && s.progress.badges.length > 0 ? '🏆'.repeat(s.progress.badges.length) : <span style={{ color:'#bbb', fontSize:'0.75rem' }}>—</span>}</div>
-                          <div style={{ color:'#888', fontSize:'0.75rem' }}>{s.joinedAt ? new Date(s.joinedAt).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '—'}</div>
-                          <div style={{ color: lastBadge ? 'var(--jungle-mid)' : '#bbb', fontSize:'0.75rem', fontWeight: lastBadge ? 600 : 400 }}>{lastBadge ? new Date(lastBadge.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '—'}</div>
+                {/* Student table */}
+                <div style={{ flex:1, overflowY:'auto', padding:'1rem 1.5rem 1.5rem' }}>
+                  <div style={{ maxWidth:'720px', margin:'0 auto' }}>
+                    <div style={{ background:'white', borderRadius:'16px', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', overflow:'hidden' }}>
+                      {/* Table header */}
+                      <div style={{ display:'grid', gridTemplateColumns:'1.6fr 0.7fr 0.7fr 0.7fr 1fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
+                        {['Student','Points','Badges','Done','Last Active'].map(h => (
+                          <div key={h} style={{ color:'rgba(255,255,255,0.8)', fontSize:'0.72rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>{h}</div>
+                        ))}
+                      </div>
+
+                      {/* Table body */}
+                      {firestoreStudents.length === 0 ? (
+                        <div style={{ padding:'2rem 1rem', textAlign:'center' }}>
+                          <p style={{ color:'#999', fontSize:'0.85rem', fontStyle:'italic' }}>No students have submitted yet.</p>
                         </div>
-                      );
-                    })
-                  )}
-                </div>
+                      ) : (
+                        firestoreStudents.map((s, i) => {
+                          const lastBadge = s.badges && s.badges.length > 0 ? s.badges[s.badges.length - 1] : null;
+                          const lastActiveDate = s.completedAt
+                            ? s.completedAt
+                            : lastBadge && lastBadge.timestamp ? new Date(lastBadge.timestamp) : null;
+                          return (
+                            <div key={s.name} style={{ display:'grid', gridTemplateColumns:'1.6fr 0.7fr 0.7fr 0.7fr 1fr', padding:'0.7rem 1rem', borderTop:'1px solid #F0EDE8', alignItems:'center', background: i % 2 === 0 ? 'white' : '#FAFAF8' }}>
+                              <div style={{ display:'flex', alignItems:'center', gap:'0.55rem' }}>
+                                <div style={{ width:'28px', height:'28px', borderRadius:'50%', background: s.completed ? 'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))' : 'linear-gradient(135deg, #aaa, #ccc)', display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontSize:'0.72rem', fontWeight:700, flexShrink:0 }}>
+                                  {s.name.charAt(0).toUpperCase()}
+                                </div>
+                                <span style={{ fontWeight:600, color:'var(--jungle-deep)', fontSize:'0.88rem' }}>{s.name}</span>
+                              </div>
+                              <div style={{ fontWeight:700, color:'var(--sunset-orange)', fontSize:'0.9rem' }}>{s.totalPoints || 0}</div>
+                              <div style={{ fontSize:'0.88rem' }}>{s.badges && s.badges.length > 0 ? '🏆'.repeat(s.badges.length) : <span style={{ color:'#bbb', fontSize:'0.75rem' }}>—</span>}</div>
+                              <div style={{ fontSize:'0.82rem' }}>
+                                {s.completed
+                                  ? <span style={{ display:'inline-flex', alignItems:'center', gap:'0.25rem', background:'#F0FDF4', color:'#16A34A', fontWeight:700, fontSize:'0.72rem', padding:'0.2rem 0.5rem', borderRadius:'10px' }}>✓ Yes</span>
+                                  : <span style={{ color:'#bbb', fontSize:'0.75rem' }}>—</span>
+                                }
+                              </div>
+                              <div style={{ color: lastActiveDate ? 'var(--jungle-mid)' : '#bbb', fontSize:'0.75rem', fontWeight: lastActiveDate ? 600 : 400 }}>
+                                {lastActiveDate ? lastActiveDate.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '—'}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
 
-                {/* Actions */}
-                <div style={{ display:'flex', gap:'0.7rem', marginTop:'1.5rem', flexWrap:'wrap' }}>
-                  <button onClick={resetClass} style={{ flex:'1 1 auto', minWidth:'140px', padding:'0.6rem 1rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', background:'white', color:'#888', fontSize:'0.8rem', fontWeight:600, cursor:'pointer', transition:'all 0.2s' }}
-                    onMouseEnter={(e)=>{ e.currentTarget.style.borderColor='#ef4444'; e.currentTarget.style.color='#ef4444'; }}
-                    onMouseLeave={(e)=>{ e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.color='#888'; }}>
-                    🗑 Reset class data
-                  </button>
-                  <button onClick={archiveClass} style={{ flex:'1 1 auto', minWidth:'140px', padding:'0.6rem 1rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', background:'white', color:'#888', fontSize:'0.8rem', fontWeight:600, cursor:'pointer', transition:'all 0.2s' }}
-                    onMouseEnter={(e)=>{ e.currentTarget.style.borderColor='var(--jungle-mid)'; e.currentTarget.style.color='var(--jungle-mid)'; }}
-                    onMouseLeave={(e)=>{ e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.color='#888'; }}>
-                    📦 Archive class
-                  </button>
+                    {/* Actions */}
+                    <div style={{ display:'flex', gap:'0.7rem', marginTop:'1.5rem', flexWrap:'wrap' }}>
+                      <button onClick={resetClass} style={{ flex:'1 1 auto', minWidth:'140px', padding:'0.6rem 1rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', background:'white', color:'#888', fontSize:'0.8rem', fontWeight:600, cursor:'pointer', transition:'all 0.2s' }}
+                        onMouseEnter={(e)=>{ e.currentTarget.style.borderColor='#ef4444'; e.currentTarget.style.color='#ef4444'; }}
+                        onMouseLeave={(e)=>{ e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.color='#888'; }}>
+                        🗑 Reset class data
+                      </button>
+                      <button onClick={archiveClass} style={{ flex:'1 1 auto', minWidth:'140px', padding:'0.6rem 1rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', background:'white', color:'#888', fontSize:'0.8rem', fontWeight:600, cursor:'pointer', transition:'all 0.2s' }}
+                        onMouseEnter={(e)=>{ e.currentTarget.style.borderColor='var(--jungle-mid)'; e.currentTarget.style.color='var(--jungle-mid)'; }}
+                        onMouseLeave={(e)=>{ e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.color='#888'; }}>
+                        📦 Archive class
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
         );
       }
