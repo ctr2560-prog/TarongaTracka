@@ -759,6 +759,7 @@
           localStorage.setItem('tarongaStudentName', JSON.stringify(studentName));
           localStorage.setItem('tarongaClassCode', JSON.stringify(code));
           setStudentJoinError('');
+          enableLocation();
           setCurrentScreen('map');
         };
         return (
