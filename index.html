@@ -329,20 +329,8 @@
 
         if (correct) {
           setQuizAnswers(prev => ({ ...prev, [questionIndex]: answerIndex }));
-          try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.15);
-            gain.gain.setValueAtTime(0.4, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-            osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + 0.4);
-          } catch(e) {}
+          const audio = new Audio('images/ding.mp3');
+          audio.play().catch(() => {});
         }
       };
 
@@ -560,7 +548,16 @@
             <div style={{ maxWidth:'900px', margin:'0 auto', padding:'3rem 2rem' }}>
               <div style={{ background:'white', borderRadius:'20px', padding:'2.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
                 <h2 className="heading-display" style={{ fontSize:'2.5rem', color:'var(--jungle-deep)', marginBottom:'1rem', textAlign:'center' }}>Your Observations</h2>
-                <p style={{ color:'#666', marginBottom:'2rem', lineHeight:1.6, fontSize:'1.1rem', textAlign:'center' }}>{currentAnimal.observationPrompt}</p>
+                <p style={{ color:'#666', marginBottom:'1.2rem', lineHeight:1.6, fontSize:'1.1rem', textAlign:'center' }}>{currentAnimal.observationPrompt}</p>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:'0.6rem', justifyContent:'center', marginBottom:'1.5rem' }}>
+                  {[
+                    { label:'🤔 What is it doing right now?', color:'var(--jungle-light)' },
+                    { label:'👀 What does it look like?', color:'var(--discovery-blue)' },
+                    { label:'📝 Use full sentences.', color:'var(--sunset-orange)' }
+                  ].map((hint, i) => (
+                    <div key={i} style={{ background:`${hint.color}18`, border:`1.5px solid ${hint.color}40`, borderRadius:'20px', padding:'0.45rem 0.9rem', fontSize:'0.85rem', fontWeight:600, color:hint.color }}>{hint.label}</div>
+                  ))}
+                </div>
                 <textarea value={observation} onChange={(e)=>setObservation(e.target.value)} placeholder="Describe what you observe in detail..."
                   style={{ width:'100%', minHeight:'200px', padding:'1.5rem', borderRadius:'16px', border:'3px solid #E5E5E5', fontSize:'1.1rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', transition:'border-color 0.2s ease' }}
                   onFocus={(e)=>e.target.style.borderColor=currentAnimal.color} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'} />
