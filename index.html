@@ -670,6 +670,22 @@
           database: firebase.app().options.databaseURL || "(default)"
         });
 
+        // Sanitize badges: ensure no undefined fields, including nested quizResults
+        const cleanBadges = badges.map(b => ({
+          animalId: b.animalId || "",
+          animal: b.animal || "",
+          points: b.points || 0,
+          behaviorScore: b.behaviorScore || 0,
+          detailScore: b.detailScore || 0,
+          literacyScore: b.literacyScore || 0,
+          quizResults: (b.quizResults || []).map(qr => ({
+            question: qr.question || "",
+            correctOnFirstAttempt: qr.correctOnFirstAttempt === true
+          })),
+          observation: b.observation || "",
+          timestamp: b.timestamp || ""
+        }));
+
         try {
           await window.db.collection('classes').doc(code)
             .collection('students').doc(safeStudentId)
@@ -677,7 +693,7 @@
               name: studentName,
               classCode: code,
               totalPoints: totalPoints,
-              badges: badges,
+              badges: cleanBadges,
               completed: true,
               completedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
