@@ -659,10 +659,20 @@
 
         setIsSubmittingActivity(true);
         const code = normaliseCode(classCode);
+        const safeStudentId = studentName.trim().replace(/[\/#\.\$\[\]]/g, "_");
+
+        // Debug: log submission details
+        console.log("📤 Submitting to Firestore:", {
+          classCode: classCode,
+          normalisedCode: code,
+          studentName: studentName,
+          safeStudentId: safeStudentId,
+          database: firebase.app().options.databaseURL || "(default)"
+        });
 
         try {
           await window.db.collection('classes').doc(code)
-            .collection('students').doc(studentName)
+            .collection('students').doc(safeStudentId)
             .set({
               name: studentName,
               classCode: code,
@@ -676,8 +686,9 @@
           setIsSubmittingActivity(false);
           setCurrentScreen('submissionComplete');
         } catch (err) {
+          console.error("❌ Firestore submission error:", err);
           setIsSubmittingActivity(false);
-          alert('Submission failed. Please check your connection and try again.');
+          alert(`Submission failed: ${err.message}\n\nPlease check your connection and try again.`);
         }
       };
 
