@@ -34,8 +34,11 @@
   // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
 
+  // Debug: confirm which Firebase project we're connected to
+  console.log("🔥 Firebase project:", firebase.app().options.projectId);
+
   // Firestore reference (THIS is what we'll use later)
-  const db = firebase.firestore();
+  window.db = firebase.firestore();
 </script>
 
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
@@ -226,7 +229,7 @@
         const code = normaliseCode(classCode);
         if (code.length !== 6) { setLookedUpClass(null); return; }
         let cancelled = false;
-        db.collection('classes').doc(code).get().then((doc) => {
+        window.db.collection('classes').doc(code).get().then((doc) => {
           if (cancelled) return;
           if (doc.exists) {
             const d = doc.data();
@@ -247,7 +250,7 @@
         }
 
         setFirestoreLoading(true);
-        const unsubscribe = db.collection('classes').doc(selectedClass)
+        const unsubscribe = window.db.collection('classes').doc(selectedClass)
           .collection('students')
           .onSnapshot((snapshot) => {
             const students = snapshot.docs.map(doc => {
@@ -298,7 +301,7 @@
         setNewClassName('');
 
         // Persist class definition to Firestore
-        db.collection('classes').doc(code).set({
+        window.db.collection('classes').doc(code).set({
           classCode: code,
           yearGroup: newClass.yearGroup,
           className: newClass.className,
@@ -658,7 +661,7 @@
         const code = normaliseCode(classCode);
 
         try {
-          await db.collection('classes').doc(code)
+          await window.db.collection('classes').doc(code)
             .collection('students').doc(studentName)
             .set({
               name: studentName,
@@ -1010,7 +1013,7 @@
           const code = normaliseCode(classCode);
           if (code.length !== 6) { setStudentJoinError('Code not found — check with your teacher.'); return; }
           try {
-            const doc = await db.collection('classes').doc(code).get();
+            const doc = await window.db.collection('classes').doc(code).get();
             if (!doc.exists) { setStudentJoinError('Code not found — check with your teacher.'); return; }
           } catch (err) {
             console.error('Firestore join check failed:', err);
@@ -1219,8 +1222,8 @@
         const resetClass = async () => {
           if (!window.confirm(`Reset all student data for ${cls.className}? This cannot be undone.`)) return;
           try {
-            const snapshot = await db.collection('classes').doc(selectedClass).collection('students').get();
-            const batch = db.batch();
+            const snapshot = await window.db.collection('classes').doc(selectedClass).collection('students').get();
+            const batch = window.db.batch();
             snapshot.docs.forEach(doc => batch.delete(doc.ref));
             await batch.commit();
           } catch (err) {
