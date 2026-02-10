@@ -171,9 +171,6 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
 
-    // GPS TOGGLE: Set to false to disable all location requirements (temporary demo mode)
-    const GPS_ENABLED = false;
-
     const TarongaTracka = () => {
       const loadProgress = () => {
         try {
@@ -462,7 +459,7 @@
         },
         {
           id: 'koala', name: 'Koala', scientificName: 'Phascolarctos cinereus',
-          image: 'images/koala.jpg', latitude: -34.2068, longitude: 150.5799,
+          image: 'images/koala.jpg', latitude: -34.027013, longitude: 150.851140,
           radius: 50, emoji: '🐨', color: '#7A8B6F',
           questions: [
             { q: 'Without intervention, by what year could koalas become extinct in NSW?',
@@ -508,16 +505,6 @@
       };
 
       const enableLocation = () => {
-        // GPS disabled: skip all location logic
-        if (!GPS_ENABLED) {
-          setLocationEnabled(true);
-          if (!hasEnteredMapRef.current) {
-            hasEnteredMapRef.current = true;
-            setCurrentScreen(prev => (prev === 'home' ? 'map' : prev));
-          }
-          return;
-        }
-
         const video = document.getElementById('bgVideo');
         if (video) { video.muted = true; video.playsInline = true; video.play().catch(() => {}); }
 
@@ -561,9 +548,6 @@
       };
 
       const checkAnimalProximity = (animal) => {
-        // GPS disabled: all animals are always "nearby"
-        if (!GPS_ENABLED) return { nearby: true, distance: 0 };
-
         if (!userLocation) return { nearby: false, distance: null };
         const distance = calculateDistance(userLocation.latitude, userLocation.longitude, animal.latitude, animal.longitude);
         return { nearby: distance <= animal.radius, distance: Math.round(distance) };
