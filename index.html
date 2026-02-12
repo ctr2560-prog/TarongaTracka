@@ -1461,6 +1461,89 @@
                   </div>
                 ) : (
                   <>
+                    {(() => {
+                      // Calculate KPIs from adminClasses
+                      const totalClasses = adminClasses.length;
+                      const totalStudents = adminClasses.reduce((sum, cls) => sum + cls.studentCount, 0);
+                      
+                      // Calculate average quiz percentage from all students
+                      let quizPercentageSum = 0;
+                      let studentsWithQuiz = 0;
+                      
+                      // Calculate observation scores and total unlocks
+                      let observationScoresSum = 0;
+                      let studentsWithObservations = 0;
+                      let totalUnlocks = 0;
+                      
+                      // This requires iterating through actual student data
+                      // We'll use the data already loaded in adminClasses
+                      adminClasses.forEach(cls => {
+                        // Note: We need to fetch student subcollections for detailed metrics
+                        // For now, we'll use available data from class aggregates
+                      });
+                      
+                      // Average quiz percentage (from class averages weighted by student count)
+                      let weightedQuizSum = 0;
+                      let totalStudentsWithQuiz = 0;
+                      adminClasses.forEach(cls => {
+                        if (cls.quizAverage && cls.studentCount > 0) {
+                          weightedQuizSum += cls.quizAverage * cls.completedCount;
+                          totalStudentsWithQuiz += cls.completedCount;
+                        }
+                      });
+                      const averageQuizPercentage = totalStudentsWithQuiz > 0 
+                        ? Math.round(weightedQuizSum / totalStudentsWithQuiz) 
+                        : 0;
+                      
+                      // Count unique schools
+                      const uniqueSchools = new Set(
+                        adminClasses
+                          .map(cls => cls.schoolName)
+                          .filter(name => name && name.trim())
+                      ).size;
+                      
+                      // Placeholder values for metrics requiring student-level data
+                      const averageObservationScore = '—';
+                      const totalUnlocksDisplay = '—';
+                      
+                      return (
+                        <>
+                          {/* KPI Cards Row */}
+                          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(160px, 1fr))', gap:'1rem', marginBottom:'1.5rem' }}>
+                            <div className="animate-scale-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', animationDelay:'0.05s' }}>
+                              <div style={{ fontSize:'2.5rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem', lineHeight:1 }}>{totalClasses}</div>
+                              <div style={{ fontSize:'0.85rem', fontWeight:600, color:'#888', textTransform:'uppercase', letterSpacing:'0.05em' }}>Total Classes</div>
+                            </div>
+                            
+                            <div className="animate-scale-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', animationDelay:'0.1s' }}>
+                              <div style={{ fontSize:'2.5rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem', lineHeight:1 }}>{totalStudents}</div>
+                              <div style={{ fontSize:'0.85rem', fontWeight:600, color:'#888', textTransform:'uppercase', letterSpacing:'0.05em' }}>Total Students</div>
+                            </div>
+                            
+                            <div className="animate-scale-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', animationDelay:'0.15s' }}>
+                              <div style={{ fontSize:'2.5rem', fontWeight:700, color:'var(--jungle-mid)', marginBottom:'0.3rem', lineHeight:1 }}>{averageQuizPercentage}%</div>
+                              <div style={{ fontSize:'0.85rem', fontWeight:600, color:'#888', textTransform:'uppercase', letterSpacing:'0.05em' }}>Avg Quiz Score</div>
+                            </div>
+                            
+                            <div className="animate-scale-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', animationDelay:'0.2s' }}>
+                              <div style={{ fontSize:'2.5rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem', lineHeight:1 }}>{averageObservationScore}</div>
+                              <div style={{ fontSize:'0.85rem', fontWeight:600, color:'#888', textTransform:'uppercase', letterSpacing:'0.05em' }}>Avg Observation</div>
+                            </div>
+                            
+                            <div className="animate-scale-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', animationDelay:'0.25s' }}>
+                              <div style={{ fontSize:'2.5rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem', lineHeight:1 }}>{totalUnlocksDisplay}</div>
+                              <div style={{ fontSize:'0.85rem', fontWeight:600, color:'#888', textTransform:'uppercase', letterSpacing:'0.05em' }}>Total Unlocks</div>
+                            </div>
+                            
+                            <div className="animate-scale-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', animationDelay:'0.3s' }}>
+                              <div style={{ fontSize:'2.5rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem', lineHeight:1 }}>{uniqueSchools}</div>
+                              <div style={{ fontSize:'0.85rem', fontWeight:600, color:'#888', textTransform:'uppercase', letterSpacing:'0.05em' }}>Unique Schools</div>
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
+
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:'1rem', marginBottom:'1.5rem' }}>
                       <div className="animate-scale-in" style={{ background:'white', borderRadius:'16px', padding:'1.5rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', animationDelay:'0.1s' }}>
                         <div style={{ fontSize:'2rem', marginBottom:'0.5rem' }}>👥</div>
