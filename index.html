@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -14,17 +13,12 @@
   <title>Taronga Tracka v2.2 - Animal Discovery</title>
 
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <!-- Firebase SDKs -->
-
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <script>
@@ -170,7 +164,6 @@
       }
     }
   </style>
-
 </head>
 
 <body>
@@ -251,6 +244,14 @@
       const [observationsModal, setObservationsModal] = useState(null);
       const [classCodeModal, setClassCodeModal] = useState(null);
       const [classCodeFullscreen, setClassCodeFullscreen] = useState(false);
+
+      // Analytics chart refs (declared at top level to follow hooks rules)
+      const animalChartRef = React.useRef(null);
+      const animalChartInstanceRef = React.useRef(null);
+      const quizChartRef = React.useRef(null);
+      const quizChartInstanceRef = React.useRef(null);
+      const radarChartRef = React.useRef(null);
+      const radarChartInstanceRef = React.useRef(null);
 
       useEffect(() => { localStorage.setItem('tarongaStudentName', JSON.stringify(studentName)); }, [studentName]);
       useEffect(() => { localStorage.setItem('tarongaClassCode', JSON.stringify(classCode)); }, [classCode]);
@@ -618,6 +619,244 @@
           audio.play().catch(() => {});
         }
       }, [currentScreen]);
+
+      // Analytics Charts useEffects (hooks declared at top level)
+      // Chart 1: Most Visited Animals
+      useEffect(() => {
+        if (currentScreen !== 'adminDashboard' || adminTab !== 'analytics') return;
+        if (!window.Chart || !animalChartRef.current) return;
+
+        try {
+          const { Chart, registerables } = window;
+          if (registerables) {
+            Chart.register(...registerables);
+          }
+
+          if (animalChartInstanceRef.current) {
+            animalChartInstanceRef.current.destroy();
+          }
+
+          // Calculate animal data
+          const animalCounts = {};
+          const animalNames = ['Chimpanzee', 'Western Lowland Gorilla', 'African Lion', 'Giraffe', 'Koala', 'Sumatran Tiger'];
+          animalNames.forEach(name => { animalCounts[name] = 0; });
+          const sortedAnimals = Object.entries(animalCounts).sort((a, b) => b[1] - a[1]);
+
+          const ctx = animalChartRef.current.getContext('2d');
+          animalChartInstanceRef.current = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: sortedAnimals.map(([name]) => name),
+              datasets: [{
+                label: 'Total Visits',
+                data: sortedAnimals.map(([, count]) => count),
+                backgroundColor: '#1A5238',
+                borderColor: '#1A5238',
+                borderWidth: 0,
+                borderRadius: 8,
+                barThickness: 40
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  backgroundColor: 'rgba(10, 47, 31, 0.9)',
+                  titleColor: '#fff',
+                  bodyColor: '#fff',
+                  borderColor: '#1A5238',
+                  borderWidth: 1,
+                  padding: 12,
+                  displayColors: false,
+                  callbacks: { label: (context) => 'Visits: ' + context.parsed.y }
+                }
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: { stepSize: 5, color: '#666', font: { size: 12, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' },
+                  grid: { color: '#F0EDE8', drawBorder: false }
+                },
+                x: {
+                  ticks: { color: '#666', font: { size: 11, family: "'DM Sans', sans-serif" } },
+                  grid: { display: false, drawBorder: false }
+                }
+              }
+            }
+          });
+        } catch (error) {
+          console.error('Failed to create Most Visited Animals chart:', error);
+        }
+
+        return () => {
+          if (animalChartInstanceRef.current) {
+            animalChartInstanceRef.current.destroy();
+          }
+        };
+      }, [currentScreen, adminTab, adminClasses]);
+
+      // Chart 2: Quiz Performance Distribution
+      useEffect(() => {
+        if (currentScreen !== 'adminDashboard' || adminTab !== 'analytics') return;
+        if (!window.Chart || !quizChartRef.current) return;
+
+        try {
+          const { Chart, registerables } = window;
+          if (registerables) {
+            Chart.register(...registerables);
+          }
+
+          if (quizChartInstanceRef.current) {
+            quizChartInstanceRef.current.destroy();
+          }
+
+          // Calculate quiz ranges
+          const quizRanges = { '0-25%': 0, '26-50%': 0, '51-75%': 0, '76-100%': 0 };
+          adminClasses.forEach(cls => {
+            const avg = cls.quizAverage;
+            const count = cls.completedCount || 0;
+            if (avg >= 0 && avg <= 25) quizRanges['0-25%'] += count;
+            else if (avg >= 26 && avg <= 50) quizRanges['26-50%'] += count;
+            else if (avg >= 51 && avg <= 75) quizRanges['51-75%'] += count;
+            else if (avg >= 76 && avg <= 100) quizRanges['76-100%'] += count;
+          });
+
+          const ctx = quizChartRef.current.getContext('2d');
+          quizChartInstanceRef.current = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: Object.keys(quizRanges),
+              datasets: [{
+                label: 'Number of Students',
+                data: Object.values(quizRanges),
+                backgroundColor: '#2E7D55',
+                borderColor: '#2E7D55',
+                borderWidth: 0,
+                borderRadius: 8,
+                barThickness: 60
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  backgroundColor: 'rgba(46, 125, 85, 0.9)',
+                  titleColor: '#fff',
+                  bodyColor: '#fff',
+                  borderColor: '#2E7D55',
+                  borderWidth: 1,
+                  padding: 12,
+                  displayColors: false,
+                  callbacks: { label: (context) => 'Students: ' + context.parsed.y }
+                }
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: { stepSize: 5, color: '#666', font: { size: 12, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' },
+                  grid: { color: '#F0EDE8', drawBorder: false }
+                },
+                x: {
+                  ticks: { color: '#666', font: { size: 12, family: "'DM Sans', sans-serif", weight: 600 } },
+                  grid: { display: false, drawBorder: false }
+                }
+              }
+            }
+          });
+        } catch (error) {
+          console.error('Failed to create Quiz Distribution chart:', error);
+        }
+
+        return () => {
+          if (quizChartInstanceRef.current) {
+            quizChartInstanceRef.current.destroy();
+          }
+        };
+      }, [currentScreen, adminTab, adminClasses]);
+
+      // Chart 3: Observation Skill Breakdown (Radar)
+      useEffect(() => {
+        if (currentScreen !== 'adminDashboard' || adminTab !== 'analytics') return;
+        if (!window.Chart || !radarChartRef.current) return;
+
+        try {
+          const { Chart, registerables } = window;
+          if (registerables) {
+            Chart.register(...registerables);
+          }
+
+          if (radarChartInstanceRef.current) {
+            radarChartInstanceRef.current.destroy();
+          }
+
+          // Placeholder scores
+          const avgBehaviorScore = 0;
+          const avgDetailScore = 0;
+          const avgLiteracyScore = 0;
+
+          const ctx = radarChartRef.current.getContext('2d');
+          radarChartInstanceRef.current = new Chart(ctx, {
+            type: 'radar',
+            data: {
+              labels: ['Behavior Score', 'Detail Score', 'Literacy Score'],
+              datasets: [{
+                label: 'Average Score',
+                data: [avgBehaviorScore, avgDetailScore, avgLiteracyScore],
+                backgroundColor: 'rgba(30, 79, 61, 0.2)',
+                borderColor: '#1E4F3D',
+                borderWidth: 2,
+                pointBackgroundColor: '#1E4F3D',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointHoverBackgroundColor: '#1A5238',
+                pointHoverBorderColor: '#fff'
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  backgroundColor: 'rgba(30, 79, 61, 0.9)',
+                  titleColor: '#fff',
+                  bodyColor: '#fff',
+                  borderColor: '#1E4F3D',
+                  borderWidth: 1,
+                  padding: 12,
+                  displayColors: false,
+                  callbacks: { label: (context) => 'Average: ' + context.parsed.r + '/100' }
+                }
+              },
+              scales: {
+                r: {
+                  beginAtZero: true,
+                  min: 0,
+                  max: 100,
+                  ticks: { stepSize: 20, color: '#666', font: { size: 11, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' },
+                  grid: { color: '#E5E5E5' },
+                  angleLines: { color: '#E5E5E5' },
+                  pointLabels: { color: '#333', font: { size: 13, family: "'DM Sans', sans-serif", weight: 600 } }
+                }
+              }
+            }
+          });
+        } catch (error) {
+          console.error('Failed to create Radar chart:', error);
+        }
+
+        return () => {
+          if (radarChartInstanceRef.current) {
+            radarChartInstanceRef.current.destroy();
+          }
+        };
+      }, [currentScreen, adminTab, adminClasses]);
 
       // ---------- DATA ----------
       const animals = [
@@ -1754,438 +1993,52 @@
                       </div>
                     ) : (
                       <>
-                        {(() => {
-                          // Calculate animal engagement data
-                          const animalCounts = {};
-                          
-                          // Loop through all classes
-                          adminClasses.forEach(cls => {
-                            // Note: We need student-level badge data
-                            // For now, this will be calculated from available data
-                            // In a real scenario, we'd fetch student subcollections
-                          });
-                          
-                          // For demonstration, let's use the animal names from the app
-                          const animalNames = [
-                            'Chimpanzee',
-                            'Western Lowland Gorilla',
-                            'African Lion',
-                            'Giraffe',
-                            'Koala',
-                            'Sumatran Tiger'
-                          ];
-                          
-                          // Initialize counts (placeholder values since we need student badge data)
-                          animalNames.forEach(name => {
-                            animalCounts[name] = 0;
-                          });
-                          
-                          // Sort by count descending
-                          const sortedAnimals = Object.entries(animalCounts)
-                            .sort((a, b) => b[1] - a[1]);
-                          
-                          const chartRef = React.useRef(null);
-                          const chartInstanceRef = React.useRef(null);
-                          
-                          React.useEffect(() => {
-                            // Guard: Check if Chart.js is loaded and canvas is ready
-                            if (!window.Chart || !chartRef.current) return;
-
-                            try {
-                              // Register Chart.js components (v4)
-                              const { Chart, registerables } = window;
-                              if (registerables) {
-                                Chart.register(...registerables);
-                              }
-
-                              // Destroy previous instance
-                              if (chartInstanceRef.current) {
-                                chartInstanceRef.current.destroy();
-                              }
-                              
-                              const ctx = chartRef.current.getContext('2d');
-                              chartInstanceRef.current = new Chart(ctx, {
-                                type: 'bar',
-                                data: {
-                                  labels: sortedAnimals.map(([name]) => name),
-                                  datasets: [{
-                                    label: 'Total Visits',
-                                    data: sortedAnimals.map(([, count]) => count),
-                                    backgroundColor: '#1A5238',
-                                    borderColor: '#1A5238',
-                                    borderWidth: 0,
-                                    borderRadius: 8,
-                                    barThickness: 40
-                                  }]
-                                },
-                                options: {
-                                  responsive: true,
-                                  maintainAspectRatio: false,
-                                  plugins: {
-                                    legend: {
-                                      display: false
-                                    },
-                                    tooltip: {
-                                      backgroundColor: 'rgba(10, 47, 31, 0.9)',
-                                      titleColor: '#fff',
-                                      bodyColor: '#fff',
-                                      borderColor: '#1A5238',
-                                      borderWidth: 1,
-                                      padding: 12,
-                                      displayColors: false,
-                                      callbacks: {
-                                        label: function(context) {
-                                          return 'Visits: ' + context.parsed.y;
-                                        }
-                                      }
-                                    }
-                                  },
-                                  scales: {
-                                    y: {
-                                      beginAtZero: true,
-                                      ticks: {
-                                        stepSize: 5,
-                                        color: '#666',
-                                        font: {
-                                          size: 12,
-                                          family: "'DM Sans', sans-serif"
-                                        }
-                                      },
-                                      grid: {
-                                        color: '#F0EDE8',
-                                        drawBorder: false
-                                      }
-                                    },
-                                    x: {
-                                      ticks: {
-                                        color: '#666',
-                                        font: {
-                                          size: 11,
-                                          family: "'DM Sans', sans-serif"
-                                        }
-                                      },
-                                      grid: {
-                                        display: false,
-                                        drawBorder: false
-                                      }
-                                    }
-                                  }
-                                }
-                              });
-                            } catch (error) {
-                              console.error('Failed to create Most Visited Animals chart:', error);
-                            }
-                            
-                            return () => {
-                              if (chartInstanceRef.current) {
-                                chartInstanceRef.current.destroy();
-                              }
-                            };
-                          }, []);
-                          
-                          return (
-                            <div style={{ marginBottom:'2rem' }}>
-                              <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
-                                Most Visited Animals
-                              </h2>
-                              <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
-                                <div style={{ height:'400px', position:'relative' }}>
-                                  <canvas ref={chartRef}></canvas>
-                                </div>
-                              </div>
-                              <p style={{ color:'#888', fontSize:'0.85rem', marginTop:'1rem', textAlign:'center', fontStyle:'italic' }}>
-                                Note: Animal visit data will be calculated from student badge submissions once data is available.
-                              </p>
+                        {/* Chart 1: Most Visited Animals */}
+                        <div style={{ marginBottom:'2rem' }}>
+                          <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
+                            Most Visited Animals
+                          </h2>
+                          <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
+                            <div style={{ height:'400px', position:'relative' }}>
+                              <canvas ref={animalChartRef}></canvas>
                             </div>
+                          </div>
+                          <p style={{ color:'#888', fontSize:'0.85rem', marginTop:'1rem', textAlign:'center', fontStyle:'italic' }}>
+                            Note: Animal visit data will be calculated from student badge submissions once data is available.
+                          </p>
+                        </div>
                           );
                         })()}
 
-                        {(() => {
-                          // Calculate quiz performance distribution
-                          const quizRanges = {
-                            '0-25%': 0,
-                            '26-50%': 0,
-                            '51-75%': 0,
-                            '76-100%': 0
-                          };
-                          
-                          // Count students in each range from adminClasses
-                          // Note: This requires accessing student-level quizPercentage data
-                          // For now, we'll use aggregate data from adminClasses
-                          // In production, you'd fetch student subcollections
-                          
-                          // Placeholder: Distribute based on class averages as estimate
-                          adminClasses.forEach(cls => {
-                            const avg = cls.quizAverage;
-                            const count = cls.completedCount || 0;
-                            
-                            if (avg >= 0 && avg <= 25) {
-                              quizRanges['0-25%'] += count;
-                            } else if (avg >= 26 && avg <= 50) {
-                              quizRanges['26-50%'] += count;
-                            } else if (avg >= 51 && avg <= 75) {
-                              quizRanges['51-75%'] += count;
-                            } else if (avg >= 76 && avg <= 100) {
-                              quizRanges['76-100%'] += count;
-                            }
-                          });
-                          
-                          const quizChartRef = React.useRef(null);
-                          const quizChartInstanceRef = React.useRef(null);
-                          
-                          React.useEffect(() => {
-                            // Guard: Check if Chart.js is loaded and canvas is ready
-                            if (!window.Chart || !quizChartRef.current) return;
-
-                            try {
-                              // Register Chart.js components (v4)
-                              const { Chart, registerables } = window;
-                              if (registerables) {
-                                Chart.register(...registerables);
-                              }
-
-                              // Destroy previous instance
-                              if (quizChartInstanceRef.current) {
-                                quizChartInstanceRef.current.destroy();
-                              }
-                              
-                              const ctx = quizChartRef.current.getContext('2d');
-                              quizChartInstanceRef.current = new Chart(ctx, {
-                                type: 'bar',
-                                data: {
-                                  labels: Object.keys(quizRanges),
-                                  datasets: [{
-                                    label: 'Number of Students',
-                                    data: Object.values(quizRanges),
-                                    backgroundColor: '#2E7D55',
-                                    borderColor: '#2E7D55',
-                                    borderWidth: 0,
-                                    borderRadius: 8,
-                                    barThickness: 60
-                                  }]
-                                },
-                                options: {
-                                  responsive: true,
-                                  maintainAspectRatio: false,
-                                  plugins: {
-                                    legend: {
-                                      display: false
-                                    },
-                                    tooltip: {
-                                      backgroundColor: 'rgba(46, 125, 85, 0.9)',
-                                      titleColor: '#fff',
-                                      bodyColor: '#fff',
-                                      borderColor: '#2E7D55',
-                                      borderWidth: 1,
-                                      padding: 12,
-                                      displayColors: false,
-                                      callbacks: {
-                                        label: function(context) {
-                                          return 'Students: ' + context.parsed.y;
-                                        }
-                                      }
-                                    }
-                                  },
-                                  scales: {
-                                    y: {
-                                      beginAtZero: true,
-                                      ticks: {
-                                        stepSize: 5,
-                                        color: '#666',
-                                        font: {
-                                          size: 12,
-                                          family: "'DM Sans', sans-serif"
-                                        }
-                                      },
-                                      grid: {
-                                        color: '#F0EDE8',
-                                        drawBorder: false
-                                      }
-                                    },
-                                    x: {
-                                      ticks: {
-                                        color: '#666',
-                                        font: {
-                                          size: 12,
-                                          family: "'DM Sans', sans-serif",
-                                          weight: 600
-                                        }
-                                      },
-                                      grid: {
-                                        display: false,
-                                        drawBorder: false
-                                      }
-                                    }
-                                  }
-                                }
-                              });
-                            } catch (error) {
-                              console.error('Failed to create Quiz Distribution chart:', error);
-                            }
-                            
-                            return () => {
-                              if (quizChartInstanceRef.current) {
-                                quizChartInstanceRef.current.destroy();
-                              }
-                            };
-                          }, []);
-                          
-                          return (
-                            <div style={{ marginBottom:'2rem' }}>
-                              <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
-                                Quiz Performance Distribution
-                              </h2>
-                              <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
-                                <div style={{ height:'350px', position:'relative' }}>
-                                  <canvas ref={quizChartRef}></canvas>
-                                </div>
-                              </div>
-                              <p style={{ color:'#888', fontSize:'0.85rem', marginTop:'1rem', textAlign:'center', fontStyle:'italic' }}>
-                                Distribution based on completed student quiz scores across all classes.
-                              </p>
+                        {/* Chart 2: Quiz Performance Distribution */}
+                        <div style={{ marginBottom:'2rem' }}>
+                          <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
+                            Quiz Performance Distribution
+                          </h2>
+                          <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
+                            <div style={{ height:'350px', position:'relative' }}>
+                              <canvas ref={quizChartRef}></canvas>
                             </div>
-                          );
-                        })()}
+                          </div>
+                          <p style={{ color:'#888', fontSize:'0.85rem', marginTop:'1rem', textAlign:'center', fontStyle:'italic' }}>
+                            Distribution based on completed student quiz scores across all classes.
+                          </p>
+                        </div>
 
-                        {(() => {
-                          // Calculate average observation scores
-                          let totalBehaviorScore = 0;
-                          let totalDetailScore = 0;
-                          let totalLiteracyScore = 0;
-                          let studentCount = 0;
-                          
-                          // Note: This requires student-level badge data with observation scores
-                          // For now, placeholder values will be shown
-                          // In production, fetch student subcollections and aggregate scores
-                          
-                          // Placeholder: Use sample data structure
-                          // Real implementation would loop through:
-                          // adminClasses -> students -> badges with observation scores
-                          
-                          const avgBehaviorScore = studentCount > 0 ? Math.round(totalBehaviorScore / studentCount) : 0;
-                          const avgDetailScore = studentCount > 0 ? Math.round(totalDetailScore / studentCount) : 0;
-                          const avgLiteracyScore = studentCount > 0 ? Math.round(totalLiteracyScore / studentCount) : 0;
-                          
-                          const radarChartRef = React.useRef(null);
-                          const radarChartInstanceRef = React.useRef(null);
-                          
-                          React.useEffect(() => {
-                            // Guard: Check if Chart.js is loaded and canvas is ready
-                            if (!window.Chart || !radarChartRef.current) return;
-
-                            try {
-                              // Register Chart.js components (v4)
-                              const { Chart, registerables } = window;
-                              if (registerables) {
-                                Chart.register(...registerables);
-                              }
-
-                              // Destroy previous instance
-                              if (radarChartInstanceRef.current) {
-                                radarChartInstanceRef.current.destroy();
-                              }
-                              
-                              const ctx = radarChartRef.current.getContext('2d');
-                              radarChartInstanceRef.current = new Chart(ctx, {
-                                type: 'radar',
-                                data: {
-                                  labels: ['Behavior Score', 'Detail Score', 'Literacy Score'],
-                                  datasets: [{
-                                    label: 'Average Score',
-                                    data: [avgBehaviorScore, avgDetailScore, avgLiteracyScore],
-                                    backgroundColor: 'rgba(30, 79, 61, 0.2)',
-                                    borderColor: '#1E4F3D',
-                                    borderWidth: 2,
-                                    pointBackgroundColor: '#1E4F3D',
-                                    pointBorderColor: '#fff',
-                                    pointBorderWidth: 2,
-                                    pointRadius: 5,
-                                    pointHoverRadius: 7,
-                                    pointHoverBackgroundColor: '#1A5238',
-                                    pointHoverBorderColor: '#fff'
-                                  }]
-                                },
-                                options: {
-                                  responsive: true,
-                                  maintainAspectRatio: false,
-                                  plugins: {
-                                    legend: {
-                                      display: false
-                                    },
-                                    tooltip: {
-                                      backgroundColor: 'rgba(30, 79, 61, 0.9)',
-                                      titleColor: '#fff',
-                                      bodyColor: '#fff',
-                                      borderColor: '#1E4F3D',
-                                      borderWidth: 1,
-                                      padding: 12,
-                                      displayColors: false,
-                                      callbacks: {
-                                        label: function(context) {
-                                          return 'Average: ' + context.parsed.r + '/100';
-                                        }
-                                      }
-                                    }
-                                  },
-                                  scales: {
-                                    r: {
-                                      beginAtZero: true,
-                                      min: 0,
-                                      max: 100,
-                                      ticks: {
-                                        stepSize: 20,
-                                        color: '#666',
-                                        font: {
-                                          size: 11,
-                                          family: "'DM Sans', sans-serif"
-                                        },
-                                        backdropColor: 'transparent'
-                                      },
-                                      grid: {
-                                        color: '#E5E5E5'
-                                      },
-                                      angleLines: {
-                                        color: '#E5E5E5'
-                                      },
-                                      pointLabels: {
-                                        color: '#333',
-                                        font: {
-                                          size: 13,
-                                          family: "'DM Sans', sans-serif",
-                                          weight: 600
-                                        }
-                                      }
-                                    }
-                                  }
-                                }
-                              });
-                            } catch (error) {
-                              console.error('Failed to create Radar chart:', error);
-                            }
-                            
-                            return () => {
-                              if (radarChartInstanceRef.current) {
-                                radarChartInstanceRef.current.destroy();
-                              }
-                            };
-                          }, []);
-                          
-                          return (
-                            <div style={{ marginBottom:'2rem' }}>
-                              <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
-                                Observation Skill Breakdown
-                              </h2>
-                              <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
-                                <div style={{ height:'400px', position:'relative' }}>
-                                  <canvas ref={radarChartRef}></canvas>
-                                </div>
-                              </div>
-                              <p style={{ color:'#888', fontSize:'0.85rem', marginTop:'1rem', textAlign:'center', fontStyle:'italic' }}>
-                                Average scores across all completed student observations. Scores range from 0-100.
-                              </p>
+                        {/* Chart 3: Observation Skill Breakdown (Radar) */}
+                        <div style={{ marginBottom:'2rem' }}>
+                          <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
+                            Observation Skill Breakdown
+                          </h2>
+                          <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
+                            <div style={{ height:'400px', position:'relative' }}>
+                              <canvas ref={radarChartRef}></canvas>
                             </div>
-                          );
-                        })()}
+                          </div>
+                          <p style={{ color:'#888', fontSize:'0.85rem', marginTop:'1rem', textAlign:'center', fontStyle:'italic' }}>
+                            Average scores across all completed student observations. Scores range from 0-100.
+                          </p>
+                        </div>
 
                         {(() => {
                           // Group classes by school and calculate performance metrics
@@ -2854,6 +2707,5 @@
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<TarongaTracka />);
   </script>
-
 </body>
 </html>
