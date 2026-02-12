@@ -201,6 +201,7 @@
       const [studentName, setStudentName] = useState(() => { try { return JSON.parse(localStorage.getItem('tarongaStudentName')) || ''; } catch(e) { return ''; } });
       const [classCode, setClassCode] = useState(() => { try { return JSON.parse(localStorage.getItem('tarongaClassCode')) || ''; } catch(e) { return ''; } });
       const [teacherEmail, setTeacherEmail] = useState('');
+      const [adminAccessCode, setAdminAccessCode] = useState('');
 
       // Step 2 – Class creation state
       const [teacherClasses, setTeacherClasses] = useState([]);
@@ -1134,6 +1135,47 @@
                 Join
               </button>
               <button onClick={()=>{ setStudentJoinError(''); setCurrentScreen('home'); }} style={{ display:'block', width:'100%', background:'none', border:'none', color:'#999', fontSize:'0.82rem', cursor:'pointer', marginTop:'1rem', padding:'0.4rem' }}>← Back</button>
+            </div>
+          </div>
+        );
+      }
+
+      if (currentScreen === 'adminLogin') {
+        const handleAdminLogin = async () => {
+          const code = adminAccessCode.trim().toLowerCase();
+          if (!code) return;
+          
+          try {
+            const doc = await window.db.collection('adminAccess').doc(code).get();
+            if (doc.exists && doc.data().active === true) {
+              setCurrentScreen('adminDashboard');
+            } else {
+              alert('Invalid or inactive access code');
+            }
+          } catch (err) {
+            console.error('Admin login error:', err);
+            alert('Failed to verify access code. Please try again.');
+          }
+        };
+
+        return (
+          <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'clamp(1rem, 5vw, 2rem)', overflow:'auto' }}>
+            <div className="animate-scale-in" style={{ background:'white', borderRadius:'24px', padding:'clamp(1.5rem, 4vh, 2.5rem)', maxWidth:'420px', width:'100%', boxShadow:'0 20px 60px rgba(0,0,0,0.3)' }}>
+              <div style={{ textAlign:'center', marginBottom:'1.5rem' }}>
+                <div style={{ fontSize:'2.8rem', marginBottom:'0.4rem' }}>🔐</div>
+                <h2 className="heading-display" style={{ fontSize:'clamp(1.6rem, 4vh, 2rem)', color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Taronga Staff Portal</h2>
+                <p style={{ color:'#666', fontSize:'0.9rem' }}>Enter your access code to continue</p>
+              </div>
+              <label style={{ display:'block', fontSize:'0.82rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.35rem' }}>Staff Access Code</label>
+              <input type="text" value={adminAccessCode} onChange={(e)=>setAdminAccessCode(e.target.value)} placeholder="Enter staff access code"
+                style={{ width:'100%', padding:'0.75rem 1rem', borderRadius:'12px', border:'2px solid #E5E5E5', fontSize:'1rem', fontFamily:'DM Sans, sans-serif', marginBottom:'1.5rem', boxSizing:'border-box', transition:'border-color 0.2s' }}
+                onFocus={(e)=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'}
+                onKeyPress={(e)=>{ if (e.key === 'Enter') handleAdminLogin(); }} />
+              <button onClick={handleAdminLogin} disabled={!adminAccessCode.trim()}
+                style={{ width:'100%', padding:'0.85rem', borderRadius:'50px', border:'none', background:adminAccessCode.trim()?'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))':'#CCC', color:'white', fontSize:'1.05rem', fontWeight:700, cursor:adminAccessCode.trim()?'pointer':'not-allowed', textTransform:'uppercase', letterSpacing:'0.08em', transition:'all 0.3s ease' }}>
+                Enter Portal
+              </button>
+              <button onClick={()=>{ setAdminAccessCode(''); setCurrentScreen('home'); }} style={{ display:'block', width:'100%', background:'none', border:'none', color:'#999', fontSize:'0.82rem', cursor:'pointer', marginTop:'1rem', padding:'0.4rem' }}>← Back</button>
             </div>
           </div>
         );
