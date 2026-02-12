@@ -175,6 +175,17 @@
   <div id="root"></div>
 
   <script type="text/babel">
+    window.onerror = function(message, source, lineno, colno, error) {
+      document.body.innerHTML = `
+        <div style="padding:20px;color:red;font-family:monospace;">
+          <h2>Runtime Error</h2>
+          <p><strong>Message:</strong> ${message}</p>
+          <p><strong>Line:</strong> ${lineno}</p>
+          <p><strong>Column:</strong> ${colno}</p>
+        </div>
+      `;
+    };
+
     const { useState, useEffect, useRef } = React;
 
     const TarongaTracka = () => {
