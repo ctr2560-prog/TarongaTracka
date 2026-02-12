@@ -203,7 +203,7 @@
       const [teacherEmail, setTeacherEmail] = useState('');
 
       // Step 2 – Class creation state
-      const [teacherClasses, setTeacherClasses] = useState(() => { try { return JSON.parse(localStorage.getItem('tarongaTeacherClasses')) || []; } catch(e) { return []; } });
+      const [teacherClasses, setTeacherClasses] = useState([]);
       const [studentJoinError, setStudentJoinError] = useState('');
       const [lookedUpClass, setLookedUpClass] = useState(null);
       const [newYearGroup, setNewYearGroup] = useState('');
@@ -221,7 +221,35 @@
 
       useEffect(() => { localStorage.setItem('tarongaStudentName', JSON.stringify(studentName)); }, [studentName]);
       useEffect(() => { localStorage.setItem('tarongaClassCode', JSON.stringify(classCode)); }, [classCode]);
-      useEffect(() => { localStorage.setItem('tarongaTeacherClasses', JSON.stringify(teacherClasses)); }, [teacherClasses]);
+
+      // Firestore listener: load teacher's classes when dashboard opens
+      useEffect(() => {
+        if (currentScreen !== 'teacherDashboard' || !teacherEmail.trim()) {
+          return;
+        }
+
+        const unsubscribe = window.db.collection('teachers').doc(teacherEmail)
+          .collection('classes')
+          .onSnapshot((snapshot) => {
+            const classes = snapshot.docs.map(doc => {
+              const d = doc.data();
+              return {
+                classCode: d.classCode || doc.id,
+                className: d.className || "",
+                yearGroup: d.yearGroup || "",
+                teacherEmail: d.teacherEmail || teacherEmail,
+                archived: d.archived || false,
+                students: [] // Keep for local student join tracking
+              };
+            });
+            setTeacherClasses(classes);
+          }, (err) => {
+            console.error('Firestore teacher classes listener error:', err);
+            setTeacherClasses([]);
+          });
+
+        return () => unsubscribe();
+      }, [currentScreen, teacherEmail]);
 
       // Firestore class-code lookup: drives the live preview banner as the student types
       useEffect(() => {
@@ -289,22 +317,28 @@
         while (teacherClasses.some(c => normaliseCode(c.classCode) === normaliseCode(code))) {
           code = generateClassCode();
         }
-        const newClass = {
+
+        // Write to Firestore: teachers/{teacherEmail}/classes/{classCode}
+        window.db.collection('teachers').doc(teacherEmail)
+          .collection('classes').doc(code)
+          .set({
+            classCode: code,
+            yearGroup: newYearGroup.trim(),
+            className: newClassName.trim(),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            archived: false
+          })
+          .then(() => {
+            setNewYearGroup('');
+            setNewClassName('');
+          })
+          .catch((err) => console.error('Failed to create class:', err));
+
+        // Also write to classes/{code} for student join validation
+        window.db.collection('classes').doc(code).set({
           classCode: code,
           yearGroup: newYearGroup.trim(),
           className: newClassName.trim(),
-          teacherEmail: teacherEmail,
-          students: []
-        };
-        setTeacherClasses(prev => [...prev, newClass]);
-        setNewYearGroup('');
-        setNewClassName('');
-
-        // Persist class definition to Firestore
-        window.db.collection('classes').doc(code).set({
-          classCode: code,
-          yearGroup: newClass.yearGroup,
-          className: newClass.className,
           teacherEmail: teacherEmail,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         }).catch((err) => console.error('Failed to save class to Firestore:', err));
@@ -1258,10 +1292,17 @@
           }
         };
 
-        const archiveClass = () => {
+        const archiveClass = async () => {
           if (!window.confirm(`Archive ${cls.className}? It will be hidden from your active classes.`)) return;
-          setTeacherClasses(teacherClasses.map(c => c.classCode === selectedClass ? { ...c, archived: true } : c));
-          setCurrentScreen('teacherDashboard');
+          try {
+            await window.db.collection('teachers').doc(teacherEmail)
+              .collection('classes').doc(selectedClass)
+              .update({ archived: true });
+            setCurrentScreen('teacherDashboard');
+          } catch (err) {
+            console.error('Failed to archive class:', err);
+            alert('Failed to archive class. Please try again.');
+          }
         };
 
         return (
