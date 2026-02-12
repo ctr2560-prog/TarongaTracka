@@ -1788,21 +1788,30 @@
                           const chartInstanceRef = React.useRef(null);
                           
                           React.useEffect(() => {
-                            if (!chartRef.current) return;
+                            // Guard: Check if Chart.js is loaded and canvas is ready
+                            if (!window.Chart || !chartRef.current) return;
 
-                            if (chartInstanceRef.current) {
-                              chartInstanceRef.current.destroy();
-                            }
-                            
-                            const ctx = chartRef.current.getContext('2d');
-                            chartInstanceRef.current = new Chart(ctx, {
-                              type: 'bar',
-                              data: {
-                                labels: sortedAnimals.map(([name]) => name),
-                                datasets: [{
-                                  label: 'Total Visits',
-                                  data: sortedAnimals.map(([, count]) => count),
-                                  backgroundColor: '#1A5238',
+                            try {
+                              // Register Chart.js components (v4)
+                              const { Chart, registerables } = window;
+                              if (registerables) {
+                                Chart.register(...registerables);
+                              }
+
+                              // Destroy previous instance
+                              if (chartInstanceRef.current) {
+                                chartInstanceRef.current.destroy();
+                              }
+                              
+                              const ctx = chartRef.current.getContext('2d');
+                              chartInstanceRef.current = new Chart(ctx, {
+                                type: 'bar',
+                                data: {
+                                  labels: sortedAnimals.map(([name]) => name),
+                                  datasets: [{
+                                    label: 'Total Visits',
+                                    data: sortedAnimals.map(([, count]) => count),
+                                    backgroundColor: '#1A5238',
                                     borderColor: '#1A5238',
                                     borderWidth: 0,
                                     borderRadius: 8,
@@ -1863,6 +1872,9 @@
                                   }
                                 }
                               });
+                            } catch (error) {
+                              console.error('Failed to create Most Visited Animals chart:', error);
+                            }
                             
                             return () => {
                               if (chartInstanceRef.current) {
@@ -1922,22 +1934,31 @@
                           const quizChartInstanceRef = React.useRef(null);
                           
                           React.useEffect(() => {
-                            if (!quizChartRef.current) return;
+                            // Guard: Check if Chart.js is loaded and canvas is ready
+                            if (!window.Chart || !quizChartRef.current) return;
 
-                            if (quizChartInstanceRef.current) {
-                              quizChartInstanceRef.current.destroy();
-                            }
-                            
-                            const ctx = quizChartRef.current.getContext('2d');
-                            quizChartInstanceRef.current = new Chart(ctx, {
-                              type: 'bar',
-                              data: {
-                                labels: Object.keys(quizRanges),
-                                datasets: [{
-                                  label: 'Number of Students',
-                                  data: Object.values(quizRanges),
-                                  backgroundColor: '#2E7D55',
-                                  borderColor: '#2E7D55',
+                            try {
+                              // Register Chart.js components (v4)
+                              const { Chart, registerables } = window;
+                              if (registerables) {
+                                Chart.register(...registerables);
+                              }
+
+                              // Destroy previous instance
+                              if (quizChartInstanceRef.current) {
+                                quizChartInstanceRef.current.destroy();
+                              }
+                              
+                              const ctx = quizChartRef.current.getContext('2d');
+                              quizChartInstanceRef.current = new Chart(ctx, {
+                                type: 'bar',
+                                data: {
+                                  labels: Object.keys(quizRanges),
+                                  datasets: [{
+                                    label: 'Number of Students',
+                                    data: Object.values(quizRanges),
+                                    backgroundColor: '#2E7D55',
+                                    borderColor: '#2E7D55',
                                     borderWidth: 0,
                                     borderRadius: 8,
                                     barThickness: 60
@@ -1998,6 +2019,9 @@
                                   }
                                 }
                               });
+                            } catch (error) {
+                              console.error('Failed to create Quiz Distribution chart:', error);
+                            }
                             
                             return () => {
                               if (quizChartInstanceRef.current) {
@@ -2046,23 +2070,32 @@
                           const radarChartInstanceRef = React.useRef(null);
                           
                           React.useEffect(() => {
-                            if (!radarChartRef.current) return;
+                            // Guard: Check if Chart.js is loaded and canvas is ready
+                            if (!window.Chart || !radarChartRef.current) return;
 
-                            if (radarChartInstanceRef.current) {
-                              radarChartInstanceRef.current.destroy();
-                            }
-                            
-                            const ctx = radarChartRef.current.getContext('2d');
-                            radarChartInstanceRef.current = new Chart(ctx, {
-                              type: 'radar',
-                              data: {
-                                labels: ['Behavior Score', 'Detail Score', 'Literacy Score'],
-                                datasets: [{
-                                  label: 'Average Score',
-                                  data: [avgBehaviorScore, avgDetailScore, avgLiteracyScore],
-                                  backgroundColor: 'rgba(30, 79, 61, 0.2)',
-                                  borderColor: '#1E4F3D',
-                                  borderWidth: 2,
+                            try {
+                              // Register Chart.js components (v4)
+                              const { Chart, registerables } = window;
+                              if (registerables) {
+                                Chart.register(...registerables);
+                              }
+
+                              // Destroy previous instance
+                              if (radarChartInstanceRef.current) {
+                                radarChartInstanceRef.current.destroy();
+                              }
+                              
+                              const ctx = radarChartRef.current.getContext('2d');
+                              radarChartInstanceRef.current = new Chart(ctx, {
+                                type: 'radar',
+                                data: {
+                                  labels: ['Behavior Score', 'Detail Score', 'Literacy Score'],
+                                  datasets: [{
+                                    label: 'Average Score',
+                                    data: [avgBehaviorScore, avgDetailScore, avgLiteracyScore],
+                                    backgroundColor: 'rgba(30, 79, 61, 0.2)',
+                                    borderColor: '#1E4F3D',
+                                    borderWidth: 2,
                                     pointBackgroundColor: '#1E4F3D',
                                     pointBorderColor: '#fff',
                                     pointBorderWidth: 2,
@@ -2126,6 +2159,9 @@
                                   }
                                 }
                               });
+                            } catch (error) {
+                              console.error('Failed to create Radar chart:', error);
+                            }
                             
                             return () => {
                               if (radarChartInstanceRef.current) {
