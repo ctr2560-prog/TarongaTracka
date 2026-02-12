@@ -1637,6 +1637,7 @@
         const completionPercent = adminClassStudents.length > 0 ? Math.round((completedCount / adminClassStudents.length) * 100) : 0;
 
         return (
+          <>
           <div style={{ position:'fixed', inset:0, background:'var(--mist-light)', display:'flex', flexDirection:'column' }}>
             <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1rem 1.5rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', flexShrink:0 }}>
               <div style={{ maxWidth:'1200px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
@@ -1735,9 +1736,13 @@
                                   {student.completedAt ? new Date(student.completedAt).toLocaleDateString('en-AU', { day:'numeric', month:'short' }) : '—'}
                                 </td>
                                 <td style={{ padding:'0.85rem 0.5rem', textAlign:'center' }}>
-                                  <button style={{ background:'var(--jungle-light)', color:'white', border:'none', padding:'0.4rem 0.8rem', borderRadius:'8px', fontSize:'0.8rem', fontWeight:600, cursor:'pointer' }}>
-                                    View
-                                  </button>
+                                  {observationCount > 0 ? (
+                                    <button onClick={() => { console.log('View observations clicked for:', student.name); setObservationsModal(student); }} style={{ background:'var(--jungle-light)', color:'white', border:'none', padding:'0.4rem 0.8rem', borderRadius:'8px', fontSize:'0.8rem', fontWeight:600, cursor:'pointer' }}>
+                                      View
+                                    </button>
+                                  ) : (
+                                    <span style={{ color:'#bbb', fontSize:'0.75rem' }}>—</span>
+                                  )}
                                 </td>
                               </tr>
                             );
@@ -1751,6 +1756,32 @@
               </div>
             </div>
           </div>
+
+          {observationsModal && (
+            <div onClick={() => setObservationsModal(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'1.5rem' }}>
+              <div onClick={(e) => e.stopPropagation()} style={{ background:'white', borderRadius:'18px', width:'100%', maxWidth:'480px', maxHeight:'80vh', overflowY:'auto', boxShadow:'0 24px 60px rgba(0,0,0,0.25)' }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'1.2rem 1.4rem 0.8rem', borderBottom:'1px solid #F0EDE8', position:'sticky', top:0, background:'white', zIndex:1 }}>
+                  <div>
+                    <h3 style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)', margin:0 }}>📋 Observations</h3>
+                    <p style={{ fontSize:'0.78rem', color:'#888', margin:'0.15rem 0 0' }}>{observationsModal.name}</p>
+                  </div>
+                  <button onClick={() => setObservationsModal(null)} style={{ background:'none', border:'none', fontSize:'1.4rem', color:'#aaa', cursor:'pointer', lineHeight:1, padding:'0.2rem 0.4rem' }}>×</button>
+                </div>
+                <div style={{ padding:'1rem 1.4rem 1.4rem' }}>
+                  {(observationsModal.badges || []).filter(b => b.observation && b.observation.trim()).map((b, idx, arr) => (
+                    <div key={idx} style={{ borderLeft:'3px solid var(--jungle-mid)', background:'#F7FAF8', borderRadius:'0 10px 10px 0', padding:'0.75rem 1rem', marginBottom: idx < arr.length - 1 ? '0.75rem' : 0 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.35rem' }}>
+                        <span style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{b.animal}</span>
+                        {b.timestamp && <span style={{ fontSize:'0.65rem', color:'#aaa' }}>· {new Date(b.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short' })}</span>}
+                      </div>
+                      <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.55, margin:0 }}>{b.observation}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          </>
         );
       }
 
