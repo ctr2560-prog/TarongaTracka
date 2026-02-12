@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -13,11 +14,15 @@
   <title>Taronga Tracka v2.2 - Animal Discovery</title>
 
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <!-- Firebase SDKs -->
+
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <script>
@@ -163,6 +168,7 @@
       }
     }
   </style>
+
 </head>
 
 <body>
@@ -204,6 +210,10 @@
       const [adminAccessCode, setAdminAccessCode] = useState('');
       const [adminStats, setAdminStats] = useState({ totalTeachers: 0, totalClasses: 0, totalStudents: 0, totalCompleted: 0 });
       const [adminLoading, setAdminLoading] = useState(false);
+      const [selectedAdminClass, setSelectedAdminClass] = useState(null);
+      const [adminClassData, setAdminClassData] = useState(null);
+      const [adminClassStudents, setAdminClassStudents] = useState([]);
+      const [adminClassLoading, setAdminClassLoading] = useState(false);
 
       // Step 2 – Class creation state
       const [teacherClasses, setTeacherClasses] = useState([]);
@@ -315,6 +325,51 @@
 
         fetchAdminStats();
       }, [currentScreen]);
+
+      // Admin class view: fetch class details and students
+      useEffect(() => {
+        if (!selectedAdminClass || currentScreen !== 'adminClassView') {
+          setAdminClassData(null);
+          setAdminClassStudents([]);
+          return;
+        }
+
+        const fetchClassData = async () => {
+          setAdminClassLoading(true);
+          try {
+            // Fetch class document
+            const classDoc = await window.db.collection('classes').doc(selectedAdminClass).get();
+            if (classDoc.exists) {
+              setAdminClassData({ id: classDoc.id, ...classDoc.data() });
+            }
+
+            // Fetch students subcollection
+            const studentsSnapshot = await window.db.collection('classes')
+              .doc(selectedAdminClass)
+              .collection('students')
+              .get();
+
+            const students = studentsSnapshot.docs.map(doc => {
+              const d = doc.data();
+              return {
+                name: d.name || doc.id,
+                totalPoints: d.totalPoints || 0,
+                badges: d.badges || [],
+                completed: d.completed || false,
+                completedAt: d.completedAt ? d.completedAt.toDate() : null
+              };
+            });
+
+            setAdminClassStudents(students);
+          } catch (err) {
+            console.error('Failed to fetch class data:', err);
+          } finally {
+            setAdminClassLoading(false);
+          }
+        };
+
+        fetchClassData();
+      }, [selectedAdminClass, currentScreen]);
 
       // Step 5 – Real-time listener: fetch students from Firestore when teacher opens a class
       useEffect(() => {
@@ -1296,6 +1351,141 @@
         );
       }
 
+      if (currentScreen === 'adminClassView') {
+        if (!adminClassData) {
+          return (
+            <div style={{ position:'fixed', inset:0, background:'var(--mist-light)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <div style={{ width:'48px', height:'48px', border:'4px solid rgba(26,82,56,0.15)', borderTop:'4px solid var(--jungle-mid)', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
+            </div>
+          );
+        }
+
+        const completedCount = adminClassStudents.filter(s => s.completed).length;
+        const completionPercent = adminClassStudents.length > 0 ? Math.round((completedCount / adminClassStudents.length) * 100) : 0;
+
+        return (
+          <div style={{ position:'fixed', inset:0, background:'var(--mist-light)', display:'flex', flexDirection:'column' }}>
+            <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1rem 1.5rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', flexShrink:0 }}>
+              <div style={{ maxWidth:'1200px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:'0.7rem' }}>
+                  <button onClick={()=>{ setSelectedAdminClass(null); setCurrentScreen('adminDashboard'); }} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', width:'34px', height:'34px', borderRadius:'50%', cursor:'pointer', fontSize:'1.1rem', display:'flex', alignItems:'center', justifyContent:'center' }}>←</button>
+                  <div>
+                    <h1 className="heading-display" style={{ fontSize:'clamp(1.2rem, 3vw, 1.6rem)', color:'white', lineHeight:1.2 }}>Class Details</h1>
+                    <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.78rem' }}>{adminClassData.classCode}</p>
+                  </div>
+                </div>
+                <button onClick={()=>{ setAdminAccessCode(''); setSelectedAdminClass(null); setCurrentScreen('home'); }} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', padding:'0.45rem 0.9rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.8rem', fontWeight:600 }}>
+                  Sign Out
+                </button>
+              </div>
+            </div>
+
+            <div style={{ flex:1, overflowY:'auto', padding:'1.5rem' }}>
+              <div style={{ maxWidth:'1200px', margin:'0 auto' }}>
+                
+                <div className="animate-fade-in-up" style={{ background:'white', borderRadius:'20px', padding:'1.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)', marginBottom:'1.5rem' }}>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:'1.5rem' }}>
+                    <div>
+                      <div style={{ fontSize:'0.75rem', fontWeight:600, color:'#999', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>Class Name</div>
+                      <div style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)' }}>{adminClassData.className}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize:'0.75rem', fontWeight:600, color:'#999', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>Year Group</div>
+                      <div style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)' }}>{adminClassData.yearGroup}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize:'0.75rem', fontWeight:600, color:'#999', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>Teacher</div>
+                      <div style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)' }}>{adminClassData.teacherEmail}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize:'0.75rem', fontWeight:600, color:'#999', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>Created</div>
+                      <div style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)' }}>
+                        {adminClassData.createdAt ? new Date(adminClassData.createdAt.toDate()).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '—'}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize:'0.75rem', fontWeight:600, color:'#999', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>Completion</div>
+                      <div style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)' }}>{completionPercent}% ({completedCount}/{adminClassStudents.length})</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="animate-fade-in-up" style={{ background:'white', borderRadius:'20px', padding:'1.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)', animationDelay:'0.1s' }}>
+                  <h2 style={{ fontSize:'1.3rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>Students ({adminClassStudents.length})</h2>
+                  
+                  {adminClassLoading ? (
+                    <div style={{ display:'flex', justifyContent:'center', padding:'2rem' }}>
+                      <div style={{ width:'36px', height:'36px', border:'3px solid rgba(26,82,56,0.15)', borderTop:'3px solid var(--jungle-mid)', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
+                    </div>
+                  ) : adminClassStudents.length === 0 ? (
+                    <div style={{ textAlign:'center', padding:'2rem', color:'#999' }}>
+                      <div style={{ fontSize:'2rem', marginBottom:'0.5rem' }}>📭</div>
+                      <p>No students have joined this class yet.</p>
+                    </div>
+                  ) : (
+                    <div style={{ overflowX:'auto' }}>
+                      <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'0.9rem' }}>
+                        <thead>
+                          <tr style={{ borderBottom:'2px solid #F0EDE8' }}>
+                            <th style={{ textAlign:'left', padding:'0.75rem 0.5rem', fontWeight:600, color:'var(--jungle-deep)', fontSize:'0.8rem' }}>Student Name</th>
+                            <th style={{ textAlign:'center', padding:'0.75rem 0.5rem', fontWeight:600, color:'var(--jungle-deep)', fontSize:'0.8rem' }}>Completed</th>
+                            <th style={{ textAlign:'center', padding:'0.75rem 0.5rem', fontWeight:600, color:'var(--jungle-deep)', fontSize:'0.8rem' }}>Points</th>
+                            <th style={{ textAlign:'center', padding:'0.75rem 0.5rem', fontWeight:600, color:'var(--jungle-deep)', fontSize:'0.8rem' }}>Quiz Score</th>
+                            <th style={{ textAlign:'center', padding:'0.75rem 0.5rem', fontWeight:600, color:'var(--jungle-deep)', fontSize:'0.8rem' }}>Observations</th>
+                            <th style={{ textAlign:'center', padding:'0.75rem 0.5rem', fontWeight:600, color:'var(--jungle-deep)', fontSize:'0.8rem' }}>Submitted</th>
+                            <th style={{ textAlign:'center', padding:'0.75rem 0.5rem', fontWeight:600, color:'var(--jungle-deep)', fontSize:'0.8rem' }}>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {adminClassStudents.map((student, i) => {
+                            // Calculate quiz score
+                            let correctAnswers = 0;
+                            let totalQuestions = 0;
+                            (student.badges || []).forEach(badge => {
+                              if (badge.quizResults) {
+                                badge.quizResults.forEach(qr => {
+                                  totalQuestions++;
+                                  if (qr.correctOnFirstAttempt === true) correctAnswers++;
+                                });
+                              }
+                            });
+                            const quizScore = totalQuestions > 0 ? `${correctAnswers}/${totalQuestions}` : '—';
+
+                            // Count observations
+                            const observationCount = (student.badges || []).filter(b => b.observation && b.observation.trim()).length;
+
+                            return (
+                              <tr key={i} style={{ borderBottom:'1px solid #F5F3EE' }}>
+                                <td style={{ padding:'0.85rem 0.5rem', color:'var(--jungle-deep)', fontWeight:500 }}>{student.name}</td>
+                                <td style={{ padding:'0.85rem 0.5rem', textAlign:'center', fontSize:'1.2rem' }}>
+                                  {student.completed ? '✅' : '❌'}
+                                </td>
+                                <td style={{ padding:'0.85rem 0.5rem', textAlign:'center', fontWeight:600, color:'var(--jungle-mid)' }}>{student.totalPoints}</td>
+                                <td style={{ padding:'0.85rem 0.5rem', textAlign:'center', color:'#666' }}>{quizScore}</td>
+                                <td style={{ padding:'0.85rem 0.5rem', textAlign:'center', color:'#666' }}>{observationCount}</td>
+                                <td style={{ padding:'0.85rem 0.5rem', textAlign:'center', color:'#888', fontSize:'0.85rem' }}>
+                                  {student.completedAt ? new Date(student.completedAt).toLocaleDateString('en-AU', { day:'numeric', month:'short' }) : '—'}
+                                </td>
+                                <td style={{ padding:'0.85rem 0.5rem', textAlign:'center' }}>
+                                  <button style={{ background:'var(--jungle-light)', color:'white', border:'none', padding:'0.4rem 0.8rem', borderRadius:'8px', fontSize:'0.8rem', fontWeight:600, cursor:'pointer' }}>
+                                    View
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            </div>
+          </div>
+        );
+      }
+
       if (currentScreen === 'teacherLogin') {
         return (
           <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'clamp(1rem, 5vw, 2rem)', overflow:'auto' }}>
@@ -1621,5 +1811,6 @@
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<TarongaTracka />);
   </script>
+
 </body>
 </html>
