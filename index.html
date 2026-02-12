@@ -294,6 +294,8 @@
             const teacherEmails = new Set();
             let totalStudents = 0;
             let totalCompleted = 0;
+            let totalQuizPercentageSum = 0;
+            let studentsWithQuizData = 0;
             const classesWithStats = [];
 
             for (const classDoc of classesSnapshot.docs) {
@@ -307,18 +309,29 @@
 
               const studentCount = studentsSnapshot.size;
               let completedCount = 0;
+              let classQuizSum = 0;
+              let classQuizCount = 0;
 
               studentsSnapshot.docs.forEach(studentDoc => {
                 const studentData = studentDoc.data();
                 if (studentData.completed === true) {
                   completedCount++;
                   totalCompleted++;
+                  
+                  // Aggregate quiz percentage
+                  if (studentData.quizPercentage !== undefined) {
+                    classQuizSum += studentData.quizPercentage;
+                    classQuizCount++;
+                    totalQuizPercentageSum += studentData.quizPercentage;
+                    studentsWithQuizData++;
+                  }
                 }
               });
 
               totalStudents += studentCount;
 
-              // Store class with stats
+              // Store class with stats including quiz average
+              const classQuizAvg = classQuizCount > 0 ? Math.round(classQuizSum / classQuizCount) : 0;
               classesWithStats.push({
                 classCode: classDoc.id,
                 className: classData.className || '',
@@ -326,15 +339,19 @@
                 teacherEmail: classData.teacherEmail || '',
                 studentCount: studentCount,
                 completedCount: completedCount,
-                completionPercent: studentCount > 0 ? Math.round((completedCount / studentCount) * 100) : 0
+                completionPercent: studentCount > 0 ? Math.round((completedCount / studentCount) * 100) : 0,
+                quizAverage: classQuizAvg
               });
             }
+
+            const platformQuizAvg = studentsWithQuizData > 0 ? Math.round(totalQuizPercentageSum / studentsWithQuizData) : 0;
 
             setAdminStats({
               totalTeachers: teacherEmails.size,
               totalClasses: classesSnapshot.size,
               totalStudents: totalStudents,
-              totalCompleted: totalCompleted
+              totalCompleted: totalCompleted,
+              platformQuizAvg: platformQuizAvg
             });
 
             setAdminClasses(classesWithStats);
@@ -844,6 +861,19 @@
           timestamp: b.timestamp || ""
         }));
 
+        // Calculate quiz metrics from cleanBadges
+        let quizCorrect = 0;
+        let quizTotal = 0;
+        cleanBadges.forEach(badge => {
+          if (badge.quizResults) {
+            badge.quizResults.forEach(qr => {
+              quizTotal++;
+              if (qr.correctOnFirstAttempt === true) quizCorrect++;
+            });
+          }
+        });
+        const quizPercentage = quizTotal > 0 ? Math.round((quizCorrect / quizTotal) * 100) : 0;
+
         try {
           await window.db.collection('classes').doc(code)
             .collection('students').doc(safeStudentId)
@@ -852,6 +882,9 @@
               classCode: code,
               totalPoints: totalPoints,
               badges: cleanBadges,
+              quizCorrect: quizCorrect,
+              quizTotal: quizTotal,
+              quizPercentage: quizPercentage,
               completed: true,
               completedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
@@ -1354,6 +1387,12 @@
                         <div style={{ fontSize:'2.2rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>{adminStats.totalCompleted}</div>
                         <h3 style={{ fontSize:'0.95rem', fontWeight:600, color:'#666' }}>Completed Activities</h3>
                       </div>
+
+                      <div className="animate-scale-in" style={{ background:'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))', borderRadius:'16px', padding:'1.5rem', boxShadow:'0 4px 16px rgba(0,0,0,0.12)', animationDelay:'0.5s' }}>
+                        <div style={{ fontSize:'2rem', marginBottom:'0.5rem' }}>📝</div>
+                        <div style={{ fontSize:'2.2rem', fontWeight:700, color:'white', marginBottom:'0.3rem' }}>{adminStats.platformQuizAvg}%</div>
+                        <h3 style={{ fontSize:'0.95rem', fontWeight:600, color:'rgba(255,255,255,0.9)' }}>Platform Quiz Avg</h3>
+                      </div>
                     </div>
 
                     <div className="animate-fade-in-up" style={{ marginTop:'1.5rem', animationDelay:'0.5s' }}>
@@ -1408,6 +1447,10 @@
                                 <div>
                                   <div style={{ color:'#999', fontSize:'0.75rem', marginBottom:'0.2rem' }}>Year Group</div>
                                   <div style={{ color:'var(--jungle-deep)', fontWeight:600 }}>{cls.yearGroup}</div>
+                                </div>
+                                <div style={{ textAlign:'center' }}>
+                                  <div style={{ color:'#999', fontSize:'0.75rem', marginBottom:'0.2rem' }}>Quiz Avg</div>
+                                  <div style={{ color:'var(--jungle-mid)', fontWeight:700 }}>{cls.quizAverage}%</div>
                                 </div>
                                 <div style={{ textAlign:'right' }}>
                                   <div style={{ color:'#999', fontSize:'0.75rem', marginBottom:'0.2rem' }}>Students</div>
@@ -1681,6 +1724,10 @@
         const avgPoints = totalStudents > 0 ? Math.round(firestoreStudents.reduce((sum, s) => sum + (s.totalPoints || 0), 0) / totalStudents) : 0;
         const totalBadges = firestoreStudents.reduce((sum, s) => sum + (s.badges ? s.badges.length : 0), 0);
         const completedCount = firestoreStudents.filter(s => s.completed).length;
+        const completedStudents = firestoreStudents.filter(s => s.completed);
+        const avgQuizPercentage = completedStudents.length > 0 
+          ? Math.round(completedStudents.reduce((sum, s) => sum + (s.quizPercentage || 0), 0) / completedStudents.length) 
+          : 0;
 
         const downloadCSV = () => {
           const header = ['Name','Points','Badges Earned','Quiz Score','Completed','Last Active','Observations'];
@@ -1775,17 +1822,18 @@
             ) : (
               <>
                 <div style={{ flexShrink:0, padding:'1rem 1.5rem 0' }}>
-                  <div style={{ maxWidth:'720px', margin:'0 auto', display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:'0.7rem' }}>
+                  <div style={{ maxWidth:'720px', margin:'0 auto', display:'grid', gridTemplateColumns:'repeat(5, 1fr)', gap:'0.7rem' }}>
                     {[
                       { label:'Students', value:totalStudents, icon:'👥' },
                       { label:'Avg Points', value:avgPoints, icon:'⭐' },
                       { label:'Total Badges', value:totalBadges, icon:'🏆' },
-                      { label:'Completed', value:completedCount, icon:'✓' }
+                      { label:'Completed', value:completedCount, icon:'✓' },
+                      { label:'Avg Quiz %', value:`${avgQuizPercentage}%`, icon:'📝', highlight:true }
                     ].map(stat => (
-                      <div key={stat.label} style={{ background:'white', borderRadius:'12px', padding:'0.7rem 0.5rem', textAlign:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
+                      <div key={stat.label} style={{ background: stat.highlight ? 'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))' : 'white', borderRadius:'12px', padding:'0.7rem 0.5rem', textAlign:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
                         <div style={{ fontSize:'1.3rem', marginBottom:'0.15rem' }}>{stat.icon}</div>
-                        <div style={{ fontWeight:700, color:'var(--jungle-deep)', fontSize:'1.1rem', lineHeight:1.2 }}>{stat.value}</div>
-                        <div style={{ color:'#999', fontSize:'0.68rem', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.04em' }}>{stat.label}</div>
+                        <div style={{ fontWeight:700, color: stat.highlight ? 'white' : 'var(--jungle-deep)', fontSize:'1.1rem', lineHeight:1.2 }}>{stat.value}</div>
+                        <div style={{ color: stat.highlight ? 'rgba(255,255,255,0.85)' : '#999', fontSize:'0.68rem', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.04em' }}>{stat.label}</div>
                       </div>
                     ))}
                   </div>
@@ -1794,8 +1842,8 @@
                 <div style={{ flex:1, overflowY:'auto', padding:'1rem 1.5rem 1.5rem' }}>
                   <div style={{ maxWidth:'720px', margin:'0 auto' }}>
                     <div style={{ background:'white', borderRadius:'16px', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', overflow:'hidden' }}>
-                      <div style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 0.85fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
-                        {['Student','Points','Badges','Done','Last Active','Observations'].map(h => (
+                      <div style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.65fr 0.85fr 0.85fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
+                        {['Student','Points','Badges','Quiz %','Done','Last Active','Observations'].map(h => (
                           <div key={h} style={{ color:'rgba(255,255,255,0.8)', fontSize:'0.72rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>{h}</div>
                         ))}
                       </div>
@@ -1812,7 +1860,7 @@
                             : lastBadge && lastBadge.timestamp ? new Date(lastBadge.timestamp) : null;
                           const hasObservations = (s.badges || []).some(b => b.observation);
                           return (
-                            <div key={s.name} style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 0.85fr', padding:'0.7rem 1rem', borderTop:'1px solid #F0EDE8', alignItems:'center', background: i % 2 === 0 ? 'white' : '#FAFAF8' }}>
+                            <div key={s.name} style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.65fr 0.85fr 0.85fr', padding:'0.7rem 1rem', borderTop:'1px solid #F0EDE8', alignItems:'center', background: i % 2 === 0 ? 'white' : '#FAFAF8' }}>
                               <div style={{ display:'flex', alignItems:'center', gap:'0.55rem' }}>
                                 <div style={{ width:'28px', height:'28px', borderRadius:'50%', background: s.completed ? 'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))' : 'linear-gradient(135deg, #aaa, #ccc)', display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontSize:'0.72rem', fontWeight:700, flexShrink:0 }}>
                                   {s.name.charAt(0).toUpperCase()}
@@ -1821,6 +1869,9 @@
                               </div>
                               <div style={{ fontWeight:700, color:'var(--sunset-orange)', fontSize:'0.9rem' }}>{s.totalPoints || 0}</div>
                               <div style={{ fontSize:'0.88rem' }}>{s.badges && s.badges.length > 0 ? '🏆'.repeat(s.badges.length) : <span style={{ color:'#bbb', fontSize:'0.75rem' }}>—</span>}</div>
+                              <div style={{ fontWeight:600, color:'var(--jungle-mid)', fontSize:'0.85rem' }}>
+                                {s.quizPercentage !== undefined ? `${s.quizPercentage}%` : '—'}
+                              </div>
                               <div style={{ fontSize:'0.82rem' }}>
                                 {s.completed
                                   ? <span style={{ display:'inline-flex', alignItems:'center', gap:'0.25rem', background:'#F0FDF4', color:'#16A34A', fontWeight:700, fontSize:'0.72rem', padding:'0.2rem 0.5rem', borderRadius:'10px' }}>✓ Yes</span>
