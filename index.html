@@ -1788,23 +1788,21 @@
                           const chartInstanceRef = React.useRef(null);
                           
                           React.useEffect(() => {
-                            if (chartRef.current) {
-                              const ctx = chartRef.current.getContext('2d');
-                              
-                              // Destroy existing chart if it exists
-                              if (chartInstanceRef.current) {
-                                chartInstanceRef.current.destroy();
-                              }
-                              
-                              // Create new chart
-                              chartInstanceRef.current = new Chart(ctx, {
-                                type: 'bar',
-                                data: {
-                                  labels: sortedAnimals.map(([name]) => name),
-                                  datasets: [{
-                                    label: 'Total Visits',
-                                    data: sortedAnimals.map(([, count]) => count),
-                                    backgroundColor: '#1A5238',
+                            if (!chartRef.current) return;
+
+                            if (chartInstanceRef.current) {
+                              chartInstanceRef.current.destroy();
+                            }
+                            
+                            const ctx = chartRef.current.getContext('2d');
+                            chartInstanceRef.current = new Chart(ctx, {
+                              type: 'bar',
+                              data: {
+                                labels: sortedAnimals.map(([name]) => name),
+                                datasets: [{
+                                  label: 'Total Visits',
+                                  data: sortedAnimals.map(([, count]) => count),
+                                  backgroundColor: '#1A5238',
                                     borderColor: '#1A5238',
                                     borderWidth: 0,
                                     borderRadius: 8,
@@ -1865,7 +1863,6 @@
                                   }
                                 }
                               });
-                            }
                             
                             return () => {
                               if (chartInstanceRef.current) {
@@ -1925,24 +1922,22 @@
                           const quizChartInstanceRef = React.useRef(null);
                           
                           React.useEffect(() => {
-                            if (quizChartRef.current) {
-                              const ctx = quizChartRef.current.getContext('2d');
-                              
-                              // Destroy existing chart if it exists
-                              if (quizChartInstanceRef.current) {
-                                quizChartInstanceRef.current.destroy();
-                              }
-                              
-                              // Create new chart
-                              quizChartInstanceRef.current = new Chart(ctx, {
-                                type: 'bar',
-                                data: {
-                                  labels: Object.keys(quizRanges),
-                                  datasets: [{
-                                    label: 'Number of Students',
-                                    data: Object.values(quizRanges),
-                                    backgroundColor: '#2E7D55',
-                                    borderColor: '#2E7D55',
+                            if (!quizChartRef.current) return;
+
+                            if (quizChartInstanceRef.current) {
+                              quizChartInstanceRef.current.destroy();
+                            }
+                            
+                            const ctx = quizChartRef.current.getContext('2d');
+                            quizChartInstanceRef.current = new Chart(ctx, {
+                              type: 'bar',
+                              data: {
+                                labels: Object.keys(quizRanges),
+                                datasets: [{
+                                  label: 'Number of Students',
+                                  data: Object.values(quizRanges),
+                                  backgroundColor: '#2E7D55',
+                                  borderColor: '#2E7D55',
                                     borderWidth: 0,
                                     borderRadius: 8,
                                     barThickness: 60
@@ -2003,7 +1998,6 @@
                                   }
                                 }
                               });
-                            }
                             
                             return () => {
                               if (quizChartInstanceRef.current) {
@@ -2052,25 +2046,23 @@
                           const radarChartInstanceRef = React.useRef(null);
                           
                           React.useEffect(() => {
-                            if (radarChartRef.current) {
-                              const ctx = radarChartRef.current.getContext('2d');
-                              
-                              // Destroy existing chart if it exists
-                              if (radarChartInstanceRef.current) {
-                                radarChartInstanceRef.current.destroy();
-                              }
-                              
-                              // Create new chart
-                              radarChartInstanceRef.current = new Chart(ctx, {
-                                type: 'radar',
-                                data: {
-                                  labels: ['Behavior Score', 'Detail Score', 'Literacy Score'],
-                                  datasets: [{
-                                    label: 'Average Score',
-                                    data: [avgBehaviorScore, avgDetailScore, avgLiteracyScore],
-                                    backgroundColor: 'rgba(30, 79, 61, 0.2)',
-                                    borderColor: '#1E4F3D',
-                                    borderWidth: 2,
+                            if (!radarChartRef.current) return;
+
+                            if (radarChartInstanceRef.current) {
+                              radarChartInstanceRef.current.destroy();
+                            }
+                            
+                            const ctx = radarChartRef.current.getContext('2d');
+                            radarChartInstanceRef.current = new Chart(ctx, {
+                              type: 'radar',
+                              data: {
+                                labels: ['Behavior Score', 'Detail Score', 'Literacy Score'],
+                                datasets: [{
+                                  label: 'Average Score',
+                                  data: [avgBehaviorScore, avgDetailScore, avgLiteracyScore],
+                                  backgroundColor: 'rgba(30, 79, 61, 0.2)',
+                                  borderColor: '#1E4F3D',
+                                  borderWidth: 2,
                                     pointBackgroundColor: '#1E4F3D',
                                     pointBorderColor: '#fff',
                                     pointBorderWidth: 2,
@@ -2134,7 +2126,6 @@
                                   }
                                 }
                               });
-                            }
                             
                             return () => {
                               if (radarChartInstanceRef.current) {
