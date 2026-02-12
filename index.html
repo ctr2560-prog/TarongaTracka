@@ -210,6 +210,7 @@
       const [adminAccessCode, setAdminAccessCode] = useState('');
       const [adminStats, setAdminStats] = useState({ totalTeachers: 0, totalClasses: 0, totalStudents: 0, totalCompleted: 0 });
       const [adminLoading, setAdminLoading] = useState(false);
+      const [adminClasses, setAdminClasses] = useState([]);
       const [selectedAdminClass, setSelectedAdminClass] = useState(null);
       const [adminClassData, setAdminClassData] = useState(null);
       const [adminClassStudents, setAdminClassStudents] = useState([]);
@@ -293,6 +294,7 @@
             const teacherEmails = new Set();
             let totalStudents = 0;
             let totalCompleted = 0;
+            const classesWithStats = [];
 
             for (const classDoc of classesSnapshot.docs) {
               const classData = classDoc.data();
@@ -303,10 +305,28 @@
                 .collection('students')
                 .get();
 
-              totalStudents += studentsSnapshot.size;
+              const studentCount = studentsSnapshot.size;
+              let completedCount = 0;
+
               studentsSnapshot.docs.forEach(studentDoc => {
                 const studentData = studentDoc.data();
-                if (studentData.completed === true) totalCompleted++;
+                if (studentData.completed === true) {
+                  completedCount++;
+                  totalCompleted++;
+                }
+              });
+
+              totalStudents += studentCount;
+
+              // Store class with stats
+              classesWithStats.push({
+                classCode: classDoc.id,
+                className: classData.className || '',
+                yearGroup: classData.yearGroup || '',
+                teacherEmail: classData.teacherEmail || '',
+                studentCount: studentCount,
+                completedCount: completedCount,
+                completionPercent: studentCount > 0 ? Math.round((completedCount / studentCount) * 100) : 0
               });
             }
 
@@ -316,6 +336,8 @@
               totalStudents: totalStudents,
               totalCompleted: totalCompleted
             });
+
+            setAdminClasses(classesWithStats);
           } catch (err) {
             console.error('Failed to fetch admin stats:', err);
           } finally {
@@ -1334,13 +1356,74 @@
                       </div>
                     </div>
 
-                    <div className="animate-fade-in-up" style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)', textAlign:'center', animationDelay:'0.5s' }}>
-                      <div style={{ fontSize:'3rem', marginBottom:'1rem' }}>🚧</div>
-                      <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>Dashboard Under Development</h2>
-                      <p style={{ color:'#666', fontSize:'0.95rem', lineHeight:1.6 }}>
-                        Admin features are being built. Check back soon for teacher management,<br />
-                        class oversight, and comprehensive analytics.
-                      </p>
+                    <div className="animate-fade-in-up" style={{ marginTop:'1.5rem', animationDelay:'0.5s' }}>
+                      <h2 style={{ fontSize:'1.3rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
+                        All Classes ({adminClasses.length})
+                      </h2>
+                      
+                      {adminClasses.length === 0 ? (
+                        <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)', textAlign:'center' }}>
+                          <div style={{ fontSize:'3rem', marginBottom:'1rem' }}>📭</div>
+                          <p style={{ color:'#666', fontSize:'0.95rem' }}>No classes have been created yet.</p>
+                        </div>
+                      ) : (
+                        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:'1rem' }}>
+                          {adminClasses.map((cls, i) => (
+                            <div key={cls.classCode} 
+                              onClick={() => { setSelectedAdminClass(cls.classCode); setCurrentScreen('adminClassView'); }}
+                              style={{ 
+                                background:'white', 
+                                borderRadius:'16px', 
+                                padding:'1.25rem', 
+                                boxShadow:'0 4px 16px rgba(0,0,0,0.08)', 
+                                cursor:'pointer',
+                                transition:'all 0.2s',
+                                border:'2px solid transparent'
+                              }}
+                              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--jungle-mid)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; }}>
+                              
+                              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'start', marginBottom:'0.75rem' }}>
+                                <div>
+                                  <h3 style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.2rem' }}>
+                                    {cls.className}
+                                  </h3>
+                                  <p style={{ fontSize:'0.8rem', color:'#999', fontWeight:600, letterSpacing:'0.05em' }}>
+                                    {cls.classCode}
+                                  </p>
+                                </div>
+                                <div style={{ 
+                                  background: cls.completionPercent === 100 ? 'var(--jungle-light)' : 'var(--safari-gold)', 
+                                  color:'white', 
+                                  padding:'0.3rem 0.6rem', 
+                                  borderRadius:'8px', 
+                                  fontSize:'0.75rem', 
+                                  fontWeight:700 
+                                }}>
+                                  {cls.completionPercent}%
+                                </div>
+                              </div>
+
+                              <div style={{ borderTop:'1px solid #F5F3EE', paddingTop:'0.75rem', display:'flex', justifyContent:'space-between', fontSize:'0.85rem' }}>
+                                <div>
+                                  <div style={{ color:'#999', fontSize:'0.75rem', marginBottom:'0.2rem' }}>Year Group</div>
+                                  <div style={{ color:'var(--jungle-deep)', fontWeight:600 }}>{cls.yearGroup}</div>
+                                </div>
+                                <div style={{ textAlign:'right' }}>
+                                  <div style={{ color:'#999', fontSize:'0.75rem', marginBottom:'0.2rem' }}>Students</div>
+                                  <div style={{ color:'var(--jungle-deep)', fontWeight:600 }}>
+                                    {cls.completedCount}/{cls.studentCount}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div style={{ marginTop:'0.75rem', fontSize:'0.8rem', color:'#888' }}>
+                                👤 {cls.teacherEmail}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </>
                 )}
