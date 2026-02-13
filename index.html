@@ -626,69 +626,102 @@
         if (currentScreen !== 'adminDashboard' || adminTab !== 'analytics') return;
         if (!window.Chart || !animalChartRef.current) return;
 
-        try {
-          const { Chart, registerables } = window;
-          if (registerables) {
-            Chart.register(...registerables);
-          }
+        const buildChart = async () => {
+          try {
+            const { Chart, registerables } = window;
+            if (registerables) {
+              Chart.register(...registerables);
+            }
 
-          if (animalChartInstanceRef.current) {
-            animalChartInstanceRef.current.destroy();
-          }
+            if (animalChartInstanceRef.current) {
+              animalChartInstanceRef.current.destroy();
+            }
 
-          // Calculate animal data
-          const animalCounts = {};
-          const animalNames = ['Chimpanzee', 'Western Lowland Gorilla', 'African Lion', 'Giraffe', 'Koala', 'Sumatran Tiger'];
-          animalNames.forEach(name => { animalCounts[name] = 0; });
-          const sortedAnimals = Object.entries(animalCounts).sort((a, b) => b[1] - a[1]);
+            // Initialize animal counts from animals array
+            const animalCounts = {};
+            animals.forEach(animal => {
+              animalCounts[animal.name] = 0;
+            });
 
-          const ctx = animalChartRef.current.getContext('2d');
-          animalChartInstanceRef.current = new Chart(ctx, {
-            type: 'bar',
-            data: {
-              labels: sortedAnimals.map(([name]) => name),
-              datasets: [{
-                label: 'Total Visits',
-                data: sortedAnimals.map(([, count]) => count),
-                backgroundColor: '#1A5238',
-                borderColor: '#1A5238',
-                borderWidth: 0,
-                borderRadius: 8,
-                barThickness: 40
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  backgroundColor: 'rgba(10, 47, 31, 0.9)',
-                  titleColor: '#fff',
-                  bodyColor: '#fff',
-                  borderColor: '#1A5238',
-                  borderWidth: 1,
-                  padding: 12,
-                  displayColors: false,
-                  callbacks: { label: (context) => 'Visits: ' + context.parsed.y }
-                }
-              },
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  ticks: { stepSize: 5, color: '#666', font: { size: 12, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' },
-                  grid: { color: '#F0EDE8', drawBorder: false }
-                },
-                x: {
-                  ticks: { color: '#666', font: { size: 11, family: "'DM Sans', sans-serif" } },
-                  grid: { display: false, drawBorder: false }
-                }
+            // Aggregate badge visits from Firestore
+            for (const cls of adminClasses) {
+              try {
+                const studentsSnapshot = await window.db
+                  .collection('classes')
+                  .doc(cls.classCode)
+                  .collection('students')
+                  .get();
+
+                studentsSnapshot.docs.forEach(studentDoc => {
+                  const studentData = studentDoc.data();
+                  if (Array.isArray(studentData.badges)) {
+                    studentData.badges.forEach(badge => {
+                      const match = animals.find(a => a.id === badge.animalId);
+                      if (match) {
+                        animalCounts[match.name]++;
+                      }
+                    });
+                  }
+                });
+              } catch (err) {
+                console.error('Animal visit aggregation error for class:', cls.classCode, err);
               }
             }
-          });
-        } catch (error) {
-          console.error('Failed to create Most Visited Animals chart:', error);
-        }
+
+            // Sort by count descending
+            const sortedAnimals = Object.entries(animalCounts)
+              .sort((a, b) => b[1] - a[1]);
+
+            const ctx = animalChartRef.current.getContext('2d');
+            animalChartInstanceRef.current = new Chart(ctx, {
+              type: 'bar',
+              data: {
+                labels: sortedAnimals.map(([name]) => name),
+                datasets: [{
+                  label: 'Total Visits',
+                  data: sortedAnimals.map(([, count]) => count),
+                  backgroundColor: '#1A5238',
+                  borderColor: '#1A5238',
+                  borderWidth: 0,
+                  borderRadius: 8,
+                  barThickness: 40
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    backgroundColor: 'rgba(10, 47, 31, 0.9)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#1A5238',
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: false,
+                    callbacks: { label: (context) => 'Visits: ' + context.parsed.y }
+                  }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 5, color: '#666', font: { size: 12, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' },
+                    grid: { color: '#F0EDE8', drawBorder: false }
+                  },
+                  x: {
+                    ticks: { color: '#666', font: { size: 11, family: "'DM Sans', sans-serif" } },
+                    grid: { display: false, drawBorder: false }
+                  }
+                }
+              }
+            });
+          } catch (error) {
+            console.error('Failed to create Most Visited Animals chart:', error);
+          }
+        };
+
+        buildChart();
 
         return () => {
           if (animalChartInstanceRef.current) {
@@ -934,7 +967,7 @@
         },
         {
           id: 'koala', name: 'Koala', scientificName: 'Phascolarctos cinereus',
-          image: 'images/koala.jpg', latitude: -34.206972, longitude: 150.579889,
+          image: 'images/koala.jpg', latitude: -34.205984, longitude: 150.579066,
           radius: 50, emoji: '🐨', color: '#7A8B6F',
           questions: [
             { q: 'Without intervention, by what year could koalas become extinct in NSW?',
@@ -1784,38 +1817,6 @@
                         </>
                       );
                     })()}
-
-                    <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:'1rem', marginBottom:'1.5rem' }}>
-                      <div className="animate-scale-in" style={{ background:'white', borderRadius:'16px', padding:'1.5rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', animationDelay:'0.1s' }}>
-                        <div style={{ fontSize:'2rem', marginBottom:'0.5rem' }}>👥</div>
-                        <div style={{ fontSize:'2.2rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>{adminStats.totalTeachers}</div>
-                        <h3 style={{ fontSize:'0.95rem', fontWeight:600, color:'#666' }}>Teachers</h3>
-                      </div>
-
-                      <div className="animate-scale-in" style={{ background:'white', borderRadius:'16px', padding:'1.5rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', animationDelay:'0.2s' }}>
-                        <div style={{ fontSize:'2rem', marginBottom:'0.5rem' }}>📚</div>
-                        <div style={{ fontSize:'2.2rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>{adminStats.totalClasses}</div>
-                        <h3 style={{ fontSize:'0.95rem', fontWeight:600, color:'#666' }}>Classes</h3>
-                      </div>
-
-                      <div className="animate-scale-in" style={{ background:'white', borderRadius:'16px', padding:'1.5rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', animationDelay:'0.3s' }}>
-                        <div style={{ fontSize:'2rem', marginBottom:'0.5rem' }}>🎒</div>
-                        <div style={{ fontSize:'2.2rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>{adminStats.totalStudents}</div>
-                        <h3 style={{ fontSize:'0.95rem', fontWeight:600, color:'#666' }}>Students</h3>
-                      </div>
-
-                      <div className="animate-scale-in" style={{ background:'white', borderRadius:'16px', padding:'1.5rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', animationDelay:'0.4s' }}>
-                        <div style={{ fontSize:'2rem', marginBottom:'0.5rem' }}>✅</div>
-                        <div style={{ fontSize:'2.2rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>{adminStats.totalCompleted}</div>
-                        <h3 style={{ fontSize:'0.95rem', fontWeight:600, color:'#666' }}>Completed Activities</h3>
-                      </div>
-
-                      <div className="animate-scale-in" style={{ background:'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))', borderRadius:'16px', padding:'1.5rem', boxShadow:'0 4px 16px rgba(0,0,0,0.12)', animationDelay:'0.5s' }}>
-                        <div style={{ fontSize:'2rem', marginBottom:'0.5rem' }}>📝</div>
-                        <div style={{ fontSize:'2.2rem', fontWeight:700, color:'white', marginBottom:'0.3rem' }}>{adminStats.platformQuizAvg}%</div>
-                        <h3 style={{ fontSize:'0.95rem', fontWeight:600, color:'rgba(255,255,255,0.9)' }}>Platform Quiz Avg</h3>
-                      </div>
-                    </div>
 
                     <div className="animate-fade-in-up" style={{ marginTop:'1.5rem', animationDelay:'0.5s' }}>
                       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1rem', flexWrap:'wrap', gap:'1rem' }}>
