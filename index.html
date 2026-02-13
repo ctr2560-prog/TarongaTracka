@@ -163,6 +163,37 @@
         align-self: flex-start;
       }
     }
+
+    /* Tooltip styles */
+    .tooltip-wrapper {
+      position: relative;
+      display: inline-block;
+      cursor: help;
+    }
+
+    .tooltip-text {
+      visibility: hidden;
+      opacity: 0;
+      width: 220px;
+      background-color: rgba(10, 47, 31, 0.95);
+      color: #fff;
+      text-align: left;
+      border-radius: 8px;
+      padding: 0.6rem;
+      position: absolute;
+      z-index: 999;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      line-height: 1.4;
+      transition: opacity 0.2s ease;
+    }
+
+    .tooltip-wrapper:hover .tooltip-text {
+      visibility: visible;
+      opacity: 1;
+    }
   </style>
 </head>
 
@@ -351,6 +382,8 @@
             let totalCompleted = 0;
             let totalQuizPercentageSum = 0;
             let studentsWithQuizData = 0;
+            let globalBehaviourTotal = 0;
+            let globalDetailTotal = 0;
             let literacyTotal = 0;
             let badgeCount = 0;
             const classesWithStats = [];
@@ -368,6 +401,8 @@
               let completedCount = 0;
               let classQuizSum = 0;
               let classQuizCount = 0;
+              let classBehaviourTotal = 0;
+              let classDetailTotal = 0;
               let classLiteracyTotal = 0;
               let classBadgeCount = 0;
 
@@ -386,13 +421,21 @@
                   }
                 }
                 
-                // Aggregate writing (literacy) scores from badges (per-class and global)
+                // Aggregate observation scores from badges (per-class and global)
                 if (Array.isArray(studentData.badges)) {
                   studentData.badges.forEach(badge => {
-                    const score = badge.literacyScore || 0;
-                    classLiteracyTotal += score;
+                    // Backwards compatible: check behaviourScore first, fallback to behaviorScore
+                    const behaviourValue = badge.behaviourScore !== undefined ? badge.behaviourScore : (badge.behaviorScore || 0);
+                    
+                    classBehaviourTotal += behaviourValue;
+                    classDetailTotal += badge.detailScore || 0;
+                    classLiteracyTotal += badge.literacyScore || 0;
                     classBadgeCount++;
-                    literacyTotal += score;
+                    
+                    // Global tracking for platform-wide average
+                    globalBehaviourTotal += behaviourValue;
+                    globalDetailTotal += badge.detailScore || 0;
+                    literacyTotal += badge.literacyScore || 0;
                     badgeCount++;
                   });
                 }
@@ -400,11 +443,14 @@
 
               totalStudents += studentCount;
 
-              // Calculate per-class writing percentage
-              const avgWritingRaw = classBadgeCount ? classLiteracyTotal / classBadgeCount : 0;
-              const averageObservationPercent = Math.round((avgWritingRaw / 10) * 100);
+              // Calculate per-class combined observation percentage (out of 40 total per badge)
+              const classTotalScore = classBehaviourTotal + classDetailTotal + classLiteracyTotal;
+              const classMaxPossible = classBadgeCount * 40;
+              const averageObservationPercent = classMaxPossible > 0 
+                ? Math.round((classTotalScore / classMaxPossible) * 100) 
+                : 0;
 
-              // Store class with stats including quiz average and writing percentage
+              // Store class with stats including quiz average and observation percentage
               const classQuizAvg = classQuizCount > 0 ? Math.round(classQuizSum / classQuizCount) : 0;
               classesWithStats.push({
                 classCode: classDoc.id,
@@ -423,9 +469,12 @@
 
             const platformQuizAvg = studentsWithQuizData > 0 ? Math.round(totalQuizPercentageSum / studentsWithQuizData) : 0;
             
-            // Calculate average writing percentage
-            const avgWritingRaw = badgeCount ? (literacyTotal / badgeCount) : 0;
-            const avgWritingPercent = Math.round((avgWritingRaw / 10) * 100);
+            // Calculate average combined observation percentage (behaviour + detail + writing out of 40)
+            const globalTotalScore = globalBehaviourTotal + globalDetailTotal + literacyTotal;
+            const globalMaxPossible = badgeCount * 40;
+            const averageObservationPercent = globalMaxPossible > 0 
+              ? Math.round((globalTotalScore / globalMaxPossible) * 100) 
+              : 0;
 
             setAdminStats({
               totalTeachers: teacherEmails.size,
@@ -433,7 +482,7 @@
               totalStudents: totalStudents,
               totalCompleted: totalCompleted,
               platformQuizAvg: platformQuizAvg,
-              averageObservationPercent: avgWritingPercent
+              averageObservationPercent: averageObservationPercent
             });
 
             setAdminClasses(classesWithStats);
@@ -1939,7 +1988,7 @@
                             
                             <div className="animate-scale-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', animationDelay:'0.2s' }}>
                               <div style={{ fontSize:'2.5rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem', lineHeight:1 }}>{averageObservationScore}</div>
-                              <div style={{ fontSize:'0.85rem', fontWeight:600, color:'#888', textTransform:'uppercase', letterSpacing:'0.05em' }}>Avg Writing</div>
+                              <div style={{ fontSize:'0.85rem', fontWeight:600, color:'#888', textTransform:'uppercase', letterSpacing:'0.05em' }}>Avg Observation</div>
                             </div>
                             
                             <div className="animate-scale-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', animationDelay:'0.25s' }}>
@@ -2192,9 +2241,38 @@
 
                         {/* Chart 3: Observation Skill Breakdown (Radar) */}
                         <div style={{ marginBottom:'2rem' }}>
-                          <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
+                          <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>
                             Observation Skill Breakdown
                           </h2>
+                          <div style={{ fontSize:'0.85rem', color:'#666', marginBottom:'1rem', display:'flex', gap:'1.5rem', flexWrap:'wrap' }}>
+                            <span>
+                              <strong>Behaviour (%)</strong>
+                              <span className="tooltip-wrapper" style={{ marginLeft:'6px' }}>
+                                ⓘ
+                                <span className="tooltip-text">
+                                  Measures use of action-based vocabulary in observations. Scored 5 points per behaviour word, capped at 15. Displayed as % of maximum possible score.
+                                </span>
+                              </span>
+                            </span>
+                            <span>
+                              <strong>Detail (%)</strong>
+                              <span className="tooltip-wrapper" style={{ marginLeft:'6px' }}>
+                                ⓘ
+                                <span className="tooltip-text">
+                                  Measures descriptive detail in observations. Includes physical traits, colour, size and sensory descriptors. Scored up to 15 points total.
+                                </span>
+                              </span>
+                            </span>
+                            <span>
+                              <strong>Writing (%)</strong>
+                              <span className="tooltip-wrapper" style={{ marginLeft:'6px' }}>
+                                ⓘ
+                                <span className="tooltip-text">
+                                  Measures literacy quality. Includes capitalisation, punctuation, sentence structure and vocabulary diversity. Scored up to 10 points total.
+                                </span>
+                              </span>
+                            </span>
+                          </div>
                           <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
                             <div style={{ height:'400px', position:'relative' }}>
                               <canvas ref={radarChartRef}></canvas>
@@ -2288,7 +2366,15 @@
                                           Avg Quiz %
                                         </th>
                                         <th style={{ textAlign:'center', padding:'0.75rem 1rem', fontWeight:700, color:'var(--jungle-deep)', fontSize:'0.9rem', textTransform:'uppercase', letterSpacing:'0.05em' }}>
-                                          Avg Observation
+                                          <span>
+                                            Avg Observation %
+                                            <span className="tooltip-wrapper" style={{ marginLeft:'6px' }}>
+                                              ⓘ
+                                              <span className="tooltip-text">
+                                                Combined observation quality score. Calculated as: (Behaviour + Detail + Writing) ÷ 40 × 100.
+                                              </span>
+                                            </span>
+                                          </span>
                                         </th>
                                       </tr>
                                     </thead>
