@@ -368,6 +368,8 @@
               let completedCount = 0;
               let classQuizSum = 0;
               let classQuizCount = 0;
+              let classLiteracyTotal = 0;
+              let classBadgeCount = 0;
 
               studentsSnapshot.docs.forEach(studentDoc => {
                 const studentData = studentDoc.data();
@@ -384,10 +386,13 @@
                   }
                 }
                 
-                // Aggregate writing (literacy) scores from badges
+                // Aggregate writing (literacy) scores from badges (per-class and global)
                 if (Array.isArray(studentData.badges)) {
                   studentData.badges.forEach(badge => {
-                    literacyTotal += badge.literacyScore || 0;
+                    const score = badge.literacyScore || 0;
+                    classLiteracyTotal += score;
+                    classBadgeCount++;
+                    literacyTotal += score;
                     badgeCount++;
                   });
                 }
@@ -395,7 +400,11 @@
 
               totalStudents += studentCount;
 
-              // Store class with stats including quiz average
+              // Calculate per-class writing percentage
+              const avgWritingRaw = classBadgeCount ? classLiteracyTotal / classBadgeCount : 0;
+              const averageObservationPercent = Math.round((avgWritingRaw / 10) * 100);
+
+              // Store class with stats including quiz average and writing percentage
               const classQuizAvg = classQuizCount > 0 ? Math.round(classQuizSum / classQuizCount) : 0;
               classesWithStats.push({
                 classCode: classDoc.id,
@@ -407,6 +416,7 @@
                 completedCount: completedCount,
                 completionPercent: studentCount > 0 ? Math.round((completedCount / studentCount) * 100) : 0,
                 quizAverage: classQuizAvg,
+                averageObservationPercent: averageObservationPercent,
                 createdAt: classData.createdAt || null
               });
             }
@@ -843,7 +853,7 @@
             }
 
             // Calculate real averages from badges
-            let behaviorTotal = 0;
+            let behaviourTotal = 0;
             let detailTotal = 0;
             let literacyTotal = 0;
             let badgeCount = 0;
@@ -860,7 +870,9 @@
                   const studentData = studentDoc.data();
                   if (Array.isArray(studentData.badges)) {
                     studentData.badges.forEach(badge => {
-                      behaviorTotal += badge.behaviorScore || 0;
+                      // Backwards compatible: check behaviourScore first, fallback to behaviorScore
+                      const behaviourValue = badge.behaviourScore !== undefined ? badge.behaviourScore : (badge.behaviorScore || 0);
+                      behaviourTotal += behaviourValue;
                       detailTotal += badge.detailScore || 0;
                       literacyTotal += badge.literacyScore || 0;
                       badgeCount++;
@@ -872,12 +884,12 @@
               }
             }
 
-            const avgBehaviorRaw = badgeCount ? (behaviorTotal / badgeCount) : 0;
+            const avgBehaviourRaw = badgeCount ? (behaviourTotal / badgeCount) : 0;
             const avgDetailRaw = badgeCount ? (detailTotal / badgeCount) : 0;
             const avgLiteracyRaw = badgeCount ? (literacyTotal / badgeCount) : 0;
 
             // Convert to percentage of category maximum
-            const avgBehaviorScore = Math.round((avgBehaviorRaw / 25) * 100);
+            const avgBehaviourScore = Math.round((avgBehaviourRaw / 15) * 100);
             const avgDetailScore = Math.round((avgDetailRaw / 15) * 100);
             const avgLiteracyScore = Math.round((avgLiteracyRaw / 10) * 100);
 
@@ -885,10 +897,10 @@
             radarChartInstanceRef.current = new Chart(ctx, {
               type: 'radar',
               data: {
-                labels: ['Behavior (%)', 'Detail (%)', 'Writing (%)'],
+                labels: ['Behaviour (%)', 'Detail (%)', 'Writing (%)'],
                 datasets: [{
                   label: 'Average Score',
-                  data: [avgBehaviorScore, avgDetailScore, avgLiteracyScore],
+                  data: [avgBehaviourScore, avgDetailScore, avgLiteracyScore],
                   backgroundColor: 'rgba(30, 79, 61, 0.2)',
                   borderColor: '#1E4F3D',
                   borderWidth: 2,
@@ -1257,7 +1269,7 @@
         const behaviorWords = ['sleeping','eating','walking','climbing','jumping','playing','sitting','running','resting','moving','looking','watching','grooming','scratching','lying','standing','hanging','swinging','chewing','drinking','hiding','stretching','yawning','sniffing','touching','holding','grabbing'];
         let behaviorCount = 0;
         behaviorWords.forEach(w => { if (lower.includes(w)) behaviorCount++; });
-        const behaviorBonus = Math.min(behaviorCount * 5, 25);
+        const behaviourBonus = Math.min(behaviorCount * 5, 15);
 
         const detailWords = ['fur','color','eyes','ears','tail','paws','claws','nose','mouth','teeth','stripes','spots','pattern','size','big','small','long','short','thick','thin','soft','rough','dark','light','brown','black','white','orange','grey','gray','quietly','slowly','quickly'];
         let detailCount = 0;
@@ -1271,13 +1283,13 @@
         const words = lower.split(/\s+/).filter(Boolean);
         if (words.length > 0 && new Set(words).size / words.length > 0.6) literacyBonus += 2;
 
-        const totalEarned = quizPoints + 30 + behaviorBonus + detailBonus + literacyBonus + currentAnimal.pointValue;
+        const totalEarned = quizPoints + 30 + behaviourBonus + detailBonus + literacyBonus + currentAnimal.pointValue;
 
         setTotalPoints(p => p + totalEarned);
         setFoundAnimals(prev => new Set([...prev, currentAnimal.id]));
         setBadges(prev => ([...prev, {
           animalId: currentAnimal.id, animal: currentAnimal.name, points: totalEarned,
-          behaviorScore: behaviorBonus, detailScore: detailBonus, literacyScore: literacyBonus,
+          behaviourScore: behaviourBonus, detailScore: detailBonus, literacyScore: literacyBonus,
           quizResults: quizResults,
           observation: text,
           timestamp: new Date().toISOString()
@@ -1309,7 +1321,7 @@
           animalId: b.animalId || "",
           animal: b.animal || "",
           points: b.points || 0,
-          behaviorScore: b.behaviorScore || 0,
+          behaviourScore: b.behaviourScore !== undefined ? b.behaviourScore : (b.behaviorScore || 0),
           detailScore: b.detailScore || 0,
           literacyScore: b.literacyScore || 0,
           quizResults: (b.quizResults || []).map(qr => ({
@@ -1597,7 +1609,7 @@
                     {earned&&badge&&(
                       <div>
                         <p style={{ fontSize:'1.5rem', fontWeight:700, color:'var(--sunset-orange)', marginBottom:'0.3rem' }}>{badge.points} pts</p>
-                        <p style={{ fontSize:'0.7rem', color:'#666', lineHeight:1.3 }}>Behavior: +{badge.behaviorScore}<br/>Detail: +{badge.detailScore}<br/>Writing: +{badge.literacyScore}</p>
+                        <p style={{ fontSize:'0.7rem', color:'#666', lineHeight:1.3 }}>Behaviour: +{badge.behaviourScore !== undefined ? badge.behaviourScore : (badge.behaviorScore || 0)}<br/>Detail: +{badge.detailScore}<br/>Writing: +{badge.literacyScore}</p>
                       </div>
                     )}
                     {!earned&&(<p style={{ fontSize:'0.85rem', color:'rgba(255,255,255,0.6)' }}>Not yet discovered</p>)}
@@ -2222,8 +2234,11 @@
                               school.quizCount += cls.completedCount;
                             }
                             
-                            // Observation scores would come from student-level data
-                            // Placeholder for now
+                            // Add observation (writing) percentage data from class
+                            if (cls.averageObservationPercent !== undefined && cls.studentCount > 0) {
+                              school.observationScoreSum += cls.averageObservationPercent * cls.studentCount;
+                              school.observationCount += cls.studentCount;
+                            }
                           });
                           
                           // Calculate averages and convert to array
@@ -2235,7 +2250,7 @@
                               ? Math.round(school.quizPercentageSum / school.quizCount) 
                               : 0,
                             avgObservationScore: school.observationCount > 0
-                              ? Math.round(school.observationScoreSum / school.observationCount)
+                              ? `${Math.round(school.observationScoreSum / school.observationCount)}%`
                               : '—'
                           }));
                           
