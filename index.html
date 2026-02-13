@@ -182,12 +182,13 @@
       padding: 0.6rem;
       position: absolute;
       z-index: 999;
-      bottom: 125%;
+      top: 125%;
       left: 50%;
       transform: translateX(-50%);
       font-size: 0.75rem;
       line-height: 1.4;
       transition: opacity 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
 
     .tooltip-wrapper:hover .tooltip-text {
@@ -250,6 +251,7 @@
       const [adminLoading, setAdminLoading] = useState(false);
       const [adminClasses, setAdminClasses] = useState([]);
       const [adminDateFilter, setAdminDateFilter] = useState('all');
+      const [adminDateRange, setAdminDateRange] = useState('all');
       const [selectedAdminClass, setSelectedAdminClass] = useState(null);
       const [adminClassData, setAdminClassData] = useState(null);
       const [adminClassStudents, setAdminClassStudents] = useState([]);
@@ -386,6 +388,7 @@
             let globalDetailTotal = 0;
             let literacyTotal = 0;
             let badgeCount = 0;
+            let totalBadges = 0;
             const classesWithStats = [];
 
             for (const classDoc of classesSnapshot.docs) {
@@ -405,9 +408,23 @@
               let classDetailTotal = 0;
               let classLiteracyTotal = 0;
               let classBadgeCount = 0;
+              let classTotalBadges = 0;
 
               studentsSnapshot.docs.forEach(studentDoc => {
                 const studentData = studentDoc.data();
+                
+                // Date range filtering
+                const completedAt = studentData.completedAt?.toDate?.();
+                if (!completedAt) return;
+
+                if (adminDateRange !== 'all') {
+                  const days = parseInt(adminDateRange, 10);
+                  const cutoff = new Date();
+                  cutoff.setDate(cutoff.getDate() - days);
+
+                  if (completedAt < cutoff) return;
+                }
+                
                 if (studentData.completed === true) {
                   completedCount++;
                   totalCompleted++;
@@ -423,6 +440,9 @@
                 
                 // Aggregate observation scores from badges (per-class and global)
                 if (Array.isArray(studentData.badges)) {
+                  classTotalBadges += studentData.badges.length;
+                  totalBadges += studentData.badges.length;
+                  
                   studentData.badges.forEach(badge => {
                     // Backwards compatible: check behaviourScore first, fallback to behaviorScore
                     const behaviourValue = badge.behaviourScore !== undefined ? badge.behaviourScore : (badge.behaviorScore || 0);
@@ -463,6 +483,7 @@
                 completionPercent: studentCount > 0 ? Math.round((completedCount / studentCount) * 100) : 0,
                 quizAverage: classQuizAvg,
                 averageObservationPercent: averageObservationPercent,
+                totalBadges: classTotalBadges,
                 createdAt: classData.createdAt || null
               });
             }
@@ -482,7 +503,8 @@
               totalStudents: totalStudents,
               totalCompleted: totalCompleted,
               platformQuizAvg: platformQuizAvg,
-              averageObservationPercent: averageObservationPercent
+              averageObservationPercent: averageObservationPercent,
+              totalBadges: totalBadges
             });
 
             setAdminClasses(classesWithStats);
@@ -494,7 +516,7 @@
         };
 
         fetchAdminStats();
-      }, [currentScreen]);
+      }, [currentScreen, adminDateRange]);
 
       // Admin class view: fetch class details and students
       useEffect(() => {
@@ -728,6 +750,19 @@
 
                 studentsSnapshot.docs.forEach(studentDoc => {
                   const studentData = studentDoc.data();
+                  
+                  // Date range filtering
+                  const completedAt = studentData.completedAt?.toDate?.();
+                  if (!completedAt) return;
+
+                  if (adminDateRange !== 'all') {
+                    const days = parseInt(adminDateRange, 10);
+                    const cutoff = new Date();
+                    cutoff.setDate(cutoff.getDate() - days);
+
+                    if (completedAt < cutoff) return;
+                  }
+                  
                   if (Array.isArray(studentData.badges)) {
                     studentData.badges.forEach(badge => {
                       const match = animals.find(a => a.id === badge.animalId);
@@ -802,7 +837,7 @@
             animalChartInstanceRef.current.destroy();
           }
         };
-      }, [currentScreen, adminTab, adminClasses]);
+      }, [currentScreen, adminTab, adminClasses, adminDateRange]);
 
       // Chart 2: Quiz Performance Distribution
       useEffect(() => {
@@ -883,7 +918,7 @@
             quizChartInstanceRef.current.destroy();
           }
         };
-      }, [currentScreen, adminTab, adminClasses]);
+      }, [currentScreen, adminTab, adminClasses, adminDateRange]);
 
       // Chart 3: Observation Skill Breakdown (Radar)
       useEffect(() => {
@@ -917,6 +952,19 @@
 
                 studentsSnapshot.docs.forEach(studentDoc => {
                   const studentData = studentDoc.data();
+                  
+                  // Date range filtering
+                  const completedAt = studentData.completedAt?.toDate?.();
+                  if (!completedAt) return;
+
+                  if (adminDateRange !== 'all') {
+                    const days = parseInt(adminDateRange, 10);
+                    const cutoff = new Date();
+                    cutoff.setDate(cutoff.getDate() - days);
+
+                    if (completedAt < cutoff) return;
+                  }
+                  
                   if (Array.isArray(studentData.badges)) {
                     studentData.badges.forEach(badge => {
                       // Backwards compatible: check behaviourScore first, fallback to behaviorScore
@@ -1003,7 +1051,7 @@
             radarChartInstanceRef.current.destroy();
           }
         };
-      }, [currentScreen, adminTab, adminClasses]);
+      }, [currentScreen, adminTab, adminClasses, adminDateRange]);
 
       // CSV Export for Analytics
       const exportAnalyticsCSV = async () => {
@@ -1035,6 +1083,18 @@
 
             studentsSnapshot.docs.forEach(studentDoc => {
               const data = studentDoc.data();
+              
+              // Date range filtering
+              const completedAt = data.completedAt?.toDate?.();
+              if (!completedAt) return;
+
+              if (adminDateRange !== 'all') {
+                const days = parseInt(adminDateRange, 10);
+                const cutoff = new Date();
+                cutoff.setDate(cutoff.getDate() - days);
+
+                if (completedAt < cutoff) return;
+              }
 
               if (Array.isArray(data.badges)) {
                 totalBadges += data.badges.length;
@@ -1965,7 +2025,7 @@
                       
                       // Use calculated writing percentage from adminStats
                       const averageObservationScore = `${adminStats.averageObservationPercent || 0}%`;
-                      const totalUnlocksDisplay = '—';
+                      const totalUnlocksDisplay = adminStats.totalBadges || 0;
                       
                       return (
                         <>
@@ -2181,33 +2241,53 @@
                       </div>
                     ) : (
                       <>
-                        {/* CSV Export Button */}
-                        <button
-                          onClick={exportAnalyticsCSV}
-                          style={{
-                            background: "linear-gradient(135deg, #1A5238, #2E7D55)",
-                            color: "white",
-                            border: "none",
-                            padding: "0.6rem 1.2rem",
-                            borderRadius: "30px",
-                            cursor: "pointer",
-                            fontWeight: 600,
-                            marginBottom: "1.5rem",
-                            fontSize: "0.95rem",
-                            boxShadow: "0 4px 12px rgba(26, 82, 56, 0.2)",
-                            transition: "transform 0.2s, box-shadow 0.2s"
-                          }}
-                          onMouseEnter={(e) => {
-                            e.target.style.transform = "translateY(-2px)";
-                            e.target.style.boxShadow = "0 6px 16px rgba(26, 82, 56, 0.3)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.transform = "translateY(0)";
-                            e.target.style.boxShadow = "0 4px 12px rgba(26, 82, 56, 0.2)";
-                          }}
-                        >
-                          📥 Export Analytics CSV
-                        </button>
+                        {/* Date Range Filter */}
+                        <div style={{ display:'flex', gap:'1rem', alignItems:'center', marginBottom:'1rem' }}>
+                          <select
+                            value={adminDateRange}
+                            onChange={(e) => setAdminDateRange(e.target.value)}
+                            style={{
+                              padding: '0.5rem 1rem',
+                              borderRadius: '20px',
+                              border: '1px solid #ccc',
+                              fontFamily: "'DM Sans', sans-serif",
+                              fontSize: '0.9rem',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <option value="all">All Time</option>
+                            <option value="7">Last 7 Days</option>
+                            <option value="30">Last 30 Days</option>
+                            <option value="90">Last 90 Days</option>
+                          </select>
+
+                          {/* CSV Export Button */}
+                          <button
+                            onClick={exportAnalyticsCSV}
+                            style={{
+                              background: "linear-gradient(135deg, #1A5238, #2E7D55)",
+                              color: "white",
+                              border: "none",
+                              padding: "0.6rem 1.2rem",
+                              borderRadius: "30px",
+                              cursor: "pointer",
+                              fontWeight: 600,
+                              fontSize: "0.95rem",
+                              boxShadow: "0 4px 12px rgba(26, 82, 56, 0.2)",
+                              transition: "transform 0.2s, box-shadow 0.2s"
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.transform = "translateY(-2px)";
+                              e.target.style.boxShadow = "0 6px 16px rgba(26, 82, 56, 0.3)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.transform = "translateY(0)";
+                              e.target.style.boxShadow = "0 4px 12px rgba(26, 82, 56, 0.2)";
+                            }}
+                          >
+                            📥 Export Analytics CSV
+                          </button>
+                        </div>
 
                         {/* Chart 1: Most Visited Animals */}
                         <div style={{ marginBottom:'2rem' }}>
@@ -2298,13 +2378,15 @@
                                 quizPercentageSum: 0,
                                 quizCount: 0,
                                 observationScoreSum: 0,
-                                observationCount: 0
+                                observationCount: 0,
+                                totalBadges: 0
                               };
                             }
                             
                             const school = schoolStats[schoolName];
                             school.totalClasses++;
                             school.totalStudents += cls.studentCount || 0;
+                            school.totalBadges += cls.totalBadges || 0;
                             
                             // Add quiz data
                             if (cls.quizAverage && cls.completedCount > 0) {
@@ -2329,7 +2411,8 @@
                               : 0,
                             avgObservationScore: school.observationCount > 0
                               ? `${Math.round(school.observationScoreSum / school.observationCount)}%`
-                              : '—'
+                              : '—',
+                            totalBadges: school.totalBadges
                           }));
                           
                           // Sort by avg quiz percentage descending
@@ -2371,7 +2454,7 @@
                                             <span className="tooltip-wrapper" style={{ marginLeft:'6px' }}>
                                               ⓘ
                                               <span className="tooltip-text">
-                                                Combined observation quality score. Calculated as: (Behaviour + Detail + Writing) ÷ 40 × 100.
+                                                Combined score from: Behaviour (15) + Detail (15) + Writing (10). Displayed as a percentage of 40 total points.
                                               </span>
                                             </span>
                                           </span>
