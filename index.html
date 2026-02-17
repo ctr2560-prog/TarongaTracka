@@ -199,6 +199,26 @@
 </head>
 
 <body>
+
+  <video
+    id="bgVideo"
+    autoplay
+    muted
+    loop
+    playsinline
+    preload="auto"
+    style="
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1;
+    "
+  >
+    <source src="images/background-video.mp4" type="video/mp4" />
+  </video>
+
   <div id="root"></div>
 
   <script type="text/babel">
@@ -706,35 +726,6 @@
             window.removeEventListener('keydown', handleEscape);
           };
         }
-      }, [currentScreen]);
-
-      // Ensure background video plays on home screen load
-      useEffect(() => {
-        if (currentScreen !== 'home') return;
-
-        const video = document.getElementById('bgVideo');
-        if (!video) return;
-
-        video.muted = true;
-        video.playsInline = true;
-
-        const handleCanPlay = async () => {
-          try {
-            await video.play();
-          } catch (err) {
-            console.warn("Autoplay blocked on first attempt.");
-          }
-        };
-
-        if (video.readyState >= 2) {
-          handleCanPlay();
-        } else {
-          video.addEventListener("canplay", handleCanPlay, { once: true });
-        }
-
-        return () => {
-          video.removeEventListener("canplay", handleCanPlay);
-        };
       }, [currentScreen]);
 
       useEffect(() => {
@@ -1289,9 +1280,6 @@
       };
 
       const enableLocation = () => {
-        const video = document.getElementById('bgVideo');
-        if (video) { video.muted = true; video.playsInline = true; video.play().catch(() => {}); }
-
         if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
           alert('Desktop browsers require HTTPS for location. Host this page on HTTPS (GitHub Pages/Netlify) or run locally.');
           return;
@@ -1512,10 +1500,6 @@
       if (currentScreen === 'home') {
         return (
           <div style={{ position:'relative', width:'100%', height:'100vh', overflow:'hidden', background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)' }}>
-            <video id="bgVideo" autoPlay loop muted playsInline webkit-playsinline="true" preload="auto"
-              style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', objectFit:'cover', zIndex:0 }}>
-              <source src="images/background-video.mp4" type="video/mp4" />
-            </video>
             <div style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', background:'rgba(10,47,31,0.5)', zIndex:1 }} />
             <div style={{ position:'relative', zIndex:10, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', padding:'1rem', textAlign:'center' }}>
               <div className="animate-fade-in-up" style={{ animationDelay:'0.2s', marginBottom:'clamp(1rem, 3vh, 2rem)' }}>
