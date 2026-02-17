@@ -63,6 +63,7 @@
       overflow-x: hidden;
       touch-action: pan-y;
       overscroll-behavior: contain;
+      background: transparent;
     }
 
     #root {
@@ -1506,8 +1507,8 @@
       // ---------- SCREENS ----------
       if (currentScreen === 'home') {
         return (
-          <div style={{ position:'relative', width:'100%', height:'100vh', overflow:'hidden', background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)' }}>
-            <div style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', background:'rgba(10,47,31,0.5)', zIndex:1 }} />
+          <div style={{ position:'relative', width:'100%', height:'100vh', overflow:'hidden', background:'transparent' }}>
+            <div style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', background:'rgba(0,0,0,0.4)', zIndex:1 }} />
             <div style={{ position:'relative', zIndex:10, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', padding:'1rem', textAlign:'center' }}>
               <div className="animate-fade-in-up" style={{ animationDelay:'0.2s', marginBottom:'clamp(1rem, 3vh, 2rem)' }}>
                 <img src="images/logo.png" alt="Taronga Tracka" style={{ width:'clamp(200px, 50vw, 300px)', height:'auto', display:'block' }} onError={(e)=>{ e.target.style.display='none'; }} />
