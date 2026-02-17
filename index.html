@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -14,17 +13,12 @@
   <title>Taronga Tracka v2.2 - Animal Discovery</title>
 
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <!-- Firebase SDKs -->
-
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <script>
@@ -202,7 +196,6 @@
       opacity: 1;
     }
   </style>
-
 </head>
 
 <body>
@@ -725,15 +718,23 @@
         video.muted = true;
         video.playsInline = true;
 
-        const attemptPlay = async () => {
+        const handleCanPlay = async () => {
           try {
             await video.play();
           } catch (err) {
-            console.warn("Autoplay blocked, waiting for interaction.");
+            console.warn("Autoplay blocked on first attempt.");
           }
         };
 
-        attemptPlay();
+        if (video.readyState >= 2) {
+          handleCanPlay();
+        } else {
+          video.addEventListener("canplay", handleCanPlay, { once: true });
+        }
+
+        return () => {
+          video.removeEventListener("canplay", handleCanPlay);
+        };
       }, [currentScreen]);
 
       useEffect(() => {
@@ -1511,7 +1512,7 @@
       if (currentScreen === 'home') {
         return (
           <div style={{ position:'relative', width:'100%', height:'100vh', overflow:'hidden', background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)' }}>
-            <video id="bgVideo" autoPlay loop muted playsInline webkit-playsinline="true" preload="metadata"
+            <video id="bgVideo" autoPlay loop muted playsInline webkit-playsinline="true" preload="auto"
               style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', objectFit:'cover', zIndex:0 }}>
               <source src="images/background-video.mp4" type="video/mp4" />
             </video>
@@ -3072,6 +3073,5 @@
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<TarongaTracka />);
   </script>
-
 </body>
 </html>
