@@ -273,6 +273,7 @@
       const [classCode, setClassCode] = useState(() => { try { return JSON.parse(localStorage.getItem('tarongaClassCode')) || ''; } catch(e) { return ''; } });
       const [teacherEmail, setTeacherEmail] = useState('');
       const [adminAccessCode, setAdminAccessCode] = useState('');
+      const [accessCodeInput, setAccessCodeInput] = useState('');
       const [adminTab, setAdminTab] = useState('overview');
       const [adminStats, setAdminStats] = useState({ totalTeachers: 0, totalClasses: 0, totalStudents: 0, totalCompleted: 0 });
       const [adminLoading, setAdminLoading] = useState(false);
@@ -2754,6 +2755,20 @@
                   <input type="text" value={newClassName} onChange={(e)=>setNewClassName(e.target.value)} placeholder="e.g. 7A, Biology, Koala Crew"
                     style={{ width:'100%', padding:'0.7rem 0.9rem', borderRadius:'12px', border:'2px solid #E5E5E5', fontSize:'0.95rem', fontFamily:'DM Sans, sans-serif', marginBottom:'1.2rem', boxSizing:'border-box', transition:'border-color 0.2s' }}
                     onFocus={(e)=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'} />
+
+                  <input
+                    type="text"
+                    placeholder="Enter Taronga Access Code"
+                    value={accessCodeInput}
+                    onChange={(e) => setAccessCodeInput(e.target.value)}
+                    style={{
+                      padding: "10px",
+                      marginBottom: "10px",
+                      width: "100%",
+                      borderRadius: "6px",
+                      border: "1px solid #ccc"
+                    }}
+                  />
 
                   <button onClick={createClass} disabled={!newYearGroup.trim() || !newClassName.trim() || !newSchoolName.trim()}
                     style={{ width:'100%', padding:'0.75rem', borderRadius:'50px', border:'none', background:(newYearGroup.trim()&&newClassName.trim()&&newSchoolName.trim())?'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))':'#CCC', color:'white', fontSize:'0.95rem', fontWeight:700, cursor:(newYearGroup.trim()&&newClassName.trim()&&newSchoolName.trim())?'pointer':'not-allowed', textTransform:'uppercase', letterSpacing:'0.08em', transition:'all 0.3s ease' }}>
