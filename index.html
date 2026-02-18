@@ -277,6 +277,7 @@
       const [adminTab, setAdminTab] = useState('overview');
       const [adminStats, setAdminStats] = useState({ totalTeachers: 0, totalClasses: 0, totalStudents: 0, totalCompleted: 0 });
       const [adminLoading, setAdminLoading] = useState(false);
+      const [dailyCode, setDailyCode] = useState(null);
       const [adminClasses, setAdminClasses] = useState([]);
       const [adminDateFilter, setAdminDateFilter] = useState('all');
       const [adminDateRange, setAdminDateRange] = useState('all');
@@ -545,6 +546,35 @@
 
         fetchAdminStats();
       }, [currentScreen, adminDateRange]);
+
+      // Fetch active daily code for admin dashboard
+      useEffect(() => {
+        if (currentScreen !== 'adminDashboard') return;
+
+        const fetchActiveCode = async () => {
+          try {
+            const now = new Date();
+            const snapshot = await window.db.collection('accessCodes')
+              .where('active', '==', true)
+              .get();
+
+            let validCode = null;
+
+            snapshot.forEach((docSnap) => {
+              const data = docSnap.data();
+              if (data.expiresAt?.toDate() > now) {
+                validCode = { id: docSnap.id, ...data };
+              }
+            });
+
+            setDailyCode(validCode);
+          } catch (error) {
+            console.error('Error fetching daily code:', error);
+          }
+        };
+
+        fetchActiveCode();
+      }, [currentScreen]);
 
       // Admin class view: fetch class details and students
       useEffect(() => {
@@ -1140,6 +1170,51 @@
           }
         };
       }, [currentScreen, adminTab, adminClasses, adminDateRange]);
+
+      // Generate Daily Code for Admin
+      const generateDailyCode = async () => {
+        try {
+          const newCode = "ROAR-" + Math.floor(1000 + Math.random() * 9000);
+
+          const expires = new Date();
+          expires.setHours(23, 59, 59, 999);
+
+          // Deactivate all existing active codes
+          const activeSnapshot = await window.db.collection('accessCodes')
+            .where('active', '==', true)
+            .get();
+
+          const batch = window.db.batch();
+
+          activeSnapshot.forEach((docSnap) => {
+            batch.update(docSnap.ref, { active: false });
+          });
+
+          // Create new code
+          const newRef = window.db.collection('accessCodes').doc(newCode);
+          batch.set(newRef, {
+            active: true,
+            expiresAt: expires,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            venue: "Taronga Sydney",
+            uses: 0,
+            maxUses: 999
+          });
+
+          await batch.commit();
+
+          setDailyCode({
+            id: newCode,
+            active: true,
+            expiresAt: expires
+          });
+
+          alert(`Daily code generated: ${newCode}`);
+        } catch (error) {
+          console.error('Error generating daily code:', error);
+          alert('Error generating daily code');
+        }
+      };
 
       // CSV Export for Analytics
       const exportAnalyticsCSV = async () => {
@@ -2009,9 +2084,50 @@
                   <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.78rem' }}>Staff Portal</p>
                 </div>
               </div>
-              <button onClick={()=>{ setAdminAccessCode(''); setCurrentScreen('home'); }} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', padding:'0.45rem 0.9rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.8rem', fontWeight:600 }}>
-                Sign Out
-              </button>
+              <div style={{ display:'flex', alignItems:'center', gap:'1rem' }}>
+                <div style={{
+                  background: "#1A5238",
+                  padding: "8px 14px",
+                  borderRadius: "20px",
+                  color: "white",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  fontSize: "14px"
+                }}>
+                  🦁 Daily Code: {dailyCode ? (
+                    <>
+                      <strong>{dailyCode.id}</strong>
+                      <span style={{ opacity: 0.8 }}>
+                        (Expires 11:59pm)
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span>No active code</span>
+                      <button
+                        onClick={generateDailyCode}
+                        style={{
+                          marginLeft: "10px",
+                          padding: "4px 10px",
+                          borderRadius: "12px",
+                          border: "none",
+                          cursor: "pointer",
+                          background: "white",
+                          color: "#1A5238",
+                          fontWeight: 600,
+                          fontSize: "13px"
+                        }}
+                      >
+                        Generate
+                      </button>
+                    </>
+                  )}
+                </div>
+                <button onClick={()=>{ setAdminAccessCode(''); setCurrentScreen('home'); }} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', padding:'0.45rem 0.9rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.8rem', fontWeight:600 }}>
+                  Sign Out
+                </button>
+              </div>
             </div>
 
             <div style={{ background:'white', borderBottom:'2px solid #F0EDE8', padding:'0 1.5rem', flexShrink:0 }}>
