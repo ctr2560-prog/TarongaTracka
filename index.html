@@ -635,40 +635,100 @@
         return code;
       };
 
-      const createClass = () => {
+      const createClass = async () => {
         if (!newYearGroup.trim() || !newClassName.trim() || !newSchoolName.trim()) return;
-        let code = generateClassCode();
-        while (teacherClasses.some(c => normaliseCode(c.classCode) === normaliseCode(code))) {
-          code = generateClassCode();
+        
+        // Validate access code
+        if (!accessCodeInput.trim()) {
+          alert("Please enter a Taronga Access Code.");
+          return;
         }
 
-        // Write to Firestore: teachers/{teacherEmail}/classes/{classCode}
-        window.db.collection('teachers').doc(teacherEmail)
-          .collection('classes').doc(code)
-          .set({
-            classCode: code,
-            yearGroup: newYearGroup.trim(),
-            className: newClassName.trim(),
-            schoolName: newSchoolName.trim(),
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            archived: false
-          })
-          .then(() => {
-            setNewYearGroup('');
-            setNewClassName('');
-            setNewSchoolName('');
-          })
-          .catch((err) => console.error('Failed to create class:', err));
+        try {
+          const codeRef = window.db.collection('accessCodes').doc(accessCodeInput.trim());
+          const codeSnap = await codeRef.get();
 
-        // Also write to classes/{code} for student join validation
-        window.db.collection('classes').doc(code).set({
-          classCode: code,
-          yearGroup: newYearGroup.trim(),
-          className: newClassName.trim(),
-          schoolName: newSchoolName.trim(),
-          teacherEmail: teacherEmail,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        }).catch((err) => console.error('Failed to save class to Firestore:', err));
+          if (!codeSnap.exists) {
+            alert("Invalid access code.");
+            return;
+          }
+
+          const codeData = codeSnap.data();
+          const now = new Date();
+
+          if (!codeData.active) {
+            alert("This access code is no longer active.");
+            return;
+          }
+
+          if (codeData.expiresAt.toDate() < now) {
+            alert("This access code has expired.");
+            return;
+          }
+
+          if (codeData.uses >= codeData.maxUses) {
+            alert("This access code has reached its usage limit.");
+            return;
+          }
+
+          // Generate unique class code
+          let code = generateClassCode();
+          while (teacherClasses.some(c => normaliseCode(c.classCode) === normaliseCode(code))) {
+            code = generateClassCode();
+          }
+
+          // Run transaction to increment usage and create class
+          await window.db.runTransaction(async (transaction) => {
+            const freshCodeSnap = await transaction.get(codeRef);
+            const freshData = freshCodeSnap.data();
+
+            if (freshData.uses >= freshData.maxUses) {
+              throw new Error("Code usage limit reached.");
+            }
+
+            transaction.update(codeRef, {
+              uses: freshData.uses + 1
+            });
+
+            // Write to teachers/{teacherEmail}/classes/{classCode}
+            const teacherClassRef = window.db.collection('teachers').doc(teacherEmail)
+              .collection('classes').doc(code);
+            transaction.set(teacherClassRef, {
+              classCode: code,
+              yearGroup: newYearGroup.trim(),
+              className: newClassName.trim(),
+              schoolName: newSchoolName.trim(),
+              accessCodeUsed: accessCodeInput.trim(),
+              venue: freshData.venue || 'Taronga Zoo',
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+              archived: false
+            });
+
+            // Also write to classes/{code} for student join validation
+            const classRef = window.db.collection('classes').doc(code);
+            transaction.set(classRef, {
+              classCode: code,
+              yearGroup: newYearGroup.trim(),
+              className: newClassName.trim(),
+              schoolName: newSchoolName.trim(),
+              teacherEmail: teacherEmail,
+              accessCodeUsed: accessCodeInput.trim(),
+              venue: freshData.venue || 'Taronga Zoo',
+              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          });
+
+          // Clear form on success
+          setNewYearGroup('');
+          setNewClassName('');
+          setNewSchoolName('');
+          setAccessCodeInput('');
+          alert("Class created successfully!");
+
+        } catch (error) {
+          console.error('Error creating class:', error);
+          alert(`Error creating class: ${error.message}`);
+        }
       };
 
       const geoWatchIdRef = useRef(null);
