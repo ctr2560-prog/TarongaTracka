@@ -1656,11 +1656,11 @@
                   <div style={{ display:'flex', alignItems:'center', gap:'0.6rem' }}><span style={{ fontSize:'clamp(1.2rem, 2.5vh, 1.5rem)' }}>🏆</span><span>Collect badges & earn points</span></div>
                 </div>
               </div>
-              <button onClick={enableLocation} className="animate-scale-in" style={{ background:'linear-gradient(135deg, var(--sunset-orange) 0%, var(--earth-clay) 100%)', color:'white', border:'none', padding:'clamp(0.8rem, 2vh, 1rem) clamp(2rem, 5vw, 2.5rem)', fontSize:'clamp(0.95rem, 2.5vh, 1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', boxShadow:'0 10px 30px rgba(232,106,51,0.4)', animationDelay:'0.6s', textTransform:'uppercase', letterSpacing:'0.1em', width:'min(90vw, 400px)', marginBottom:'1rem' }}>
-                Let's Track
+              <button onClick={()=>setCurrentScreen('public')} className="animate-scale-in" style={{ background:'linear-gradient(135deg, var(--sunset-orange) 0%, var(--earth-clay) 100%)', color:'white', border:'none', padding:'clamp(0.8rem, 2vh, 1rem) clamp(2rem, 5vw, 2.5rem)', fontSize:'clamp(0.95rem, 2.5vh, 1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', boxShadow:'0 10px 30px rgba(232,106,51,0.4)', animationDelay:'0.6s', textTransform:'uppercase', letterSpacing:'0.1em', width:'min(90vw, 400px)', marginBottom:'1rem' }}>
+                Let's Track!
               </button>
               <button onClick={()=>setCurrentScreen('schoolEntry')} className="animate-scale-in" style={{ background:'rgba(255,255,255,0.15)', border:'1.5px solid rgba(255,255,255,0.4)', color:'white', padding:'clamp(0.8rem, 2vh, 1rem) clamp(2rem, 5vw, 2.5rem)', fontSize:'clamp(0.95rem, 2.5vh, 1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', backdropFilter:'blur(6px)', animationDelay:'0.7s', textTransform:'uppercase', letterSpacing:'0.1em', width:'min(90vw, 400px)' }}>
-                Begin School Adventure
+                Taronga Education
               </button>
               
               <div onClick={()=>setCurrentScreen('adminLogin')} style={{ position:'absolute', bottom:'1rem', left:'50%', transform:'translateX(-50%)', color:'white', fontSize:'0.7rem', opacity:0.7, cursor:'pointer', transition:'opacity 0.2s' }}
@@ -1669,6 +1669,56 @@
                 Taronga Staff Portal
               </div>
             </div>
+          </div>
+        );
+      }
+
+      if (currentScreen === 'public') {
+        return (
+          <div style={{
+            height: "100vh",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            textAlign: "center",
+            color: "white",
+            padding: "20px"
+          }}>
+            <h2 style={{
+              fontSize: "34px",
+              marginBottom: "20px"
+            }}>
+              🌿 Let's Track! – Coming Soon
+            </h2>
+
+            <p style={{
+              maxWidth: "520px",
+              marginBottom: "40px",
+              opacity: 0.9,
+              lineHeight: "1.6"
+            }}>
+              Taronga Tracka's independent explorer experience is currently in development.
+              <br /><br />
+              Visiting with a school group? Access the full learning adventure through
+              <strong> Taronga Education</strong>.
+            </p>
+
+            <button
+              onClick={() => setCurrentScreen('home')}
+              style={{
+                padding: "12px 28px",
+                borderRadius: "25px",
+                border: "none",
+                background: "#1A5238",
+                color: "white",
+                cursor: "pointer",
+                fontWeight: 600,
+                fontSize: "15px"
+              }}
+            >
+              ← Back to Home
+            </button>
           </div>
         );
       }
