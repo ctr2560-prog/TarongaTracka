@@ -722,8 +722,8 @@
           setNewYearGroup('');
           setNewClassName('');
           setNewSchoolName('');
-          setAccessCodeInput('');
           alert("Class created successfully!");
+          setAccessCodeInput('');
 
         } catch (error) {
           console.error('Error creating class:', error);
@@ -2817,10 +2817,11 @@
                     onFocus={(e)=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'} />
 
                   <input
-                    type="text"
+                    type="password"
                     placeholder="Enter Taronga Access Code"
                     value={accessCodeInput}
                     onChange={(e) => setAccessCodeInput(e.target.value)}
+                    autoComplete="off"
                     style={{
                       padding: "10px",
                       marginBottom: "10px",
