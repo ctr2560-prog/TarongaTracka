@@ -1659,7 +1659,32 @@
               <button onClick={()=>setCurrentScreen('public')} className="animate-scale-in" style={{ background:'linear-gradient(135deg, var(--sunset-orange) 0%, var(--earth-clay) 100%)', color:'white', border:'none', padding:'clamp(0.8rem, 2vh, 1rem) clamp(2rem, 5vw, 2.5rem)', fontSize:'clamp(0.95rem, 2.5vh, 1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', boxShadow:'0 10px 30px rgba(232,106,51,0.4)', animationDelay:'0.6s', textTransform:'uppercase', letterSpacing:'0.1em', width:'min(90vw, 400px)', marginBottom:'1rem' }}>
                 Let's Track!
               </button>
-              <button onClick={()=>setCurrentScreen('schoolEntry')} className="animate-scale-in" style={{ background:'rgba(255,255,255,0.15)', border:'1.5px solid rgba(255,255,255,0.4)', color:'white', padding:'clamp(0.8rem, 2vh, 1rem) clamp(2rem, 5vw, 2.5rem)', fontSize:'clamp(0.95rem, 2.5vh, 1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', backdropFilter:'blur(6px)', animationDelay:'0.7s', textTransform:'uppercase', letterSpacing:'0.1em', width:'min(90vw, 400px)' }}>
+              <button 
+                onClick={()=>setCurrentScreen('schoolEntry')}
+                style={{
+                  padding: "18px 42px",
+                  borderRadius: "30px",
+                  border: "none",
+                  background: "#1A5238",
+                  color: "white",
+                  cursor: "pointer",
+                  fontWeight: "600",
+                  minWidth: "280px",
+                  boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
+                  transition: "all 0.2s ease",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  fontSize: "clamp(0.95rem, 2.5vh, 1.3rem)"
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = "#14402C";
+                  e.target.style.transform = "translateY(-2px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = "#1A5238";
+                  e.target.style.transform = "translateY(0)";
+                }}
+              >
                 Taronga Education
               </button>
               
