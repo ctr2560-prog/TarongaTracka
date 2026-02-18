@@ -1676,49 +1676,67 @@
       if (currentScreen === 'public') {
         return (
           <div style={{
+            position: "relative",
             height: "100vh",
             display: "flex",
-            flexDirection: "column",
             justifyContent: "center",
             alignItems: "center",
             textAlign: "center",
             color: "white",
             padding: "20px"
           }}>
-            <h2 style={{
-              fontSize: "34px",
-              marginBottom: "20px"
-            }}>
-              🌿 Let's Track! – Coming Soon
-            </h2>
 
-            <p style={{
-              maxWidth: "520px",
-              marginBottom: "40px",
-              opacity: 0.9,
-              lineHeight: "1.6"
-            }}>
-              Taronga Tracka's independent explorer experience is currently in development.
-              <br /><br />
-              Visiting with a school group? Access the full learning adventure through
-              <strong> Taronga Education</strong>.
-            </p>
+            {/* Cinematic Overlay */}
+            <div style={{
+              position: "absolute",
+              inset: 0,
+              background: "linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.45))",
+              zIndex: 0
+            }} />
 
-            <button
-              onClick={() => setCurrentScreen('home')}
-              style={{
-                padding: "12px 28px",
-                borderRadius: "25px",
-                border: "none",
-                background: "#1A5238",
-                color: "white",
-                cursor: "pointer",
-                fontWeight: 600,
-                fontSize: "15px"
-              }}
-            >
-              ← Back to Home
-            </button>
+            {/* Content */}
+            <div style={{
+              position: "relative",
+              zIndex: 1,
+              maxWidth: "600px"
+            }}>
+              <h2 style={{
+                fontSize: "34px",
+                marginBottom: "20px",
+                fontWeight: "600"
+              }}>
+                🌿 Let's Track! – Coming Soon
+              </h2>
+
+              <p style={{
+                marginBottom: "40px",
+                opacity: 0.95,
+                lineHeight: "1.7",
+                fontSize: "17px"
+              }}>
+                Taronga Tracka's <strong>public explorer experience</strong> is currently in development.
+                <br /><br />
+                Visiting with a school group? Access the full learning adventure through
+                <strong> Taronga Education</strong>.
+              </p>
+
+              <button
+                onClick={() => setCurrentScreen('home')}
+                style={{
+                  padding: "12px 28px",
+                  borderRadius: "25px",
+                  border: "none",
+                  background: "#1A5238",
+                  color: "white",
+                  cursor: "pointer",
+                  fontWeight: "600",
+                  fontSize: "15px"
+                }}
+              >
+                ← Back to Home
+              </button>
+            </div>
+
           </div>
         );
       }
