@@ -1656,17 +1656,12 @@
                   <div style={{ display:'flex', alignItems:'center', gap:'0.6rem' }}><span style={{ fontSize:'clamp(1.2rem, 2.5vh, 1.5rem)' }}>🏆</span><span>Collect badges & earn points</span></div>
                 </div>
               </div>
-              <button onClick={enableLocation} className="animate-scale-in" style={{ background:'linear-gradient(135deg, var(--sunset-orange) 0%, var(--earth-clay) 100%)', color:'white', border:'none', padding:'clamp(0.8rem, 2vh, 1rem) clamp(2rem, 5vw, 2.5rem)', fontSize:'clamp(0.95rem, 2.5vh, 1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', boxShadow:'0 10px 30px rgba(232,106,51,0.4)', animationDelay:'0.6s', textTransform:'uppercase', letterSpacing:'0.1em', width:'min(90vw, 400px)' }}>
-                Begin Exploration
+              <button onClick={enableLocation} className="animate-scale-in" style={{ background:'linear-gradient(135deg, var(--sunset-orange) 0%, var(--earth-clay) 100%)', color:'white', border:'none', padding:'clamp(0.8rem, 2vh, 1rem) clamp(2rem, 5vw, 2.5rem)', fontSize:'clamp(0.95rem, 2.5vh, 1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', boxShadow:'0 10px 30px rgba(232,106,51,0.4)', animationDelay:'0.6s', textTransform:'uppercase', letterSpacing:'0.1em', width:'min(90vw, 400px)', marginBottom:'1rem' }}>
+                Let's Track
               </button>
-              <div className="animate-fade-in-up" style={{ display:'flex', gap:'0.75rem', marginTop:'1.2rem', animationDelay:'0.8s' }}>
-                <button onClick={()=>setCurrentScreen('studentJoin')} style={{ background:'rgba(255,255,255,0.15)', border:'1.5px solid rgba(255,255,255,0.4)', color:'white', padding:'0.55rem 1.1rem', borderRadius:'30px', cursor:'pointer', fontSize:'0.85rem', fontWeight:600, backdropFilter:'blur(6px)' }}>
-                  🎒 Student Join
-                </button>
-                <button onClick={()=>setCurrentScreen('teacherLogin')} style={{ background:'rgba(255,255,255,0.15)', border:'1.5px solid rgba(255,255,255,0.4)', color:'white', padding:'0.55rem 1.1rem', borderRadius:'30px', cursor:'pointer', fontSize:'0.85rem', fontWeight:600, backdropFilter:'blur(6px)' }}>
-                  👩‍🏫 Teacher Access
-                </button>
-              </div>
+              <button onClick={()=>setCurrentScreen('schoolEntry')} className="animate-scale-in" style={{ background:'rgba(255,255,255,0.15)', border:'1.5px solid rgba(255,255,255,0.4)', color:'white', padding:'clamp(0.8rem, 2vh, 1rem) clamp(2rem, 5vw, 2.5rem)', fontSize:'clamp(0.95rem, 2.5vh, 1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', backdropFilter:'blur(6px)', animationDelay:'0.7s', textTransform:'uppercase', letterSpacing:'0.1em', width:'min(90vw, 400px)' }}>
+                Begin School Adventure
+              </button>
               
               <div onClick={()=>setCurrentScreen('adminLogin')} style={{ position:'absolute', bottom:'1rem', left:'50%', transform:'translateX(-50%)', color:'white', fontSize:'0.7rem', opacity:0.7, cursor:'pointer', transition:'opacity 0.2s' }}
                 onMouseEnter={(e)=>e.currentTarget.style.opacity='1'}
@@ -1966,6 +1961,47 @@
       }
 
       // ---------- STEP 1 SCREENS ----------
+
+      if (currentScreen === 'schoolEntry') {
+        return (
+          <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'clamp(1rem, 3vw, 2rem)', overflow:'auto' }}>
+            <div style={{ maxWidth:'900px', width:'100%', display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))', gap:'1.5rem' }}>
+              {/* Student Join Card */}
+              <div className="animate-scale-in" onClick={()=>setCurrentScreen('studentJoin')} style={{ background:'white', borderRadius:'24px', padding:'clamp(2rem, 4vh, 2.5rem)', boxShadow:'0 20px 60px rgba(0,0,0,0.3)', cursor:'pointer', transition:'transform 0.2s, boxShadow 0.2s', animationDelay:'0.1s' }}
+                onMouseEnter={(e)=>{ e.currentTarget.style.transform='translateY(-4px)'; e.currentTarget.style.boxShadow='0 24px 70px rgba(0,0,0,0.35)'; }}
+                onMouseLeave={(e)=>{ e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='0 20px 60px rgba(0,0,0,0.3)'; }}>
+                <div style={{ textAlign:'center' }}>
+                  <div style={{ fontSize:'3.5rem', marginBottom:'1rem' }}>🎒</div>
+                  <h2 className="heading-display" style={{ fontSize:'clamp(1.8rem, 4vh, 2.2rem)', color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>Student Join</h2>
+                  <p style={{ color:'#666', fontSize:'0.95rem', lineHeight:'1.5' }}>Have a class code from your teacher? Join your class adventure here.</p>
+                  <div style={{ marginTop:'1.5rem', padding:'0.8rem', background:'linear-gradient(135deg, var(--sunset-orange) 0%, var(--earth-clay) 100%)', color:'white', borderRadius:'50px', fontWeight:700, fontSize:'0.95rem', textTransform:'uppercase', letterSpacing:'0.08em' }}>
+                    Tap to Join →
+                  </div>
+                </div>
+              </div>
+
+              {/* Teacher Access Card */}
+              <div className="animate-scale-in" onClick={()=>setCurrentScreen('teacherLogin')} style={{ background:'white', borderRadius:'24px', padding:'clamp(2rem, 4vh, 2.5rem)', boxShadow:'0 20px 60px rgba(0,0,0,0.3)', cursor:'pointer', transition:'transform 0.2s, boxShadow 0.2s', animationDelay:'0.2s' }}
+                onMouseEnter={(e)=>{ e.currentTarget.style.transform='translateY(-4px)'; e.currentTarget.style.boxShadow='0 24px 70px rgba(0,0,0,0.35)'; }}
+                onMouseLeave={(e)=>{ e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='0 20px 60px rgba(0,0,0,0.3)'; }}>
+                <div style={{ textAlign:'center' }}>
+                  <div style={{ fontSize:'3.5rem', marginBottom:'1rem' }}>👩‍🏫</div>
+                  <h2 className="heading-display" style={{ fontSize:'clamp(1.8rem, 4vh, 2.2rem)', color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>Teacher Access</h2>
+                  <p style={{ color:'#666', fontSize:'0.95rem', lineHeight:'1.5' }}>Create and manage classes, track student progress, and view analytics.</p>
+                  <div style={{ marginTop:'1.5rem', padding:'0.8rem', background:'linear-gradient(135deg, #1A5238, #2E7D55)', color:'white', borderRadius:'50px', fontWeight:700, fontSize:'0.95rem', textTransform:'uppercase', letterSpacing:'0.08em' }}>
+                    Tap to Access →
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Back to Home */}
+            <button onClick={()=>setCurrentScreen('home')} style={{ position:'absolute', top:'1.5rem', left:'1.5rem', background:'rgba(255,255,255,0.2)', border:'1px solid rgba(255,255,255,0.3)', color:'white', padding:'0.5rem 1rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.85rem', fontWeight:600, backdropFilter:'blur(6px)' }}>
+              ← Back
+            </button>
+          </div>
+        );
+      }
 
       if (currentScreen === 'studentJoin') {
         const handleJoin = async () => {
