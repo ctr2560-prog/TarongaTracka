@@ -298,6 +298,7 @@
 
       // Step 4 – Activity completion
       const [activityCompleted, setActivityCompleted] = useState(savedProgress?.activityCompleted || false);
+      const [sessionLocked, setSessionLocked] = useState(false);
       const [isSubmittingActivity, setIsSubmittingActivity] = useState(false);
 
       // Step 5 – Firestore live student data for teacher classDetails
@@ -317,6 +318,33 @@
 
       useEffect(() => { localStorage.setItem('tarongaStudentName', JSON.stringify(studentName)); }, [studentName]);
       useEffect(() => { localStorage.setItem('tarongaClassCode', JSON.stringify(classCode)); }, [classCode]);
+
+      // Check if student session is already completed
+      useEffect(() => {
+        if (!studentName || !classCode) return;
+
+        const checkCompletion = async () => {
+          try {
+            const studentDoc = await window.db
+              .collection('classes')
+              .doc(classCode)
+              .collection('students')
+              .doc(studentName)
+              .get();
+
+            if (studentDoc.exists) {
+              const studentData = studentDoc.data();
+              if (studentData.completed) {
+                setSessionLocked(true);
+              }
+            }
+          } catch (error) {
+            console.error('Error checking student completion:', error);
+          }
+        };
+
+        checkCompletion();
+      }, [studentName, classCode]);
 
       // Firestore listener: load teacher's classes when dashboard opens
       useEffect(() => {
@@ -1423,6 +1451,8 @@
       };
 
       const enableLocation = () => {
+        if (sessionLocked) return;
+        
         if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
           alert('Desktop browsers require HTTPS for location. Host this page on HTTPS (GitHub Pages/Netlify) or run locally.');
           return;
@@ -1487,6 +1517,7 @@
       };
 
       const handleQuizAnswer = (questionIndex, answerIndex) => {
+        if (sessionLocked) return;
         if (isProcessingAnswer) return;
         setIsProcessingAnswer(true);
 
@@ -1518,6 +1549,7 @@
       };
 
       const submitObservation = () => {
+        if (sessionLocked) return;
         if (activityCompleted) return;
         const wc = observation.trim().split(/\s+/).filter(Boolean).length;
         if (wc < 10) { alert(`Your observation needs at least 10 words. You have ${wc}.`); return; }
@@ -1640,6 +1672,66 @@
       };
 
       // ---------- SCREENS ----------
+      if (sessionLocked) {
+        return (
+          <div style={{
+            height: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            textAlign: 'center',
+            padding: '20px',
+            background: 'var(--mist-light)'
+          }}>
+            <div style={{
+              background: 'white',
+              borderRadius: '20px',
+              padding: '40px',
+              maxWidth: '500px',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
+            }}>
+              <h2 style={{
+                fontSize: '28px',
+                marginBottom: '16px',
+                color: 'var(--jungle-deep)',
+                fontWeight: '600'
+              }}>
+                ✅ Session Complete
+              </h2>
+              <p style={{
+                fontSize: '17px',
+                color: '#666',
+                lineHeight: '1.6',
+                marginBottom: '24px'
+              }}>
+                Your activity has been submitted successfully. Your teacher can now view your observations and quiz results.
+              </p>
+              <button
+                onClick={() => {
+                  setStudentName('');
+                  setClassCode('');
+                  setSessionLocked(false);
+                  setCurrentScreen('home');
+                }}
+                style={{
+                  padding: '12px 28px',
+                  borderRadius: '25px',
+                  border: 'none',
+                  background: '#1A5238',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '15px'
+                }}
+              >
+                Return to Home
+              </button>
+            </div>
+          </div>
+        );
+      }
+
       if (currentScreen === 'home') {
         return (
           <div style={{ position:'relative', width:'100%', height:'100vh', overflow:'hidden', background:'transparent' }}>
@@ -2122,29 +2214,59 @@
           if (!classCode.trim() || !studentName.trim()) return;
           const code = normaliseCode(classCode);
           if (code.length !== 6) { setStudentJoinError('Code not found — check with your teacher.'); return; }
+          
           try {
-            const doc = await window.db.collection('classes').doc(code).get();
-            if (!doc.exists) { setStudentJoinError('Code not found — check with your teacher.'); return; }
+            // Verify class exists
+            const classDoc = await window.db.collection('classes').doc(code).get();
+            if (!classDoc.exists) { setStudentJoinError('Code not found — check with your teacher.'); return; }
+            
+            // Check for existing incomplete session
+            const existingQuery = await window.db.collection('classes').doc(code)
+              .collection('students')
+              .where('name', '==', studentName.trim())
+              .where('completed', '==', false)
+              .get();
+            
+            if (!existingQuery.empty) {
+              // Load existing session
+              const existingDoc = existingQuery.docs[0];
+              const existingData = existingDoc.data();
+              
+              // Restore session data
+              setTotalPoints(existingData.totalPoints || 0);
+              setBadges(existingData.badges || []);
+              setFoundAnimals(new Set(existingData.badges?.map(b => b.animalId) || []));
+              
+              localStorage.setItem('tarongaStudentName', JSON.stringify(studentName.trim()));
+              localStorage.setItem('tarongaClassCode', JSON.stringify(code));
+              setStudentJoinError('');
+              enableLocation();
+              setCurrentScreen('map');
+              return; // IMPORTANT: prevent creating new document
+            }
+            
+            // No active session found → create new one
+            await window.db.collection('classes').doc(code)
+              .collection('students').add({
+                name: studentName.trim(),
+                classCode: code,
+                totalPoints: 0,
+                badges: [],
+                completed: false,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+            
+            localStorage.setItem('tarongaStudentName', JSON.stringify(studentName.trim()));
+            localStorage.setItem('tarongaClassCode', JSON.stringify(code));
+            setStudentJoinError('');
+            enableLocation();
+            setCurrentScreen('map');
+            
           } catch (err) {
             console.error('Firestore join check failed:', err);
             setStudentJoinError('Could not verify code — please try again.');
             return;
           }
-          // Class exists in Firestore — record student locally for dashboard card count
-          const classIndex = teacherClasses.findIndex(c => normaliseCode(c.classCode) === code);
-          if (classIndex !== -1) {
-            const updatedClasses = [...teacherClasses];
-            const cls = updatedClasses[classIndex];
-            if (!cls.students.some(s => s.name === studentName)) {
-              cls.students.push({ name: studentName, joinedAt: new Date().toISOString(), progress: { badges: [], quizScore: 0, observations: [] } });
-            }
-            setTeacherClasses(updatedClasses);
-          }
-          localStorage.setItem('tarongaStudentName', JSON.stringify(studentName));
-          localStorage.setItem('tarongaClassCode', JSON.stringify(code));
-          setStudentJoinError('');
-          enableLocation();
-          setCurrentScreen('map');
         };
         return (
           <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'clamp(1rem, 5vw, 2rem)', overflow:'auto' }}>
