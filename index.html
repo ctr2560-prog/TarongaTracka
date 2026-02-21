@@ -299,7 +299,6 @@
       // Step 4 \'96 Activity completion
       const [activityCompleted, setActivityCompleted] = useState(savedProgress?.activityCompleted || false);
       const [sessionLocked, setSessionLocked] = useState(false);
-      const [studentStatus, setStudentStatus] = useState("incomplete"); // "incomplete" | "complete" | "locked"
       const [isSubmittingActivity, setIsSubmittingActivity] = useState(false);
 
       // Step 5 \'96 Firestore live student data for teacher classDetails
@@ -794,30 +793,6 @@
         }
       };
 
-      // Lock student (set status to "locked")
-      const lockStudent = async (classCode, studentId) => {
-        try {
-          await window.db.collection('classes').doc(classCode)
-            .collection('students').doc(studentId)
-            .update({ status: "locked" });
-        } catch (error) {
-          console.error('Error locking student:', error);
-          alert('Failed to lock student');
-        }
-      };
-
-      // Unlock student (set status to "incomplete")
-      const unlockStudent = async (classCode, studentId) => {
-        try {
-          await window.db.collection('classes').doc(classCode)
-            .collection('students').doc(studentId)
-            .update({ status: "incomplete" });
-        } catch (error) {
-          console.error('Error unlocking student:', error);
-          alert('Failed to unlock student');
-        }
-      };
-
       const geoWatchIdRef = useRef(null);
       const hasEnteredMapRef = useRef(false);
 
@@ -832,32 +807,6 @@
         };
         localStorage.setItem('tarongaTrackaProgress', JSON.stringify(progress));
       }, [currentScreen, foundAnimals, totalPoints, badges, locationEnabled, activityCompleted]);
-
-      // Fetch student status from Firestore
-      useEffect(() => {
-        if (!studentName || !classCode) return;
-
-        const fetchStudentStatus = async () => {
-          try {
-            const safeStudentId = studentName.trim().replace(/[\/#\.\$\[\]]/g, "_");
-            const studentDoc = await window.db
-              .collection('classes')
-              .doc(classCode)
-              .collection('students')
-              .doc(safeStudentId)
-              .get();
-
-            if (studentDoc.exists) {
-              const data = studentDoc.data();
-              setStudentStatus(data.status || "incomplete"); // Default to incomplete if not set
-            }
-          } catch (error) {
-            console.error('Error fetching student status:', error);
-          }
-        };
-
-        fetchStudentStatus();
-      }, [studentName, classCode]);
 
       // Sync student progress back into teacherClasses for the teacher dashboard
       useEffect(() => {
@@ -1713,7 +1662,6 @@
               quizTotal: quizTotal,
               quizPercentage: quizPercentage,
               completed: true,
-              status: "complete",
               completedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
@@ -1936,79 +1884,6 @@
       }
 
       if (currentScreen === 'map') {
-        // Show locked screen if status is "locked"
-        if (studentStatus === "locked") {
-          return (
-            <div style={{
-              height: "100vh",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-              textAlign: "center",
-              padding: "20px",
-              background: "var(--mist-light)"
-            }}>
-              <h2 style={{ fontSize: "32px", marginBottom: "16px", fontWeight: "600", color: "var(--jungle-deep)" }}>Session Locked</h2>
-              <p style={{ fontSize: "18px", marginBottom: "30px", opacity: 0.8, color: "#666" }}>
-                This session has been locked by your teacher.
-              </p>
-              <button
-                onClick={() => setCurrentScreen('home')}
-                style={{
-                  padding: "12px 28px",
-                  borderRadius: "25px",
-                  border: "none",
-                  background: "#1A5238",
-                  color: "white",
-                  cursor: "pointer",
-                  fontWeight: "600",
-                  fontSize: "15px"
-                }}
-              >
-                ← Back to Home
-              </button>
-            </div>
-          );
-        }
-
-        // Show completion screen if status is "complete"  
-        if (studentStatus === "complete") {
-          return (
-            <div style={{
-              height: "100vh",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-              textAlign: "center",
-              padding: "20px",
-              background: "var(--mist-light)"
-            }}>
-              <h2 style={{ fontSize: "32px", marginBottom: "16px", fontWeight: "600", color: "var(--jungle-deep)" }}>✓ Activity Complete</h2>
-              <p style={{ fontSize: "18px", marginBottom: "30px", opacity: 0.8, color: "#666" }}>
-                Your work has been submitted to your teacher.
-              </p>
-              <button
-                onClick={() => setCurrentScreen('home')}
-                style={{
-                  padding: "12px 28px",
-                  borderRadius: "25px",
-                  border: "none",
-                  background: "#1A5238",
-                  color: "white",
-                  cursor: "pointer",
-                  fontWeight: "600",
-                  fontSize: "15px"
-                }}
-              >
-                ← Back to Home
-              </button>
-            </div>
-          );
-        }
-
-        // Normal map screen (status is "incomplete")
         return (
           <div style={{ minHeight:'100vh', background:'var(--mist-light)' }}>
             <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1.5rem 1rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', position:'sticky', top:0, zIndex:100 }}>
@@ -2382,7 +2257,6 @@
                 totalPoints: 0,
                 badges: [],
                 completed: false,
-                status: "incomplete",
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
               });
             
@@ -3193,7 +3067,6 @@
                         <thead>
                           <tr style={{ borderBottom:'2px solid #F0EDE8' }}>
                             <th style={{ textAlign:'left', padding:'0.75rem 0.5rem', fontWeight:600, color:'var(--jungle-deep)', fontSize:'0.8rem' }}>Student Name</th>
-                            <th style={{ textAlign:'center', padding:'0.75rem 0.5rem', fontWeight:600, color:'var(--jungle-deep)', fontSize:'0.8rem' }}>Status</th>
                             <th style={{ textAlign:'center', padding:'0.75rem 0.5rem', fontWeight:600, color:'var(--jungle-deep)', fontSize:'0.8rem' }}>Completed</th>
                             <th style={{ textAlign:'center', padding:'0.75rem 0.5rem', fontWeight:600, color:'var(--jungle-deep)', fontSize:'0.8rem' }}>Points</th>
                             <th style={{ textAlign:'center', padding:'0.75rem 0.5rem', fontWeight:600, color:'var(--jungle-deep)', fontSize:'0.8rem' }}>Quiz %</th>
@@ -3210,50 +3083,6 @@
                             return (
                               <tr key={i} style={{ borderBottom:'1px solid #F5F3EE' }}>
                                 <td style={{ padding:'0.85rem 0.5rem', color:'var(--jungle-deep)', fontWeight:500 }}>{student.name}</td>
-                                <td style={{ padding:'0.85rem 0.5rem', textAlign:'center' }}>
-                                  <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'8px' }}>
-                                    <div style={{
-                                      width: '10px',
-                                      height: '10px',
-                                      borderRadius: '50%',
-                                      background: student.status === 'locked' ? '#ef4444' : student.status === 'complete' ? '#10b981' : '#f59e0b'
-                                    }} />
-                                    <span style={{ fontSize:'0.75rem', color:'#666', textTransform:'capitalize' }}>
-                                      {student.status || 'incomplete'}
-                                    </span>
-                                    <button
-                                      onClick={async () => {
-                                        const isLocked = student.status === 'locked';
-                                        if (isLocked) {
-                                          await unlockStudent(selectedAdminClass.classCode, student.id);
-                                        } else {
-                                          await lockStudent(selectedAdminClass.classCode, student.id);
-                                        }
-                                        // Refresh student list
-                                        const freshSnapshot = await window.db.collection('classes')
-                                          .doc(selectedAdminClass.classCode)
-                                          .collection('students')
-                                          .get();
-                                        const freshStudents = freshSnapshot.docs.map(doc => ({
-                                          id: doc.id,
-                                          ...doc.data()
-                                        }));
-                                        setAdminClassStudents(freshStudents);
-                                      }}
-                                      style={{
-                                        background: 'none',
-                                        border: '1px solid #ddd',
-                                        borderRadius: '6px',
-                                        padding: '4px 8px',
-                                        fontSize: '0.7rem',
-                                        cursor: 'pointer',
-                                        color: '#666'
-                                      }}
-                                    >
-                                      {student.status === 'locked' ? '🔓 Unlock' : '🔒 Lock'}
-                                    </button>
-                                  </div>
-                                </td>
                                 <td style={{ padding:'0.85rem 0.5rem', textAlign:'center', fontSize:'1.2rem' }}>
                                   {student.completed ? '\uc0\u9989 ' : '\u10060 '}
                                 </td>
