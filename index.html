@@ -2277,7 +2277,12 @@
               const existingDoc = existingQuery.docs[0];
               const existingData = existingDoc.data();
               
-              // Check session lock
+              // Restore session data
+              setTotalPoints(existingData.totalPoints || 0);
+              setBadges(existingData.badges || []);
+              setFoundAnimals(new Set(existingData.badges?.map(b => b.animalId) || []));
+              
+              // Check session lock after data is loaded
               const today = new Date().toLocaleDateString("en-CA");
               if (
                 (classData.sessionClosed === true ||
@@ -2286,11 +2291,6 @@
               ) {
                 setSessionLocked(true);
               }
-              
-              // Restore session data
-              setTotalPoints(existingData.totalPoints || 0);
-              setBadges(existingData.badges || []);
-              setFoundAnimals(new Set(existingData.badges?.map(b => b.animalId) || []));
               
               localStorage.setItem('tarongaStudentName', JSON.stringify(studentName.trim()));
               localStorage.setItem('tarongaClassCode', JSON.stringify(code));
