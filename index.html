@@ -1320,7 +1320,7 @@
           ]);
         }
 
-        const csvContent = rows.map(e => e.join(",")).join("\\n");
+        const csvContent = rows.map(e => e.join(",")).join("\n");
 
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
@@ -1361,7 +1361,7 @@
             { q: 'What is the alpha male gorilla called?',
               options: ['King Kong', 'Silverback', 'Alpha', 'Chief'],
               correct: 1, fact: 'The leader is called a silverback due to the silver hair on his back.' },
-            { q: 'What percentage of a gorilla\\'s diet is plant-based?',
+            { q: 'What percentage of a gorilla\'s diet is plant-based?',
               options: ['50%', '75%', '95%+', '100%'],
               correct: 2, fact: 'Gorillas are mostly herbivores \'97 over 95% of their diet is plants.' },
             { q: 'How do gorillas communicate?',
@@ -1376,9 +1376,9 @@
           image: 'images/lion.jpg', latitude: -33.8427, longitude: 151.2393,
           radius: 50, emoji: '\uc0\u55358 \u56705 ', color: '#D4A574',
           questions: [
-            { q: 'How far can a lion\\'s roar be heard?',
+            { q: 'How far can a lion\'s roar be heard?',
               options: ['500 meters', '2 kilometers', '8 kilometers', '20 kilometers'],
-              correct: 2, fact: 'A lion\\'s roar can be heard up to about 8 km away.' },
+              correct: 2, fact: 'A lion\'s roar can be heard up to about 8 km away.' },
             { q: 'Who does most of the hunting in a lion pride?',
               options: ['Male lions', 'Female lions', 'Cubs', 'All equally'],
               correct: 1, fact: 'Female lions do most of the hunting and work together as a team.' },
@@ -1397,11 +1397,11 @@
             { q: 'How do giraffes sleep?',
               options: ['Standing up for short periods', 'Lying down for 8 hours', 'They never sleep', 'Hanging from trees'],
               correct: 0, fact: 'Giraffes often sleep standing and only for short periods.' },
-            { q: 'What is unique about a giraffe\\'s tongue?',
-              options: ['It\\'s blue-black and up to 50cm long', 'It glows in the dark', 'It\\'s forked like a snake', 'It\\'s covered in scales'],
-              correct: 0, fact: 'A giraffe\\'s tongue can be very long and dark to help protect from sun.' },
+            { q: 'What is unique about a giraffe\'s tongue?',
+              options: ['It\'s blue-black and up to 50cm long', 'It glows in the dark', 'It\'s forked like a snake', 'It\'s covered in scales'],
+              correct: 0, fact: 'A giraffe\'s tongue can be very long and dark to help protect from sun.' },
             { q: 'How do giraffes drink water?',
-              options: ['Using their long tongue', 'Through their nose', 'By spreading their front legs apart', 'They don\\'t drink water'],
+              options: ['Using their long tongue', 'Through their nose', 'By spreading their front legs apart', 'They don\'t drink water'],
               correct: 2, fact: 'They spread their front legs to reach down and drink.' }
           ],
           observationPrompt: 'Observe how the giraffes move and eat. What feeding behaviors do you notice?',
@@ -1440,7 +1440,7 @@
               options: ['Climate change only', 'Habitat loss and poaching', 'Disease', 'Natural predators'],
               correct: 1, fact: 'Major threats include habitat loss and poaching.' }
           ],
-          observationPrompt: 'Watch the tiger\\'s behavior. Describe how it moves.',
+          observationPrompt: 'Watch the tiger\'s behavior. Describe how it moves.',
           pointValue: 50
         }
       ];
@@ -1555,7 +1555,7 @@
       const submitObservation = () => {
         if (sessionLocked) return;
         if (activityCompleted) return;
-        const wc = observation.trim().split(/\\s+/).filter(Boolean).length;
+        const wc = observation.trim().split(/\s+/).filter(Boolean).length;
         if (wc < 10) { alert(`Your observation needs at least 10 words. You have ${wc}.`); return; }
 
         // Quiz score = questions correct on first attempt only
@@ -1585,7 +1585,7 @@
         if (/^[A-Z]/.test(text)) literacyBonus += 3;
         if (/[.!?]$/.test(text)) literacyBonus += 2;
         if (text.split(/[.!?]+/).filter(s => s.trim().length > 0).length >= 2) literacyBonus += 3;
-        const words = lower.split(/\\s+/).filter(Boolean);
+        const words = lower.split(/\s+/).filter(Boolean);
         if (words.length > 0 && new Set(words).size / words.length > 0.6) literacyBonus += 2;
 
         const totalEarned = quizPoints + 30 + behaviourBonus + detailBonus + literacyBonus + currentAnimal.pointValue;
@@ -1606,11 +1606,11 @@
       const completeActivity = async () => {
         if (!studentName || !classCode) return;
         if (activityCompleted) return;
-        if (!window.confirm('Submit your activity results to your teacher?\\n\\nYou will not be able to earn more badges after this.')) return;
+        if (!window.confirm('Submit your activity results to your teacher?\n\nYou will not be able to earn more badges after this.')) return;
 
         setIsSubmittingActivity(true);
         const code = normaliseCode(classCode);
-        const safeStudentId = studentName.trim().replace(/[\\/#\\.\\$\\[\\]]/g, "_");
+        const safeStudentId = studentName.trim().replace(/[\/#\.\$\[\]]/g, "_");
 
         // Debug: log submission details
         console.log("\uc0\u55357 \u56548  Submitting to Firestore:", {
@@ -1671,7 +1671,7 @@
         } catch (err) {
           console.error("\uc0\u10060  Firestore submission error:", err);
           setIsSubmittingActivity(false);
-          alert(`Submission failed: ${err.message}\\n\\nPlease check your connection and try again.`);
+          alert(`Submission failed: ${err.message}\n\nPlease check your connection and try again.`);
         }
       };
 
@@ -2018,7 +2018,7 @@
       }
 
       if (currentScreen === 'observation' && currentAnimal) {
-        const wordCount = observation.trim().split(/\\s+/).filter(Boolean).length;
+        const wordCount = observation.trim().split(/\s+/).filter(Boolean).length;
         return (
           <div style={{ minHeight:'100vh', background:'var(--mist-light)', paddingBottom:'4rem' }}>
             <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)' }}>
@@ -2554,7 +2554,7 @@
                           </select>
                         
                           <button onClick={async () => {
-                            if (!window.confirm('\uc0\u9888 \u65039  DANGER: This will permanently delete ALL classes and student data from the database.\\n\\nThis action CANNOT be undone.\\n\\nType "DELETE" in the next prompt to confirm.')) return;
+                            if (!window.confirm('\uc0\u9888 \u65039  DANGER: This will permanently delete ALL classes and student data from the database.\n\nThis action CANNOT be undone.\n\nType "DELETE" in the next prompt to confirm.')) return;
                             const confirmation = prompt('Type DELETE to confirm:');
                             if (confirmation !== 'DELETE') {
                               alert('Deletion cancelled.');
@@ -3343,7 +3343,7 @@
               obsStr || '\'97'
             ];
           });
-          const csv = [header, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\\n');
+          const csv = [header, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
           const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a'); a.href = url; a.download = `${cls.className}-${cls.classCode}-results.csv`; a.click();
@@ -3534,3 +3534,4 @@
   </script>
 </body>
 </html>
+}
