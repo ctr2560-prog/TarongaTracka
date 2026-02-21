@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -13,12 +14,17 @@
   <title>Taronga Tracka v2.2 - Animal Discovery</title>
 
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <!-- Firebase SDKs -->
+
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <script>
@@ -202,28 +208,32 @@
       opacity: 1;
     }
   </style>
+
 </head>
 
 <body>
 
-  <video
-    autoplay
-    muted
-    loop
-    playsinline
-    webkit-playsinline
-    preload="auto"
-    style="
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
-      z-index: 0;
-    "
-  >
-    <source src="./images/background-video.mp4" type="video/mp4">
+<video
+autoplay
+muted
+loop
+playsinline
+webkit-playsinline
+preload=“auto”
+style=”
+position: fixed;
+top: 0;
+left: 0;
+width: 100vw;
+height: 100vh;
+object-fit: cover;
+z-index: 0;
+“
+
+```
+<source src="./images/background-video.mp4" type="video/mp4">
+```
+
   </video>
 
   <div id="root" style="position: relative; z-index: 1;"></div>
@@ -267,7 +277,6 @@
       const [totalPoints, setTotalPoints] = useState(savedProgress?.totalPoints || 0);
       const [badges, setBadges] = useState(savedProgress?.badges || []);
       const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
-      const [sessionLocked, setSessionLocked] = useState(false);
 
       // Step 1 – Teacher/Student state
       const [studentName, setStudentName] = useState(() => { try { return JSON.parse(localStorage.getItem('tarongaStudentName')) || ''; } catch(e) { return ''; } });
@@ -318,33 +327,6 @@
 
       useEffect(() => { localStorage.setItem('tarongaStudentName', JSON.stringify(studentName)); }, [studentName]);
       useEffect(() => { localStorage.setItem('tarongaClassCode', JSON.stringify(classCode)); }, [classCode]);
-
-      // Check if student session is already completed
-      useEffect(() => {
-        if (!studentName || !classCode) return;
-
-        const checkCompletion = async () => {
-          try {
-            const studentDoc = await window.db
-              .collection('classes')
-              .doc(classCode)
-              .collection('students')
-              .doc(studentName)
-              .get();
-
-            if (studentDoc.exists) {
-              const studentData = studentDoc.data();
-              if (studentData.completed) {
-                setSessionLocked(true);
-              }
-            }
-          } catch (error) {
-            console.error('Error checking student completion:', error);
-          }
-        };
-
-        checkCompletion();
-      }, [studentName, classCode]);
 
       // Firestore listener: load teacher's classes when dashboard opens
       useEffect(() => {
@@ -1455,8 +1437,6 @@
       };
 
       const enableLocation = () => {
-        if (sessionLocked) return;
-        
         if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
           alert('Desktop browsers require HTTPS for location. Host this page on HTTPS (GitHub Pages/Netlify) or run locally.');
           return;
@@ -1521,7 +1501,6 @@
       };
 
       const handleQuizAnswer = (questionIndex, answerIndex) => {
-        if (sessionLocked) return;
         if (isProcessingAnswer) return;
         setIsProcessingAnswer(true);
 
@@ -1553,7 +1532,6 @@
       };
 
       const submitObservation = () => {
-        if (sessionLocked) return;
         if (activityCompleted) return;
         const wc = observation.trim().split(/\s+/).filter(Boolean).length;
         if (wc < 10) { alert(`Your observation needs at least 10 words. You have ${wc}.`); return; }
@@ -1604,7 +1582,6 @@
 
       // Step 4 – Submit activity to Firestore
       const completeActivity = async () => {
-        if (sessionLocked) return;
         if (!studentName || !classCode) return;
         if (activityCompleted) return;
         if (!window.confirm('Submit your activity results to your teacher?\n\nYou will not be able to earn more badges after this.')) return;
@@ -1677,66 +1654,6 @@
       };
 
       // ---------- SCREENS ----------
-      if (sessionLocked) {
-        return (
-          <div style={{
-            height: '100vh',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            textAlign: 'center',
-            padding: '20px',
-            background: 'var(--mist-light)'
-          }}>
-            <div style={{
-              background: 'white',
-              borderRadius: '20px',
-              padding: '40px',
-              maxWidth: '500px',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
-            }}>
-              <h2 style={{
-                fontSize: '28px',
-                marginBottom: '16px',
-                color: 'var(--jungle-deep)',
-                fontWeight: '600'
-              }}>
-                ✅ Session Complete
-              </h2>
-              <p style={{
-                fontSize: '17px',
-                color: '#666',
-                lineHeight: '1.6',
-                marginBottom: '24px'
-              }}>
-                Your activity has been submitted successfully. Your teacher can now view your observations and quiz results.
-              </p>
-              <button
-                onClick={() => {
-                  setStudentName('');
-                  setClassCode('');
-                  setSessionLocked(false);
-                  setCurrentScreen('home');
-                }}
-                style={{
-                  padding: '12px 28px',
-                  borderRadius: '25px',
-                  border: 'none',
-                  background: '#1A5238',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontWeight: '600',
-                  fontSize: '15px'
-                }}
-              >
-                Return to Home
-              </button>
-            </div>
-          </div>
-        );
-      }
-
       if (currentScreen === 'home') {
         return (
           <div style={{ position:'relative', width:'100%', height:'100vh', overflow:'hidden', background:'transparent' }}>
@@ -1885,44 +1802,6 @@
       }
 
       if (currentScreen === 'map') {
-        // Render locked screen if session is closed or date mismatch
-        if (sessionLocked) {
-          return (
-            <div style={{
-              height: "100vh",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-              textAlign: "center",
-              padding: "20px",
-              background: "var(--mist-light)",
-              color: "var(--jungle-deep)"
-            }}>
-              <h2 style={{ fontSize: "32px", marginBottom: "16px", fontWeight: "600" }}>Session Closed</h2>
-              <p style={{ fontSize: "18px", marginBottom: "30px", opacity: 0.8 }}>This class session is no longer active.</p>
-              <button
-                onClick={() => {
-                  setSessionLocked(false);
-                  setCurrentScreen('home');
-                }}
-                style={{
-                  padding: "12px 28px",
-                  borderRadius: "25px",
-                  border: "none",
-                  background: "#1A5238",
-                  color: "white",
-                  cursor: "pointer",
-                  fontWeight: "600",
-                  fontSize: "15px"
-                }}
-              >
-                ← Back to Home
-              </button>
-            </div>
-          );
-        }
-        
         return (
           <div style={{ minHeight:'100vh', background:'var(--mist-light)' }}>
             <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1.5rem 1rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', position:'sticky', top:0, zIndex:100 }}>
@@ -2282,36 +2161,12 @@
               setBadges(existingData.badges || []);
               setFoundAnimals(new Set(existingData.badges?.map(b => b.animalId) || []));
               
-              // Check session lock after data is loaded (defensive check)
-              if (
-                classData &&
-                existingData &&
-                typeof existingData.overrideUnlocked !== "undefined"
-              ) {
-                const today = new Date().toLocaleDateString("en-CA");
-
-                if (
-                  (classData.sessionClosed === true ||
-                   classData.sessionDate !== today) &&
-                  existingData.overrideUnlocked !== true
-                ) {
-                  setSessionLocked(true);
-                }
-              }
-              
               localStorage.setItem('tarongaStudentName', JSON.stringify(studentName.trim()));
               localStorage.setItem('tarongaClassCode', JSON.stringify(code));
               setStudentJoinError('');
               enableLocation();
               setCurrentScreen('map');
               return; // IMPORTANT: prevent creating new document
-            }
-            
-            // No active session found → Check if session is locked before creating new one
-            const today = new Date().toLocaleDateString("en-CA");
-            if (classData.sessionClosed === true || classData.sessionDate !== today) {
-              setStudentJoinError('This class session is no longer active.');
-              return;
             }
             
             // No active session found → create new one
@@ -3597,5 +3452,6 @@
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<TarongaTracka />);
   </script>
+
 </body>
 </html>
