@@ -2282,14 +2282,21 @@
               setBadges(existingData.badges || []);
               setFoundAnimals(new Set(existingData.badges?.map(b => b.animalId) || []));
               
-              // Check session lock after data is loaded
-              const today = new Date().toLocaleDateString("en-CA");
+              // Check session lock after data is loaded (defensive check)
               if (
-                (classData.sessionClosed === true ||
-                 classData.sessionDate !== today) &&
-                !existingData.overrideUnlocked
+                classData &&
+                existingData &&
+                typeof existingData.overrideUnlocked !== "undefined"
               ) {
-                setSessionLocked(true);
+                const today = new Date().toLocaleDateString("en-CA");
+
+                if (
+                  (classData.sessionClosed === true ||
+                   classData.sessionDate !== today) &&
+                  existingData.overrideUnlocked !== true
+                ) {
+                  setSessionLocked(true);
+                }
               }
               
               localStorage.setItem('tarongaStudentName', JSON.stringify(studentName.trim()));
