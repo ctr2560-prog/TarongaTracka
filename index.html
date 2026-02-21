@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -14,17 +13,12 @@
   <title>Taronga Tracka v2.2 - Animal Discovery</title>
 
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <!-- Firebase SDKs -->
-
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <script>
@@ -76,6 +70,8 @@
       position: relative;
       z-index: 1;
       min-height: 100vh;
+      height: 100vh;
+      overflow: hidden; /* keep scroll inside screens, not on body */
     }
 
     .heading-display {
@@ -117,6 +113,7 @@
     html, body { 
       height: 100%; 
       margin: 0;
+      overflow: hidden; /* critical: stop page scroll */
     }
 
     @media (pointer: fine) {
@@ -211,33 +208,30 @@
       opacity: 1;
     }
   </style>
-
 </head>
 
 <body>
 
-<video
-id=“bgVideo”
-autoplay
-muted
-loop
-playsinline
-preload=“auto”
-style=”
-position: fixed;
-inset: 0;
-width: 100vw;
-height: 100vh;
-object-fit: cover;
-z-index: 0;
-pointer-events: none;
-background: #000;
-“
-
-```
-<source src="images/background-video.mp4" type="video/mp4">
-```
-
+  <video
+    id="bgVideo"
+    autoplay
+    muted
+    loop
+    playsinline
+    preload="auto"
+    style="
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      object-position: center center;
+      z-index: 0;
+      pointer-events: none;
+      background: #000;
+    "
+  >
+    <source src="images/background-video.mp4" type="video/mp4">
   </video>
 
   <div id="root"></div>
@@ -1828,7 +1822,7 @@ background: #000;
 
       if (currentScreen === 'map') {
         return (
-          <div style={{ minHeight:'100vh', background:'var(--mist-light)' }}>
+          <div style={{ height:'100vh', overflowY:'auto', WebkitOverflowScrolling:'touch', background:'var(--mist-light)' }}>
             <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1.5rem 1rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', position:'sticky', top:0, zIndex:100 }}>
               <div className="student-banner-mobile" style={{ maxWidth:'1400px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                 <div className="logo-title-block" style={{ display:'flex', alignItems:'center', gap:'1rem' }}>
@@ -3477,6 +3471,5 @@ background: #000;
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<TarongaTracka />);
   </script>
-
 </body>
 </html>
