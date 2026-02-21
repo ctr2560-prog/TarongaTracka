@@ -759,7 +759,9 @@
               accessCodeUsed: accessCodeInput.trim(),
               venue: freshData.venue || 'Taronga Zoo',
               createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-              archived: false
+              archived: false,
+              sessionClosed: false,
+              sessionDate: new Date().toISOString().split("T")[0]
             });
 
             // Also write to classes/{code} for student join validation
@@ -772,7 +774,9 @@
               teacherEmail: teacherEmail,
               accessCodeUsed: accessCodeInput.trim(),
               venue: freshData.venue || 'Taronga Zoo',
-              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+              sessionClosed: false,
+              sessionDate: new Date().toISOString().split("T")[0]
             });
           });
 
