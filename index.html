@@ -1656,7 +1656,17 @@ pointer-events: none;
       // ---------- SCREENS ----------
       if (currentScreen === 'home') {
         return (
-          <div style={{ position:'relative', width:'100%', height:'100vh', overflow:'hidden', background:'transparent' }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              minHeight: "100vh",
+              textAlign: "center",
+              position: "relative",
+              zIndex: 1
+            }}
+          >
             <div style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', background:'rgba(0,0,0,0.4)', zIndex:1 }} />
             <div style={{ position:'relative', zIndex:10, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', padding:'1rem', textAlign:'center' }}>
               <div className="animate-fade-in-up" style={{ animationDelay:'0.2s', marginBottom:'clamp(1rem, 3vh, 2rem)' }}>
