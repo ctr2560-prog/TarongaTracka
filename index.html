@@ -23,14 +23,14 @@
 
 <script>
   // Your web app's Firebase configuration
-  const firebaseConfig = {
+  const firebaseConfig = \{
     apiKey: "AIzaSyCFS0oFiThCyjgoRxgoJ6nyO34fzgyW2IM",
     authDomain: "tarongatracka.firebaseapp.com",
     projectId: "tarongatracka",
     storageBucket: "tarongatracka.firebasestorage.app",
     messagingSenderId: "925190436532",
     appId: "1:925190436532:web:47d2c5016dc1b28d7d09e1"
-  };
+  \};
 
   // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
@@ -45,7 +45,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 
   <style>
-    :root {
+    :root \{
       --jungle-deep: #0A2F1F;
       --jungle-mid: #1A5238;
       --jungle-light: #2E7D55;
@@ -54,130 +54,130 @@
       --earth-clay: #8B5A3C;
       --mist-light: #F5F3EE;
       --discovery-blue: #4A9FD8;
-    }
+    \}
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * \{ margin: 0; padding: 0; box-sizing: border-box; \}
 
-    body {
+    body \{
       font-family: 'DM Sans', sans-serif;
       overflow-x: hidden;
       touch-action: pan-y;
       overscroll-behavior: contain;
       background: transparent;
-    }
+    \}
 
-    #root {
+    #root \{
       position: relative;
       z-index: 1;
       height: 100%;
-    }
+    \}
 
-    .heading-display {
+    .heading-display \{
       font-family: 'Bebas Neue', sans-serif;
       letter-spacing: 0.08em;
-    }
+    \}
 
-    .serif-accent {
+    .serif-accent \{
       font-family: 'Instrument Serif', serif;
       font-style: italic;
-    }
+    \}
 
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes fadeInUp \{
+      from \{ opacity: 0; transform: translateY(30px); \}
+      to   \{ opacity: 1; transform: translateY(0); \}
+    \}
 
-    @keyframes scaleIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to   { opacity: 1; transform: scale(1); }
-    }
+    @keyframes scaleIn \{
+      from \{ opacity: 0; transform: scale(0.95); \}
+      to   \{ opacity: 1; transform: scale(1); \}
+    \}
 
-    @keyframes fall {
-      to { transform: translateY(100vh) rotate(360deg); opacity: 0; }
-    }
+    @keyframes fall \{
+      to \{ transform: translateY(100vh) rotate(360deg); opacity: 0; \}
+    \}
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.6; }
-    }
+    @keyframes pulse \{
+      0%, 100% \{ opacity: 1; \}
+      50% \{ opacity: 0.6; \}
+    \}
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin \{
+      to \{ transform: rotate(360deg); \}
+    \}
 
-    .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
-    .animate-scale-in   { animation: scaleIn 0.6s ease-out forwards; }
+    .animate-fade-in-up \{ animation: fadeInUp 0.8s ease-out forwards; \}
+    .animate-scale-in   \{ animation: scaleIn 0.6s ease-out forwards; \}
 
-    html, body { height: 100%; }
+    html, body \{ height: 100%; \}
 
-    @media (pointer: fine) {
-      body { touch-action: auto; }
-    }
+    @media (pointer: fine) \{
+      body \{ touch-action: auto; \}
+    \}
 
     /* Mobile student banner \'97 map screen */
-    @media (max-width: 600px) {
-      .student-banner-mobile {
+    @media (max-width: 600px) \{
+      .student-banner-mobile \{
         flex-direction: column !important;
         align-items: stretch !important;
         gap: 0.65rem !important;
         padding: 0.9rem 1rem !important;
-      }
-      .student-banner-mobile > .logo-title-block {
+      \}
+      .student-banner-mobile > .logo-title-block \{
         flex-direction: row;
         align-items: center;
         gap: 0.5rem;
-      }
-      .student-banner-mobile > .logo-title-block img {
+      \}
+      .student-banner-mobile > .logo-title-block img \{
         height: 52px !important;
-      }
-      .student-banner-mobile > .logo-title-block h1 {
+      \}
+      .student-banner-mobile > .logo-title-block h1 \{
         font-size: 1.25rem !important;
-      }
-      .student-banner-mobile > .logo-title-block p {
+      \}
+      .student-banner-mobile > .logo-title-block p \{
         font-size: 0.78rem !important;
-      }
-      .student-banner-mobile > .student-name-pill {
+      \}
+      .student-banner-mobile > .student-name-pill \{
         align-self: flex-start;
         padding: 0.45rem 0.85rem !important;
-      }
-      .student-banner-mobile > .submit-btn {
+      \}
+      .student-banner-mobile > .submit-btn \{
         align-self: stretch;
         text-align: center;
         padding: 0.6rem 1rem !important;
-      }
-      .student-banner-mobile > .points-card {
+      \}
+      .student-banner-mobile > .points-card \{
         align-self: flex-start;
-      }
+      \}
 
       /* Mobile student banner \'97 collection screen */
-      .collection-header-mobile {
+      .collection-header-mobile \{
         flex-direction: column !important;
         align-items: stretch !important;
         gap: 0.6rem !important;
         padding: 0.75rem 0.6rem !important;
-      }
-      .collection-header-mobile > h1 {
+      \}
+      .collection-header-mobile > h1 \{
         text-align: center;
         font-size: 1.5rem !important;
-      }
-      .collection-header-mobile > .submit-btn {
+      \}
+      .collection-header-mobile > .submit-btn \{
         align-self: stretch;
         text-align: center;
         padding: 0.6rem 1rem !important;
-      }
-      .collection-header-mobile > .back-btn {
+      \}
+      .collection-header-mobile > .back-btn \{
         align-self: flex-start;
-      }
-    }
+      \}
+    \}
 
     /* Tooltip styles */
-    .tooltip-wrapper {
+    .tooltip-wrapper \{
       position: relative;
       display: inline-block;
       cursor: help;
-    }
+    \}
 
-    .tooltip-text {
+    .tooltip-text \{
       visibility: hidden;
       opacity: 0;
       width: 220px;
@@ -195,12 +195,12 @@
       line-height: 1.4;
       transition: opacity 0.2s ease;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
+    \}
 
-    .tooltip-wrapper:hover .tooltip-text {
+    .tooltip-wrapper:hover .tooltip-text \{
       visibility: visible;
       opacity: 1;
-    }
+    \}
   </style>
 </head>
 
@@ -334,7 +334,8 @@
 
             if (studentDoc.exists) {
               const studentData = studentDoc.data();
-              if (studentData.completed) {
+              const status = studentData.status ?? (studentData.completed ? "complete" : "incomplete");
+              if (status === "complete" || status === "locked") {
                 setSessionLocked(true);
               }
             }
@@ -665,12 +666,14 @@
             const students = snapshot.docs.map(doc => {
               const d = doc.data();
               return {
+                docId: doc.id,
                 name: d.name || doc.id,
                 totalPoints: d.totalPoints || 0,
                 badges: d.badges || [],
                 completed: d.completed || false,
                 completedAt: d.completedAt ? d.completedAt.toDate() : null,
-                quizPercentage: d.quizPercentage
+                quizPercentage: d.quizPercentage,
+                status: d.status ?? (d.completed ? "complete" : "incomplete")
               };
             });
             setFirestoreStudents(students);
@@ -1320,7 +1323,7 @@
           ]);
         }
 
-        const csvContent = rows.map(e => e.join(",")).join("\n");
+        const csvContent = rows.map(e => e.join(",")).join("\\n");
 
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
@@ -1361,7 +1364,7 @@
             { q: 'What is the alpha male gorilla called?',
               options: ['King Kong', 'Silverback', 'Alpha', 'Chief'],
               correct: 1, fact: 'The leader is called a silverback due to the silver hair on his back.' },
-            { q: 'What percentage of a gorilla\'s diet is plant-based?',
+            { q: 'What percentage of a gorilla\\'s diet is plant-based?',
               options: ['50%', '75%', '95%+', '100%'],
               correct: 2, fact: 'Gorillas are mostly herbivores \'97 over 95% of their diet is plants.' },
             { q: 'How do gorillas communicate?',
@@ -1376,9 +1379,9 @@
           image: 'images/lion.jpg', latitude: -33.8427, longitude: 151.2393,
           radius: 50, emoji: '\uc0\u55358 \u56705 ', color: '#D4A574',
           questions: [
-            { q: 'How far can a lion\'s roar be heard?',
+            { q: 'How far can a lion\\'s roar be heard?',
               options: ['500 meters', '2 kilometers', '8 kilometers', '20 kilometers'],
-              correct: 2, fact: 'A lion\'s roar can be heard up to about 8 km away.' },
+              correct: 2, fact: 'A lion\\'s roar can be heard up to about 8 km away.' },
             { q: 'Who does most of the hunting in a lion pride?',
               options: ['Male lions', 'Female lions', 'Cubs', 'All equally'],
               correct: 1, fact: 'Female lions do most of the hunting and work together as a team.' },
@@ -1397,11 +1400,11 @@
             { q: 'How do giraffes sleep?',
               options: ['Standing up for short periods', 'Lying down for 8 hours', 'They never sleep', 'Hanging from trees'],
               correct: 0, fact: 'Giraffes often sleep standing and only for short periods.' },
-            { q: 'What is unique about a giraffe\'s tongue?',
-              options: ['It\'s blue-black and up to 50cm long', 'It glows in the dark', 'It\'s forked like a snake', 'It\'s covered in scales'],
-              correct: 0, fact: 'A giraffe\'s tongue can be very long and dark to help protect from sun.' },
+            { q: 'What is unique about a giraffe\\'s tongue?',
+              options: ['It\\'s blue-black and up to 50cm long', 'It glows in the dark', 'It\\'s forked like a snake', 'It\\'s covered in scales'],
+              correct: 0, fact: 'A giraffe\\'s tongue can be very long and dark to help protect from sun.' },
             { q: 'How do giraffes drink water?',
-              options: ['Using their long tongue', 'Through their nose', 'By spreading their front legs apart', 'They don\'t drink water'],
+              options: ['Using their long tongue', 'Through their nose', 'By spreading their front legs apart', 'They don\\'t drink water'],
               correct: 2, fact: 'They spread their front legs to reach down and drink.' }
           ],
           observationPrompt: 'Observe how the giraffes move and eat. What feeding behaviors do you notice?',
@@ -1440,7 +1443,7 @@
               options: ['Climate change only', 'Habitat loss and poaching', 'Disease', 'Natural predators'],
               correct: 1, fact: 'Major threats include habitat loss and poaching.' }
           ],
-          observationPrompt: 'Watch the tiger\'s behavior. Describe how it moves.',
+          observationPrompt: 'Watch the tiger\\'s behavior. Describe how it moves.',
           pointValue: 50
         }
       ];
@@ -1555,7 +1558,7 @@
       const submitObservation = () => {
         if (sessionLocked) return;
         if (activityCompleted) return;
-        const wc = observation.trim().split(/\s+/).filter(Boolean).length;
+        const wc = observation.trim().split(/\\s+/).filter(Boolean).length;
         if (wc < 10) { alert(`Your observation needs at least 10 words. You have ${wc}.`); return; }
 
         // Quiz score = questions correct on first attempt only
@@ -1585,7 +1588,7 @@
         if (/^[A-Z]/.test(text)) literacyBonus += 3;
         if (/[.!?]$/.test(text)) literacyBonus += 2;
         if (text.split(/[.!?]+/).filter(s => s.trim().length > 0).length >= 2) literacyBonus += 3;
-        const words = lower.split(/\s+/).filter(Boolean);
+        const words = lower.split(/\\s+/).filter(Boolean);
         if (words.length > 0 && new Set(words).size / words.length > 0.6) literacyBonus += 2;
 
         const totalEarned = quizPoints + 30 + behaviourBonus + detailBonus + literacyBonus + currentAnimal.pointValue;
@@ -1606,11 +1609,11 @@
       const completeActivity = async () => {
         if (!studentName || !classCode) return;
         if (activityCompleted) return;
-        if (!window.confirm('Submit your activity results to your teacher?\n\nYou will not be able to earn more badges after this.')) return;
+        if (!window.confirm('Submit your activity results to your teacher?\\n\\nYou will not be able to earn more badges after this.')) return;
 
         setIsSubmittingActivity(true);
         const code = normaliseCode(classCode);
-        const safeStudentId = studentName.trim().replace(/[\/#\.\$\[\]]/g, "_");
+        const safeStudentId = studentName.trim().replace(/[\\/#\\.\\$\\[\\]]/g, "_");
 
         // Debug: log submission details
         console.log("\uc0\u55357 \u56548  Submitting to Firestore:", {
@@ -1662,7 +1665,8 @@
               quizTotal: quizTotal,
               quizPercentage: quizPercentage,
               completed: true,
-              completedAt: firebase.firestore.FieldValue.serverTimestamp()
+              completedAt: firebase.firestore.FieldValue.serverTimestamp(),
+              status: "complete"
             });
 
           setActivityCompleted(true);
@@ -1671,7 +1675,7 @@
         } catch (err) {
           console.error("\uc0\u10060  Firestore submission error:", err);
           setIsSubmittingActivity(false);
-          alert(`Submission failed: ${err.message}\n\nPlease check your connection and try again.`);
+          alert(`Submission failed: ${err.message}\\n\\nPlease check your connection and try again.`);
         }
       };
 
@@ -2018,7 +2022,7 @@
       }
 
       if (currentScreen === 'observation' && currentAnimal) {
-        const wordCount = observation.trim().split(/\s+/).filter(Boolean).length;
+        const wordCount = observation.trim().split(/\\s+/).filter(Boolean).length;
         return (
           <div style={{ minHeight:'100vh', background:'var(--mist-light)', paddingBottom:'4rem' }}>
             <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)' }}>
@@ -2554,7 +2558,7 @@
                           </select>
                         
                           <button onClick={async () => {
-                            if (!window.confirm('\uc0\u9888 \u65039  DANGER: This will permanently delete ALL classes and student data from the database.\n\nThis action CANNOT be undone.\n\nType "DELETE" in the next prompt to confirm.')) return;
+                            if (!window.confirm('\uc0\u9888 \u65039  DANGER: This will permanently delete ALL classes and student data from the database.\\n\\nThis action CANNOT be undone.\\n\\nType "DELETE" in the next prompt to confirm.')) return;
                             const confirmation = prompt('Type DELETE to confirm:');
                             if (confirmation !== 'DELETE') {
                               alert('Deletion cancelled.');
@@ -3343,7 +3347,7 @@
               obsStr || '\'97'
             ];
           });
-          const csv = [header, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
+          const csv = [header, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\\n');
           const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a'); a.href = url; a.download = `${cls.className}-${cls.classCode}-results.csv`; a.click();
@@ -3429,8 +3433,8 @@
                 <div style={{ flex:1, overflowY:'auto', padding:'1rem 1.5rem 1.5rem' }}>
                   <div style={{ maxWidth:'720px', margin:'0 auto' }}>
                     <div style={{ background:'white', borderRadius:'16px', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', overflow:'hidden' }}>
-                      <div style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.65fr 0.85fr 0.85fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
-                        {['Student','Points','Badges','Quiz %','Done','Last Active','Observations'].map(h => (
+                      <div style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.65fr 0.85fr 0.85fr 0.9fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
+                        {['Student','Points','Badges','Quiz %','Status','Last Active','Observations','Control'].map(h => (
                           <div key={h} style={{ color:'rgba(255,255,255,0.8)', fontSize:'0.72rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>{h}</div>
                         ))}
                       </div>
@@ -3447,7 +3451,7 @@
                             : lastBadge && lastBadge.timestamp ? new Date(lastBadge.timestamp) : null;
                           const hasObservations = (s.badges || []).some(b => b.observation);
                           return (
-                            <div key={s.name} style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.65fr 0.85fr 0.85fr', padding:'0.7rem 1rem', borderTop:'1px solid #F0EDE8', alignItems:'center', background: i % 2 === 0 ? 'white' : '#FAFAF8' }}>
+                            <div key={s.name} style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.65fr 0.85fr 0.85fr 0.9fr', padding:'0.7rem 1rem', borderTop:'1px solid #F0EDE8', alignItems:'center', background: i % 2 === 0 ? 'white' : '#FAFAF8' }}>
                               <div style={{ display:'flex', alignItems:'center', gap:'0.55rem' }}>
                                 <div style={{ width:'28px', height:'28px', borderRadius:'50%', background: s.completed ? 'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))' : 'linear-gradient(135deg, #aaa, #ccc)', display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontSize:'0.72rem', fontWeight:700, flexShrink:0 }}>
                                   {s.name.charAt(0).toUpperCase()}
@@ -3460,10 +3464,11 @@
                                 {s.quizPercentage !== undefined ? `${s.quizPercentage}%` : '\'97'}
                               </div>
                               <div style={{ fontSize:'0.82rem' }}>
-                                {s.completed
-                                  ? <span style={{ display:'inline-flex', alignItems:'center', gap:'0.25rem', background:'#F0FDF4', color:'#16A34A', fontWeight:700, fontSize:'0.72rem', padding:'0.2rem 0.5rem', borderRadius:'10px' }}>\uc0\u10003  Yes</span>
-                                  : <span style={{ color:'#bbb', fontSize:'0.75rem' }}>\'97</span>
-                                }
+                                {(() => {
+                                  if (s.status === 'complete') return <span style={{ display:'inline-flex', alignItems:'center', gap:'0.25rem', background:'#F0FDF4', color:'#16A34A', fontWeight:700, fontSize:'0.72rem', padding:'0.2rem 0.5rem', borderRadius:'10px' }}>\uc0\u9679  Done</span>;
+                                  if (s.status === 'locked') return <span style={{ display:'inline-flex', alignItems:'center', gap:'0.25rem', background:'#FEF2F2', color:'#DC2626', fontWeight:700, fontSize:'0.72rem', padding:'0.2rem 0.5rem', borderRadius:'10px' }}>\uc0\u9679  Locked</span>;
+                                  return <span style={{ display:'inline-flex', alignItems:'center', gap:'0.25rem', background:'#FFFBEB', color:'#D97706', fontWeight:700, fontSize:'0.72rem', padding:'0.2rem 0.5rem', borderRadius:'10px' }}>\uc0\u9679  Active</span>;
+                                })()}
                               </div>
                               <div style={{ color: lastActiveDate ? 'var(--jungle-mid)' : '#bbb', fontSize:'0.75rem', fontWeight: lastActiveDate ? 600 : 400 }}>
                                 {lastActiveDate ? lastActiveDate.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '\'97'}
@@ -3473,6 +3478,23 @@
                                   ? <button onClick={() => setObservationsModal(s)} style={{ background:'var(--jungle-deep)', color:'white', border:'none', padding:'0.25rem 0.6rem', borderRadius:'6px', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' }}>View</button>
                                   : <span style={{ color:'#bbb', fontSize:'0.75rem' }}>\'97</span>
                                 }
+                              </div>
+                              <div>
+                                {s.status === 'locked' ? (
+                                  <button
+                                    onClick={() => window.db.collection('classes').doc(selectedClass).collection('students').doc(s.docId).update({ status: 'incomplete' })}
+                                    style={{ background:'#FEF9C3', color:'#854D0E', border:'1px solid #FDE68A', padding:'0.25rem 0.55rem', borderRadius:'6px', fontSize:'0.72rem', fontWeight:700, cursor:'pointer' }}>
+                                    Unlock
+                                  </button>
+                                ) : s.status !== 'complete' ? (
+                                  <button
+                                    onClick={() => window.db.collection('classes').doc(selectedClass).collection('students').doc(s.docId).update({ status: 'locked' })}
+                                    style={{ background:'#FEE2E2', color:'#991B1B', border:'1px solid #FECACA', padding:'0.25rem 0.55rem', borderRadius:'6px', fontSize:'0.72rem', fontWeight:700, cursor:'pointer' }}>
+                                    Lock
+                                  </button>
+                                ) : (
+                                  <span style={{ color:'#bbb', fontSize:'0.75rem' }}>\'97</span>
+                                )}
                               </div>
                             </div>
                           );
@@ -3534,4 +3556,3 @@
   </script>
 </body>
 </html>
-}
