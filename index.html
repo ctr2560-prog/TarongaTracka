@@ -267,6 +267,7 @@
       const [totalPoints, setTotalPoints] = useState(savedProgress?.totalPoints || 0);
       const [badges, setBadges] = useState(savedProgress?.badges || []);
       const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
+      const [sessionLocked, setSessionLocked] = useState(false);
 
       // Step 1 – Teacher/Student state
       const [studentName, setStudentName] = useState(() => { try { return JSON.parse(localStorage.getItem('tarongaStudentName')) || ''; } catch(e) { return ''; } });
@@ -1604,6 +1605,7 @@
 
       // Step 4 – Submit activity to Firestore
       const completeActivity = async () => {
+        if (sessionLocked) return;
         if (!studentName || !classCode) return;
         if (activityCompleted) return;
         if (!window.confirm('Submit your activity results to your teacher?\n\nYou will not be able to earn more badges after this.')) return;
@@ -1884,6 +1886,44 @@
       }
 
       if (currentScreen === 'map') {
+        // Render locked screen if session is closed or date mismatch
+        if (sessionLocked) {
+          return (
+            <div style={{
+              height: "100vh",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              textAlign: "center",
+              padding: "20px",
+              background: "var(--mist-light)",
+              color: "var(--jungle-deep)"
+            }}>
+              <h2 style={{ fontSize: "32px", marginBottom: "16px", fontWeight: "600" }}>Session Closed</h2>
+              <p style={{ fontSize: "18px", marginBottom: "30px", opacity: 0.8 }}>This class session is no longer active.</p>
+              <button
+                onClick={() => {
+                  setSessionLocked(false);
+                  setCurrentScreen('home');
+                }}
+                style={{
+                  padding: "12px 28px",
+                  borderRadius: "25px",
+                  border: "none",
+                  background: "#1A5238",
+                  color: "white",
+                  cursor: "pointer",
+                  fontWeight: "600",
+                  fontSize: "15px"
+                }}
+              >
+                ← Back to Home
+              </button>
+            </div>
+          );
+        }
+        
         return (
           <div style={{ minHeight:'100vh', background:'var(--mist-light)' }}>
             <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1.5rem 1rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', position:'sticky', top:0, zIndex:100 }}>
@@ -2224,6 +2264,8 @@
             const classDoc = await window.db.collection('classes').doc(code).get();
             if (!classDoc.exists) { setStudentJoinError('Code not found — check with your teacher.'); return; }
             
+            const classData = classDoc.data();
+            
             // Check for existing incomplete session
             const existingQuery = await window.db.collection('classes').doc(code)
               .collection('students')
@@ -2236,6 +2278,16 @@
               const existingDoc = existingQuery.docs[0];
               const existingData = existingDoc.data();
               
+              // Check session lock
+              const today = new Date().toISOString().split("T")[0];
+              if (
+                (classData.sessionClosed === true ||
+                 classData.sessionDate !== today) &&
+                !existingData.overrideUnlocked
+              ) {
+                setSessionLocked(true);
+              }
+              
               // Restore session data
               setTotalPoints(existingData.totalPoints || 0);
               setBadges(existingData.badges || []);
@@ -2247,6 +2299,13 @@
               enableLocation();
               setCurrentScreen('map');
               return; // IMPORTANT: prevent creating new document
+            }
+            
+            // No active session found → Check if session is locked before creating new one
+            const today = new Date().toISOString().split("T")[0];
+            if (classData.sessionClosed === true || classData.sessionDate !== today) {
+              setStudentJoinError('This class session is no longer active.');
+              return;
             }
             
             // No active session found → create new one
