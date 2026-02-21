@@ -300,6 +300,7 @@
       const [activityCompleted, setActivityCompleted] = useState(savedProgress?.activityCompleted || false);
       const [sessionLocked, setSessionLocked] = useState(false);
       const [isSubmittingActivity, setIsSubmittingActivity] = useState(false);
+      const [studentStatus, setStudentStatus] = React.useState("incomplete");
 
       // Step 5 – Firestore live student data for teacher classDetails
       const [firestoreStudents, setFirestoreStudents] = useState([]);
@@ -323,27 +324,24 @@
       useEffect(() => {
         if (!studentName || !classCode) return;
 
-        const checkCompletion = async () => {
-          try {
-            const studentDoc = await window.db
-              .collection('classes')
-              .doc(classCode)
-              .collection('students')
-              .doc(studentName)
-              .get();
-
+        const unsubscribe = window.db
+          .collection('classes')
+          .doc(classCode)
+          .collection('students')
+          .doc(studentName)
+          .onSnapshot((studentDoc) => {
             if (studentDoc.exists) {
               const studentData = studentDoc.data();
+              setStudentStatus(studentData?.status || "incomplete");
               if (studentData.completed) {
                 setSessionLocked(true);
               }
             }
-          } catch (error) {
+          }, (error) => {
             console.error('Error checking student completion:', error);
-          }
-        };
+          });
 
-        checkCompletion();
+        return () => unsubscribe();
       }, [studentName, classCode]);
 
       // Firestore listener: load teacher's classes when dashboard opens
@@ -1677,6 +1675,15 @@
       };
 
       // ---------- SCREENS ----------
+      if (studentStatus === "locked") {
+        return (
+          <div style={{ padding: "40px", textAlign: "center" }}>
+            <h2>Session Locked</h2>
+            <p>Your teacher has locked this session.</p>
+          </div>
+        );
+      }
+
       if (sessionLocked) {
         return (
           <div style={{
