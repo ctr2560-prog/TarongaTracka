@@ -23,20 +23,20 @@
 
 <script>
   // Your web app's Firebase configuration
-  const firebaseConfig = \{
+  const firebaseConfig = {
     apiKey: "AIzaSyCFS0oFiThCyjgoRxgoJ6nyO34fzgyW2IM",
     authDomain: "tarongatracka.firebaseapp.com",
     projectId: "tarongatracka",
     storageBucket: "tarongatracka.firebasestorage.app",
     messagingSenderId: "925190436532",
     appId: "1:925190436532:web:47d2c5016dc1b28d7d09e1"
-  \};
+  };
 
   // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
 
   // Debug: confirm which Firebase project we're connected to
-  console.log("🔥  Firebase project:", firebase.app().options.projectId);
+  console.log("\uc0\u55357 \u56613  Firebase project:", firebase.app().options.projectId);
 
   // Firestore reference (THIS is what we'll use later)
   window.db = firebase.firestore();
@@ -45,7 +45,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 
   <style>
-    :root \{
+    :root {
       --jungle-deep: #0A2F1F;
       --jungle-mid: #1A5238;
       --jungle-light: #2E7D55;
@@ -54,130 +54,130 @@
       --earth-clay: #8B5A3C;
       --mist-light: #F5F3EE;
       --discovery-blue: #4A9FD8;
-    \}
+    }
 
-    * \{ margin: 0; padding: 0; box-sizing: border-box; \}
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    body \{
+    body {
       font-family: 'DM Sans', sans-serif;
       overflow-x: hidden;
       touch-action: pan-y;
       overscroll-behavior: contain;
       background: transparent;
-    \}
+    }
 
-    #root \{
+    #root {
       position: relative;
       z-index: 1;
       height: 100%;
-    \}
+    }
 
-    .heading-display \{
+    .heading-display {
       font-family: 'Bebas Neue', sans-serif;
       letter-spacing: 0.08em;
-    \}
+    }
 
-    .serif-accent \{
+    .serif-accent {
       font-family: 'Instrument Serif', serif;
       font-style: italic;
-    \}
+    }
 
-    @keyframes fadeInUp \{
-      from \{ opacity: 0; transform: translateY(30px); \}
-      to   \{ opacity: 1; transform: translateY(0); \}
-    \}
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
 
-    @keyframes scaleIn \{
-      from \{ opacity: 0; transform: scale(0.95); \}
-      to   \{ opacity: 1; transform: scale(1); \}
-    \}
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to   { opacity: 1; transform: scale(1); }
+    }
 
-    @keyframes fall \{
-      to \{ transform: translateY(100vh) rotate(360deg); opacity: 0; \}
-    \}
+    @keyframes fall {
+      to { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+    }
 
-    @keyframes pulse \{
-      0%, 100% \{ opacity: 1; \}
-      50% \{ opacity: 0.6; \}
-    \}
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
 
-    @keyframes spin \{
-      to \{ transform: rotate(360deg); \}
-    \}
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
 
-    .animate-fade-in-up \{ animation: fadeInUp 0.8s ease-out forwards; \}
-    .animate-scale-in   \{ animation: scaleIn 0.6s ease-out forwards; \}
+    .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
+    .animate-scale-in   { animation: scaleIn 0.6s ease-out forwards; }
 
-    html, body \{ height: 100%; \}
+    html, body { height: 100%; }
 
-    @media (pointer: fine) \{
-      body \{ touch-action: auto; \}
-    \}
+    @media (pointer: fine) {
+      body { touch-action: auto; }
+    }
 
     /* Mobile student banner \'97 map screen */
-    @media (max-width: 600px) \{
-      .student-banner-mobile \{
+    @media (max-width: 600px) {
+      .student-banner-mobile {
         flex-direction: column !important;
         align-items: stretch !important;
         gap: 0.65rem !important;
         padding: 0.9rem 1rem !important;
-      \}
-      .student-banner-mobile > .logo-title-block \{
+      }
+      .student-banner-mobile > .logo-title-block {
         flex-direction: row;
         align-items: center;
         gap: 0.5rem;
-      \}
-      .student-banner-mobile > .logo-title-block img \{
+      }
+      .student-banner-mobile > .logo-title-block img {
         height: 52px !important;
-      \}
-      .student-banner-mobile > .logo-title-block h1 \{
+      }
+      .student-banner-mobile > .logo-title-block h1 {
         font-size: 1.25rem !important;
-      \}
-      .student-banner-mobile > .logo-title-block p \{
+      }
+      .student-banner-mobile > .logo-title-block p {
         font-size: 0.78rem !important;
-      \}
-      .student-banner-mobile > .student-name-pill \{
+      }
+      .student-banner-mobile > .student-name-pill {
         align-self: flex-start;
         padding: 0.45rem 0.85rem !important;
-      \}
-      .student-banner-mobile > .submit-btn \{
+      }
+      .student-banner-mobile > .submit-btn {
         align-self: stretch;
         text-align: center;
         padding: 0.6rem 1rem !important;
-      \}
-      .student-banner-mobile > .points-card \{
+      }
+      .student-banner-mobile > .points-card {
         align-self: flex-start;
-      \}
+      }
 
       /* Mobile student banner \'97 collection screen */
-      .collection-header-mobile \{
+      .collection-header-mobile {
         flex-direction: column !important;
         align-items: stretch !important;
         gap: 0.6rem !important;
         padding: 0.75rem 0.6rem !important;
-      \}
-      .collection-header-mobile > h1 \{
+      }
+      .collection-header-mobile > h1 {
         text-align: center;
         font-size: 1.5rem !important;
-      \}
-      .collection-header-mobile > .submit-btn \{
+      }
+      .collection-header-mobile > .submit-btn {
         align-self: stretch;
         text-align: center;
         padding: 0.6rem 1rem !important;
-      \}
-      .collection-header-mobile > .back-btn \{
+      }
+      .collection-header-mobile > .back-btn {
         align-self: flex-start;
-      \}
-    \}
+      }
+    }
 
     /* Tooltip styles */
-    .tooltip-wrapper \{
+    .tooltip-wrapper {
       position: relative;
       display: inline-block;
       cursor: help;
-    \}
+    }
 
-    .tooltip-text \{
+    .tooltip-text {
       visibility: hidden;
       opacity: 0;
       width: 220px;
@@ -195,12 +195,12 @@
       line-height: 1.4;
       transition: opacity 0.2s ease;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    \}
+    }
 
-    .tooltip-wrapper:hover .tooltip-text \{
+    .tooltip-wrapper:hover .tooltip-text {
       visibility: visible;
       opacity: 1;
-    \}
+    }
   </style>
 </head>
 
@@ -334,8 +334,7 @@
 
             if (studentDoc.exists) {
               const studentData = studentDoc.data();
-              const status = studentData.status ?? (studentData.completed ? "complete" : "incomplete");
-              if (status === "complete" || status === "locked") {
+              if (studentData.completed) {
                 setSessionLocked(true);
               }
             }
@@ -666,14 +665,12 @@
             const students = snapshot.docs.map(doc => {
               const d = doc.data();
               return {
-                docId: doc.id,
                 name: d.name || doc.id,
                 totalPoints: d.totalPoints || 0,
                 badges: d.badges || [],
                 completed: d.completed || false,
                 completedAt: d.completedAt ? d.completedAt.toDate() : null,
-                quizPercentage: d.quizPercentage,
-                status: d.status ?? (d.completed ? "complete" : "incomplete")
+                quizPercentage: d.quizPercentage
               };
             });
             setFirestoreStudents(students);
@@ -1341,7 +1338,7 @@
         {
           id: 'chimpanzee', name: 'Chimpanzee', scientificName: 'Pan troglodytes',
           image: 'images/chimpanzee.jpg', latitude: -33.8428, longitude: 151.2401,
-          radius: 50, emoji: '🐵 ', color: '#8B5A3C',
+          radius: 50, emoji: '\uc0\u55357 \u56373 ', color: '#8B5A3C',
           questions: [
             { q: 'What do chimpanzees use tools for?',
               options: ['Cracking nuts and fishing for termites', 'Building houses', 'Playing music', 'Swimming'],
@@ -1359,7 +1356,7 @@
         {
           id: 'gorilla', name: 'Western Lowland Gorilla', scientificName: 'Gorilla gorilla gorilla',
           image: 'images/gorilla.jpg', latitude: -33.8443, longitude: 151.2413,
-          radius: 50, emoji: '🦍 ', color: '#2E2E2E',
+          radius: 50, emoji: '\uc0\u55358 \u56717 ', color: '#2E2E2E',
           questions: [
             { q: 'What is the alpha male gorilla called?',
               options: ['King Kong', 'Silverback', 'Alpha', 'Chief'],
@@ -1377,7 +1374,7 @@
         {
           id: 'lion', name: 'African Lion', scientificName: 'Panthera leo',
           image: 'images/lion.jpg', latitude: -33.8427, longitude: 151.2393,
-          radius: 50, emoji: '🦁 ', color: '#D4A574',
+          radius: 50, emoji: '\uc0\u55358 \u56705 ', color: '#D4A574',
           questions: [
             { q: 'How far can a lion\\'s roar be heard?',
               options: ['500 meters', '2 kilometers', '8 kilometers', '20 kilometers'],
@@ -1395,7 +1392,7 @@
         {
           id: 'giraffe', name: 'Giraffe', scientificName: 'Giraffa camelopardalis',
           image: 'images/giraffe.jpg', latitude: -33.8431, longitude: 151.2404,
-          radius: 50, emoji: '🦒 ', color: '#E86A33',
+          radius: 50, emoji: '\uc0\u55358 \u56722 ', color: '#E86A33',
           questions: [
             { q: 'How do giraffes sleep?',
               options: ['Standing up for short periods', 'Lying down for 8 hours', 'They never sleep', 'Hanging from trees'],
@@ -1413,7 +1410,7 @@
         {
           id: 'koala', name: 'Koala', scientificName: 'Phascolarctos cinereus',
           image: 'images/koala.jpg', latitude: -34.205984, longitude: 150.579066,
-          radius: 50, emoji: '🐨 ', color: '#7A8B6F',
+          radius: 50, emoji: '\uc0\u55357 \u56360 ', color: '#7A8B6F',
           questions: [
             { q: 'Without intervention, by what year could koalas become extinct in NSW?',
               options: ['2030', '2040', '2050', '2060'],
@@ -1431,7 +1428,7 @@
         {
           id: 'tiger', name: 'Sumatran Tiger', scientificName: 'Panthera tigris sumatrae',
           image: 'images/tiger.jpg', latitude: -33.8433, longitude: 151.2394,
-          radius: 50, emoji: '🐯 ', color: '#E86A33',
+          radius: 50, emoji: '\uc0\u55357 \u56367 ', color: '#E86A33',
           questions: [
             { q: 'How many Sumatran tigers are left in the wild?',
               options: ['Over 10,000', '5,000-7,000', 'Fewer than 400', 'They are extinct'],
@@ -1616,7 +1613,7 @@
         const safeStudentId = studentName.trim().replace(/[\\/#\\.\\$\\[\\]]/g, "_");
 
         // Debug: log submission details
-        console.log("📤  Submitting to Firestore:", {
+        console.log("\uc0\u55357 \u56548  Submitting to Firestore:", {
           classCode: classCode,
           normalisedCode: code,
           studentName: studentName,
@@ -1673,7 +1670,7 @@
           setIsSubmittingActivity(false);
           setCurrentScreen('submissionComplete');
         } catch (err) {
-          console.error("❌  Firestore submission error:", err);
+          console.error("\uc0\u10060  Firestore submission error:", err);
           setIsSubmittingActivity(false);
           alert(`Submission failed: ${err.message}\\n\\nPlease check your connection and try again.`);
         }
@@ -1705,7 +1702,7 @@
                 color: 'var(--jungle-deep)',
                 fontWeight: '600'
               }}>
-                ✅  Session Complete
+                \uc0\u9989  Session Complete
               </h2>
               <p style={{
                 fontSize: '17px',
@@ -1851,7 +1848,7 @@
                 marginBottom: "20px",
                 fontWeight: "600"
               }}>
-                🌿  Let's Track! \'96 Coming Soon
+                \uc0\u55356 \u57151  Let's Track! \'96 Coming Soon
               </h2>
 
               <p style={{
@@ -1879,7 +1876,7 @@
                   fontSize: "15px"
                 }}
               >
-                ←  Back to Home
+                \uc0\u8592  Back to Home
               </button>
             </div>
 
@@ -1901,18 +1898,18 @@
                 </div>
                 {studentName && (
                   <div className="student-name-pill" style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', borderRadius:'20px', padding:'0.4rem 0.85rem', backdropFilter:'blur(6px)' }}>
-                    <span style={{ color:'white', fontSize:'0.82rem', fontWeight:600 }}>👋  {studentName}</span>
+                    <span style={{ color:'white', fontSize:'0.82rem', fontWeight:600 }}>\uc0\u55357 \u56395  {studentName}</span>
                   </div>
                 )}
                 {studentName && classCode && (
                   <button className="submit-btn" onClick={completeActivity} disabled={activityCompleted || isSubmittingActivity}
                     style={{ background: activityCompleted ? 'rgba(46,125,85,0.5)' : 'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))', border: activityCompleted ? '1px solid rgba(255,255,255,0.3)' : 'none', color:'white', padding:'0.55rem 1rem', borderRadius:'30px', cursor: activityCompleted || isSubmittingActivity ? 'not-allowed' : 'pointer', fontSize:'0.82rem', fontWeight:700, opacity: activityCompleted || isSubmittingActivity ? 0.6 : 1, textTransform:'uppercase', letterSpacing:'0.06em', whiteSpace:'nowrap', boxShadow: activityCompleted ? 'none' : '0 4px 12px rgba(232,106,51,0.4)', transition:'all 0.2s' }}>
-                    {activityCompleted ? '✓  Submitted' : isSubmittingActivity ? '⏳  Submitting\'85' : '   Complete Activity'}
+                    {activityCompleted ? '\uc0\u10003  Submitted' : isSubmittingActivity ? '\u9203  Submitting\'85' : '\u55357 \u56548  Complete Activity'}
                   </button>
                 )}
                 <button className="points-card" onClick={()=>setCurrentScreen('collection')} style={{ background:'rgba(255,255,255,0.2)', border:'2px solid rgba(255,255,255,0.4)', color:'white', padding:'0.8rem', borderRadius:'16px', cursor:'pointer', textAlign:'right' }}>
                   <div style={{ fontSize:'2rem', color:'var(--safari-gold)', fontWeight:700, marginBottom:'0.2rem' }}>{totalPoints}</div>
-                  <div style={{ color:'rgba(255,255,255,0.9)', fontSize:'0.85rem', fontWeight:600 }}>🏆  {foundAnimals.size}/{animals.length} Badges</div>
+                  <div style={{ color:'rgba(255,255,255,0.9)', fontSize:'0.85rem', fontWeight:600 }}>\uc0\u55356 \u57286  {foundAnimals.size}/{animals.length} Badges</div>
                 </button>
               </div>
             </div>
@@ -1939,13 +1936,13 @@
                           <h3 className="heading-display" style={{ fontSize:'2rem', marginBottom:'0.3rem', textShadow:'0 2px 8px rgba(0,0,0,0.3)' }}>{animal.name}</h3>
                           <p className="serif-accent" style={{ fontSize:'1rem', opacity:0.9, marginBottom:'1rem' }}>{animal.scientificName}</p>
                           {alreadyFound ? (
-                            <div style={{ display:'inline-block', background:'rgba(46,125,85,0.9)', backdropFilter:'blur(10px)', padding:'0.6rem 1.5rem', borderRadius:'30px', fontWeight:600, fontSize:'0.95rem', border:'2px solid rgba(255,255,255,0.3)' }}>✓  Discovered</div>
+                            <div style={{ display:'inline-block', background:'rgba(46,125,85,0.9)', backdropFilter:'blur(10px)', padding:'0.6rem 1.5rem', borderRadius:'30px', fontWeight:600, fontSize:'0.95rem', border:'2px solid rgba(255,255,255,0.3)' }}>\uc0\u10003  Discovered</div>
                           ) : nearby ? (
-                            <div style={{ display:'inline-block', background:'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))', padding:'0.8rem 2rem', borderRadius:'30px', fontWeight:700, fontSize:'1rem', animation:'pulse 2s infinite', textTransform:'uppercase', letterSpacing:'0.08em', boxShadow:'0 4px 15px rgba(232,106,51,0.5)' }}>📍  Tap to Discover</div>
+                            <div style={{ display:'inline-block', background:'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))', padding:'0.8rem 2rem', borderRadius:'30px', fontWeight:700, fontSize:'1rem', animation:'pulse 2s infinite', textTransform:'uppercase', letterSpacing:'0.08em', boxShadow:'0 4px 15px rgba(232,106,51,0.5)' }}>\uc0\u55357 \u56525  Tap to Discover</div>
                           ) : distance !== null ? (
                             <div style={{ display:'inline-block', background:'rgba(74,159,216,0.2)', backdropFilter:'blur(10px)', padding:'0.6rem 1.5rem', borderRadius:'30px', fontWeight:600, fontSize:'0.95rem', border:'1px solid rgba(255,255,255,0.3)' }}>{distance}m away</div>
                           ) : (
-                            <div style={{ display:'inline-block', background:'rgba(139,90,60,0.3)', backdropFilter:'blur(10px)', padding:'0.6rem 1.5rem', borderRadius:'30px', fontWeight:600, fontSize:'0.95rem', border:'1px solid rgba(255,255,255,0.3)' }}>🔒  Locked</div>
+                            <div style={{ display:'inline-block', background:'rgba(139,90,60,0.3)', backdropFilter:'blur(10px)', padding:'0.6rem 1.5rem', borderRadius:'30px', fontWeight:600, fontSize:'0.95rem', border:'1px solid rgba(255,255,255,0.3)' }}>\uc0\u55357 \u56594  Locked</div>
                           )}
                         </div>
                         {nearby&&!alreadyFound&&(<div style={{ position:'absolute', inset:0, border:'4px solid var(--sunset-orange)', borderRadius:'16px', animation:'pulse 2s infinite', pointerEvents:'none' }} />)}
@@ -1970,7 +1967,7 @@
             <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'0.6rem 1rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', flex:'0 0 auto', zIndex:100 }}>
               <div style={{ maxWidth:'900px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                 <button onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); if(showResult)return; if(window.confirm('Leave this question and go back to the map?'))setCurrentScreen('map'); }} disabled={showResult}
-                  style={{ background:showResult?'rgba(255,255,255,0.1)':'rgba(255,255,255,0.2)', border:'none', color:'white', padding:'0.5rem 1rem', borderRadius:'20px', cursor:showResult?'not-allowed':'pointer', fontSize:'0.85rem', fontWeight:600, opacity:showResult?0.5:1 }}>←  Back</button>
+                  style={{ background:showResult?'rgba(255,255,255,0.1)':'rgba(255,255,255,0.2)', border:'none', color:'white', padding:'0.5rem 1rem', borderRadius:'20px', cursor:showResult?'not-allowed':'pointer', fontSize:'0.85rem', fontWeight:600, opacity:showResult?0.5:1 }}>\uc0\u8592  Back</button>
                 <img src="images/logo.png" alt="Taronga Tracka" style={{ height:'45px', width:'auto' }} onError={(e)=>{ e.target.style.display='none'; }} />
                 <div style={{ width:'70px' }} />
               </div>
@@ -1986,20 +1983,20 @@
             <div style={{ flex:'1 1 auto', overflowY:'auto', overflowX:'hidden', display:'flex', flexDirection:'column', padding:'clamp(0.5rem, 2vw, 1rem)', maxWidth:'900px', margin:'0 auto', width:'100%', WebkitOverflowScrolling:'touch' }}>
               <div style={{ textAlign:'center', marginBottom:'clamp(0.5rem, 1.5vh, 0.8rem)' }}>
                 <p style={{ fontSize:'clamp(0.75rem, 1.8vh, 0.9rem)', color:showResult?'white':'var(--jungle-mid)', fontWeight:600 }}>Question {currentQuestionIndex+1} of {currentAnimal.questions.length}</p>
-                {!showResult&&(<p style={{ fontSize:'clamp(0.7rem, 1.6vh, 0.85rem)', color:'var(--sunset-orange)', fontWeight:600, marginTop:'0.3rem', fontStyle:'italic' }}>💡  Read the signs for clues!</p>)}
+                {!showResult&&(<p style={{ fontSize:'clamp(0.7rem, 1.6vh, 0.85rem)', color:'var(--sunset-orange)', fontWeight:600, marginTop:'0.3rem', fontStyle:'italic' }}>\uc0\u55357 \u56481  Read the signs for clues!</p>)}
               </div>
               {showResult&&(
                 <div className="animate-scale-in" style={{ textAlign:'center', padding:'clamp(1.5rem, 3vh, 2rem)', background:'rgba(255,255,255,0.95)', borderRadius:'20px', boxShadow:'0 8px 32px rgba(0,0,0,0.2)', margin:'clamp(1rem, 2vh, 1.5rem)', maxWidth:'90%', marginLeft:'auto', marginRight:'auto' }}>
-                  <div style={{ fontSize:'clamp(3rem, 8vh, 4.5rem)', marginBottom:'0.5rem' }}>{isCorrect?'🎉 ':'❌ '}</div>
+                  <div style={{ fontSize:'clamp(3rem, 8vh, 4.5rem)', marginBottom:'0.5rem' }}>{isCorrect?'\uc0\u55356 \u57225 ':'\u10060 '}</div>
                   <h2 className="heading-display" style={{ fontSize:'clamp(2rem, 5vh, 3rem)', color:isCorrect?'#10b981':'#ef4444', marginBottom:'0.8rem', lineHeight:1.1 }}>{isCorrect?'CORRECT!':'TRY AGAIN'}</h2>
                   {isCorrect&&currentQuestion.fact&&(
                     <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'12px', padding:'clamp(1rem, 2vh, 1.5rem)', marginTop:'0.8rem', marginBottom:'1rem' }}>
-                      <p style={{ color:'#333', fontSize:'clamp(0.9rem, 2vh, 1.1rem)', lineHeight:1.5, fontWeight:500 }}>💡  {currentQuestion.fact}</p>
+                      <p style={{ color:'#333', fontSize:'clamp(0.9rem, 2vh, 1.1rem)', lineHeight:1.5, fontWeight:500 }}>\uc0\u55357 \u56481  {currentQuestion.fact}</p>
                     </div>
                   )}
                   <button onClick={()=>{ if(isCorrect){handleNextQuestion();}else{setIsProcessingAnswer(false);setShowResult(false);} }}
                     style={{ background:isCorrect?'linear-gradient(135deg, #10b981, #059669)':'linear-gradient(135deg, #ef4444, #dc2626)', color:'white', border:'none', padding:'clamp(0.8rem, 2vh, 1.2rem) clamp(2rem, 5vw, 3rem)', fontSize:'clamp(1rem, 2.5vh, 1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.05em', boxShadow:'0 4px 12px rgba(0,0,0,0.2)', marginTop:'0.5rem' }}>
-                    {isCorrect?(currentQuestionIndex<currentAnimal.questions.length-1?'Next Question → ':'Continue to Observation → '):'Try Again'}
+                    {isCorrect?(currentQuestionIndex<currentAnimal.questions.length-1?'Next Question \uc0\u8594 ':'Continue to Observation \u8594 '):'Try Again'}
                   </button>
                 </div>
               )}
@@ -2036,9 +2033,9 @@
                 <p style={{ color:'#666', marginBottom:'1.2rem', lineHeight:1.6, fontSize:'1.1rem', textAlign:'center' }}>{currentAnimal.observationPrompt}</p>
                 <div style={{ display:'flex', flexWrap:'wrap', gap:'0.6rem', justifyContent:'center', marginBottom:'1.5rem' }}>
                   {[
-                    { label:'🤔  What is it doing right now?', color:'var(--jungle-light)' },
-                    { label:'👀  What does it look like?', color:'var(--discovery-blue)' },
-                    { label:'📝  Use full sentences.', color:'var(--sunset-orange)' }
+                    { label:'\uc0\u55358 \u56596  What is it doing right now?', color:'var(--jungle-light)' },
+                    { label:'\uc0\u55357 \u56384  What does it look like?', color:'var(--discovery-blue)' },
+                    { label:'\uc0\u55357 \u56541  Use full sentences.', color:'var(--sunset-orange)' }
                   ].map((hint, i) => (
                     <div key={i} style={{ background:`${hint.color}18`, border:`1.5px solid ${hint.color}40`, borderRadius:'20px', padding:'0.45rem 0.9rem', fontSize:'0.85rem', fontWeight:600, color:hint.color }}>{hint.label}</div>
                   ))}
@@ -2046,10 +2043,10 @@
                 <textarea value={observation} onChange={(e)=>setObservation(e.target.value)} placeholder="Describe what you observe in detail..."
                   style={{ width:'100%', minHeight:'200px', padding:'1.5rem', borderRadius:'16px', border:'3px solid #E5E5E5', fontSize:'1.1rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', transition:'border-color 0.2s ease' }}
                   onFocus={(e)=>e.target.style.borderColor=currentAnimal.color} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'} />
-                <div style={{ marginTop:'1rem', fontSize:'1rem', color:wordCount>=10?'var(--jungle-light)':'#E86A33', fontWeight:600 }}>{wordCount}/10 words {wordCount>=10?'✓ ':''}</div>
+                <div style={{ marginTop:'1rem', fontSize:'1rem', color:wordCount>=10?'var(--jungle-light)':'#E86A33', fontWeight:600 }}>{wordCount}/10 words {wordCount>=10?'\uc0\u10003 ':''}</div>
                 <button onClick={submitObservation} disabled={wordCount<10}
                   style={{ width:'100%', padding:'1.5rem', borderRadius:'50px', border:'none', background:wordCount>=10?'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))':'#CCC', color:'white', fontSize:'1.3rem', fontWeight:700, cursor:wordCount>=10?'pointer':'not-allowed', transition:'all 0.3s ease', textTransform:'uppercase', letterSpacing:'0.1em', marginTop:'2rem', boxShadow:wordCount>=10?'0 8px 24px rgba(232,106,51,0.4)':'none' }}>
-                  {wordCount<10?'Write More to Continue':'🏆  Submit & Earn Badge'}
+                  {wordCount<10?'Write More to Continue':'\uc0\u55356 \u57286  Submit & Earn Badge'}
                 </button>
               </div>
             </div>
@@ -2061,12 +2058,12 @@
         return (
           <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', overflow:'auto', padding:'1rem' }}>
             <div className="collection-header-mobile" style={{ maxWidth:'900px', margin:'0 auto 2rem', display:'flex', justifyContent:'space-between', alignItems:'center', padding:'1rem' }}>
-              <button className="back-btn" onClick={()=>setCurrentScreen('map')} style={{ background:'rgba(255,255,255,0.2)', border:'none', color:'white', padding:'0.6rem 1.2rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.9rem', fontWeight:600 }}>←  Back</button>
+              <button className="back-btn" onClick={()=>setCurrentScreen('map')} style={{ background:'rgba(255,255,255,0.2)', border:'none', color:'white', padding:'0.6rem 1.2rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.9rem', fontWeight:600 }}>\uc0\u8592  Back</button>
               <h1 className="heading-display" style={{ fontSize:'clamp(1.8rem, 4vw, 2.5rem)', color:'white' }}>BADGE COLLECTION</h1>
               {studentName && classCode ? (
                 <button className="submit-btn" onClick={completeActivity} disabled={activityCompleted || isSubmittingActivity}
                   style={{ background: activityCompleted ? 'rgba(46,125,85,0.5)' : 'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))', border: activityCompleted ? '1px solid rgba(255,255,255,0.3)' : 'none', color:'white', padding:'0.55rem 1rem', borderRadius:'30px', cursor: activityCompleted || isSubmittingActivity ? 'not-allowed' : 'pointer', fontSize:'0.82rem', fontWeight:700, opacity: activityCompleted || isSubmittingActivity ? 0.6 : 1, textTransform:'uppercase', letterSpacing:'0.06em', whiteSpace:'nowrap', boxShadow: activityCompleted ? 'none' : '0 4px 12px rgba(232,106,51,0.4)', transition:'all 0.2s' }}>
-                  {activityCompleted ? '✓  Submitted' : isSubmittingActivity ? '⏳  Submitting\'85' : '   Complete Activity'}
+                  {activityCompleted ? '\uc0\u10003  Submitted' : isSubmittingActivity ? '\u9203  Submitting\'85' : '\u55357 \u56548  Complete Activity'}
                 </button>
               ) : <div style={{ width:'80px' }} />}
             </div>
@@ -2077,7 +2074,7 @@
                 return (
                   <div key={animal.id} style={{ background:earned?'white':'rgba(255,255,255,0.1)', borderRadius:'16px', padding:'1.5rem', textAlign:'center', opacity:earned?1:0.4, boxShadow:earned?'0 8px 24px rgba(0,0,0,0.2)':'none' }}>
                     <div style={{ width:'150px', height:'150px', margin:'0 auto 1.2rem', backgroundImage:earned?`url(images/badge-${animal.id}.png)`:'none', backgroundColor:earned?'transparent':'rgba(255,255,255,0.15)', backgroundSize:'contain', backgroundRepeat:'no-repeat', backgroundPosition:'center', borderRadius:'20px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'2.5rem' }}>
-                      {!earned&&'🔒 '}
+                      {!earned&&'\uc0\u55357 \u56594 '}
                     </div>
                     <h3 style={{ fontSize:'1.1rem', fontWeight:700, color:earned?'var(--jungle-deep)':'white', marginBottom:'0.5rem' }}>{animal.name}</h3>
                     {earned&&badge&&(
@@ -2092,10 +2089,10 @@
               })}
             </div>
             <div style={{ maxWidth:'900px', margin:'2rem auto', background:'rgba(255,255,255,0.1)', borderRadius:'20px', padding:'1.5rem', textAlign:'center' }}>
-              <div style={{ fontSize:'3rem', fontWeight:700, color:'var(--safari-gold)', marginBottom:'0.5rem' }}>⭐  {totalPoints}</div>
+              <div style={{ fontSize:'3rem', fontWeight:700, color:'var(--safari-gold)', marginBottom:'0.5rem' }}>\uc0\u11088  {totalPoints}</div>
               <div style={{ fontSize:'1.2rem', color:'white', fontWeight:600, marginBottom:'1rem' }}>Total Points</div>
               <button onClick={()=>{ if(window.confirm('Are you sure you want to reset all progress? This cannot be undone!')){localStorage.removeItem('tarongaTrackaProgress');window.location.reload();} }}
-                style={{ background:'rgba(239, 68, 68, 0.8)', color:'white', border:'none', padding:'0.6rem 1.2rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.85rem', fontWeight:600 }}>🔄  Reset Progress</button>
+                style={{ background:'rgba(239, 68, 68, 0.8)', color:'white', border:'none', padding:'0.6rem 1.2rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.85rem', fontWeight:600 }}>\uc0\u55357 \u56580  Reset Progress</button>
             </div>
           </div>
         );
@@ -2117,7 +2114,7 @@
               <div style={{ background:'#F5F3EE', borderRadius:'16px', padding:'clamp(1rem, 2vh, 1.5rem)', marginBottom:'clamp(0.8rem, 1.5vh, 1rem)' }}>
                 <div style={{ color:'#666', fontSize:'clamp(0.8rem, 1.8vh, 0.9rem)', marginBottom:'0.3rem' }}>Total Progress</div>
                 <div style={{ fontSize:'clamp(1.3rem, 2.8vh, 1.8rem)', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>{foundAnimals.size}/{animals.length} Animals</div>
-                <div style={{ fontSize:'clamp(1.2rem, 2.5vh, 1.5rem)', fontWeight:700, color:'var(--sunset-orange)' }}>⭐  {totalPoints} Points</div>
+                <div style={{ fontSize:'clamp(1.2rem, 2.5vh, 1.5rem)', fontWeight:700, color:'var(--sunset-orange)' }}>\uc0\u11088  {totalPoints} Points</div>
               </div>
               <button onClick={()=>setCurrentScreen('map')} style={{ background:'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))', color:'white', border:'none', padding:'clamp(0.8rem, 1.5vh, 1rem) 2rem', fontSize:'clamp(1rem, 2vh, 1.2rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase' }}>Continue Exploring</button>
             </div>
@@ -2133,16 +2130,16 @@
             </div>
 
             <div className="animate-scale-in" style={{ position:'relative', zIndex:10, background:'white', borderRadius:'28px', padding:'clamp(1.8rem, 5vh, 2.8rem)', maxWidth:'480px', width:'100%', textAlign:'center', boxShadow:'0 24px 64px rgba(0,0,0,0.35)' }}>
-              <div style={{ width:'80px', height:'80px', borderRadius:'50%', background:'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))', margin:'0 auto 1.2rem', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'2.4rem', boxShadow:'0 6px 20px rgba(26,82,56,0.4)' }}>✓ </div>
+              <div style={{ width:'80px', height:'80px', borderRadius:'50%', background:'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))', margin:'0 auto 1.2rem', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'2.4rem', boxShadow:'0 6px 20px rgba(26,82,56,0.4)' }}>\uc0\u10003 </div>
 
               <h1 className="heading-display" style={{ fontSize:'clamp(1.9rem, 5vh, 2.6rem)', color:'var(--jungle-deep)', marginBottom:'0.2rem', lineHeight:1.1 }}>SUBMISSION COMPLETE</h1>
               <p className="serif-accent" style={{ color:'var(--jungle-light)', fontSize:'clamp(0.95rem, 2.2vh, 1.15rem)', marginBottom:'1.4rem' }}>Your results have been saved</p>
 
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'0.7rem', marginBottom:'1.4rem' }}>
                 {[
-                  { label:'Points', value: totalPoints, icon:'⭐ ', color:'var(--sunset-orange)' },
-                  { label:'Badges', value: badges.length, icon:'🏆 ', color:'var(--earth-clay)' },
-                  { label:'Animals', value:`${foundAnimals.size}/${animals.length}`, icon:'🐾 ', color:'var(--jungle-mid)' }
+                  { label:'Points', value: totalPoints, icon:'\uc0\u11088 ', color:'var(--sunset-orange)' },
+                  { label:'Badges', value: badges.length, icon:'\uc0\u55356 \u57286 ', color:'var(--earth-clay)' },
+                  { label:'Animals', value:`${foundAnimals.size}/${animals.length}`, icon:'\uc0\u55357 \u56382 ', color:'var(--jungle-mid)' }
                 ].map(s => (
                   <div key={s.label} style={{ background:'#F5F3EE', borderRadius:'14px', padding:'0.8rem 0.4rem' }}>
                     <div style={{ fontSize:'1.3rem', marginBottom:'0.15rem' }}>{s.icon}</div>
@@ -2161,7 +2158,7 @@
               )}
 
               <div style={{ background:'#F0FDF4', border:'1px solid #BBF7D0', borderRadius:'12px', padding:'0.6rem 1rem', marginBottom:'1.4rem', display:'inline-block' }}>
-                <p style={{ color:'#16A34A', fontSize:'0.8rem', fontWeight:600 }}>✓  Saved to class <span style={{ fontFamily:'monospace', letterSpacing:'0.1em' }}>{normaliseCode(classCode)}</span> \'b7 {studentName}</p>
+                <p style={{ color:'#16A34A', fontSize:'0.8rem', fontWeight:600 }}>\uc0\u10003  Saved to class <span style={{ fontFamily:'monospace', letterSpacing:'0.1em' }}>{normaliseCode(classCode)}</span> \'b7 {studentName}</p>
               </div>
 
               <div>
@@ -2185,11 +2182,11 @@
                 onMouseEnter={(e)=>{ e.currentTarget.style.transform='translateY(-4px)'; e.currentTarget.style.boxShadow='0 24px 70px rgba(0,0,0,0.35)'; }}
                 onMouseLeave={(e)=>{ e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='0 20px 60px rgba(0,0,0,0.3)'; }}>
                 <div style={{ textAlign:'center' }}>
-                  <div style={{ fontSize:'3.5rem', marginBottom:'1rem' }}>🎒 </div>
+                  <div style={{ fontSize:'3.5rem', marginBottom:'1rem' }}>\uc0\u55356 \u57234 </div>
                   <h2 className="heading-display" style={{ fontSize:'clamp(1.8rem, 4vh, 2.2rem)', color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>Student Join</h2>
                   <p style={{ color:'#666', fontSize:'0.95rem', lineHeight:'1.5' }}>Have a class code from your teacher? Join your class adventure here.</p>
                   <div style={{ marginTop:'1.5rem', padding:'0.8rem', background:'linear-gradient(135deg, var(--sunset-orange) 0%, var(--earth-clay) 100%)', color:'white', borderRadius:'50px', fontWeight:700, fontSize:'0.95rem', textTransform:'uppercase', letterSpacing:'0.08em' }}>
-                    Tap to Join → 
+                    Tap to Join \uc0\u8594 
                   </div>
                 </div>
               </div>
@@ -2199,11 +2196,11 @@
                 onMouseEnter={(e)=>{ e.currentTarget.style.transform='translateY(-4px)'; e.currentTarget.style.boxShadow='0 24px 70px rgba(0,0,0,0.35)'; }}
                 onMouseLeave={(e)=>{ e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='0 20px 60px rgba(0,0,0,0.3)'; }}>
                 <div style={{ textAlign:'center' }}>
-                  <div style={{ fontSize:'3.5rem', marginBottom:'1rem' }}>👩 ‍   </div>
+                  <div style={{ fontSize:'3.5rem', marginBottom:'1rem' }}>\uc0\u55357 \u56425 \u8205 \u55356 \u57323 </div>
                   <h2 className="heading-display" style={{ fontSize:'clamp(1.8rem, 4vh, 2.2rem)', color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>Teacher Access</h2>
                   <p style={{ color:'#666', fontSize:'0.95rem', lineHeight:'1.5' }}>Create and manage classes, track student progress, and view analytics.</p>
                   <div style={{ marginTop:'1.5rem', padding:'0.8rem', background:'linear-gradient(135deg, #1A5238, #2E7D55)', color:'white', borderRadius:'50px', fontWeight:700, fontSize:'0.95rem', textTransform:'uppercase', letterSpacing:'0.08em' }}>
-                    Tap to Access → 
+                    Tap to Access \uc0\u8594 
                   </div>
                 </div>
               </div>
@@ -2211,7 +2208,7 @@
 
             {/* Back to Home */}
             <button onClick={()=>setCurrentScreen('home')} style={{ position:'absolute', top:'1.5rem', left:'1.5rem', background:'rgba(255,255,255,0.2)', border:'1px solid rgba(255,255,255,0.3)', color:'white', padding:'0.5rem 1rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.85rem', fontWeight:600, backdropFilter:'blur(6px)' }}>
-              ←  Back
+              \uc0\u8592  Back
             </button>
           </div>
         );
@@ -2253,7 +2250,7 @@
               return; // IMPORTANT: prevent creating new document
             }
             
-            // No active session found →  create new one
+            // No active session found \uc0\u8594  create new one
             await window.db.collection('classes').doc(code)
               .collection('students').add({
                 name: studentName.trim(),
@@ -2280,7 +2277,7 @@
           <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'clamp(1rem, 5vw, 2rem)', overflow:'auto' }}>
             <div className="animate-scale-in" style={{ background:'white', borderRadius:'24px', padding:'clamp(1.5rem, 4vh, 2.5rem)', maxWidth:'420px', width:'100%', boxShadow:'0 20px 60px rgba(0,0,0,0.3)' }}>
               <div style={{ textAlign:'center', marginBottom:'1.5rem' }}>
-                <div style={{ fontSize:'2.8rem', marginBottom:'0.4rem' }}>🎒 </div>
+                <div style={{ fontSize:'2.8rem', marginBottom:'0.4rem' }}>\uc0\u55356 \u57234 </div>
                 <h2 className="heading-display" style={{ fontSize:'clamp(1.6rem, 4vh, 2rem)', color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Student Join</h2>
                 <p style={{ color:'#666', fontSize:'0.9rem' }}>Enter your class code and first name to join</p>
               </div>
@@ -2290,12 +2287,12 @@
                 onFocus={(e)=>{ if(!studentJoinError && !lookedUpClass) e.target.style.borderColor='var(--jungle-mid)'; }} onBlur={(e)=>{ if(!studentJoinError && !lookedUpClass) e.target.style.borderColor='#E5E5E5'; }} />
               {studentJoinError && (
                 <div style={{ background:'#FEF2F2', border:'1px solid #FECACA', borderRadius:'10px', padding:'0.55rem 0.75rem', marginBottom:'0.8rem' }}>
-                  <p style={{ color:'#DC2626', fontSize:'0.8rem', fontWeight:600 }}>⚠️  {studentJoinError}</p>
+                  <p style={{ color:'#DC2626', fontSize:'0.8rem', fontWeight:600 }}>\uc0\u9888 \u65039  {studentJoinError}</p>
                 </div>
               )}
               {lookedUpClass && !studentJoinError && (
                 <div style={{ background:'#F0FDF4', border:'1px solid #BBF7D0', borderRadius:'10px', padding:'0.55rem 0.75rem', marginBottom:'0.8rem' }}>
-                  <p style={{ color:'#16A34A', fontSize:'0.8rem', fontWeight:600 }}>✓  {lookedUpClass.className} \'97 {lookedUpClass.yearGroup}</p>
+                  <p style={{ color:'#16A34A', fontSize:'0.8rem', fontWeight:600 }}>\uc0\u10003  {lookedUpClass.className} \'97 {lookedUpClass.yearGroup}</p>
                 </div>
               )}
               <label style={{ display:'block', fontSize:'0.82rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.35rem' }}>First Name</label>
@@ -2306,7 +2303,7 @@
                 style={{ width:'100%', padding:'0.85rem', borderRadius:'50px', border:'none', background:classCode.trim()&&studentName.trim()?'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))':'#CCC', color:'white', fontSize:'1.05rem', fontWeight:700, cursor:classCode.trim()&&studentName.trim()?'pointer':'not-allowed', textTransform:'uppercase', letterSpacing:'0.08em', transition:'all 0.3s ease' }}>
                 Join
               </button>
-              <button onClick={()=>{ setStudentJoinError(''); setCurrentScreen('home'); }} style={{ display:'block', width:'100%', background:'none', border:'none', color:'#999', fontSize:'0.82rem', cursor:'pointer', marginTop:'1rem', padding:'0.4rem' }}>←  Back</button>
+              <button onClick={()=>{ setStudentJoinError(''); setCurrentScreen('home'); }} style={{ display:'block', width:'100%', background:'none', border:'none', color:'#999', fontSize:'0.82rem', cursor:'pointer', marginTop:'1rem', padding:'0.4rem' }}>\uc0\u8592  Back</button>
             </div>
           </div>
         );
@@ -2334,7 +2331,7 @@
           <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'clamp(1rem, 5vw, 2rem)', overflow:'auto' }}>
             <div className="animate-scale-in" style={{ background:'white', borderRadius:'24px', padding:'clamp(1.5rem, 4vh, 2.5rem)', maxWidth:'420px', width:'100%', boxShadow:'0 20px 60px rgba(0,0,0,0.3)' }}>
               <div style={{ textAlign:'center', marginBottom:'1.5rem' }}>
-                <div style={{ fontSize:'2.8rem', marginBottom:'0.4rem' }}>🔐 </div>
+                <div style={{ fontSize:'2.8rem', marginBottom:'0.4rem' }}>\uc0\u55357 \u56592 </div>
                 <h2 className="heading-display" style={{ fontSize:'clamp(1.6rem, 4vh, 2rem)', color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Taronga Staff Portal</h2>
                 <p style={{ color:'#666', fontSize:'0.9rem' }}>Enter your access code to continue</p>
               </div>
@@ -2347,7 +2344,7 @@
                 style={{ width:'100%', padding:'0.85rem', borderRadius:'50px', border:'none', background:adminAccessCode.trim()?'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))':'#CCC', color:'white', fontSize:'1.05rem', fontWeight:700, cursor:adminAccessCode.trim()?'pointer':'not-allowed', textTransform:'uppercase', letterSpacing:'0.08em', transition:'all 0.3s ease' }}>
                 Enter Portal
               </button>
-              <button onClick={()=>{ setAdminAccessCode(''); setCurrentScreen('home'); }} style={{ display:'block', width:'100%', background:'none', border:'none', color:'#999', fontSize:'0.82rem', cursor:'pointer', marginTop:'1rem', padding:'0.4rem' }}>←  Back</button>
+              <button onClick={()=>{ setAdminAccessCode(''); setCurrentScreen('home'); }} style={{ display:'block', width:'100%', background:'none', border:'none', color:'#999', fontSize:'0.82rem', cursor:'pointer', marginTop:'1rem', padding:'0.4rem' }}>\uc0\u8592  Back</button>
             </div>
           </div>
         );
@@ -2375,7 +2372,7 @@
                   gap: "10px",
                   fontSize: "14px"
                 }}>
-                  🦁  Daily Code: {dailyCode ? (
+                  \uc0\u55358 \u56705  Daily Code: {dailyCode ? (
                     <>
                       <strong>{dailyCode.id}</strong>
                       <span style={{ opacity: 0.8 }}>
@@ -2558,7 +2555,7 @@
                           </select>
                         
                           <button onClick={async () => {
-                            if (!window.confirm('⚠️  DANGER: This will permanently delete ALL classes and student data from the database.\\n\\nThis action CANNOT be undone.\\n\\nType "DELETE" in the next prompt to confirm.')) return;
+                            if (!window.confirm('\uc0\u9888 \u65039  DANGER: This will permanently delete ALL classes and student data from the database.\\n\\nThis action CANNOT be undone.\\n\\nType "DELETE" in the next prompt to confirm.')) return;
                             const confirmation = prompt('Type DELETE to confirm:');
                             if (confirmation !== 'DELETE') {
                               alert('Deletion cancelled.');
@@ -2585,14 +2582,14 @@
                             }
                             
                             await batch.commit();
-                            alert(`✓  Deleted ${classesSnapshot.size} classes and all student data.`);
+                            alert(`\uc0\u10003  Deleted ${classesSnapshot.size} classes and all student data.`);
                             window.location.reload();
                           } catch (err) {
                             console.error('Deletion error:', err);
                             alert(`Failed to delete data: ${err.message}`);
                           }
                         }} style={{ background:'linear-gradient(135deg, #ef4444, #dc2626)', color:'white', border:'none', padding:'0.5rem 1rem', borderRadius:'10px', fontSize:'0.75rem', fontWeight:700, cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.05em', boxShadow:'0 2px 8px rgba(239,68,68,0.4)' }}>
-                          🗑  Wipe All Test Data
+                          \uc0\u55357 \u56785  Wipe All Test Data
                         </button>
                       </div>
                       </div>
@@ -2628,7 +2625,7 @@
                       
                             {filteredClasses.length === 0 ? (
                               <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)', textAlign:'center' }}>
-                                <div style={{ fontSize:'3rem', marginBottom:'1rem' }}>📭 </div>
+                                <div style={{ fontSize:'3rem', marginBottom:'1rem' }}>\uc0\u55357 \u56557 </div>
                                 <p style={{ color:'#666', fontSize:'0.95rem' }}>
                                   {adminClasses.length === 0 ? 'No classes have been created yet.' : 'No classes match this date filter.'}
                                 </p>
@@ -2660,7 +2657,7 @@
                                         </p>
                                         {cls.schoolName && (
                                           <p style={{ fontSize:'0.75rem', color:'var(--jungle-mid)', fontWeight:600 }}>
-                                            🏫  {cls.schoolName}
+                                            \uc0\u55356 \u57323  {cls.schoolName}
                                           </p>
                                         )}
                                       </div>
@@ -2694,7 +2691,7 @@
                                     </div>
 
                                     <div style={{ marginTop:'0.75rem', fontSize:'0.8rem', color:'#888' }}>
-                                      👤  {cls.teacherEmail}
+                                      \uc0\u55357 \u56420  {cls.teacherEmail}
                                     </div>
                                   </div>
                                 ))}
@@ -2762,7 +2759,7 @@
                               e.target.style.boxShadow = "0 4px 12px rgba(26, 82, 56, 0.2)";
                             }}
                           >
-                            📥  Export Analytics CSV
+                            \uc0\u55357 \u56549  Export Analytics CSV
                           </button>
                         </div>
 
@@ -2805,7 +2802,7 @@
                             <span>
                               <strong>Behaviour (%)</strong>
                               <span className="tooltip-wrapper" style={{ marginLeft:'6px' }}>
-                                ⓘ 
+                                \uc0\u9432 
                                 <span className="tooltip-text">
                                   Measures use of action-based vocabulary in observations. Scored 5 points per behaviour word, capped at 15. Displayed as % of maximum possible score.
                                 </span>
@@ -2814,7 +2811,7 @@
                             <span>
                               <strong>Detail (%)</strong>
                               <span className="tooltip-wrapper" style={{ marginLeft:'6px' }}>
-                                ⓘ 
+                                \uc0\u9432 
                                 <span className="tooltip-text">
                                   Measures descriptive detail in observations. Includes physical traits, colour, size and sensory descriptors. Scored up to 15 points total.
                                 </span>
@@ -2823,7 +2820,7 @@
                             <span>
                               <strong>Writing (%)</strong>
                               <span className="tooltip-wrapper" style={{ marginLeft:'6px' }}>
-                                ⓘ 
+                                \uc0\u9432 
                                 <span className="tooltip-text">
                                   Measures literacy quality. Includes capitalisation, punctuation, sentence structure and vocabulary diversity. Scored up to 10 points total.
                                 </span>
@@ -2929,7 +2926,7 @@
                                           <span>
                                             Avg Observation %
                                             <span className="tooltip-wrapper" style={{ marginLeft:'6px' }}>
-                                              ⓘ 
+                                              \uc0\u9432 
                                               <span className="tooltip-text">
                                                 Combined score from: Behaviour (15) + Detail (15) + Writing (10). Displayed as a percentage of 40 total points.
                                               </span>
@@ -3005,7 +3002,7 @@
             <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1rem 1.5rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', flexShrink:0 }}>
               <div style={{ maxWidth:'1200px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                 <div style={{ display:'flex', alignItems:'center', gap:'0.7rem' }}>
-                  <button onClick={()=>{ setSelectedAdminClass(null); setCurrentScreen('adminDashboard'); }} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', width:'34px', height:'34px', borderRadius:'50%', cursor:'pointer', fontSize:'1.1rem', display:'flex', alignItems:'center', justifyContent:'center' }}>← </button>
+                  <button onClick={()=>{ setSelectedAdminClass(null); setCurrentScreen('adminDashboard'); }} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', width:'34px', height:'34px', borderRadius:'50%', cursor:'pointer', fontSize:'1.1rem', display:'flex', alignItems:'center', justifyContent:'center' }}>\uc0\u8592 </button>
                   <div>
                     <h1 className="heading-display" style={{ fontSize:'clamp(1.2rem, 3vw, 1.6rem)', color:'white', lineHeight:1.2 }}>Class Details</h1>
                     <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.78rem' }}>{adminClassData.classCode}</p>
@@ -3062,7 +3059,7 @@
                     </div>
                   ) : adminClassStudents.length === 0 ? (
                     <div style={{ textAlign:'center', padding:'2rem', color:'#999' }}>
-                      <div style={{ fontSize:'2rem', marginBottom:'0.5rem' }}>📭 </div>
+                      <div style={{ fontSize:'2rem', marginBottom:'0.5rem' }}>\uc0\u55357 \u56557 </div>
                       <p>No students have joined this class yet.</p>
                     </div>
                   ) : (
@@ -3088,7 +3085,7 @@
                               <tr key={i} style={{ borderBottom:'1px solid #F5F3EE' }}>
                                 <td style={{ padding:'0.85rem 0.5rem', color:'var(--jungle-deep)', fontWeight:500 }}>{student.name}</td>
                                 <td style={{ padding:'0.85rem 0.5rem', textAlign:'center', fontSize:'1.2rem' }}>
-                                  {student.completed ? '✅ ' : '❌ '}
+                                  {student.completed ? '\uc0\u9989 ' : '\u10060 '}
                                 </td>
                                 <td style={{ padding:'0.85rem 0.5rem', textAlign:'center', fontWeight:600, color:'var(--jungle-mid)' }}>{student.totalPoints}</td>
                                 <td style={{ padding:'0.85rem 0.5rem', textAlign:'center', fontWeight:600, color:'var(--jungle-mid)' }}>
@@ -3125,7 +3122,7 @@
               <div onClick={(e) => e.stopPropagation()} style={{ background:'white', borderRadius:'18px', width:'100%', maxWidth:'480px', maxHeight:'80vh', overflowY:'auto', boxShadow:'0 24px 60px rgba(0,0,0,0.25)' }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'1.2rem 1.4rem 0.8rem', borderBottom:'1px solid #F0EDE8', position:'sticky', top:0, background:'white', zIndex:1 }}>
                   <div>
-                    <h3 style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)', margin:0 }}>📋  Observations</h3>
+                    <h3 style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)', margin:0 }}>\uc0\u55357 \u56523  Observations</h3>
                     <p style={{ fontSize:'0.78rem', color:'#888', margin:'0.15rem 0 0' }}>{observationsModal.name}</p>
                   </div>
                   <button onClick={() => setObservationsModal(null)} style={{ background:'none', border:'none', fontSize:'1.4rem', color:'#aaa', cursor:'pointer', lineHeight:1, padding:'0.2rem 0.4rem' }}>\'d7</button>
@@ -3153,7 +3150,7 @@
           <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'clamp(1rem, 5vw, 2rem)', overflow:'auto' }}>
             <div className="animate-scale-in" style={{ background:'white', borderRadius:'24px', padding:'clamp(1.5rem, 4vh, 2.5rem)', maxWidth:'420px', width:'100%', boxShadow:'0 20px 60px rgba(0,0,0,0.3)' }}>
               <div style={{ textAlign:'center', marginBottom:'1.5rem' }}>
-                <div style={{ fontSize:'2.8rem', marginBottom:'0.4rem' }}>👩 ‍   </div>
+                <div style={{ fontSize:'2.8rem', marginBottom:'0.4rem' }}>\uc0\u55357 \u56425 \u8205 \u55356 \u57323 </div>
                 <h2 className="heading-display" style={{ fontSize:'clamp(1.6rem, 4vh, 2rem)', color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Teacher Access</h2>
                 <p style={{ color:'#666', fontSize:'0.9rem' }}>Enter your email to continue</p>
               </div>
@@ -3165,7 +3162,7 @@
                 style={{ width:'100%', padding:'0.85rem', borderRadius:'50px', border:'none', background:teacherEmail.trim().includes('@')?'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))':'#CCC', color:'white', fontSize:'1.05rem', fontWeight:700, cursor:teacherEmail.trim().includes('@')?'pointer':'not-allowed', textTransform:'uppercase', letterSpacing:'0.08em', transition:'all 0.3s ease' }}>
                 Continue
               </button>
-              <button onClick={()=>setCurrentScreen('home')} style={{ display:'block', width:'100%', background:'none', border:'none', color:'#999', fontSize:'0.82rem', cursor:'pointer', marginTop:'1rem', padding:'0.4rem' }}>←  Back</button>
+              <button onClick={()=>setCurrentScreen('home')} style={{ display:'block', width:'100%', background:'none', border:'none', color:'#999', fontSize:'0.82rem', cursor:'pointer', marginTop:'1rem', padding:'0.4rem' }}>\uc0\u8592  Back</button>
             </div>
           </div>
         );
@@ -3250,7 +3247,7 @@
                           <div>
                             <p style={{ fontWeight:700, color:'var(--jungle-deep)', fontSize:'0.95rem', marginBottom:'0.15rem' }}>{cls.className}</p>
                             {cls.schoolName && (
-                              <p style={{ color:'var(--jungle-mid)', fontSize:'0.75rem', marginBottom:'0.1rem', fontWeight:600 }}>🏫  {cls.schoolName}</p>
+                              <p style={{ color:'var(--jungle-mid)', fontSize:'0.75rem', marginBottom:'0.1rem', fontWeight:600 }}>\uc0\u55356 \u57323  {cls.schoolName}</p>
                             )}
                             <p style={{ color:'#888', fontSize:'0.78rem' }}>
                               {cls.yearGroup} \'b7 {teacherClassStudentCounts[cls.classCode]?.total || 0} student{(teacherClassStudentCounts[cls.classCode]?.total || 0) !== 1 ? 's' : ''}
@@ -3271,7 +3268,7 @@
                   )}
                 </div>
 
-                <button onClick={()=>setCurrentScreen('home')} style={{ display:'block', width:'100%', background:'none', border:'none', color:'#999', fontSize:'0.82rem', cursor:'pointer', marginTop:'1.8rem', padding:'0.4rem' }}>←  Back to Home</button>
+                <button onClick={()=>setCurrentScreen('home')} style={{ display:'block', width:'100%', background:'none', border:'none', color:'#999', fontSize:'0.82rem', cursor:'pointer', marginTop:'1.8rem', padding:'0.4rem' }}>\uc0\u8592  Back to Home</button>
               </div>
             </div>
 
@@ -3283,7 +3280,7 @@
                     {classCodeModal}
                   </div>
                   <button onClick={() => { setClassCodeFullscreen(true); }} style={{ width:'100%', background:'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))', color:'white', border:'none', padding:'0.85rem', borderRadius:'12px', fontSize:'0.95rem', fontWeight:700, cursor:'pointer', marginBottom:'0.7rem', textTransform:'uppercase', letterSpacing:'0.05em' }}>
-                    🖥  Full Screen Mode
+                    \uc0\u55357 \u56741  Full Screen Mode
                   </button>
                   <button onClick={() => setClassCodeModal(null)} style={{ width:'100%', background:'#F5F3EE', color:'#666', border:'none', padding:'0.75rem', borderRadius:'12px', fontSize:'0.85rem', fontWeight:600, cursor:'pointer' }}>
                     Close
@@ -3298,7 +3295,7 @@
                   {classCodeModal}
                 </div>
                 <button onClick={() => { setClassCodeFullscreen(false); setClassCodeModal(null); }} style={{ position:'absolute', top:'2rem', right:'2rem', background:'rgba(255,255,255,0.15)', color:'white', border:'2px solid rgba(255,255,255,0.3)', padding:'0.75rem 1.5rem', borderRadius:'12px', fontSize:'0.9rem', fontWeight:700, cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.05em' }}>
-                  ✕  Exit
+                  \uc0\u10005  Exit
                 </button>
               </div>
             )}
@@ -3385,7 +3382,7 @@
             <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1rem 1.5rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', flexShrink:0 }}>
               <div style={{ maxWidth:'720px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                 <div style={{ display:'flex', alignItems:'center', gap:'0.7rem' }}>
-                  <button onClick={()=>setCurrentScreen('teacherDashboard')} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', width:'34px', height:'34px', borderRadius:'50%', cursor:'pointer', fontSize:'1.1rem', display:'flex', alignItems:'center', justifyContent:'center' }}>← </button>
+                  <button onClick={()=>setCurrentScreen('teacherDashboard')} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', width:'34px', height:'34px', borderRadius:'50%', cursor:'pointer', fontSize:'1.1rem', display:'flex', alignItems:'center', justifyContent:'center' }}>\uc0\u8592 </button>
                   <div>
                     <h1 className="heading-display" style={{ fontSize:'clamp(1.1rem, 2.8vw, 1.45rem)', color:'white', lineHeight:1.2 }}>{cls.className}</h1>
                     <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.75rem' }}>{cls.yearGroup} \'b7 Code: <span style={{ fontFamily:'monospace', fontWeight:700 }}>{cls.classCode}</span></p>
@@ -3399,7 +3396,7 @@
                     </div>
                   )}
                   <button onClick={downloadCSV} disabled={firestoreLoading} style={{ background:'rgba(255,255,255,0.18)', border:'1px solid rgba(255,255,255,0.35)', color:'white', padding:'0.45rem 0.85rem', borderRadius:'20px', cursor:firestoreLoading?'not-allowed':'pointer', fontSize:'0.78rem', fontWeight:600, display:'flex', alignItems:'center', gap:'0.35rem', opacity:firestoreLoading?0.5:1 }}>
-                    ⬇  CSV
+                    \uc0\u11015  CSV
                   </button>
                 </div>
               </div>
@@ -3415,11 +3412,11 @@
                 <div style={{ flexShrink:0, padding:'1rem 1.5rem 0' }}>
                   <div style={{ maxWidth:'720px', margin:'0 auto', display:'grid', gridTemplateColumns:'repeat(5, 1fr)', gap:'0.7rem' }}>
                     {[
-                      { label:'Students', value:totalStudents, icon:'👥 ' },
-                      { label:'Avg Points', value:avgPoints, icon:'⭐ ' },
-                      { label:'Total Badges', value:totalBadges, icon:'🏆 ' },
-                      { label:'Completed', value:completedCount, icon:'✓ ' },
-                      { label:'Avg Quiz %', value:`${avgQuizPercentage}%`, icon:'📝 ', highlight:true }
+                      { label:'Students', value:totalStudents, icon:'\uc0\u55357 \u56421 ' },
+                      { label:'Avg Points', value:avgPoints, icon:'\uc0\u11088 ' },
+                      { label:'Total Badges', value:totalBadges, icon:'\uc0\u55356 \u57286 ' },
+                      { label:'Completed', value:completedCount, icon:'\uc0\u10003 ' },
+                      { label:'Avg Quiz %', value:`${avgQuizPercentage}%`, icon:'\uc0\u55357 \u56541 ', highlight:true }
                     ].map(stat => (
                       <div key={stat.label} style={{ background: stat.highlight ? 'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))' : 'white', borderRadius:'12px', padding:'0.7rem 0.5rem', textAlign:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
                         <div style={{ fontSize:'1.3rem', marginBottom:'0.15rem' }}>{stat.icon}</div>
@@ -3433,8 +3430,8 @@
                 <div style={{ flex:1, overflowY:'auto', padding:'1rem 1.5rem 1.5rem' }}>
                   <div style={{ maxWidth:'720px', margin:'0 auto' }}>
                     <div style={{ background:'white', borderRadius:'16px', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', overflow:'hidden' }}>
-                      <div style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.65fr 0.85fr 0.85fr 0.9fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
-                        {['Student','Points','Badges','Quiz %','Status','Last Active','Observations','Control'].map(h => (
+                      <div style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.65fr 0.85fr 0.85fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
+                        {['Student','Points','Badges','Quiz %','Done','Last Active','Observations'].map(h => (
                           <div key={h} style={{ color:'rgba(255,255,255,0.8)', fontSize:'0.72rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>{h}</div>
                         ))}
                       </div>
@@ -3451,7 +3448,7 @@
                             : lastBadge && lastBadge.timestamp ? new Date(lastBadge.timestamp) : null;
                           const hasObservations = (s.badges || []).some(b => b.observation);
                           return (
-                            <div key={s.name} style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.65fr 0.85fr 0.85fr 0.9fr', padding:'0.7rem 1rem', borderTop:'1px solid #F0EDE8', alignItems:'center', background: i % 2 === 0 ? 'white' : '#FAFAF8' }}>
+                            <div key={s.name} style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.65fr 0.85fr 0.85fr', padding:'0.7rem 1rem', borderTop:'1px solid #F0EDE8', alignItems:'center', background: i % 2 === 0 ? 'white' : '#FAFAF8' }}>
                               <div style={{ display:'flex', alignItems:'center', gap:'0.55rem' }}>
                                 <div style={{ width:'28px', height:'28px', borderRadius:'50%', background: s.completed ? 'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))' : 'linear-gradient(135deg, #aaa, #ccc)', display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontSize:'0.72rem', fontWeight:700, flexShrink:0 }}>
                                   {s.name.charAt(0).toUpperCase()}
@@ -3459,16 +3456,15 @@
                                 <span style={{ fontWeight:600, color:'var(--jungle-deep)', fontSize:'0.88rem' }}>{s.name}</span>
                               </div>
                               <div style={{ fontWeight:700, color:'var(--sunset-orange)', fontSize:'0.9rem' }}>{s.totalPoints || 0}</div>
-                              <div style={{ fontSize:'0.88rem' }}>{s.badges && s.badges.length > 0 ? '🏆 '.repeat(s.badges.length) : <span style={{ color:'#bbb', fontSize:'0.75rem' }}>\'97</span>}</div>
+                              <div style={{ fontSize:'0.88rem' }}>{s.badges && s.badges.length > 0 ? '\uc0\u55356 \u57286 '.repeat(s.badges.length) : <span style={{ color:'#bbb', fontSize:'0.75rem' }}>\'97</span>}</div>
                               <div style={{ fontWeight:600, color:'var(--jungle-mid)', fontSize:'0.85rem' }}>
                                 {s.quizPercentage !== undefined ? `${s.quizPercentage}%` : '\'97'}
                               </div>
                               <div style={{ fontSize:'0.82rem' }}>
-                                {(() => {
-                                  if (s.status === 'complete') return <span style={{ display:'inline-flex', alignItems:'center', gap:'0.25rem', background:'#F0FDF4', color:'#16A34A', fontWeight:700, fontSize:'0.72rem', padding:'0.2rem 0.5rem', borderRadius:'10px' }}>●  Done</span>;
-                                  if (s.status === 'locked') return <span style={{ display:'inline-flex', alignItems:'center', gap:'0.25rem', background:'#FEF2F2', color:'#DC2626', fontWeight:700, fontSize:'0.72rem', padding:'0.2rem 0.5rem', borderRadius:'10px' }}>●  Locked</span>;
-                                  return <span style={{ display:'inline-flex', alignItems:'center', gap:'0.25rem', background:'#FFFBEB', color:'#D97706', fontWeight:700, fontSize:'0.72rem', padding:'0.2rem 0.5rem', borderRadius:'10px' }}>●  Active</span>;
-                                })()}
+                                {s.completed
+                                  ? <span style={{ display:'inline-flex', alignItems:'center', gap:'0.25rem', background:'#F0FDF4', color:'#16A34A', fontWeight:700, fontSize:'0.72rem', padding:'0.2rem 0.5rem', borderRadius:'10px' }}>\uc0\u10003  Yes</span>
+                                  : <span style={{ color:'#bbb', fontSize:'0.75rem' }}>\'97</span>
+                                }
                               </div>
                               <div style={{ color: lastActiveDate ? 'var(--jungle-mid)' : '#bbb', fontSize:'0.75rem', fontWeight: lastActiveDate ? 600 : 400 }}>
                                 {lastActiveDate ? lastActiveDate.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '\'97'}
@@ -3478,23 +3474,6 @@
                                   ? <button onClick={() => setObservationsModal(s)} style={{ background:'var(--jungle-deep)', color:'white', border:'none', padding:'0.25rem 0.6rem', borderRadius:'6px', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' }}>View</button>
                                   : <span style={{ color:'#bbb', fontSize:'0.75rem' }}>\'97</span>
                                 }
-                              </div>
-                              <div>
-                                {s.status === 'locked' ? (
-                                  <button
-                                    onClick={() => window.db.collection('classes').doc(selectedClass).collection('students').doc(s.docId).update({ status: 'incomplete' })}
-                                    style={{ background:'#FEF9C3', color:'#854D0E', border:'1px solid #FDE68A', padding:'0.25rem 0.55rem', borderRadius:'6px', fontSize:'0.72rem', fontWeight:700, cursor:'pointer' }}>
-                                    Unlock
-                                  </button>
-                                ) : s.status !== 'complete' ? (
-                                  <button
-                                    onClick={() => window.db.collection('classes').doc(selectedClass).collection('students').doc(s.docId).update({ status: 'locked' })}
-                                    style={{ background:'#FEE2E2', color:'#991B1B', border:'1px solid #FECACA', padding:'0.25rem 0.55rem', borderRadius:'6px', fontSize:'0.72rem', fontWeight:700, cursor:'pointer' }}>
-                                    Lock
-                                  </button>
-                                ) : (
-                                  <span style={{ color:'#bbb', fontSize:'0.75rem' }}>\'97</span>
-                                )}
                               </div>
                             </div>
                           );
@@ -3506,12 +3485,12 @@
                       <button onClick={resetClass} style={{ flex:'1 1 auto', minWidth:'140px', padding:'0.6rem 1rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', background:'white', color:'#888', fontSize:'0.8rem', fontWeight:600, cursor:'pointer', transition:'all 0.2s' }}
                         onMouseEnter={(e)=>{ e.currentTarget.style.borderColor='#ef4444'; e.currentTarget.style.color='#ef4444'; }}
                         onMouseLeave={(e)=>{ e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.color='#888'; }}>
-                        🗑  Reset class data
+                        \uc0\u55357 \u56785  Reset class data
                       </button>
                       <button onClick={archiveClass} style={{ flex:'1 1 auto', minWidth:'140px', padding:'0.6rem 1rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', background:'white', color:'#888', fontSize:'0.8rem', fontWeight:600, cursor:'pointer', transition:'all 0.2s' }}
                         onMouseEnter={(e)=>{ e.currentTarget.style.borderColor='var(--jungle-mid)'; e.currentTarget.style.color='var(--jungle-mid)'; }}
                         onMouseLeave={(e)=>{ e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.color='#888'; }}>
-                        📦  Archive class
+                        \uc0\u55357 \u56550  Archive class
                       </button>
                     </div>
                   </div>
@@ -3525,7 +3504,7 @@
               <div onClick={(e) => e.stopPropagation()} style={{ background:'white', borderRadius:'18px', width:'100%', maxWidth:'480px', maxHeight:'80vh', overflowY:'auto', boxShadow:'0 24px 60px rgba(0,0,0,0.25)' }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'1.2rem 1.4rem 0.8rem', borderBottom:'1px solid #F0EDE8', position:'sticky', top:0, background:'white', zIndex:1 }}>
                   <div>
-                    <h3 style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)', margin:0 }}>📋  Observations</h3>
+                    <h3 style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)', margin:0 }}>\uc0\u55357 \u56523  Observations</h3>
                     <p style={{ fontSize:'0.78rem', color:'#888', margin:'0.15rem 0 0' }}>{observationsModal.name}</p>
                   </div>
                   <button onClick={() => setObservationsModal(null)} style={{ background:'none', border:'none', fontSize:'1.4rem', color:'#aaa', cursor:'pointer', lineHeight:1, padding:'0.2rem 0.4rem' }}>\'d7</button>
