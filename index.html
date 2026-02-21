@@ -114,7 +114,10 @@
     .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
     .animate-scale-in   { animation: scaleIn 0.6s ease-out forwards; }
 
-    html, body { height: 100%; }
+    html, body { 
+      height: 100%; 
+      margin: 0;
+    }
 
     @media (pointer: fine) {
       body { touch-action: auto; }
@@ -223,11 +226,12 @@ preload=“auto”
 style=”
 position: fixed;
 inset: 0;
-width: 100%;
-height: 100%;
+width: 100vw;
+height: 100vh;
 object-fit: cover;
-z-index: -1;
+z-index: 0;
 pointer-events: none;
+background: #000;
 “
 
 ```
@@ -1658,17 +1662,28 @@ pointer-events: none;
         return (
           <div
             style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              minHeight: "100vh",
-              textAlign: "center",
-              position: "relative",
-              zIndex: 1
+              position: 'fixed',
+              inset: 0,
+              zIndex: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '100vh',
+              padding: 'clamp(16px, 3vh, 32px)',
+              paddingTop: 'calc(clamp(16px, 3vh, 32px) + env(safe-area-inset-top))',
+              paddingBottom: 'calc(clamp(16px, 3vh, 32px) + env(safe-area-inset-bottom))'
             }}
           >
-            <div style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', background:'rgba(0,0,0,0.4)', zIndex:1 }} />
-            <div style={{ position:'relative', zIndex:10, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', padding:'1rem', textAlign:'center' }}>
+            <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.4)', zIndex:1 }} />
+            <div style={{
+              width: 'min(520px, 92vw)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              position: 'relative',
+              zIndex: 10
+            }}>
               <div className="animate-fade-in-up" style={{ animationDelay:'0.2s', marginBottom:'clamp(1rem, 3vh, 2rem)' }}>
                 <img src="images/logo.png" alt="Taronga Tracka" style={{ width:'clamp(200px, 50vw, 300px)', height:'auto', display:'block' }} onError={(e)=>{ e.target.style.display='none'; }} />
               </div>
