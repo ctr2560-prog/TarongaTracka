@@ -761,7 +761,7 @@
               createdAt: firebase.firestore.FieldValue.serverTimestamp(),
               archived: false,
               sessionClosed: false,
-              sessionDate: new Date().toISOString().split("T")[0]
+              sessionDate: new Date().toLocaleDateString("en-CA")
             });
 
             // Also write to classes/{code} for student join validation
@@ -776,7 +776,7 @@
               venue: freshData.venue || 'Taronga Zoo',
               createdAt: firebase.firestore.FieldValue.serverTimestamp(),
               sessionClosed: false,
-              sessionDate: new Date().toISOString().split("T")[0]
+              sessionDate: new Date().toLocaleDateString("en-CA")
             });
           });
 
@@ -2278,7 +2278,7 @@
               const existingData = existingDoc.data();
               
               // Check session lock
-              const today = new Date().toISOString().split("T")[0];
+              const today = new Date().toLocaleDateString("en-CA");
               if (
                 (classData.sessionClosed === true ||
                  classData.sessionDate !== today) &&
@@ -2301,7 +2301,7 @@
             }
             
             // No active session found → Check if session is locked before creating new one
-            const today = new Date().toISOString().split("T")[0];
+            const today = new Date().toLocaleDateString("en-CA");
             if (classData.sessionClosed === true || classData.sessionDate !== today) {
               setStudentJoinError('This class session is no longer active.');
               return;
