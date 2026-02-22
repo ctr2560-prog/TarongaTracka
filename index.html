@@ -308,6 +308,7 @@
       const [classCodeModal, setClassCodeModal] = useState(null);
       const [classCodeFullscreen, setClassCodeFullscreen] = useState(false);
       const [studentStatus, setStudentStatus] = React.useState('incomplete');
+      const [statusLoaded, setStatusLoaded] = React.useState(false);
 
       // Analytics chart refs (declared at top level to follow hooks rules)
       const animalChartRef = React.useRef(null);
@@ -336,6 +337,7 @@
             if (studentDoc.exists) {
               const studentData = studentDoc.data();
               setStudentStatus(studentData?.status || 'incomplete');
+              setStatusLoaded(true);
               if (studentData.completed) {
                 setSessionLocked(true);
               }
@@ -1887,6 +1889,9 @@
       }
 
       if (currentScreen === 'map') {
+        if (!statusLoaded) {
+          return null;
+        }
         if (studentStatus === 'locked') {
           return (
             <div style={{ padding: '40px', textAlign: 'center', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--mist-light)' }}>
