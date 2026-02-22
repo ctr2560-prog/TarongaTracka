@@ -300,7 +300,6 @@
       const [activityCompleted, setActivityCompleted] = useState(savedProgress?.activityCompleted || false);
       const [sessionLocked, setSessionLocked] = useState(false);
       const [isSubmittingActivity, setIsSubmittingActivity] = useState(false);
-      const [studentStatus, setStudentStatus] = React.useState("incomplete");
 
       // Step 5 – Firestore live student data for teacher classDetails
       const [firestoreStudents, setFirestoreStudents] = useState([]);
@@ -308,6 +307,7 @@
       const [observationsModal, setObservationsModal] = useState(null);
       const [classCodeModal, setClassCodeModal] = useState(null);
       const [classCodeFullscreen, setClassCodeFullscreen] = useState(false);
+      const [studentStatus, setStudentStatus] = React.useState('incomplete');
 
       // Analytics chart refs (declared at top level to follow hooks rules)
       const animalChartRef = React.useRef(null);
@@ -324,24 +324,28 @@
       useEffect(() => {
         if (!studentName || !classCode) return;
 
-        const unsubscribe = window.db
-          .collection('classes')
-          .doc(classCode)
-          .collection('students')
-          .doc(studentName)
-          .onSnapshot((studentDoc) => {
+        const checkCompletion = async () => {
+          try {
+            const studentDoc = await window.db
+              .collection('classes')
+              .doc(classCode)
+              .collection('students')
+              .doc(studentName)
+              .get();
+
             if (studentDoc.exists) {
               const studentData = studentDoc.data();
-              setStudentStatus(studentData?.status || "incomplete");
+              setStudentStatus(studentData?.status || 'incomplete');
               if (studentData.completed) {
                 setSessionLocked(true);
               }
             }
-          }, (error) => {
+          } catch (error) {
             console.error('Error checking student completion:', error);
-          });
+          }
+        };
 
-        return () => unsubscribe();
+        checkCompletion();
       }, [studentName, classCode]);
 
       // Firestore listener: load teacher's classes when dashboard opens
@@ -1675,15 +1679,17 @@
       };
 
       // ---------- SCREENS ----------
-      if (studentStatus === "locked") {
+      if (studentStatus === 'locked') {
         return (
-          <div style={{ padding: "40px", textAlign: "center" }}>
-            <h2>Session Locked</h2>
-            <p>Your teacher has locked this session.</p>
+          <div style={{ padding: '40px', textAlign: 'center', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--mist-light)' }}>
+            <div style={{ background: 'white', borderRadius: '20px', padding: '40px', maxWidth: '400px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>&#x1F512;</div>
+              <h2 style={{ fontSize: '1.5rem', color: 'var(--jungle-deep)', marginBottom: '0.75rem', fontWeight: 700 }}>Session Locked</h2>
+              <p style={{ color: '#666', fontSize: '1rem', lineHeight: 1.6 }}>Your teacher has locked this session. Please wait for your teacher to unlock your session.</p>
+            </div>
           </div>
         );
       }
-
       if (sessionLocked) {
         return (
           <div style={{
