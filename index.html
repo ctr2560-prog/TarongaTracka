@@ -323,7 +323,10 @@
 
       // Check if student session is already completed
       useEffect(() => {
-        if (!studentName || !classCode) return;
+        if (!studentName || !classCode) {
+          setStatusLoaded(true);
+          return;
+        }
 
         const checkCompletion = async () => {
           try {
@@ -337,13 +340,14 @@
             if (studentDoc.exists) {
               const studentData = studentDoc.data();
               setStudentStatus(studentData?.status || 'incomplete');
-              setStatusLoaded(true);
               if (studentData.completed) {
                 setSessionLocked(true);
               }
             }
           } catch (error) {
             console.error('Error checking student completion:', error);
+          } finally {
+            setStatusLoaded(true);
           }
         };
 
