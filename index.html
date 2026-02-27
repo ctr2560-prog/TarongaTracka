@@ -836,6 +836,7 @@
       }, [badges, totalPoints]);
 
       // Autosave student progress to Firestore (debounced 1200ms)
+      // Writes EVERY field the teacher dashboard reads so Submit All never sees empty data.
       useEffect(() => {
         if (!studentName || !classCode || activityCompleted) return;
         if (currentScreen !== 'map' && currentScreen !== 'animal' && currentScreen !== 'observation' && currentScreen !== 'collection' && currentScreen !== 'badge') return;
@@ -844,30 +845,49 @@
         autosaveTimerRef.current = setTimeout(async () => {
           try {
             const code = normaliseCode(classCode);
+            // Canonical studentId — same derivation as join write and completeActivity
             const safeId = studentName.trim().replace(/[\/#\.$\[\]]/g, '_');
             const studentRef = window.db.collection('classes').doc(code).collection('students').doc(safeId);
 
-            // Compute quiz metrics from current badges state
+            // Sanitise badges: ensure all sub-fields the dashboard reads are present
+            // (mirrors the cleanBadges logic in completeActivity)
+            const savedBadges = badges.map(b => ({
+              animalId:       b.animalId || '',
+              animal:         b.animal || '',
+              points:         b.points || 0,
+              behaviourScore: b.behaviourScore !== undefined ? b.behaviourScore : (b.behaviorScore || 0),
+              detailScore:    b.detailScore || 0,
+              literacyScore:  b.literacyScore || 0,
+              quizResults:    (b.quizResults || []).map(qr => ({
+                question:              qr.question || '',
+                correctOnFirstAttempt: qr.correctOnFirstAttempt === true
+              })),
+              observation:    b.observation || '',
+              timestamp:      b.timestamp || ''
+            }));
+
+            // Compute quiz metrics from sanitised badges
             let qCorrect = 0, qTotal = 0;
-            badges.forEach(b => {
-              (b.quizResults || []).forEach(qr => {
+            savedBadges.forEach(b => {
+              b.quizResults.forEach(qr => {
                 qTotal++;
                 if (qr.correctOnFirstAttempt === true) qCorrect++;
               });
             });
             const qPct = qTotal > 0 ? Math.round((qCorrect / qTotal) * 100) : 0;
 
+            // Payload matches EXACTLY what onSnapshot maps + what dashboard derives
             await studentRef.set({
-              name: studentName,
-              classCode: code,
-              totalPoints: totalPoints,
-              badges: badges,
-              quizCorrect: qCorrect,
-              quizTotal: qTotal,
-              quizPercentage: qPct,
-              status: 'incomplete',
-              completed: false,
-              lastActiveAt: firebase.firestore.FieldValue.serverTimestamp()
+              name:            studentName,
+              classCode:       code,
+              totalPoints:     totalPoints,     // read: s.totalPoints
+              badges:          savedBadges,     // read: s.badges[].quizResults / behaviourScore / detailScore / literacyScore / observation
+              quizCorrect:     qCorrect,        // read: derived in CSV builder from badges, but stored for convenience
+              quizTotal:       qTotal,
+              quizPercentage:  qPct,            // read: s.quizPercentage
+              completed:       false,
+              status:          'incomplete',    // read: s.status
+              lastActiveAt:    firebase.firestore.FieldValue.serverTimestamp()  // read: for Last Active column
             }, { merge: true });
           } catch (err) {
             console.warn('Autosave failed (non-critical):', err);
