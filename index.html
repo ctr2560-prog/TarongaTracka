@@ -3446,6 +3446,29 @@
           }
         };
 
+        const handleSubmitAll = async () => {
+          const incompleteCount = firestoreStudents.filter(s => s.status !== 'complete').length;
+          if (incompleteCount === 0) { alert('All students are already marked complete.'); return; }
+          if (!window.confirm(`Mark ${incompleteCount} incomplete student${incompleteCount !== 1 ? 's' : ''} as complete? This cannot be undone.`)) return;
+          try {
+            const snapshot = await window.db.collection('classes').doc(selectedClass).collection('students').get();
+            const batch = window.db.batch();
+            snapshot.docs.forEach(doc => {
+              if ((doc.data().status || 'incomplete') !== 'complete') {
+                batch.update(doc.ref, {
+                  status: 'complete',
+                  completed: true,
+                  completedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+              }
+            });
+            await batch.commit();
+          } catch (err) {
+            console.error('Submit all failed:', err);
+            alert('Failed to submit all. Please check your connection and try again.');
+          }
+        };
+
         return (
           <>
           <div style={{ position:'fixed', inset:0, background:'var(--mist-light)', display:'flex', flexDirection:'column' }}>
@@ -3562,6 +3585,11 @@
                         onMouseEnter={(e)=>{ e.currentTarget.style.borderColor='var(--jungle-mid)'; e.currentTarget.style.color='var(--jungle-mid)'; }}
                         onMouseLeave={(e)=>{ e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.color='#888'; }}>
                          Archive class
+                      </button>
+                      <button onClick={handleSubmitAll} style={{ flex:'1 1 auto', minWidth:'140px', padding:'0.6rem 1rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', background:'white', color:'#888', fontSize:'0.8rem', fontWeight:600, cursor:'pointer', transition:'all 0.2s' }}
+                        onMouseEnter={(e)=>{ e.currentTarget.style.borderColor='var(--jungle-mid)'; e.currentTarget.style.background='var(--jungle-deep)'; e.currentTarget.style.color='white'; }}
+                        onMouseLeave={(e)=>{ e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.background='white'; e.currentTarget.style.color='#888'; }}>
+                         Submit All
                       </button>
                     </div>
                   </div>
