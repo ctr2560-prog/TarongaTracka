@@ -2932,38 +2932,26 @@
                           <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>
                             Observation Skill Breakdown
                           </h2>
-                          <div style={{ fontSize:'0.85rem', color:'#666', marginBottom:'1rem', display:'flex', gap:'1.5rem', flexWrap:'wrap' }}>
-                            <span>
-                              <strong>Behaviour (%)</strong>
-                              <span className="tooltip-wrapper" style={{ marginLeft:'6px' }}>
-                                
-                                <span className="tooltip-text">
-                                  <strong style={{ display:'block', marginBottom:'4px' }}>Behaviour (%)</strong>• Measures use of observable animal actions (what the animal is doing).<br/>• Higher scores include specific verbs (e.g., \"foraging\", \"grooming\", \"resting\") rather than vague statements.<br/>• Lower scores are general opinions (\"it's cute\", \"it's big\") without behaviour evidence.<br/>• <em>Tip: Describe 2–3 actions you can see and what changed over time.</em>
-                                </span>
-                              </span>
-                            </span>
-                            <span>
-                              <strong>Detail (%)</strong>
-                              <span className="tooltip-wrapper" style={{ marginLeft:'6px' }}>
-                                
-                                <span className="tooltip-text">
-                                  <strong style={{ display:'block', marginBottom:'4px' }}>Detail (%)</strong>• Measures specificity and sensory detail (colour, texture, movement, habitat features).<br/>• Higher scores include concrete details (body parts, patterns, sounds, enclosure features).<br/>• Lower scores are short or generic statements with little description.<br/>• <em>Tip: Add \"because/I noticed…\" statements with visible evidence.</em>
-                                </span>
-                              </span>
-                            </span>
-                            <span>
-                              <strong>Writing (%)</strong>
-                              <span className="tooltip-wrapper" style={{ marginLeft:'6px' }}>
-                                
-                                <span className="tooltip-text">
-                                  <strong style={{ display:'block', marginBottom:'4px' }}>Writing (%)</strong>• Measures clarity and structure (complete sentences, punctuation, spelling, logical flow).<br/>• Higher scores have readable sentences, basic paragraph flow, and correct punctuation.<br/>• Lower scores include fragments, repeated words, or hard-to-follow ideas.<br/>• <em>Tip: Use 2–4 sentences: behaviour → detail → short concluding sentence.</em>
-                                </span>
-                              </span>
-                            </span>
-                          </div>
                           <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
                             <div style={{ height:'400px', position:'relative' }}>
                               <canvas ref={radarChartRef}></canvas>
+                            </div>
+                          </div>
+                          <div style={{ background:'#F7FAF8', border:'1px solid #E4EDE8', borderRadius:'14px', padding:'1.25rem 1.5rem', marginTop:'1rem' }}>
+                            <p style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:'0.85rem' }}>How Writing Is Scored</p>
+                            <div style={{ display:'flex', flexDirection:'column', gap:'0.65rem' }}>
+                              <div>
+                                <span style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-mid)' }}>Behaviour (%) </span>
+                                <span style={{ fontSize:'0.82rem', color:'#555', lineHeight:1.55 }}>Measures use of observable animal actions (what the animal is doing). Higher scores include specific verbs such as "foraging", "grooming", or "resting" rather than general opinions.</span>
+                              </div>
+                              <div>
+                                <span style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-mid)' }}>Detail (%) </span>
+                                <span style={{ fontSize:'0.82rem', color:'#555', lineHeight:1.55 }}>Measures specificity and sensory detail (colour, texture, movement, habitat features). Higher scores include concrete, visible evidence from the observation.</span>
+                              </div>
+                              <div>
+                                <span style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-mid)' }}>Writing (%) </span>
+                                <span style={{ fontSize:'0.82rem', color:'#555', lineHeight:1.55 }}>Measures clarity and structure (complete sentences, punctuation, logical flow). Higher scores demonstrate readable, well-structured responses.</span>
+                              </div>
                             </div>
                           </div>
                           <p style={{ color:'#888', fontSize:'0.85rem', marginTop:'1rem', textAlign:'center', fontStyle:'italic' }}>
