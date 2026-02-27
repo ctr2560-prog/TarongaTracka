@@ -806,6 +806,8 @@
 
       const geoWatchIdRef = useRef(null);
       const hasEnteredMapRef = useRef(false);
+      const autosaveTimerRef = useRef(null);
+      const autosavePendingRef = useRef(false);
 
       useEffect(() => {
         const progress = {
@@ -832,6 +834,48 @@
           return { ...cls, students: updated };
         }));
       }, [badges, totalPoints]);
+
+      // Autosave student progress to Firestore (debounced 1200ms)
+      useEffect(() => {
+        if (!studentName || !classCode || activityCompleted) return;
+        if (currentScreen !== 'map' && currentScreen !== 'animal' && currentScreen !== 'observation' && currentScreen !== 'collection' && currentScreen !== 'badge') return;
+
+        if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = setTimeout(async () => {
+          try {
+            const code = normaliseCode(classCode);
+            const safeId = studentName.trim().replace(/[\/#\.$\[\]]/g, '_');
+            const studentRef = window.db.collection('classes').doc(code).collection('students').doc(safeId);
+
+            // Compute quiz metrics from current badges state
+            let qCorrect = 0, qTotal = 0;
+            badges.forEach(b => {
+              (b.quizResults || []).forEach(qr => {
+                qTotal++;
+                if (qr.correctOnFirstAttempt === true) qCorrect++;
+              });
+            });
+            const qPct = qTotal > 0 ? Math.round((qCorrect / qTotal) * 100) : 0;
+
+            await studentRef.set({
+              name: studentName,
+              classCode: code,
+              totalPoints: totalPoints,
+              badges: badges,
+              quizCorrect: qCorrect,
+              quizTotal: qTotal,
+              quizPercentage: qPct,
+              status: 'incomplete',
+              completed: false,
+              lastActiveAt: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+          } catch (err) {
+            console.warn('Autosave failed (non-critical):', err);
+          }
+        }, 1200);
+
+        return () => { if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current); };
+      }, [badges, totalPoints, currentScreen, studentName, classCode, activityCompleted]);
 
       useEffect(() => {
         return () => {
