@@ -180,7 +180,7 @@
     .tooltip-text {
       visibility: hidden;
       opacity: 0;
-      width: 220px;
+      width: 280px;
       background-color: rgba(10, 47, 31, 0.95);
       color: #fff;
       text-align: left;
@@ -2918,7 +2918,7 @@
                               <span className="tooltip-wrapper" style={{ marginLeft:'6px' }}>
                                 
                                 <span className="tooltip-text">
-                                  Measures use of action-based vocabulary in observations. Scored 5 points per behaviour word, capped at 15. Displayed as % of maximum possible score.
+                                  <strong style="display:block;margin-bottom:4px">Behaviour (%)</strong>• Measures use of observable animal actions (what the animal is doing).<br/>• Higher scores include specific verbs (e.g., \"foraging\", \"grooming\", \"resting\") rather than vague statements.<br/>• Lower scores are general opinions (\"it's cute\", \"it's big\") without behaviour evidence.<br/>• <em>Tip: Describe 2–3 actions you can see and what changed over time.</em>
                                 </span>
                               </span>
                             </span>
@@ -2927,7 +2927,7 @@
                               <span className="tooltip-wrapper" style={{ marginLeft:'6px' }}>
                                 
                                 <span className="tooltip-text">
-                                  Measures descriptive detail in observations. Includes physical traits, colour, size and sensory descriptors. Scored up to 15 points total.
+                                  <strong style="display:block;margin-bottom:4px">Detail (%)</strong>• Measures specificity and sensory detail (colour, texture, movement, habitat features).<br/>• Higher scores include concrete details (body parts, patterns, sounds, enclosure features).<br/>• Lower scores are short or generic statements with little description.<br/>• <em>Tip: Add \"because/I noticed…\" statements with visible evidence.</em>
                                 </span>
                               </span>
                             </span>
@@ -2936,7 +2936,7 @@
                               <span className="tooltip-wrapper" style={{ marginLeft:'6px' }}>
                                 
                                 <span className="tooltip-text">
-                                  Measures literacy quality. Includes capitalisation, punctuation, sentence structure and vocabulary diversity. Scored up to 10 points total.
+                                  <strong style="display:block;margin-bottom:4px">Writing (%)</strong>• Measures clarity and structure (complete sentences, punctuation, spelling, logical flow).<br/>• Higher scores have readable sentences, basic paragraph flow, and correct punctuation.<br/>• Lower scores include fragments, repeated words, or hard-to-follow ideas.<br/>• <em>Tip: Use 2–4 sentences: behaviour → detail → short concluding sentence.</em>
                                 </span>
                               </span>
                             </span>
@@ -3584,6 +3584,7 @@
                             ? s.completedAt
                             : lastBadge && lastBadge.timestamp ? new Date(lastBadge.timestamp) : null;
                           const hasObservations = (s.badges || []).some(b => b.observation);
+                          const badgeCount = Array.isArray(s.badges) ? new Set(s.badges.map(b => b.animalId).filter(Boolean)).size : 0;
                           return (
                             <div key={s.name} style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 0.85fr 0.85fr', padding:'0.7rem 1rem', borderTop:'1px solid #F0EDE8', alignItems:'center', background: i % 2 === 0 ? 'white' : '#FAFAF8' }}>
                               <div style={{ display:'flex', alignItems:'center', gap:'0.55rem' }}>
@@ -3593,7 +3594,7 @@
                                 <span style={{ fontWeight:600, color:'var(--jungle-deep)', fontSize:'0.88rem' }}>{s.name}</span>
                               </div>
                               <div style={{ fontWeight:700, color:'var(--sunset-orange)', fontSize:'0.9rem' }}>{s.totalPoints || 0}</div>
-                              <div style={{ fontSize:'0.88rem' }}>{s.badges && s.badges.length > 0 ? ''.repeat(s.badges.length) : <span style={{ color:'#bbb', fontSize:'0.75rem' }}>—</span>}</div>
+                              <div style={{ fontWeight:600, color:'var(--jungle-mid)', fontSize:'0.9rem' }}>{badgeCount}</div>
                               <div style={{ fontWeight:600, color:'var(--jungle-mid)', fontSize:'0.85rem' }}>
                                 {s.quizPercentage !== undefined ? `${s.quizPercentage}%` : '—'}
                               </div>
