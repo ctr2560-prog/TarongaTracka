@@ -643,7 +643,8 @@
                 badges: d.badges || [],
                 completed: d.completed || false,
                 completedAt: d.completedAt ? d.completedAt.toDate() : null,
-                quizPercentage: d.quizPercentage
+                quizPercentage: d.quizPercentage,
+                status: d.status || (d.completed ? 'complete' : 'incomplete')
               };
             });
 
@@ -678,7 +679,8 @@
                 badges: d.badges || [],
                 completed: d.completed || false,
                 completedAt: d.completedAt ? d.completedAt.toDate() : null,
-                quizPercentage: d.quizPercentage
+                quizPercentage: d.quizPercentage,
+                status: d.status || (d.completed ? 'complete' : 'incomplete')
               };
             });
             setFirestoreStudents(students);
@@ -1424,7 +1426,7 @@
         },
         {
           id: 'koala', name: 'Koala', scientificName: 'Phascolarctos cinereus',
-          image: 'images/koala.jpg', latitude: -34.205984, longitude: 150.579066,
+          image: 'images/koala.jpg', latitude: -34.206927872669155, longitude: 150.57988056189498,
           radius: 50, color: '#7A8B6F',
           questions: [
             { q: 'Without intervention, by what year could koalas become extinct in NSW?',
@@ -3542,9 +3544,9 @@
                                 }
                               </div>
                               <div style={{ display:'flex', alignItems:'center', gap:'0.35rem' }}>
-                                <div style={{ width:'8px', height:'8px', borderRadius:'50%', background: (s.status || 'incomplete') === 'complete' ? '#16A34A' : '#CA8A04', flexShrink:0 }} />
-                                <span style={{ fontSize:'0.72rem', fontWeight:700, color: (s.status || 'incomplete') === 'complete' ? '#16A34A' : '#CA8A04' }}>
-                                  {(s.status || 'incomplete') === 'complete' ? 'Complete' : 'Incomplete'}
+                                <div style={{ width:'8px', height:'8px', borderRadius:'50%', background: s.status === 'complete' ? '#16A34A' : '#CA8A04', flexShrink:0 }} />
+                                <span style={{ fontSize:'0.72rem', fontWeight:700, color: s.status === 'complete' ? '#16A34A' : '#CA8A04' }}>
+                                  {s.status === 'complete' ? 'Complete' : 'Incomplete'}
                                 </span>
                               </div>
                             </div>
