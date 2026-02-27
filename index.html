@@ -1903,18 +1903,50 @@
         if (!statusLoaded) {
           return null;
         }
-        // DIAGNOSTIC - remove after confirming
-        console.log('DEBUG studentStatus:', JSON.stringify(studentStatus));
-        console.log('DEBUG statusLoaded:', statusLoaded);
-        console.log('DEBUG studentName:', studentName);
-        console.log('DEBUG classCode:', classCode);
-        if (studentStatus === 'locked') {
+        if (studentStatus === 'complete') {
           return (
-            <div style={{ padding: '40px', textAlign: 'center', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--mist-light)' }}>
-              <div style={{ background: 'white', borderRadius: '20px', padding: '40px', maxWidth: '400px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>&#x1F512;</div>
-                <h2 style={{ fontSize: '1.5rem', color: 'var(--jungle-deep)', marginBottom: '0.75rem', fontWeight: 700 }}>Session Locked</h2>
-                <p style={{ color: '#666', fontSize: '1rem', lineHeight: 1.6 }}>Your teacher has locked this session. Please wait for your teacher to unlock your session.</p>
+            <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 50%, var(--jungle-light) 100%)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'clamp(1rem, 5vw, 2rem)', overflow:'hidden' }}>
+              <div style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:0 }}>
+                {[...Array(60)].map((_,i)=>(<div key={i} style={{ position:'absolute', left:`${Math.random()*100}%`, top:'-20px', width:`${6+Math.random()*8}px`, height:`${6+Math.random()*8}px`, borderRadius: Math.random()>0.5 ? '50%' : '2px', background:['#FFD700','#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#A78BFA','#34D399'][Math.floor(Math.random()*7)], animation:`fall ${2.5+Math.random()*2.5}s linear forwards`, animationDelay:`${Math.random()*1.2}s` }} />))}
+              </div>
+  
+              <div className="animate-scale-in" style={{ position:'relative', zIndex:10, background:'white', borderRadius:'28px', padding:'clamp(1.8rem, 5vh, 2.8rem)', maxWidth:'480px', width:'100%', textAlign:'center', boxShadow:'0 24px 64px rgba(0,0,0,0.35)' }}>
+                <div style={{ width:'80px', height:'80px', borderRadius:'50%', background:'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))', margin:'0 auto 1.2rem', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'2.4rem', boxShadow:'0 6px 20px rgba(26,82,56,0.4)' }}></div>
+  
+                <h1 className="heading-display" style={{ fontSize:'clamp(1.9rem, 5vh, 2.6rem)', color:'var(--jungle-deep)', marginBottom:'0.2rem', lineHeight:1.1 }}>SUBMISSION COMPLETE</h1>
+                <p className="serif-accent" style={{ color:'var(--jungle-light)', fontSize:'clamp(0.95rem, 2.2vh, 1.15rem)', marginBottom:'1.4rem' }}>Your results have been saved</p>
+  
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'0.7rem', marginBottom:'1.4rem' }}>
+                  {[
+                    { label:'Points', value: totalPoints, icon:'', color:'var(--sunset-orange)' },
+                    { label:'Badges', value: badges.length, icon:'', color:'var(--earth-clay)' },
+                    { label:'Animals', value:`${foundAnimals.size}/${animals.length}`, icon:'', color:'var(--jungle-mid)' }
+                  ].map(s => (
+                    <div key={s.label} style={{ background:'#F5F3EE', borderRadius:'14px', padding:'0.8rem 0.4rem' }}>
+                      <div style={{ fontSize:'1.3rem', marginBottom:'0.15rem' }}>{s.icon}</div>
+                      <div style={{ fontWeight:700, color:s.color, fontSize:'1.2rem', lineHeight:1.2 }}>{s.value}</div>
+                      <div style={{ color:'#999', fontSize:'0.68rem', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.04em' }}>{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+  
+                {badges.length > 0 && (
+                  <div style={{ display:'flex', justifyContent:'center', gap:'0.5rem', flexWrap:'wrap', marginBottom:'1.4rem' }}>
+                    {badges.map((b, i) => (
+                      <div key={i} style={{ width:'48px', height:'48px', borderRadius:'10px', backgroundImage:`url(images/badge-${b.animalId}.png)`, backgroundSize:'cover', backgroundPosition:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.15)', border:'2px solid white' }} />
+                    ))}
+                  </div>
+                )}
+  
+                <div style={{ background:'#F0FDF4', border:'1px solid #BBF7D0', borderRadius:'12px', padding:'0.6rem 1rem', marginBottom:'1.4rem', display:'inline-block' }}>
+                  <p style={{ color:'#16A34A', fontSize:'0.8rem', fontWeight:600 }}> Saved to class <span style={{ fontFamily:'monospace', letterSpacing:'0.1em' }}>{normaliseCode(classCode)}</span> · {studentName}</p>
+                </div>
+  
+                <div>
+                  <button onClick={()=>setCurrentScreen('map')} style={{ background:'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))', color:'white', border:'none', padding:'0.85rem 2.5rem', fontSize:'1.05rem', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.08em', boxShadow:'0 6px 18px rgba(26,82,56,0.4)' }}>
+                    Done
+                  </button>
+                </div>
               </div>
             </div>
           );
@@ -3464,8 +3496,8 @@
                 <div style={{ flex:1, overflowY:'auto', padding:'1rem 1.5rem 1.5rem' }}>
                   <div style={{ maxWidth:'720px', margin:'0 auto' }}>
                     <div style={{ background:'white', borderRadius:'16px', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', overflow:'hidden' }}>
-                      <div style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.65fr 0.85fr 0.85fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
-                        {['Student','Points','Badges','Quiz %','Done','Last Active','Observations'].map(h => (
+                      <div style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.65fr 0.85fr 0.85fr 0.85fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
+                        {['Student','Points','Badges','Quiz %','Done','Last Active','Observations','Status'].map(h => (
                           <div key={h} style={{ color:'rgba(255,255,255,0.8)', fontSize:'0.72rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>{h}</div>
                         ))}
                       </div>
@@ -3482,7 +3514,7 @@
                             : lastBadge && lastBadge.timestamp ? new Date(lastBadge.timestamp) : null;
                           const hasObservations = (s.badges || []).some(b => b.observation);
                           return (
-                            <div key={s.name} style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.65fr 0.85fr 0.85fr', padding:'0.7rem 1rem', borderTop:'1px solid #F0EDE8', alignItems:'center', background: i % 2 === 0 ? 'white' : '#FAFAF8' }}>
+                            <div key={s.name} style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.65fr 0.85fr 0.85fr 0.85fr', padding:'0.7rem 1rem', borderTop:'1px solid #F0EDE8', alignItems:'center', background: i % 2 === 0 ? 'white' : '#FAFAF8' }}>
                               <div style={{ display:'flex', alignItems:'center', gap:'0.55rem' }}>
                                 <div style={{ width:'28px', height:'28px', borderRadius:'50%', background: s.completed ? 'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))' : 'linear-gradient(135deg, #aaa, #ccc)', display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontSize:'0.72rem', fontWeight:700, flexShrink:0 }}>
                                   {s.name.charAt(0).toUpperCase()}
@@ -3508,6 +3540,12 @@
                                   ? <button onClick={() => setObservationsModal(s)} style={{ background:'var(--jungle-deep)', color:'white', border:'none', padding:'0.25rem 0.6rem', borderRadius:'6px', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' }}>View</button>
                                   : <span style={{ color:'#bbb', fontSize:'0.75rem' }}>—</span>
                                 }
+                              </div>
+                              <div style={{ display:'flex', alignItems:'center', gap:'0.35rem' }}>
+                                <div style={{ width:'8px', height:'8px', borderRadius:'50%', background: (s.status || 'incomplete') === 'complete' ? '#16A34A' : '#CA8A04', flexShrink:0 }} />
+                                <span style={{ fontSize:'0.72rem', fontWeight:700, color: (s.status || 'incomplete') === 'complete' ? '#16A34A' : '#CA8A04' }}>
+                                  {(s.status || 'incomplete') === 'complete' ? 'Complete' : 'Incomplete'}
+                                </span>
                               </div>
                             </div>
                           );
