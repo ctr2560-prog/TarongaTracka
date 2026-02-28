@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -14,20 +13,13 @@
   <title>Taronga Tracka v2.2 - Animal Discovery</title>
 
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <!-- Firebase SDKs -->
-
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 
 <script>
   // Your web app's Firebase configuration
@@ -48,7 +40,6 @@
 
   // Firestore reference (THIS is what we'll use later)
   window.db = firebase.firestore();
-  window.storage = firebase.storage();
 </script>
 
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
@@ -214,32 +205,28 @@
       opacity: 1;
     }
   </style>
-
 </head>
 
 <body>
 
-<video
-autoplay
-muted
-loop
-playsinline
-webkit-playsinline
-preload=“auto”
-style=”
-position: fixed;
-top: 0;
-left: 0;
-width: 100vw;
-height: 100vh;
-object-fit: cover;
-z-index: 0;
-“
-
-```
-<source src="./images/background-video.mp4" type="video/mp4">
-```
-
+  <video
+    autoplay
+    muted
+    loop
+    playsinline
+    webkit-playsinline
+    preload="auto"
+    style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: 0;
+    "
+  >
+    <source src="./images/background-video.mp4" type="video/mp4">
   </video>
 
   <div id="root" style="position: relative; z-index: 1;"></div>
@@ -376,14 +363,6 @@ z-index: 0;
       const [resourceDraft, setResourceDraft] = useState(true);
       const [savingResource, setSavingResource] = useState(false);
       const [resourceSyllabusLinks, setResourceSyllabusLinks] = useState([]);
-      const [resourcePreviewImage, setResourcePreviewImage] = useState('');
-      const [uploadingImage, setUploadingImage] = useState(false);
-      // Teacher Resource Hub state
-      const [teacherResources, setTeacherResources] = useState([]);
-      const [resourceLoading, setResourceLoading] = useState(false);
-      const [filterStage, setFilterStage] = useState('');
-      const [filterTopic, setFilterTopic] = useState('');
-      const [filterFocusArea, setFilterFocusArea] = useState('');
 
       // Step 5 – Firestore live student data for teacher classDetails
       const [firestoreStudents, setFirestoreStudents] = useState([]);
@@ -1389,42 +1368,11 @@ z-index: 0;
         return () => unsub();
       }, [currentScreen, adminTab]);
 
-      // Teacher Resource Hub: fetch active resources when screen opens
-      useEffect(() => {
-        if (currentScreen !== 'resourceHub') return;
-        setResourceLoading(true);
-        window.db.collection('resources')
-          .where('active', '==', true)
-          .orderBy('createdAt', 'desc')
-          .get()
-          .then(snap => {
-            setTeacherResources(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-            setResourceLoading(false);
-          })
-          .catch(err => {
-            console.error('Teacher resource load error:', err);
-            setResourceLoading(false);
-          });
-      }, [currentScreen]);
-
       const resetResourceForm = () => {
         setResourceTitle(''); setResourceDescription(''); setResourceUrl('');
         setResourceType(''); setResourceStages([]); setResourceTopics([]);
         setResourceFocusAreas([]); setResourceVenue(''); setResourceDraft(true);
-        setResourceSyllabusLinks([]); setResourcePreviewImage('');
-      };
-
-      const uploadResourceImage = async (file, resourceId) => {
-        if (!file) return null;
-        if (file.size > 2 * 1024 * 1024) {
-          alert('Image must be under 2MB. Please choose a smaller file.');
-          return null;
-        }
-        const timestamp = Date.now();
-        const path = `resourcePreviews/${resourceId}/${timestamp}.jpg`;
-        const ref = window.storage.ref(path);
-        await ref.put(file);
-        return await ref.getDownloadURL();
+        setResourceSyllabusLinks([]);
       };
 
       const saveResource = async (publish) => {
@@ -1433,14 +1381,6 @@ z-index: 0;
         }
         setSavingResource(true);
         try {
-          const docRef = window.db.collection('resources').doc();
-          let previewUrl = resourcePreviewImage || null;
-          if (window._pendingImageFile) {
-            setUploadingImage(true);
-            previewUrl = await uploadResourceImage(window._pendingImageFile, docRef.id);
-            window._pendingImageFile = null;
-            setUploadingImage(false);
-          }
           const payload = {
             title: resourceTitle.trim(),
             description: resourceDescription.trim(),
@@ -1455,16 +1395,14 @@ z-index: 0;
             active: publish,
             publishAt: publish ? firebase.firestore.FieldValue.serverTimestamp() : null,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            createdBy: adminAccessCode,
-            previewImage: previewUrl
+            createdBy: adminAccessCode
           };
-          await docRef.set(payload);
+          await window.db.collection('resources').add(payload);
           resetResourceForm();
           setResourceSaved(true);
           setTimeout(() => setResourceSaved(false), 2500);
         } catch (err) {
           console.error('Save resource error:', err);
-          setUploadingImage(false);
           alert('Failed to save resource. Please try again.');
         } finally {
           setSavingResource(false);
@@ -3385,36 +3323,6 @@ z-index: 0;
                             onFocus={e=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={e=>e.target.style.borderColor='#E5E5E5'} />
                         </div>
 
-                        <div>
-                          <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Preview Image <span style={{ fontWeight:400, color:'#aaa' }}>(Optional — max 2MB)</span></label>
-                          {resourcePreviewImage ? (
-                            <div style={{ marginBottom:'0.5rem' }}>
-                              <img src={resourcePreviewImage} alt="Preview"
-                                style={{ height:'80px', borderRadius:'8px', border:'1.5px solid #E5E5E5', objectFit:'cover', display:'block' }} />
-                              <button onClick={()=>{ setResourcePreviewImage(''); window._pendingImageFile = null; }}
-                                style={{ marginTop:'0.3rem', fontSize:'0.72rem', color:'#ef4444', background:'none', border:'none', cursor:'pointer', padding:0 }}>
-                                Remove image
-                              </button>
-                            </div>
-                          ) : null}
-                          <input type="file" accept="image/*"
-                            onChange={e => {
-                              const file = e.target.files[0];
-                              if (!file) return;
-                              if (file.size > 2 * 1024 * 1024) {
-                                alert('Image must be under 2MB. Please choose a smaller file.');
-                                e.target.value = '';
-                                return;
-                              }
-                              window._pendingImageFile = file;
-                              const reader = new FileReader();
-                              reader.onload = ev => setResourcePreviewImage(ev.target.result);
-                              reader.readAsDataURL(file);
-                            }}
-                            style={{ fontSize:'0.82rem', color:'#555' }} />
-                          {uploadingImage && <p style={{ fontSize:'0.75rem', color:'var(--jungle-mid)', marginTop:'0.3rem' }}>Uploading image...</p>}
-                        </div>
-
                         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.85rem' }}>
                           <div>
                             <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Type</label>
@@ -3846,23 +3754,6 @@ z-index: 0;
                   )}
                 </div>
 
-                {/* Resource Hub feature block */}
-                <div style={{ background:'linear-gradient(135deg, #0F3D2E 0%, #165A42 100%)', borderRadius:'20px', padding:'1.75rem 1.75rem', boxShadow:'0 8px 32px rgba(15,61,46,0.35)', marginBottom:'1.25rem', display:'flex', justifyContent:'space-between', alignItems:'center', gap:'1.5rem' }}>
-                  <div style={{ flex:1 }}>
-                    <p style={{ fontSize:'0.68rem', fontWeight:700, color:'rgba(255,255,255,0.55)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:'0.4rem' }}>Resource Hub</p>
-                    <h3 className="heading-display" style={{ fontSize:'1.25rem', color:'white', marginBottom:'0.4rem', lineHeight:1.25 }}>Curriculum-aligned teaching resources for your classes.</h3>
-                    <p style={{ color:'rgba(255,255,255,0.6)', fontSize:'0.8rem' }}>
-                      {teacherClasses.filter(c => c.teacherEmail === teacherEmail && !c.archived).length > 0
-                        ? `Resources matched to Stage ${[...new Set(teacherClasses.filter(c => c.teacherEmail === teacherEmail && !c.archived).map(c => c.yearGroup))].slice(0,2).join(', ')} classes`
-                        : 'Explore resources matched to your stage and topics'}
-                    </p>
-                  </div>
-                  <button onClick={()=>setCurrentScreen('resourceHub')}
-                    style={{ padding:'0.85rem 1.5rem', borderRadius:'50px', border:'none', background:'white', color:'#0F3D2E', fontSize:'0.88rem', fontWeight:700, cursor:'pointer', whiteSpace:'nowrap', flexShrink:0, boxShadow:'0 4px 14px rgba(0,0,0,0.2)', letterSpacing:'0.01em' }}>
-                    Explore Resources →
-                  </button>
-                </div>
-
                 <div>
                   <h3 className="heading-display" style={{ fontSize:'1.1rem', color:'var(--jungle-deep)', marginBottom:'0.7rem' }}>
                     Your Classes <span style={{ fontFamily:'DM Sans, sans-serif', fontWeight:600, fontSize:'0.78rem', color:'var(--jungle-light)', textTransform:'none', letterSpacing:0 }}>({teacherClasses.filter(c => c.teacherEmail === teacherEmail && !c.archived).length})</span>
@@ -3932,124 +3823,6 @@ z-index: 0;
                 </button>
               </div>
             )}
-          </div>
-        );
-      }
-
-      if (currentScreen === 'resourceHub') {
-        const filteredResources = teacherResources.filter(r => {
-          if (filterStage && !(r.stage || []).includes(filterStage)) return false;
-          if (filterTopic && !(r.topics || []).includes(filterTopic)) return false;
-          if (filterFocusArea && !(r.focusAreas || []).includes(filterFocusArea)) return false;
-          return true;
-        });
-
-        const allStages     = [...new Set(teacherResources.flatMap(r => r.stage     || []))].sort();
-        const allTopics     = [...new Set(teacherResources.flatMap(r => r.topics    || []))].sort();
-        const allFocusAreas = [...new Set(teacherResources.flatMap(r => r.focusAreas|| []))].sort();
-
-        const selectStyle = { padding:'0.5rem 0.75rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', fontSize:'0.82rem', fontFamily:'DM Sans, sans-serif', background:'white', cursor:'pointer' };
-
-        const tagStyle = (color) => ({
-          display:'inline-block', fontSize:'0.68rem', fontWeight:600,
-          padding:'0.15rem 0.45rem', borderRadius:'5px', marginRight:'0.25rem', marginBottom:'0.2rem',
-          background: color === 'green' ? '#F0FDF4' : color === 'blue' ? '#EFF6FF' : '#FFF7ED',
-          color: color === 'green' ? '#16A34A' : color === 'blue' ? '#2563EB' : '#C2410C'
-        });
-
-        return (
-          <div style={{ position:'fixed', inset:0, background:'var(--mist-light)', display:'flex', flexDirection:'column' }}>
-            {/* Header */}
-            <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1rem 1.5rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0 }}>
-              <div style={{ display:'flex', alignItems:'center', gap:'0.8rem' }}>
-                <button onClick={()=>setCurrentScreen('teacherDashboard')} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', width:'34px', height:'34px', borderRadius:'50%', cursor:'pointer', fontSize:'1.1rem', display:'flex', alignItems:'center', justifyContent:'center' }}>&#8592;</button>
-                <div>
-                  <h1 className="heading-display" style={{ fontSize:'clamp(1.1rem, 2.8vw, 1.45rem)', color:'white', lineHeight:1.2 }}>Resource Hub</h1>
-                  <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.75rem' }}>Curriculum-aligned teaching resources</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div style={{ flex:1, overflowY:'auto', padding:'1.5rem' }}>
-              <div style={{ maxWidth:'820px', margin:'0 auto' }}>
-
-                {/* Filters */}
-                <div style={{ display:'flex', gap:'0.75rem', flexWrap:'wrap', marginBottom:'1.25rem', alignItems:'center' }}>
-                  <select value={filterStage} onChange={e=>setFilterStage(e.target.value)} style={selectStyle}>
-                    <option value="">All Stages</option>
-                    {allStages.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                  <select value={filterTopic} onChange={e=>setFilterTopic(e.target.value)} style={selectStyle}>
-                    <option value="">All Topics</option>
-                    {allTopics.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                  <select value={filterFocusArea} onChange={e=>setFilterFocusArea(e.target.value)} style={selectStyle}>
-                    <option value="">All Focus Areas</option>
-                    {allFocusAreas.map(f => <option key={f} value={f}>{f.replace(/_/g,' ')}</option>)}
-                  </select>
-                  {(filterStage || filterTopic || filterFocusArea) && (
-                    <button onClick={()=>{ setFilterStage(''); setFilterTopic(''); setFilterFocusArea(''); }}
-                      style={{ padding:'0.5rem 0.75rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', background:'white', color:'#888', fontSize:'0.78rem', fontWeight:600, cursor:'pointer' }}>
-                      Clear filters
-                    </button>
-                  )}
-                </div>
-
-                {/* Loading / Empty / List */}
-                {resourceLoading ? (
-                  <p style={{ color:'#aaa', fontSize:'0.85rem', fontStyle:'italic', textAlign:'center', padding:'2rem 0' }}>Loading resources...</p>
-                ) : filteredResources.length === 0 ? (
-                  <p style={{ color:'#bbb', fontSize:'0.85rem', fontStyle:'italic', textAlign:'center', padding:'2rem 0' }}>No resources available for the selected filters.</p>
-                ) : (
-                  <div style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
-                    {filteredResources.map(r => (
-                      <div key={r.id} className="fade-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem 1.5rem', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', display:'grid', gridTemplateColumns:'1fr 220px', gap:'1.25rem', alignItems:'start' }}>
-
-                        {/* Left column — 70% */}
-                        <div>
-                          <p style={{ fontWeight:700, color:'var(--jungle-deep)', fontSize:'1rem', marginBottom:'0.15rem' }}>{r.title}</p>
-                          {r.type && <span style={{ fontSize:'0.7rem', color:'#999', textTransform:'capitalize', marginBottom:'0.5rem', display:'inline-block' }}>{r.type}</span>}
-                          {r.description && <p style={{ color:'#666', fontSize:'0.82rem', lineHeight:1.55, marginBottom:'0.7rem' }}>{r.description}</p>}
-                          <div style={{ display:'flex', flexWrap:'wrap', gap:'0.1rem', marginBottom:'0.4rem' }}>
-                            {(r.stage      || []).map(s => <span key={s} style={tagStyle('green')}>{s}</span>)}
-                            {(r.topics     || []).map(t => <span key={t} style={tagStyle('blue')}>{t}</span>)}
-                            {(r.focusAreas || []).map(f => <span key={f} style={tagStyle('orange')}>{f.replace(/_/g,' ')}</span>)}
-                          </div>
-                          {(r.syllabusLinks || []).length > 0 && (
-                            <div style={{ display:'flex', flexWrap:'wrap', gap:'0.25rem', marginTop:'0.25rem' }}>
-                              {(r.syllabusLinks || []).map(l => (
-                                <span key={l.code} title={l.description} style={{ fontSize:'0.68rem', fontWeight:700, color:'var(--jungle-mid)', background:'#F0FDF4', padding:'0.15rem 0.45rem', borderRadius:'5px', cursor:'default' }}>{l.code}</span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Right column — 30% */}
-                        <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem' }}>
-                          {/* Preview */}
-                          {r.previewImage ? (
-                            <img src={r.previewImage} alt={r.title}
-                              style={{ width:'100%', borderRadius:'10px', objectFit:'cover', aspectRatio:'16/10', border:'1.5px solid #F0EDE8' }} />
-                          ) : (
-                            <div style={{ width:'100%', aspectRatio:'16/10', borderRadius:'10px', background:'#F5F3EE', border:'1.5px solid #E5E5E5', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                              <p style={{ color:'#bbb', fontSize:'0.72rem', fontStyle:'italic', textAlign:'center', padding:'0.5rem' }}>Preview unavailable</p>
-                            </div>
-                          )}
-                          {/* Open button */}
-                          <a href={r.url} target="_blank" rel="noopener noreferrer"
-                            style={{ display:'block', width:'100%', padding:'0.65rem 0', borderRadius:'10px', background:'linear-gradient(135deg, var(--jungle-deep), var(--jungle-mid))', color:'white', fontSize:'0.85rem', fontWeight:700, textDecoration:'none', textAlign:'center', boxSizing:'border-box' }}>
-                            Open Resource
-                          </a>
-                        </div>
-
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-              </div>
-            </div>
           </div>
         );
       }
@@ -4156,6 +3929,7 @@ z-index: 0;
         };
 
         return (
+          <>
           <div style={{ position:'fixed', inset:0, background:'var(--mist-light)', display:'flex', flexDirection:'column' }}>
             <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1rem 1.5rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', flexShrink:0 }}>
               <div style={{ maxWidth:'720px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
@@ -4283,9 +4057,11 @@ z-index: 0;
                     </div>
                   </div>
                 </div>
-              </div>
               </>
             )}
+          </div>
+
+          {observationsModal && (
             <div onClick={() => setObservationsModal(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'1.5rem' }}>
               <div onClick={(e) => e.stopPropagation()} style={{ background:'white', borderRadius:'18px', width:'100%', maxWidth:'480px', maxHeight:'80vh', overflowY:'auto', boxShadow:'0 24px 60px rgba(0,0,0,0.25)' }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'1.2rem 1.4rem 0.8rem', borderBottom:'1px solid #F0EDE8', position:'sticky', top:0, background:'white', zIndex:1 }}>
@@ -4300,29 +4076,24 @@ z-index: 0;
                     <div key={idx} style={{ borderLeft:'3px solid var(--jungle-mid)', background:'#F7FAF8', borderRadius:'0 10px 10px 0', padding:'0.75rem 1rem', marginBottom: idx < arr.length - 1 ? '0.75rem' : 0 }}>
                       <div style={{ display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.35rem' }}>
                         <span style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{b.animal}</span>
-                                {b.timestamp && <span style={{ fontSize:'0.65rem', color:'#aaa' }}>· {new Date(b.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short' })}</span>}
-                              </div>
-                              <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.55, margin:0 }}>{b.observation}</p>
-                            </div>
-                          ))}
-                        </div>
+                        {b.timestamp && <span style={{ fontSize:'0.65rem', color:'#aaa' }}>· {new Date(b.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short' })}</span>}
                       </div>
+                      <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.55, margin:0 }}>{b.observation}</p>
                     </div>
-                  )}
+                  ))}
                 </div>
               </div>
             </div>
           )}
-          </div>
-
+          </>
         );
       }
 
+      return null;
     };
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<TarongaTracka />);
   </script>
-
 </body>
 </html>
