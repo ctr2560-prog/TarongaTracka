@@ -3923,15 +3923,10 @@
                   <div style={{ flex:1 }}>
                     <p style={{ fontSize:'0.68rem', fontWeight:700, color:'rgba(255,255,255,0.55)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:'0.4rem' }}>Resource Hub</p>
                     <h3 className="heading-display" style={{ fontSize:'1.25rem', color:'white', marginBottom:'0.4rem', lineHeight:1.25 }}>Curriculum-aligned teaching resources for your classes.</h3>
-                    <p style={{ color:'rgba(255,255,255,0.6)', fontSize:'0.8rem' }}>
-                      {teacherClasses.filter(c => c.teacherEmail === teacherEmail && !c.archived).length > 0
-                        ? `Resources matched to Stage ${[...new Set(teacherClasses.filter(c => c.teacherEmail === teacherEmail && !c.archived).map(c => c.yearGroup))].slice(0,2).join(', ')} classes`
-                        : 'Explore resources matched to your stage and topics'}
-                    </p>
                   </div>
                   <button onClick={()=>setCurrentScreen('resourceHub')}
                     style={{ padding:'0.85rem 1.5rem', borderRadius:'50px', border:'none', background:'white', color:'#0F3D2E', fontSize:'0.88rem', fontWeight:700, cursor:'pointer', whiteSpace:'nowrap', flexShrink:0, boxShadow:'0 4px 14px rgba(0,0,0,0.2)', letterSpacing:'0.01em' }}>
-                    Explore Resources \uc0\u8594 
+                    Explore Resources
                   </button>
                 </div>
 
