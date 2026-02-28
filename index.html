@@ -20,6 +20,7 @@
 <!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 
 <script>
   // Your web app's Firebase configuration
@@ -40,6 +41,7 @@
 
   // Firestore reference (THIS is what we'll use later)
   window.db = firebase.firestore();
+  window.storage = firebase.storage();
 </script>
 
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
@@ -363,6 +365,8 @@
       const [resourceDraft, setResourceDraft] = useState(true);
       const [savingResource, setSavingResource] = useState(false);
       const [resourceSyllabusLinks, setResourceSyllabusLinks] = useState([]);
+      const [resourcePreviewImage, setResourcePreviewImage] = useState('');
+      const [uploadingImage, setUploadingImage] = useState(false);
       // Teacher Resource Hub state
       const [teacherResources, setTeacherResources] = useState([]);
       const [resourceLoading, setResourceLoading] = useState(false);
@@ -1396,7 +1400,7 @@
         setResourceTitle(''); setResourceDescription(''); setResourceUrl('');
         setResourceType(''); setResourceStages([]); setResourceTopics([]);
         setResourceFocusAreas([]); setResourceVenue(''); setResourceDraft(true);
-        setResourceSyllabusLinks([]);
+        setResourceSyllabusLinks([]); setResourcePreviewImage('');
       };
 
       const saveResource = async (publish) => {
@@ -3778,14 +3782,19 @@
                   )}
                 </div>
 
-                {/* Resource Hub entry card */}
-                <div style={{ background:'white', borderRadius:'20px', padding:'1.25rem 1.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.08)', marginBottom:'1.25rem', display:'flex', justifyContent:'space-between', alignItems:'center', gap:'1rem' }}>
-                  <div>
-                    <h3 className="heading-display" style={{ fontSize:'1.1rem', color:'var(--jungle-deep)', marginBottom:'0.2rem' }}>Resource Hub</h3>
-                    <p style={{ color:'#888', fontSize:'0.82rem' }}>Curriculum-aligned teaching resources</p>
+                {/* Resource Hub feature block */}
+                <div style={{ background:'linear-gradient(135deg, #0F3D2E 0%, #165A42 100%)', borderRadius:'20px', padding:'1.75rem 1.75rem', boxShadow:'0 8px 32px rgba(15,61,46,0.35)', marginBottom:'1.25rem', display:'flex', justifyContent:'space-between', alignItems:'center', gap:'1.5rem' }}>
+                  <div style={{ flex:1 }}>
+                    <p style={{ fontSize:'0.68rem', fontWeight:700, color:'rgba(255,255,255,0.55)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:'0.4rem' }}>Resource Hub</p>
+                    <h3 className="heading-display" style={{ fontSize:'1.25rem', color:'white', marginBottom:'0.4rem', lineHeight:1.25 }}>Curriculum-aligned teaching resources for your classes.</h3>
+                    <p style={{ color:'rgba(255,255,255,0.6)', fontSize:'0.8rem' }}>
+                      {teacherClasses.filter(c => c.teacherEmail === teacherEmail && !c.archived).length > 0
+                        ? `Resources matched to Stage ${[...new Set(teacherClasses.filter(c => c.teacherEmail === teacherEmail && !c.archived).map(c => c.yearGroup))].slice(0,2).join(', ')} classes`
+                        : 'Explore resources matched to your stage and topics'}
+                    </p>
                   </div>
                   <button onClick={()=>setCurrentScreen('resourceHub')}
-                    style={{ padding:'0.65rem 1.2rem', borderRadius:'50px', border:'none', background:'linear-gradient(135deg, var(--jungle-deep), var(--jungle-mid))', color:'white', fontSize:'0.85rem', fontWeight:700, cursor:'pointer', whiteSpace:'nowrap', flexShrink:0 }}>
+                    style={{ padding:'0.85rem 1.5rem', borderRadius:'50px', border:'none', background:'white', color:'#0F3D2E', fontSize:'0.88rem', fontWeight:700, cursor:'pointer', whiteSpace:'nowrap', flexShrink:0, boxShadow:'0 4px 14px rgba(0,0,0,0.2)', letterSpacing:'0.01em' }}>
                     Explore Resources →
                   </button>
                 </div>
@@ -4229,25 +4238,4 @@
                   {(observationsModal.badges || []).filter(b => b.observation).map((b, idx, arr) => (
                     <div key={idx} style={{ borderLeft:'3px solid var(--jungle-mid)', background:'#F7FAF8', borderRadius:'0 10px 10px 0', padding:'0.75rem 1rem', marginBottom: idx < arr.length - 1 ? '0.75rem' : 0 }}>
                       <div style={{ display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.35rem' }}>
-                        <span style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{b.animal}</span>
-                        {b.timestamp && <span style={{ fontSize:'0.65rem', color:'#aaa' }}>· {new Date(b.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short' })}</span>}
-                      </div>
-                      <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.55, margin:0 }}>{b.observation}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-          </>
-        );
-      }
-
-      return null;
-    };
-
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<TarongaTracka />);
-  </script>
-</body>
-</html>
+                        <span style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'u
