@@ -1405,15 +1405,27 @@
 
       const uploadResourceImage = async (file, resourceId) => {
         if (!file) return null;
+
         if (file.size > 2 * 1024 * 1024) {
           alert('Image must be under 2MB. Please choose a smaller file.');
           return null;
         }
-        const timestamp = Date.now();
-        const path = `resourcePreviews/${resourceId}/${timestamp}.jpg`;
-        const ref = window.storage.ref(path);
-        await ref.put(file);
-        return await ref.getDownloadURL();
+
+        try {
+          const timestamp = Date.now();
+          const path = `resourcePreviews/${resourceId}/${timestamp}.jpg`;
+          const ref = window.storage.ref(path);
+
+          const uploadTaskSnapshot = await ref.put(file);
+          const downloadURL = await uploadTaskSnapshot.ref.getDownloadURL();
+
+          return downloadURL;
+
+        } catch (error) {
+          console.error('Image upload failed:', error);
+          alert('Image upload failed. Check Firebase Storage rules.');
+          return null;
+        }
       };
 
       const saveResource = async (publish) => {
