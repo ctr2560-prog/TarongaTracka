@@ -1403,12 +1403,33 @@
         setResourceSyllabusLinks([]); setResourcePreviewImage('');
       };
 
+      const uploadResourceImage = async (file, resourceId) => {
+        if (!file) return null;
+        if (file.size > 2 * 1024 * 1024) {
+          alert('Image must be under 2MB. Please choose a smaller file.');
+          return null;
+        }
+        const timestamp = Date.now();
+        const path = `resourcePreviews/${resourceId}/${timestamp}.jpg`;
+        const ref = window.storage.ref(path);
+        await ref.put(file);
+        return await ref.getDownloadURL();
+      };
+
       const saveResource = async (publish) => {
         if (!resourceTitle.trim() || !resourceUrl.trim()) {
           alert('Title and URL are required.'); return;
         }
         setSavingResource(true);
         try {
+          const docRef = window.db.collection('resources').doc();
+          let previewUrl = resourcePreviewImage || null;
+          if (window._pendingImageFile) {
+            setUploadingImage(true);
+            previewUrl = await uploadResourceImage(window._pendingImageFile, docRef.id);
+            window._pendingImageFile = null;
+            setUploadingImage(false);
+          }
           const payload = {
             title: resourceTitle.trim(),
             description: resourceDescription.trim(),
@@ -1423,14 +1444,16 @@
             active: publish,
             publishAt: publish ? firebase.firestore.FieldValue.serverTimestamp() : null,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            createdBy: adminAccessCode
+            createdBy: adminAccessCode,
+            previewImage: previewUrl
           };
-          await window.db.collection('resources').add(payload);
+          await docRef.set(payload);
           resetResourceForm();
           setResourceSaved(true);
           setTimeout(() => setResourceSaved(false), 2500);
         } catch (err) {
           console.error('Save resource error:', err);
+          setUploadingImage(false);
           alert('Failed to save resource. Please try again.');
         } finally {
           setSavingResource(false);
@@ -3351,6 +3374,36 @@
                             onFocus={e=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={e=>e.target.style.borderColor='#E5E5E5'} />
                         </div>
 
+                        <div>
+                          <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Preview Image <span style={{ fontWeight:400, color:'#aaa' }}>(Optional — max 2MB)</span></label>
+                          {resourcePreviewImage ? (
+                            <div style={{ marginBottom:'0.5rem' }}>
+                              <img src={resourcePreviewImage} alt="Preview"
+                                style={{ height:'80px', borderRadius:'8px', border:'1.5px solid #E5E5E5', objectFit:'cover', display:'block' }} />
+                              <button onClick={()=>{ setResourcePreviewImage(''); window._pendingImageFile = null; }}
+                                style={{ marginTop:'0.3rem', fontSize:'0.72rem', color:'#ef4444', background:'none', border:'none', cursor:'pointer', padding:0 }}>
+                                Remove image
+                              </button>
+                            </div>
+                          ) : null}
+                          <input type="file" accept="image/*"
+                            onChange={e => {
+                              const file = e.target.files[0];
+                              if (!file) return;
+                              if (file.size > 2 * 1024 * 1024) {
+                                alert('Image must be under 2MB. Please choose a smaller file.');
+                                e.target.value = '';
+                                return;
+                              }
+                              window._pendingImageFile = file;
+                              const reader = new FileReader();
+                              reader.onload = ev => setResourcePreviewImage(ev.target.result);
+                              reader.readAsDataURL(file);
+                            }}
+                            style={{ fontSize:'0.82rem', color:'#555' }} />
+                          {uploadingImage && <p style={{ fontSize:'0.75rem', color:'var(--jungle-mid)', marginTop:'0.3rem' }}>Uploading image...</p>}
+                        </div>
+
                         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.85rem' }}>
                           <div>
                             <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Type</label>
@@ -4238,4 +4291,27 @@
                   {(observationsModal.badges || []).filter(b => b.observation).map((b, idx, arr) => (
                     <div key={idx} style={{ borderLeft:'3px solid var(--jungle-mid)', background:'#F7FAF8', borderRadius:'0 10px 10px 0', padding:'0.75rem 1rem', marginBottom: idx < arr.length - 1 ? '0.75rem' : 0 }}>
                       <div style={{ display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.35rem' }}>
-                        <span style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'u
+                        <span style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{b.animal}</span>
+                                {b.timestamp && <span style={{ fontSize:'0.65rem', color:'#aaa' }}>· {new Date(b.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short' })}</span>}
+                              </div>
+                              <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.55, margin:0 }}>{b.observation}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<TarongaTracka />);
+  </script>
+</body>
+</html>
