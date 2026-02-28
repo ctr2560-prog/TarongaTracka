@@ -308,6 +308,20 @@
       const [submitSuccess, setSubmitSuccess] = useState(false);
       const [classCreated, setClassCreated] = useState(false);
       const [codeDeactivated, setCodeDeactivated] = useState(false);
+      // Resource Hub state
+      const [resources, setResources] = useState([]);
+      const [resourcesLoading, setResourcesLoading] = useState(false);
+      const [resourceSaved, setResourceSaved] = useState(false);
+      const [resourceTitle, setResourceTitle] = useState('');
+      const [resourceDescription, setResourceDescription] = useState('');
+      const [resourceUrl, setResourceUrl] = useState('');
+      const [resourceType, setResourceType] = useState('');
+      const [resourceStages, setResourceStages] = useState([]);
+      const [resourceTopics, setResourceTopics] = useState([]);
+      const [resourceFocusAreas, setResourceFocusAreas] = useState([]);
+      const [resourceVenue, setResourceVenue] = useState('');
+      const [resourceDraft, setResourceDraft] = useState(true);
+      const [savingResource, setSavingResource] = useState(false);
 
       // Step 5 – Firestore live student data for teacher classDetails
       const [firestoreStudents, setFirestoreStudents] = useState([]);
@@ -1296,6 +1310,75 @@
           }
         };
       }, [currentScreen, adminTab, adminClasses, adminDateRange]);
+
+      // Resource Hub: load resources when tab opens
+      useEffect(() => {
+        if (currentScreen !== 'adminDashboard' || adminTab !== 'resources') return;
+        setResourcesLoading(true);
+        const unsub = window.db.collection('resources')
+          .orderBy('createdAt', 'desc')
+          .onSnapshot(snap => {
+            setResources(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            setResourcesLoading(false);
+          }, err => {
+            console.error('Resources load error:', err);
+            setResourcesLoading(false);
+          });
+        return () => unsub();
+      }, [currentScreen, adminTab]);
+
+      const resetResourceForm = () => {
+        setResourceTitle(''); setResourceDescription(''); setResourceUrl('');
+        setResourceType(''); setResourceStages([]); setResourceTopics([]);
+        setResourceFocusAreas([]); setResourceVenue(''); setResourceDraft(true);
+      };
+
+      const saveResource = async (publish) => {
+        if (!resourceTitle.trim() || !resourceUrl.trim()) {
+          alert('Title and URL are required.'); return;
+        }
+        setSavingResource(true);
+        try {
+          const payload = {
+            title: resourceTitle.trim(),
+            description: resourceDescription.trim(),
+            url: resourceUrl.trim(),
+            type: resourceType,
+            stage: resourceStages,
+            topics: resourceTopics,
+            focusAreas: resourceFocusAreas,
+            syllabusLinks: [],
+            venue: resourceVenue,
+            draft: !publish,
+            active: publish,
+            publishAt: publish ? firebase.firestore.FieldValue.serverTimestamp() : null,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdBy: adminAccessCode
+          };
+          await window.db.collection('resources').add(payload);
+          resetResourceForm();
+          setResourceSaved(true);
+          setTimeout(() => setResourceSaved(false), 2500);
+        } catch (err) {
+          console.error('Save resource error:', err);
+          alert('Failed to save resource. Please try again.');
+        } finally {
+          setSavingResource(false);
+        }
+      };
+
+      const deactivateResource = async (id) => {
+        try {
+          await window.db.collection('resources').doc(id).update({ active: false });
+        } catch (err) {
+          console.error('Deactivate resource error:', err);
+          alert('Failed to deactivate resource.');
+        }
+      };
+
+      const toggleMulti = (setter, current, value) => {
+        setter(current.includes(value) ? current.filter(v => v !== value) : [...current, value]);
+      };
 
       // Generate Daily Code for Admin
       const generateDailyCode = async () => {
@@ -2601,6 +2684,22 @@
                   }}>
                   Analytics
                 </button>
+                <button
+                  onClick={() => setAdminTab('resources')}
+                  style={{
+                    padding:'1rem 1.5rem',
+                    background:'none',
+                    border:'none',
+                    borderBottom: adminTab === 'resources' ? '3px solid var(--jungle-mid)' : '3px solid transparent',
+                    color: adminTab === 'resources' ? 'var(--jungle-deep)' : '#999',
+                    fontSize:'0.95rem',
+                    fontWeight: adminTab === 'resources' ? 700 : 600,
+                    cursor:'pointer',
+                    transition:'all 0.2s',
+                    fontFamily:'DM Sans, sans-serif'
+                  }}>
+                  Resources
+                </button>
               </div>
             </div>
 
@@ -3126,6 +3225,163 @@
                       </>
                     )}
                   </>
+                )}
+
+                {adminTab === 'resources' && (
+                  <div style={{ paddingBottom:'2rem' }}>
+                    <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.25rem' }}>Resource Management</h2>
+                    <p style={{ color:'#888', fontSize:'0.85rem', marginBottom:'1.5rem' }}>Create and manage educational resources for the Taronga program.</p>
+
+                    {/* Creation Form */}
+                    <div style={{ background:'white', borderRadius:'16px', padding:'1.5rem', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', marginBottom:'2rem' }}>
+                      <p style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:'1rem' }}>New Resource</p>
+                      <div style={{ display:'flex', flexDirection:'column', gap:'0.85rem' }}>
+
+                        <div>
+                          <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Title *</label>
+                          <input value={resourceTitle} onChange={e=>setResourceTitle(e.target.value)} placeholder="Resource title"
+                            style={{ width:'100%', padding:'0.6rem 0.85rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', fontSize:'0.9rem', fontFamily:'DM Sans, sans-serif', boxSizing:'border-box' }}
+                            onFocus={e=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={e=>e.target.style.borderColor='#E5E5E5'} />
+                        </div>
+
+                        <div>
+                          <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Description</label>
+                          <textarea value={resourceDescription} onChange={e=>setResourceDescription(e.target.value)} placeholder="Brief description of the resource" rows={3}
+                            style={{ width:'100%', padding:'0.6rem 0.85rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', fontSize:'0.9rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', boxSizing:'border-box' }}
+                            onFocus={e=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={e=>e.target.style.borderColor='#E5E5E5'} />
+                        </div>
+
+                        <div>
+                          <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>URL *</label>
+                          <input value={resourceUrl} onChange={e=>setResourceUrl(e.target.value)} placeholder="https://" type="url"
+                            style={{ width:'100%', padding:'0.6rem 0.85rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', fontSize:'0.9rem', fontFamily:'DM Sans, sans-serif', boxSizing:'border-box' }}
+                            onFocus={e=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={e=>e.target.style.borderColor='#E5E5E5'} />
+                        </div>
+
+                        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.85rem' }}>
+                          <div>
+                            <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Type</label>
+                            <select value={resourceType} onChange={e=>setResourceType(e.target.value)}
+                              style={{ width:'100%', padding:'0.6rem 0.85rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', fontSize:'0.9rem', fontFamily:'DM Sans, sans-serif', background:'white' }}>
+                              <option value="">Select type</option>
+                              <option value="lesson">Lesson</option>
+                              <option value="worksheet">Worksheet</option>
+                              <option value="video">Video</option>
+                              <option value="pre-visit">Pre-visit</option>
+                              <option value="post-visit">Post-visit</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Venue</label>
+                            <select value={resourceVenue} onChange={e=>setResourceVenue(e.target.value)}
+                              style={{ width:'100%', padding:'0.6rem 0.85rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', fontSize:'0.9rem', fontFamily:'DM Sans, sans-serif', background:'white' }}>
+                              <option value="">Select venue</option>
+                              <option value="Taronga Sydney">Taronga Sydney</option>
+                              <option value="Taronga Western Plains">Taronga Western Plains</option>
+                              <option value="All">All</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'0.85rem' }}>
+                          <div>
+                            <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.4rem' }}>Stage</label>
+                            {['Stage 3','Stage 4','Stage 5'].map(s => (
+                              <label key={s} style={{ display:'flex', alignItems:'center', gap:'0.4rem', fontSize:'0.82rem', color:'#555', marginBottom:'0.25rem', cursor:'pointer' }}>
+                                <input type="checkbox" checked={resourceStages.includes(s)} onChange={()=>toggleMulti(setResourceStages, resourceStages, s)} />
+                                {s}
+                              </label>
+                            ))}
+                          </div>
+                          <div>
+                            <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.4rem' }}>Topics</label>
+                            {['Adaptations','Ecosystems','Biodiversity','Conservation','Scientific Investigation'].map(t => (
+                              <label key={t} style={{ display:'flex', alignItems:'center', gap:'0.4rem', fontSize:'0.82rem', color:'#555', marginBottom:'0.25rem', cursor:'pointer' }}>
+                                <input type="checkbox" checked={resourceTopics.includes(t)} onChange={()=>toggleMulti(setResourceTopics, resourceTopics, t)} />
+                                {t}
+                              </label>
+                            ))}
+                          </div>
+                          <div>
+                            <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.4rem' }}>Focus Areas</label>
+                            {['Behaviour','Detail','Writing'].map(fa => (
+                              <label key={fa} style={{ display:'flex', alignItems:'center', gap:'0.4rem', fontSize:'0.82rem', color:'#555', marginBottom:'0.25rem', cursor:'pointer' }}>
+                                <input type="checkbox" checked={resourceFocusAreas.includes(fa)} onChange={()=>toggleMulti(setResourceFocusAreas, resourceFocusAreas, fa)} />
+                                {fa}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label style={{ display:'flex', alignItems:'center', gap:'0.5rem', fontSize:'0.82rem', color:'#555', cursor:'pointer' }}>
+                            <input type="checkbox" checked={resourceDraft} onChange={e=>setResourceDraft(e.target.checked)} />
+                            Save as draft (do not publish)
+                          </label>
+                        </div>
+
+                        <div style={{ display:'flex', gap:'0.75rem', paddingTop:'0.25rem' }}>
+                          <button onClick={()=>saveResource(false)} disabled={savingResource}
+                            style={{ flex:'1 1 auto', padding:'0.65rem 1rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', background:'white', color: savingResource ? '#bbb' : '#555', fontSize:'0.85rem', fontWeight:600, cursor: savingResource ? 'not-allowed' : 'pointer', transition:'all 0.2s' }}>
+                            {savingResource ? 'Saving...' : 'Save Draft'}
+                          </button>
+                          <button onClick={()=>saveResource(true)} disabled={savingResource}
+                            style={{ flex:'1 1 auto', padding:'0.65rem 1rem', borderRadius:'10px', border:'none', background: savingResource ? '#CCC' : 'linear-gradient(135deg, var(--jungle-deep), var(--jungle-mid))', color:'white', fontSize:'0.85rem', fontWeight:700, cursor: savingResource ? 'not-allowed' : 'pointer', transition:'all 0.2s' }}>
+                            {savingResource ? 'Saving...' : 'Publish'}
+                          </button>
+                        </div>
+                        {resourceSaved && (
+                          <div className="fade-in" style={{ fontSize:'0.8rem', color:'#2e7d32', fontWeight:600 }}>&#10003; Resource saved successfully.</div>
+                        )}
+
+                      </div>
+                    </div>
+
+                    {/* Resource List */}
+                    <div style={{ background:'white', borderRadius:'16px', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', overflow:'hidden' }}>
+                      <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1.5fr 0.8fr 1fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
+                        {['Title','Stage','Topics','Status','Actions'].map(h => (
+                          <div key={h} style={{ color:'rgba(255,255,255,0.8)', fontSize:'0.72rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>{h}</div>
+                        ))}
+                      </div>
+                      {resourcesLoading ? (
+                        <div style={{ padding:'2rem', textAlign:'center' }}>
+                          <p style={{ color:'#aaa', fontSize:'0.85rem', fontStyle:'italic' }}>Loading resources...</p>
+                        </div>
+                      ) : resources.length === 0 ? (
+                        <div style={{ padding:'2rem', textAlign:'center' }}>
+                          <p style={{ color:'#bbb', fontSize:'0.85rem', fontStyle:'italic' }}>No resources yet. Create one above.</p>
+                        </div>
+                      ) : resources.map((r, idx) => (
+                        <div key={r.id} style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1.5fr 0.8fr 1fr', padding:'0.75rem 1rem', borderBottom: idx < resources.length-1 ? '1px solid #F0EDE8' : 'none', alignItems:'center' }}>
+                          <div>
+                            <p style={{ fontWeight:600, color:'var(--jungle-deep)', fontSize:'0.88rem', marginBottom:'0.1rem' }}>{r.title}</p>
+                            {r.type && <span style={{ fontSize:'0.7rem', color:'#999', textTransform:'capitalize' }}>{r.type}</span>}
+                          </div>
+                          <div style={{ fontSize:'0.78rem', color:'#666' }}>{(r.stage || []).join(', ') || '—'}</div>
+                          <div style={{ fontSize:'0.78rem', color:'#666' }}>{(r.topics || []).join(', ') || '—'}</div>
+                          <div>
+                            {r.active
+                              ? <span style={{ fontSize:'0.72rem', fontWeight:700, color:'#16A34A', background:'#F0FDF4', padding:'0.2rem 0.5rem', borderRadius:'6px' }}>Active</span>
+                              : r.draft
+                                ? <span style={{ fontSize:'0.72rem', fontWeight:700, color:'#CA8A04', background:'#FEFCE8', padding:'0.2rem 0.5rem', borderRadius:'6px' }}>Draft</span>
+                                : <span style={{ fontSize:'0.72rem', fontWeight:700, color:'#999', background:'#F5F5F5', padding:'0.2rem 0.5rem', borderRadius:'6px' }}>Inactive</span>
+                            }
+                          </div>
+                          <div style={{ display:'flex', gap:'0.4rem' }}>
+                            {r.active && (
+                              <button onClick={()=>deactivateResource(r.id)}
+                                style={{ padding:'0.3rem 0.6rem', borderRadius:'6px', border:'1.5px solid #E5E5E5', background:'white', color:'#888', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' }}
+                                onMouseEnter={e=>{ e.currentTarget.style.borderColor='#ef4444'; e.currentTarget.style.color='#ef4444'; }}
+                                onMouseLeave={e=>{ e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.color='#888'; }}>
+                                Deactivate
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
 
               </div>
