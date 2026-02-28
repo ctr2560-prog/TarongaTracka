@@ -206,6 +206,69 @@
       visibility: visible;
       opacity: 1;
     }
+
+    /* ── Resource Graphic Icons ─────────────────────────── */
+    .rg-video-circle {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: #C7D7FF; border: 1.5px solid #A0B8FF;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .rg-play-triangle {
+      width: 0; height: 0;
+      border-top: 9px solid transparent;
+      border-bottom: 9px solid transparent;
+      border-left: 15px solid #2D4FBF;
+      margin-left: 3px;
+    }
+    .rg-doc {
+      display: flex; flex-direction: column; gap: 5px;
+      width: 34px;
+    }
+    .rg-doc-line {
+      height: 3px; border-radius: 2px; background: #4D9D6B; width: 100%;
+    }
+    .rg-doc-line.short { width: 60%; }
+    .rg-worksheet {
+      position: relative; display: flex; flex-direction: column; gap: 5px;
+      width: 34px; padding-top: 8px;
+    }
+    .rg-worksheet .rg-doc-line { background: #C0902A; }
+    .rg-worksheet .rg-doc-line.short { width: 60%; }
+    .rg-worksheet-corner {
+      position: absolute; top: 0; right: 0;
+      width: 0; height: 0;
+      border-left: 8px solid transparent;
+      border-bottom: 8px solid #C0902A;
+    }
+    .rg-marker {
+      display: flex; flex-direction: column; align-items: center; gap: 0;
+    }
+    .rg-marker-head {
+      width: 22px; height: 22px; border-radius: 50% 50% 50% 0;
+      background: #2A8BB5; border: 1.5px solid #1A6A8A;
+      transform: rotate(-45deg);
+    }
+    .rg-marker-pin {
+      width: 4px; height: 10px; background: #1A6A8A;
+      border-radius: 0 0 3px 3px; margin-top: -2px;
+    }
+    .rg-scope {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+    }
+    .rg-scope-lens {
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 2.5px solid #7B5EA7; background: #EDE5F8;
+    }
+    .rg-scope-body {
+      width: 8px; height: 14px;
+      background: #7B5EA7; border-radius: 2px;
+    }
+    .rg-scope-base {
+      width: 22px; height: 4px;
+      background: #7B5EA7; border-radius: 2px;
+    }
+    /* ─────────────────────────────────────────────────────── */
+
   </style>
 </head>
 
@@ -1400,33 +1463,10 @@
         setResourceTitle(''); setResourceDescription(''); setResourceUrl('');
         setResourceType(''); setResourceStages([]); setResourceTopics([]);
         setResourceFocusAreas([]); setResourceVenue(''); setResourceDraft(true);
-        setResourceSyllabusLinks([]); setResourcePreviewImage('');
+        setResourceSyllabusLinks([]);
       };
 
-      const uploadResourceImage = async (file, resourceId) => {
-        if (!file) return null;
 
-        if (file.size > 2 * 1024 * 1024) {
-          alert('Image must be under 2MB. Please choose a smaller file.');
-          return null;
-        }
-
-        try {
-          const timestamp = Date.now();
-          const path = `resourcePreviews/${resourceId}/${timestamp}.jpg`;
-          const ref = window.storage.ref(path);
-
-          const uploadTaskSnapshot = await ref.put(file);
-          const downloadURL = await uploadTaskSnapshot.ref.getDownloadURL();
-
-          return downloadURL;
-
-        } catch (error) {
-          console.error('Image upload failed:', error);
-          alert('Image upload failed. Check Firebase Storage rules.');
-          return null;
-        }
-      };
 
       const saveResource = async (publish) => {
         if (!resourceTitle.trim() || !resourceUrl.trim()) {
@@ -1435,13 +1475,6 @@
         setSavingResource(true);
         try {
           const docRef = window.db.collection('resources').doc();
-          let previewUrl = resourcePreviewImage || null;
-          if (window._pendingImageFile) {
-            setUploadingImage(true);
-            previewUrl = await uploadResourceImage(window._pendingImageFile, docRef.id);
-            window._pendingImageFile = null;
-            setUploadingImage(false);
-          }
           const payload = {
             title: resourceTitle.trim(),
             description: resourceDescription.trim(),
@@ -1457,7 +1490,7 @@
             publishAt: publish ? firebase.firestore.FieldValue.serverTimestamp() : null,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             createdBy: adminAccessCode,
-            previewImage: previewUrl
+            previewImage: null
           };
           await docRef.set(payload);
           resetResourceForm();
@@ -1465,7 +1498,6 @@
           setTimeout(() => setResourceSaved(false), 2500);
         } catch (err) {
           console.error('Save resource error:', err);
-          setUploadingImage(false);
           alert('Failed to save resource. Please try again.');
         } finally {
           setSavingResource(false);
@@ -2677,6 +2709,73 @@
         );
       }
 
+      const renderResourceGraphic = (type) => {
+        const base = {
+          width: '100%', aspectRatio: '16/10', borderRadius: '10px',
+          border: '1.5px solid #E5E5E5', display: 'flex',
+          alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
+        };
+        switch (type) {
+          case 'video':
+            return (
+              <div style={{ ...base, background: '#F0F4FF' }}>
+                <div className="rg-video-circle">
+                  <div className="rg-play-triangle"></div>
+                </div>
+              </div>
+            );
+          case 'lesson':
+            return (
+              <div style={{ ...base, background: '#F4FAF6' }}>
+                <div className="rg-doc">
+                  <div className="rg-doc-line"></div>
+                  <div className="rg-doc-line"></div>
+                  <div className="rg-doc-line short"></div>
+                </div>
+              </div>
+            );
+          case 'worksheet':
+            return (
+              <div style={{ ...base, background: '#FFFBF0' }}>
+                <div className="rg-worksheet">
+                  <div className="rg-worksheet-corner"></div>
+                  <div className="rg-doc-line"></div>
+                  <div className="rg-doc-line"></div>
+                  <div className="rg-doc-line short"></div>
+                </div>
+              </div>
+            );
+          case 'pre-visit':
+            return (
+              <div style={{ ...base, background: '#F0F9FF' }}>
+                <div className="rg-marker">
+                  <div className="rg-marker-head"></div>
+                  <div className="rg-marker-pin"></div>
+                </div>
+              </div>
+            );
+          case 'post-visit':
+            return (
+              <div style={{ ...base, background: '#F5F0FA' }}>
+                <div className="rg-scope">
+                  <div className="rg-scope-lens"></div>
+                  <div className="rg-scope-body"></div>
+                  <div className="rg-scope-base"></div>
+                </div>
+              </div>
+            );
+          default:
+            return (
+              <div style={{ ...base, background: '#F5F3EE' }}>
+                <div className="rg-doc">
+                  <div className="rg-doc-line"></div>
+                  <div className="rg-doc-line short"></div>
+                </div>
+              </div>
+            );
+        }
+      };
+
       if (currentScreen === 'adminLogin') {
         const handleAdminLogin = async () => {
           const code = adminAccessCode.trim().toLowerCase();
@@ -3386,35 +3485,7 @@
                             onFocus={e=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={e=>e.target.style.borderColor='#E5E5E5'} />
                         </div>
 
-                        <div>
-                          <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Preview Image <span style={{ fontWeight:400, color:'#aaa' }}>(Optional \'97 max 2MB)</span></label>
-                          {resourcePreviewImage ? (
-                            <div style={{ marginBottom:'0.5rem' }}>
-                              <img src={resourcePreviewImage} alt="Preview"
-                                style={{ height:'80px', borderRadius:'8px', border:'1.5px solid #E5E5E5', objectFit:'cover', display:'block' }} />
-                              <button onClick={()=>{ setResourcePreviewImage(''); window._pendingImageFile = null; }}
-                                style={{ marginTop:'0.3rem', fontSize:'0.72rem', color:'#ef4444', background:'none', border:'none', cursor:'pointer', padding:0 }}>
-                                Remove image
-                              </button>
-                            </div>
-                          ) : null}
-                          <input type="file" accept="image/*"
-                            onChange={e => {
-                              const file = e.target.files[0];
-                              if (!file) return;
-                              if (file.size > 2 * 1024 * 1024) {
-                                alert('Image must be under 2MB. Please choose a smaller file.');
-                                e.target.value = '';
-                                return;
-                              }
-                              window._pendingImageFile = file;
-                              const reader = new FileReader();
-                              reader.onload = ev => setResourcePreviewImage(ev.target.result);
-                              reader.readAsDataURL(file);
-                            }}
-                            style={{ fontSize:'0.82rem', color:'#555' }} />
-                          {uploadingImage && <p style={{ fontSize:'0.75rem', color:'var(--jungle-mid)', marginTop:'0.3rem' }}>Uploading image...</p>}
-                        </div>
+
 
                         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.85rem' }}>
                           <div>
@@ -4028,15 +4099,8 @@
 
                         {/* Right column \'97 30% */}
                         <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem' }}>
-                          {/* Preview */}
-                          {r.previewImage ? (
-                            <img src={r.previewImage} alt={r.title}
-                              style={{ width:'100%', borderRadius:'10px', objectFit:'cover', aspectRatio:'16/10', border:'1.5px solid #F0EDE8' }} />
-                          ) : (
-                            <div style={{ width:'100%', aspectRatio:'16/10', borderRadius:'10px', background:'#F5F3EE', border:'1.5px solid #E5E5E5', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                              <p style={{ color:'#bbb', fontSize:'0.72rem', fontStyle:'italic', textAlign:'center', padding:'0.5rem' }}>Preview unavailable</p>
-                            </div>
-                          )}
+                          {/* Resource Type Graphic */}
+                          {renderResourceGraphic(r.type)}
                           {/* Open button */}
                           <a href={r.url} target="_blank" rel="noopener noreferrer"
                             style={{ display:'block', width:'100%', padding:'0.65rem 0', borderRadius:'10px', background:'linear-gradient(135deg, var(--jungle-deep), var(--jungle-mid))', color:'white', fontSize:'0.85rem', fontWeight:700, textDecoration:'none', textAlign:'center', boxSizing:'border-box' }}>
