@@ -247,6 +247,47 @@
 
     const TarongaTracka = () => {
       const loadProgress = () => {
+
+      // Resource Hub — controlled vocabularies and syllabus outcomes (2023)
+      const STAGE_LIST = ['Stage 1','Stage 2','Stage 3','Stage 4','Stage 5'];
+
+      const TOPIC_LIST = [
+        'Adaptations','Ecosystems','Biodiversity','Classification','Food Webs',
+        'Habitats','Environmental Change','Sustainability','Scientific Investigation',
+        'Observation Skills','Data & Evidence','Conservation','Human Impact',
+        'Interdependence','Literacy'
+      ];
+
+      const FOCUS_AREA_LIST = [
+        { label: 'Behaviour',            value: 'behaviour' },
+        { label: 'Scientific Language',  value: 'scientific_language' },
+        { label: 'Evidence Use',         value: 'evidence_use' },
+        { label: 'Data Interpretation',  value: 'data_interpretation' },
+        { label: 'Writing',              value: 'writing' }
+      ];
+
+      const SYLLABUS_OUTCOMES = [
+        { subject:'Science', stage:'Stage 1', code:'ST1-4LW-S', description:'Describes how changes in the environment affect living things' },
+        { subject:'Science', stage:'Stage 1', code:'ST1-1WS-S', description:'Plans and conducts scientific investigations' },
+        { subject:'Science', stage:'Stage 2', code:'ST2-4LW-S', description:'Describes how structural features of living things help them to survive' },
+        { subject:'Science', stage:'Stage 2', code:'ST2-1WS-S', description:'Presents and communicates scientific ideas and findings' },
+        { subject:'Science', stage:'Stage 3', code:'ST3-4LW-S', description:'Explains how the environment affects the growth and survival of living things' },
+        { subject:'Science', stage:'Stage 3', code:'ST3-1WS-S', description:'Plans and conducts scientific investigations' },
+        { subject:'Science', stage:'Stage 4', code:'SC4-WS-01', description:'Observing – uses scientific tools and instruments for observations' },
+        { subject:'Science', stage:'Stage 4', code:'SC4-WS-02', description:'Questioning and predicting – identifies questions and makes predictions' },
+        { subject:'Science', stage:'Stage 4', code:'SC4-WS-05', description:'Processing data and information – processes and represents data' },
+        { subject:'Science', stage:'Stage 4', code:'SC4-WS-06', description:'Analysing data and information – identifies trends, patterns and relationships' },
+        { subject:'Science', stage:'Stage 4', code:'SC4-WS-08', description:'Communicating – communicates scientific concepts and ideas' },
+        { subject:'Science', stage:'Stage 4', code:'SC4-LIV-01', description:'Living systems – describes the role, structure and function of living systems' },
+        { subject:'Science', stage:'Stage 4', code:'SC4-CLS-01', description:'Cells and classification – describes structural features used to classify organisms' },
+        { subject:'Science', stage:'Stage 4', code:'SC4-DA1-01', description:'Data science 1 – explains how data is used to model and predict phenomena' },
+        { subject:'Science', stage:'Stage 5', code:'SC5-WS-01', description:'Observing – selects and uses tools for accurate observations' },
+        { subject:'Science', stage:'Stage 5', code:'SC5-WS-06', description:'Analysing data and information – analyses data to identify trends and relationships' },
+        { subject:'Science', stage:'Stage 5', code:'SC5-WS-08', description:'Communicating – communicates scientific arguments using evidence and terminology' },
+        { subject:'Science', stage:'Stage 5', code:'SC5-DA2-01', description:'Data science 2 – assesses use of scientific knowledge and data in evidence-based decisions' },
+        { subject:'Science', stage:'Stage 5', code:'SC5-ENV-01', description:'Environmental sustainability – analyses impact of human activity on the natural world' },
+        { subject:'Science', stage:'Stage 5', code:'SC5-GEV-01', description:'Genetics and evolutionary change – describes relationship between diversity and evolution' }
+      ];
         try {
           const saved = localStorage.getItem('tarongaTrackaProgress');
           if (saved) return JSON.parse(saved);
@@ -322,6 +363,7 @@
       const [resourceVenue, setResourceVenue] = useState('');
       const [resourceDraft, setResourceDraft] = useState(true);
       const [savingResource, setSavingResource] = useState(false);
+      const [resourceSyllabusLinks, setResourceSyllabusLinks] = useState([]);
 
       // Step 5 – Firestore live student data for teacher classDetails
       const [firestoreStudents, setFirestoreStudents] = useState([]);
@@ -1331,6 +1373,7 @@
         setResourceTitle(''); setResourceDescription(''); setResourceUrl('');
         setResourceType(''); setResourceStages([]); setResourceTopics([]);
         setResourceFocusAreas([]); setResourceVenue(''); setResourceDraft(true);
+        setResourceSyllabusLinks([]);
       };
 
       const saveResource = async (publish) => {
@@ -1347,7 +1390,7 @@
             stage: resourceStages,
             topics: resourceTopics,
             focusAreas: resourceFocusAreas,
-            syllabusLinks: [],
+            syllabusLinks: resourceSyllabusLinks,
             venue: resourceVenue,
             draft: !publish,
             active: publish,
@@ -3286,7 +3329,7 @@
                         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'0.85rem' }}>
                           <div>
                             <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.4rem' }}>Stage</label>
-                            {['Stage 3','Stage 4','Stage 5'].map(s => (
+                            {STAGE_LIST.map(s => (
                               <label key={s} style={{ display:'flex', alignItems:'center', gap:'0.4rem', fontSize:'0.82rem', color:'#555', marginBottom:'0.25rem', cursor:'pointer' }}>
                                 <input type="checkbox" checked={resourceStages.includes(s)} onChange={()=>toggleMulti(setResourceStages, resourceStages, s)} />
                                 {s}
@@ -3295,7 +3338,7 @@
                           </div>
                           <div>
                             <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.4rem' }}>Topics</label>
-                            {['Adaptations','Ecosystems','Biodiversity','Conservation','Scientific Investigation'].map(t => (
+                            {TOPIC_LIST.map(t => (
                               <label key={t} style={{ display:'flex', alignItems:'center', gap:'0.4rem', fontSize:'0.82rem', color:'#555', marginBottom:'0.25rem', cursor:'pointer' }}>
                                 <input type="checkbox" checked={resourceTopics.includes(t)} onChange={()=>toggleMulti(setResourceTopics, resourceTopics, t)} />
                                 {t}
@@ -3304,13 +3347,44 @@
                           </div>
                           <div>
                             <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.4rem' }}>Focus Areas</label>
-                            {['Behaviour','Detail','Writing'].map(fa => (
-                              <label key={fa} style={{ display:'flex', alignItems:'center', gap:'0.4rem', fontSize:'0.82rem', color:'#555', marginBottom:'0.25rem', cursor:'pointer' }}>
-                                <input type="checkbox" checked={resourceFocusAreas.includes(fa)} onChange={()=>toggleMulti(setResourceFocusAreas, resourceFocusAreas, fa)} />
-                                {fa}
+                            {FOCUS_AREA_LIST.map(fa => (
+                              <label key={fa.value} style={{ display:'flex', alignItems:'center', gap:'0.4rem', fontSize:'0.82rem', color:'#555', marginBottom:'0.25rem', cursor:'pointer' }}>
+                                <input type="checkbox" checked={resourceFocusAreas.includes(fa.value)} onChange={()=>toggleMulti(setResourceFocusAreas, resourceFocusAreas, fa.value)} />
+                                {fa.label}
                               </label>
                             ))}
                           </div>
+                        </div>
+
+                        {/* Syllabus Outcome Linking — filter by selected stage(s) */}
+                        <div>
+                          <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.4rem' }}>Syllabus Outcomes</label>
+                          {resourceStages.length === 0 ? (
+                            <p style={{ fontSize:'0.78rem', color:'#aaa', fontStyle:'italic' }}>Select a Stage above to view available outcomes.</p>
+                          ) : (
+                            <div style={{ display:'flex', flexDirection:'column', gap:'0.2rem', maxHeight:'220px', overflowY:'auto', border:'1.5px solid #E5E5E5', borderRadius:'10px', padding:'0.6rem 0.85rem' }}>
+                              {SYLLABUS_OUTCOMES.filter(o => resourceStages.includes(o.stage)).map(o => {
+                                const selected = resourceSyllabusLinks.some(l => l.code === o.code);
+                                return (
+                                  <label key={o.code} style={{ display:'flex', alignItems:'flex-start', gap:'0.5rem', fontSize:'0.78rem', color:'#555', cursor:'pointer', paddingBottom:'0.2rem' }}>
+                                    <input type="checkbox" style={{ marginTop:'2px', flexShrink:0 }}
+                                      checked={selected}
+                                      onChange={() => {
+                                        if (selected) {
+                                          setResourceSyllabusLinks(resourceSyllabusLinks.filter(l => l.code !== o.code));
+                                        } else {
+                                          setResourceSyllabusLinks([...resourceSyllabusLinks, { code: o.code, description: o.description }]);
+                                        }
+                                      }} />
+                                    <span><strong style={{ color:'var(--jungle-deep)' }}>{o.code}</strong> — {o.description}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          )}
+                          {resourceSyllabusLinks.length > 0 && (
+                            <p style={{ fontSize:'0.72rem', color:'var(--jungle-mid)', marginTop:'0.35rem' }}>{resourceSyllabusLinks.length} outcome{resourceSyllabusLinks.length !== 1 ? 's' : ''} selected.</p>
+                          )}
                         </div>
 
                         <div>
