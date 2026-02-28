@@ -247,6 +247,14 @@
 
     const TarongaTracka = () => {
       const loadProgress = () => {
+        try {
+          const saved = localStorage.getItem('tarongaTrackaProgress');
+          if (saved) return JSON.parse(saved);
+        } catch (err) {}
+        return null;
+      };
+
+      const savedProgress = loadProgress();
 
       // Resource Hub — controlled vocabularies and syllabus outcomes (2023)
       const STAGE_LIST = ['Stage 1','Stage 2','Stage 3','Stage 4','Stage 5'];
@@ -259,11 +267,11 @@
       ];
 
       const FOCUS_AREA_LIST = [
-        { label: 'Behaviour',            value: 'behaviour' },
-        { label: 'Scientific Language',  value: 'scientific_language' },
-        { label: 'Evidence Use',         value: 'evidence_use' },
-        { label: 'Data Interpretation',  value: 'data_interpretation' },
-        { label: 'Writing',              value: 'writing' }
+        { label: 'Behaviour',           value: 'behaviour' },
+        { label: 'Scientific Language', value: 'scientific_language' },
+        { label: 'Evidence Use',        value: 'evidence_use' },
+        { label: 'Data Interpretation', value: 'data_interpretation' },
+        { label: 'Writing',             value: 'writing' }
       ];
 
       const SYLLABUS_OUTCOMES = [
@@ -288,15 +296,6 @@
         { subject:'Science', stage:'Stage 5', code:'SC5-ENV-01', description:'Environmental sustainability – analyses impact of human activity on the natural world' },
         { subject:'Science', stage:'Stage 5', code:'SC5-GEV-01', description:'Genetics and evolutionary change – describes relationship between diversity and evolution' }
       ];
-        try {
-          const saved = localStorage.getItem('tarongaTrackaProgress');
-          if (saved) return JSON.parse(saved);
-        } catch (err) {}
-        return null;
-      };
-
-      const savedProgress = loadProgress();
-
       const [currentScreen, setCurrentScreen] = useState(savedProgress?.currentScreen || 'home');
       const [userLocation, setUserLocation] = useState(null);
       const [locationEnabled, setLocationEnabled] = useState(savedProgress?.locationEnabled || false);
