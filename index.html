@@ -1418,6 +1418,29 @@
         }
       };
 
+      const handleReactivate = async (id) => {
+        try {
+          await window.db.collection('resources').doc(id).update({
+            active: true,
+            draft: false,
+            publishAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        } catch (err) {
+          console.error('Reactivate resource error:', err);
+          alert('Failed to reactivate resource.');
+        }
+      };
+
+      const handleDeleteResource = async (id) => {
+        if (!window.confirm('This will permanently delete this resource. Continue?')) return;
+        try {
+          await window.db.collection('resources').doc(id).delete();
+        } catch (err) {
+          console.error('Delete resource error:', err);
+          alert('Failed to delete resource.');
+        }
+      };
+
       const toggleMulti = (setter, current, value) => {
         setter(current.includes(value) ? current.filter(v => v !== value) : [...current, value]);
       };
@@ -3441,15 +3464,34 @@
                                 : <span style={{ fontSize:'0.72rem', fontWeight:700, color:'#999', background:'#F5F5F5', padding:'0.2rem 0.5rem', borderRadius:'6px' }}>Inactive</span>
                             }
                           </div>
-                          <div style={{ display:'flex', gap:'0.4rem' }}>
-                            {r.active && (
+                          <div style={{ display:'flex', gap:'0.4rem', flexWrap:'wrap' }}>
+                            <button onClick={()=>{}}
+                              style={{ padding:'0.3rem 0.6rem', borderRadius:'6px', border:'1.5px solid #E5E5E5', background:'white', color:'#888', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' }}
+                              onMouseEnter={e=>{ e.currentTarget.style.borderColor='var(--jungle-mid)'; e.currentTarget.style.color='var(--jungle-mid)'; }}
+                              onMouseLeave={e=>{ e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.color='#888'; }}>
+                              Edit
+                            </button>
+                            {r.active ? (
                               <button onClick={()=>deactivateResource(r.id)}
                                 style={{ padding:'0.3rem 0.6rem', borderRadius:'6px', border:'1.5px solid #E5E5E5', background:'white', color:'#888', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' }}
                                 onMouseEnter={e=>{ e.currentTarget.style.borderColor='#ef4444'; e.currentTarget.style.color='#ef4444'; }}
                                 onMouseLeave={e=>{ e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.color='#888'; }}>
                                 Deactivate
                               </button>
+                            ) : (
+                              <button onClick={()=>handleReactivate(r.id)}
+                                style={{ padding:'0.3rem 0.6rem', borderRadius:'6px', border:'1.5px solid #E5E5E5', background:'white', color:'#888', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' }}
+                                onMouseEnter={e=>{ e.currentTarget.style.borderColor='var(--jungle-mid)'; e.currentTarget.style.color='var(--jungle-mid)'; }}
+                                onMouseLeave={e=>{ e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.color='#888'; }}>
+                                Reactivate
+                              </button>
                             )}
+                            <button onClick={()=>handleDeleteResource(r.id)}
+                              style={{ padding:'0.3rem 0.6rem', borderRadius:'6px', border:'1.5px solid transparent', background:'none', color:'#ef4444', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' }}
+                              onMouseEnter={e=>{ e.currentTarget.style.borderColor='#ef4444'; }}
+                              onMouseLeave={e=>{ e.currentTarget.style.borderColor='transparent'; }}>
+                              Delete
+                            </button>
                           </div>
                         </div>
                       ))}
