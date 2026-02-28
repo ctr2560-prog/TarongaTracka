@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -13,13 +14,19 @@
   <title>Taronga Tracka v2.2 - Animal Discovery</title>
 
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <!-- Firebase SDKs -->
+
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 
 <script>
@@ -207,28 +214,32 @@
       opacity: 1;
     }
   </style>
+
 </head>
 
 <body>
 
-  <video
-    autoplay
-    muted
-    loop
-    playsinline
-    webkit-playsinline
-    preload="auto"
-    style="
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
-      z-index: 0;
-    "
-  >
-    <source src="./images/background-video.mp4" type="video/mp4">
+<video
+autoplay
+muted
+loop
+playsinline
+webkit-playsinline
+preload=“auto”
+style=”
+position: fixed;
+top: 0;
+left: 0;
+width: 100vw;
+height: 100vh;
+object-fit: cover;
+z-index: 0;
+“
+
+```
+<source src="./images/background-video.mp4" type="video/mp4">
+```
+
   </video>
 
   <div id="root" style="position: relative; z-index: 1;"></div>
@@ -4272,9 +4283,9 @@
                     </div>
                   </div>
                 </div>
+              </div>
               </>
             )}
-          {observationsModal && (
             <div onClick={() => setObservationsModal(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'1.5rem' }}>
               <div onClick={(e) => e.stopPropagation()} style={{ background:'white', borderRadius:'18px', width:'100%', maxWidth:'480px', maxHeight:'80vh', overflowY:'auto', boxShadow:'0 24px 60px rgba(0,0,0,0.25)' }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'1.2rem 1.4rem 0.8rem', borderBottom:'1px solid #F0EDE8', position:'sticky', top:0, background:'white', zIndex:1 }}>
@@ -4312,5 +4323,6 @@
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<TarongaTracka />);
   </script>
+
 </body>
 </html>
