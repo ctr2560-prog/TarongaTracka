@@ -3724,14 +3724,9 @@
                   <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.78rem' }}>{teacherEmail}</p>
                 </div>
               </div>
-              <div style={{ display:'flex', alignItems:'center', gap:'0.5rem' }}>
-                <button onClick={()=>setCurrentScreen('resourceHub')} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', padding:'0.45rem 0.9rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.8rem', fontWeight:600 }}>
-                  Resource Hub
-                </button>
-                <button onClick={()=>{ setTeacherEmail(''); setCurrentScreen('home'); }} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', padding:'0.45rem 0.9rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.8rem', fontWeight:600 }}>
-                  Sign Out
-                </button>
-              </div>
+              <button onClick={()=>{ setTeacherEmail(''); setCurrentScreen('home'); }} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', padding:'0.45rem 0.9rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.8rem', fontWeight:600 }}>
+                Sign Out
+              </button>
             </div>
             <div style={{ flex:1, overflowY:'auto', padding:'1.5rem' }}>
               <div style={{ maxWidth:'560px', margin:'0 auto' }}>
@@ -3781,6 +3776,18 @@
                   {classCreated && (
                     <div className="fade-in" style={{ marginTop:'8px', fontSize:'0.8rem', color:'#2e7d32', fontWeight:600 }}>&#10003; Class created successfully.</div>
                   )}
+                </div>
+
+                {/* Resource Hub entry card */}
+                <div style={{ background:'white', borderRadius:'20px', padding:'1.25rem 1.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.08)', marginBottom:'1.25rem', display:'flex', justifyContent:'space-between', alignItems:'center', gap:'1rem' }}>
+                  <div>
+                    <h3 className="heading-display" style={{ fontSize:'1.1rem', color:'var(--jungle-deep)', marginBottom:'0.2rem' }}>Resource Hub</h3>
+                    <p style={{ color:'#888', fontSize:'0.82rem' }}>Curriculum-aligned teaching resources</p>
+                  </div>
+                  <button onClick={()=>setCurrentScreen('resourceHub')}
+                    style={{ padding:'0.65rem 1.2rem', borderRadius:'50px', border:'none', background:'linear-gradient(135deg, var(--jungle-deep), var(--jungle-mid))', color:'white', fontSize:'0.85rem', fontWeight:700, cursor:'pointer', whiteSpace:'nowrap', flexShrink:0 }}>
+                    Explore Resources →
+                  </button>
                 </div>
 
                 <div>
@@ -3864,12 +3871,18 @@
           return true;
         });
 
-        const allStages   = [...new Set(teacherResources.flatMap(r => r.stage || []))].sort();
-        const allTopics   = [...new Set(teacherResources.flatMap(r => r.topics || []))].sort();
-        const allFocusAreas = [...new Set(teacherResources.flatMap(r => r.focusAreas || []))].sort();
+        const allStages     = [...new Set(teacherResources.flatMap(r => r.stage     || []))].sort();
+        const allTopics     = [...new Set(teacherResources.flatMap(r => r.topics    || []))].sort();
+        const allFocusAreas = [...new Set(teacherResources.flatMap(r => r.focusAreas|| []))].sort();
 
         const selectStyle = { padding:'0.5rem 0.75rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', fontSize:'0.82rem', fontFamily:'DM Sans, sans-serif', background:'white', cursor:'pointer' };
-        const tagStyle = (color) => ({ display:'inline-block', fontSize:'0.68rem', fontWeight:600, padding:'0.15rem 0.45rem', borderRadius:'5px', marginRight:'0.25rem', marginBottom:'0.2rem', background: color === 'green' ? '#F0FDF4' : color === 'blue' ? '#EFF6FF' : '#FFF7ED', color: color === 'green' ? '#16A34A' : color === 'blue' ? '#2563EB' : '#C2410C' });
+
+        const tagStyle = (color) => ({
+          display:'inline-block', fontSize:'0.68rem', fontWeight:600,
+          padding:'0.15rem 0.45rem', borderRadius:'5px', marginRight:'0.25rem', marginBottom:'0.2rem',
+          background: color === 'green' ? '#F0FDF4' : color === 'blue' ? '#EFF6FF' : '#FFF7ED',
+          color: color === 'green' ? '#16A34A' : color === 'blue' ? '#2563EB' : '#C2410C'
+        });
 
         return (
           <div style={{ position:'fixed', inset:0, background:'var(--mist-light)', display:'flex', flexDirection:'column' }}>
@@ -3886,7 +3899,7 @@
 
             {/* Content */}
             <div style={{ flex:1, overflowY:'auto', padding:'1.5rem' }}>
-              <div style={{ maxWidth:'760px', margin:'0 auto' }}>
+              <div style={{ maxWidth:'820px', margin:'0 auto' }}>
 
                 {/* Filters */}
                 <div style={{ display:'flex', gap:'0.75rem', flexWrap:'wrap', marginBottom:'1.25rem', alignItems:'center' }}>
@@ -3918,30 +3931,45 @@
                 ) : (
                   <div style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
                     {filteredResources.map(r => (
-                      <div key={r.id} className="fade-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem 1.5rem', boxShadow:'0 4px 16px rgba(0,0,0,0.07)' }}>
-                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'1rem', flexWrap:'wrap' }}>
-                          <div style={{ flex:1 }}>
-                            <p style={{ fontWeight:700, color:'var(--jungle-deep)', fontSize:'1rem', marginBottom:'0.25rem' }}>{r.title}</p>
-                            {r.type && <span style={{ fontSize:'0.7rem', color:'#999', textTransform:'capitalize', marginBottom:'0.4rem', display:'inline-block' }}>{r.type}</span>}
-                            {r.description && <p style={{ color:'#666', fontSize:'0.82rem', lineHeight:1.55, marginBottom:'0.7rem' }}>{r.description}</p>}
-                            <div style={{ display:'flex', flexWrap:'wrap', gap:'0.1rem', marginBottom:'0.35rem' }}>
-                              {(r.stage || []).map(s => <span key={s} style={tagStyle('green')}>{s}</span>)}
-                              {(r.topics || []).map(t => <span key={t} style={tagStyle('blue')}>{t}</span>)}
-                              {(r.focusAreas || []).map(f => <span key={f} style={tagStyle('orange')}>{f.replace(/_/g,' ')}</span>)}
-                            </div>
-                            {(r.syllabusLinks || []).length > 0 && (
-                              <div style={{ display:'flex', flexWrap:'wrap', gap:'0.25rem', marginTop:'0.25rem' }}>
-                                {(r.syllabusLinks || []).map(l => (
-                                  <span key={l.code} title={l.description} style={{ fontSize:'0.68rem', fontWeight:700, color:'var(--jungle-mid)', background:'#F0FDF4', padding:'0.15rem 0.45rem', borderRadius:'5px', cursor:'default' }}>{l.code}</span>
-                                ))}
-                              </div>
-                            )}
+                      <div key={r.id} className="fade-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem 1.5rem', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', display:'grid', gridTemplateColumns:'1fr 220px', gap:'1.25rem', alignItems:'start' }}>
+
+                        {/* Left column — 70% */}
+                        <div>
+                          <p style={{ fontWeight:700, color:'var(--jungle-deep)', fontSize:'1rem', marginBottom:'0.15rem' }}>{r.title}</p>
+                          {r.type && <span style={{ fontSize:'0.7rem', color:'#999', textTransform:'capitalize', marginBottom:'0.5rem', display:'inline-block' }}>{r.type}</span>}
+                          {r.description && <p style={{ color:'#666', fontSize:'0.82rem', lineHeight:1.55, marginBottom:'0.7rem' }}>{r.description}</p>}
+                          <div style={{ display:'flex', flexWrap:'wrap', gap:'0.1rem', marginBottom:'0.4rem' }}>
+                            {(r.stage      || []).map(s => <span key={s} style={tagStyle('green')}>{s}</span>)}
+                            {(r.topics     || []).map(t => <span key={t} style={tagStyle('blue')}>{t}</span>)}
+                            {(r.focusAreas || []).map(f => <span key={f} style={tagStyle('orange')}>{f.replace(/_/g,' ')}</span>)}
                           </div>
+                          {(r.syllabusLinks || []).length > 0 && (
+                            <div style={{ display:'flex', flexWrap:'wrap', gap:'0.25rem', marginTop:'0.25rem' }}>
+                              {(r.syllabusLinks || []).map(l => (
+                                <span key={l.code} title={l.description} style={{ fontSize:'0.68rem', fontWeight:700, color:'var(--jungle-mid)', background:'#F0FDF4', padding:'0.15rem 0.45rem', borderRadius:'5px', cursor:'default' }}>{l.code}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Right column — 30% */}
+                        <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem' }}>
+                          {/* Preview */}
+                          {r.previewImage ? (
+                            <img src={r.previewImage} alt={r.title}
+                              style={{ width:'100%', borderRadius:'10px', objectFit:'cover', aspectRatio:'16/10', border:'1.5px solid #F0EDE8' }} />
+                          ) : (
+                            <div style={{ width:'100%', aspectRatio:'16/10', borderRadius:'10px', background:'#F5F3EE', border:'1.5px solid #E5E5E5', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                              <p style={{ color:'#bbb', fontSize:'0.72rem', fontStyle:'italic', textAlign:'center', padding:'0.5rem' }}>Preview unavailable</p>
+                            </div>
+                          )}
+                          {/* Open button */}
                           <a href={r.url} target="_blank" rel="noopener noreferrer"
-                            style={{ display:'inline-block', padding:'0.55rem 1.1rem', borderRadius:'10px', background:'linear-gradient(135deg, var(--jungle-deep), var(--jungle-mid))', color:'white', fontSize:'0.82rem', fontWeight:700, textDecoration:'none', whiteSpace:'nowrap', flexShrink:0 }}>
+                            style={{ display:'block', width:'100%', padding:'0.65rem 0', borderRadius:'10px', background:'linear-gradient(135deg, var(--jungle-deep), var(--jungle-mid))', color:'white', fontSize:'0.85rem', fontWeight:700, textDecoration:'none', textAlign:'center', boxSizing:'border-box' }}>
                             Open Resource
                           </a>
                         </div>
+
                       </div>
                     ))}
                   </div>
