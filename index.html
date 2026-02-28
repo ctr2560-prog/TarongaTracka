@@ -82,6 +82,9 @@
       font-style: italic;
     }
 
+    .fade-in { opacity: 0; animation: institutionalFadeIn 180ms ease-out forwards; }
+    @keyframes institutionalFadeIn { to { opacity: 1; } }
+
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(30px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -300,6 +303,11 @@
       const [activityCompleted, setActivityCompleted] = useState(savedProgress?.activityCompleted || false);
       const [sessionLocked, setSessionLocked] = useState(false);
       const [isSubmittingActivity, setIsSubmittingActivity] = useState(false);
+      const [submittingAll, setSubmittingAll] = useState(false);
+      const [creatingClass, setCreatingClass] = useState(false);
+      const [submitSuccess, setSubmitSuccess] = useState(false);
+      const [classCreated, setClassCreated] = useState(false);
+      const [codeDeactivated, setCodeDeactivated] = useState(false);
 
       // Step 5 – Firestore live student data for teacher classDetails
       const [firestoreStudents, setFirestoreStudents] = useState([]);
@@ -713,6 +721,7 @@
           return;
         }
 
+        setCreatingClass(true);
         try {
           const codeRef = window.db.collection('accessCodes').doc(accessCodeInput.trim());
           const codeSnap = await codeRef.get();
@@ -795,12 +804,15 @@
           setNewYearGroup('');
           setNewClassName('');
           setNewSchoolName('');
-          alert("Class created successfully!");
           setAccessCodeInput('');
+          setClassCreated(true);
+          setTimeout(() => setClassCreated(false), 2500);
 
         } catch (error) {
           console.error('Error creating class:', error);
           alert(`Error creating class: ${error.message}`);
+        } finally {
+          setCreatingClass(false);
         }
       };
 
@@ -1323,7 +1335,8 @@
             expiresAt: expires
           });
 
-          alert(`Daily code generated: ${newCode}`);
+          setCodeDeactivated(true);
+          setTimeout(() => setCodeDeactivated(false), 2500);
         } catch (error) {
           console.error('Error generating daily code:', error);
           alert('Error generating daily code');
@@ -1656,12 +1669,22 @@
         const behaviorWords = ['sleeping','eating','walking','climbing','jumping','playing','sitting','running','resting','moving','looking','watching','grooming','scratching','lying','standing','hanging','swinging','chewing','drinking','hiding','stretching','yawning','sniffing','touching','holding','grabbing'];
         let behaviorCount = 0;
         behaviorWords.forEach(w => { if (lower.includes(w)) behaviorCount++; });
-        const behaviourBonus = Math.min(behaviorCount * 5, 15);
+        // Tier rubric: 0→0, 1 action→7 (50%), 2 actions or contextual→11 (75%), 2+ with context→15 (100%)
+        const hasContext = /\b(while|as|when|then|after|before|near|towards|away|together|each other|another|slowly|carefully|quickly|gently)\b/.test(lower);
+        let behaviourBonus = 0;
+        if (behaviorCount >= 1) behaviourBonus = 7;
+        if (behaviorCount >= 2 || (behaviorCount >= 1 && hasContext)) behaviourBonus = 11;
+        if (behaviorCount >= 2 && hasContext) behaviourBonus = 15;
 
-        const detailWords = ['fur','color','eyes','ears','tail','paws','claws','nose','mouth','teeth','stripes','spots','pattern','size','big','small','long','short','thick','thin','soft','rough','dark','light','brown','black','white','orange','grey','gray','quietly','slowly','quickly'];
+        const detailWords = ['fur','color','colour','eyes','ears','tail','paws','claws','nose','mouth','teeth','stripes','spots','pattern','size','big','small','long','short','thick','thin','soft','rough','dark','light','brown','black','white','orange','grey','gray','quietly','slowly','quickly','feathers','scales','beak','wings','mane','trunk','pouch','shell','horns','claws','snout','belly','neck'];
         let detailCount = 0;
         detailWords.forEach(w => { if (lower.includes(w)) detailCount++; });
-        const detailBonus = Math.min(detailCount * 3, 15);
+        // Tier rubric: 0→0, 1 detail→7 (50%), 2 details→11 (75%), 2+ linked to behaviour/habitat→15 (100%)
+        const hasLink = /\b(because|when|while|near|on the|in the|against|behind|under|above|beside|around|enclosure|tree|rock|branch|ground|water|fence|wall)\b/.test(lower);
+        let detailBonus = 0;
+        if (detailCount >= 1) detailBonus = 7;
+        if (detailCount >= 2) detailBonus = 11;
+        if (detailCount >= 2 && hasLink) detailBonus = 15;
 
         let literacyBonus = 0;
         if (/^[A-Z]/.test(text)) literacyBonus += 3;
@@ -1972,7 +1995,7 @@
         }
         if (studentStatus === 'complete') {
           return (
-            <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 50%, var(--jungle-light) 100%)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'clamp(1rem, 5vw, 2rem)', overflow:'hidden' }}>
+            <div className="fade-in" style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 50%, var(--jungle-light) 100%)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'clamp(1rem, 5vw, 2rem)', overflow:'hidden' }}>
               <div style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:0 }}>
                 {[...Array(60)].map((_,i)=>(<div key={i} style={{ position:'absolute', left:`${Math.random()*100}%`, top:'-20px', width:`${6+Math.random()*8}px`, height:`${6+Math.random()*8}px`, borderRadius: Math.random()>0.5 ? '50%' : '2px', background:['#FFD700','#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#A78BFA','#34D399'][Math.floor(Math.random()*7)], animation:`fall ${2.5+Math.random()*2.5}s linear forwards`, animationDelay:`${Math.random()*1.2}s` }} />))}
               </div>
@@ -2005,7 +2028,7 @@
                   </div>
                 )}
   
-                <div style={{ background:'#F0FDF4', border:'1px solid #BBF7D0', borderRadius:'12px', padding:'0.6rem 1rem', marginBottom:'1.4rem', display:'inline-block' }}>
+                <div className="fade-in" style={{ background:'#F0FDF4', border:'1px solid #BBF7D0', borderRadius:'12px', padding:'0.6rem 1rem', marginBottom:'1.4rem', display:'inline-block' }}>
                   <p style={{ color:'#16A34A', fontSize:'0.8rem', fontWeight:600 }}> Saved to class <span style={{ fontFamily:'monospace', letterSpacing:'0.1em' }}>{normaliseCode(classCode)}</span> · {studentName}</p>
                 </div>
   
@@ -2257,7 +2280,7 @@
 
       if (currentScreen === 'submissionComplete') {
         return (
-          <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 50%, var(--jungle-light) 100%)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'clamp(1rem, 5vw, 2rem)', overflow:'hidden' }}>
+          <div className="fade-in" style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 50%, var(--jungle-light) 100%)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'clamp(1rem, 5vw, 2rem)', overflow:'hidden' }}>
             <div style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:0 }}>
               {[...Array(60)].map((_,i)=>(<div key={i} style={{ position:'absolute', left:`${Math.random()*100}%`, top:'-20px', width:`${6+Math.random()*8}px`, height:`${6+Math.random()*8}px`, borderRadius: Math.random()>0.5 ? '50%' : '2px', background:['#FFD700','#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#A78BFA','#34D399'][Math.floor(Math.random()*7)], animation:`fall ${2.5+Math.random()*2.5}s linear forwards`, animationDelay:`${Math.random()*1.2}s` }} />))}
             </div>
@@ -2290,7 +2313,7 @@
                 </div>
               )}
 
-              <div style={{ background:'#F0FDF4', border:'1px solid #BBF7D0', borderRadius:'12px', padding:'0.6rem 1rem', marginBottom:'1.4rem', display:'inline-block' }}>
+              <div className="fade-in" style={{ background:'#F0FDF4', border:'1px solid #BBF7D0', borderRadius:'12px', padding:'0.6rem 1rem', marginBottom:'1.4rem', display:'inline-block' }}>
                 <p style={{ color:'#16A34A', fontSize:'0.8rem', fontWeight:600 }}> Saved to class <span style={{ fontFamily:'monospace', letterSpacing:'0.1em' }}>{normaliseCode(classCode)}</span> · {studentName}</p>
               </div>
 
@@ -2535,6 +2558,9 @@
                     </>
                   )}
                 </div>
+                {codeDeactivated && (
+                  <div className="fade-in" style={{ fontSize:'0.75rem', color:'#2e7d32', fontWeight:600, alignSelf:'center' }}>&#10003; Code deactivated.</div>
+                )}
                 <button onClick={()=>{ setAdminAccessCode(''); setCurrentScreen('home'); }} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', padding:'0.45rem 0.9rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.8rem', fontWeight:600 }}>
                   Sign Out
                 </button>
@@ -2847,6 +2873,8 @@
                         <div style={{ width:'48px', height:'48px', border:'4px solid rgba(26,82,56,0.15)', borderTop:'4px solid var(--jungle-mid)', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
                         <p style={{ color:'#888', fontSize:'0.9rem' }}>Loading analytics data...</p>
                       </div>
+                    ) : adminClasses.length === 0 ? (
+                      <p style={{ color:'#aaa', fontSize:'0.85rem', fontStyle:'italic', padding:'2rem 0', textAlign:'center' }}>Loading analytics...</p>
                     ) : (
                       <>
                         {/* Date Range Filter */}
@@ -2932,7 +2960,7 @@
                           <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>
                             Observation Skill Breakdown
                           </h2>
-                          <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
+                          <div className="fade-in" style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
                             <div style={{ height:'400px', position:'relative' }}>
                               <canvas ref={radarChartRef}></canvas>
                             </div>
@@ -3346,10 +3374,13 @@
                     }}
                   />
 
-                  <button onClick={createClass} disabled={!newYearGroup.trim() || !newClassName.trim() || !newSchoolName.trim()}
-                    style={{ width:'100%', padding:'0.75rem', borderRadius:'50px', border:'none', background:(newYearGroup.trim()&&newClassName.trim()&&newSchoolName.trim())?'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))':'#CCC', color:'white', fontSize:'0.95rem', fontWeight:700, cursor:(newYearGroup.trim()&&newClassName.trim()&&newSchoolName.trim())?'pointer':'not-allowed', textTransform:'uppercase', letterSpacing:'0.08em', transition:'all 0.3s ease' }}>
-                    + Create Class
+                  <button onClick={createClass} disabled={!newYearGroup.trim() || !newClassName.trim() || !newSchoolName.trim() || creatingClass}
+                    style={{ width:'100%', padding:'0.75rem', borderRadius:'50px', border:'none', background:(newYearGroup.trim()&&newClassName.trim()&&newSchoolName.trim()&&!creatingClass)?'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))':'#CCC', color:'white', fontSize:'0.95rem', fontWeight:700, cursor:(newYearGroup.trim()&&newClassName.trim()&&newSchoolName.trim()&&!creatingClass)?'pointer':'not-allowed', textTransform:'uppercase', letterSpacing:'0.08em', transition:'all 0.3s ease' }}>
+                    {creatingClass ? 'Creating...' : '+ Create Class'}
                   </button>
+                  {classCreated && (
+                    <div className="fade-in" style={{ marginTop:'8px', fontSize:'0.8rem', color:'#2e7d32', fontWeight:600 }}>&#10003; Class created successfully.</div>
+                  )}
                 </div>
 
                 <div>
@@ -3502,6 +3533,7 @@
           const incompleteCount = firestoreStudents.filter(s => s.status !== 'complete').length;
           if (incompleteCount === 0) { alert('All students are already marked complete.'); return; }
           if (!window.confirm(`Mark ${incompleteCount} incomplete student${incompleteCount !== 1 ? 's' : ''} as complete? This cannot be undone.`)) return;
+          setSubmittingAll(true);
           try {
             const snapshot = await window.db.collection('classes').doc(selectedClass).collection('students').get();
             const batch = window.db.batch();
@@ -3515,9 +3547,13 @@
               }
             });
             await batch.commit();
+            setSubmitSuccess(true);
+            setTimeout(() => setSubmitSuccess(false), 2500);
           } catch (err) {
             console.error('Submit all failed:', err);
             alert('Failed to submit all. Please check your connection and try again.');
+          } finally {
+            setSubmittingAll(false);
           }
         };
 
@@ -3639,11 +3675,14 @@
                         onMouseLeave={(e)=>{ e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.color='#888'; }}>
                          Archive class
                       </button>
-                      <button onClick={handleSubmitAll} style={{ flex:'1 1 auto', minWidth:'140px', padding:'0.6rem 1rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', background:'white', color:'#888', fontSize:'0.8rem', fontWeight:600, cursor:'pointer', transition:'all 0.2s' }}
-                        onMouseEnter={(e)=>{ e.currentTarget.style.borderColor='var(--jungle-mid)'; e.currentTarget.style.background='var(--jungle-deep)'; e.currentTarget.style.color='white'; }}
-                        onMouseLeave={(e)=>{ e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.background='white'; e.currentTarget.style.color='#888'; }}>
-                         Submit All
+                      <button onClick={handleSubmitAll} disabled={submittingAll} style={{ flex:'1 1 auto', minWidth:'140px', padding:'0.6rem 1rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', background:'white', color: submittingAll ? '#bbb' : '#888', fontSize:'0.8rem', fontWeight:600, cursor: submittingAll ? 'not-allowed' : 'pointer', transition:'all 0.2s' }}
+                        onMouseEnter={(e)=>{ if (!submittingAll) { e.currentTarget.style.borderColor='var(--jungle-mid)'; e.currentTarget.style.background='var(--jungle-deep)'; e.currentTarget.style.color='white'; } }}
+                        onMouseLeave={(e)=>{ e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.background='white'; e.currentTarget.style.color= submittingAll ? '#bbb' : '#888'; }}>
+                         {submittingAll ? 'Submitting...' : 'Submit All'}
                       </button>
+                      {submitSuccess && (
+                        <div className="fade-in" style={{ marginTop:'8px', fontSize:'0.8rem', color:'#2e7d32', fontWeight:600 }}>&#10003; Session submitted successfully.</div>
+                      )}
                     </div>
                   </div>
                 </div>
