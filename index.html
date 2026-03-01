@@ -1893,7 +1893,7 @@
       const submitObservation = () => {
         if (sessionLocked) return;
         if (activityCompleted) return;
-        const wc = observation.trim().split(/\\s+/).filter(Boolean).length;
+        const wc = observation.trim().match(/\b\w+\b/g)?.length || 0;
         if (wc < 10) { alert(`Your observation needs at least 10 words. You have ${wc}.`); return; }
 
         // Quiz score = questions correct on first attempt only
@@ -2418,7 +2418,7 @@
       }
 
       if (currentScreen === 'observation' && currentAnimal) {
-        const wordCount = observation.trim().split(/\\s+/).filter(Boolean).length;
+        const wordCount = observation.trim().match(/\b\w+\b/g)?.length || 0;
         return (
           <div style={{ minHeight:'100vh', background:'var(--mist-light)', paddingBottom:'4rem' }}>
             <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)' }}>
