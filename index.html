@@ -119,7 +119,7 @@
       body { touch-action: auto; }
     }
 
-    /* Mobile student banner \'97 map screen */
+    /* Mobile student banner — map screen */
     @media (max-width: 600px) {
       .student-banner-mobile {
         flex-direction: column !important;
@@ -154,7 +154,7 @@
         align-self: flex-start;
       }
 
-      /* Mobile student banner \'97 collection screen */
+      /* Mobile student banner — collection screen */
       .collection-header-mobile {
         flex-direction: column !important;
         align-items: stretch !important;
@@ -321,7 +321,7 @@
 
       const savedProgress = loadProgress();
 
-      // Resource Hub \'97 controlled vocabularies and syllabus outcomes (2023)
+      // Resource Hub — controlled vocabularies and syllabus outcomes (2023)
       const STAGE_LIST = ['Stage 1','Stage 2','Stage 3','Stage 4','Stage 5'];
 
       const TOPIC_LIST = [
@@ -346,20 +346,20 @@
         { subject:'Science', stage:'Stage 2', code:'ST2-1WS-S', description:'Presents and communicates scientific ideas and findings' },
         { subject:'Science', stage:'Stage 3', code:'ST3-4LW-S', description:'Explains how the environment affects the growth and survival of living things' },
         { subject:'Science', stage:'Stage 3', code:'ST3-1WS-S', description:'Plans and conducts scientific investigations' },
-        { subject:'Science', stage:'Stage 4', code:'SC4-WS-01', description:'Observing \'96 uses scientific tools and instruments for observations' },
-        { subject:'Science', stage:'Stage 4', code:'SC4-WS-02', description:'Questioning and predicting \'96 identifies questions and makes predictions' },
-        { subject:'Science', stage:'Stage 4', code:'SC4-WS-05', description:'Processing data and information \'96 processes and represents data' },
-        { subject:'Science', stage:'Stage 4', code:'SC4-WS-06', description:'Analysing data and information \'96 identifies trends, patterns and relationships' },
-        { subject:'Science', stage:'Stage 4', code:'SC4-WS-08', description:'Communicating \'96 communicates scientific concepts and ideas' },
-        { subject:'Science', stage:'Stage 4', code:'SC4-LIV-01', description:'Living systems \'96 describes the role, structure and function of living systems' },
-        { subject:'Science', stage:'Stage 4', code:'SC4-CLS-01', description:'Cells and classification \'96 describes structural features used to classify organisms' },
-        { subject:'Science', stage:'Stage 4', code:'SC4-DA1-01', description:'Data science 1 \'96 explains how data is used to model and predict phenomena' },
-        { subject:'Science', stage:'Stage 5', code:'SC5-WS-01', description:'Observing \'96 selects and uses tools for accurate observations' },
-        { subject:'Science', stage:'Stage 5', code:'SC5-WS-06', description:'Analysing data and information \'96 analyses data to identify trends and relationships' },
-        { subject:'Science', stage:'Stage 5', code:'SC5-WS-08', description:'Communicating \'96 communicates scientific arguments using evidence and terminology' },
-        { subject:'Science', stage:'Stage 5', code:'SC5-DA2-01', description:'Data science 2 \'96 assesses use of scientific knowledge and data in evidence-based decisions' },
-        { subject:'Science', stage:'Stage 5', code:'SC5-ENV-01', description:'Environmental sustainability \'96 analyses impact of human activity on the natural world' },
-        { subject:'Science', stage:'Stage 5', code:'SC5-GEV-01', description:'Genetics and evolutionary change \'96 describes relationship between diversity and evolution' }
+        { subject:'Science', stage:'Stage 4', code:'SC4-WS-01', description:'Observing – uses scientific tools and instruments for observations' },
+        { subject:'Science', stage:'Stage 4', code:'SC4-WS-02', description:'Questioning and predicting – identifies questions and makes predictions' },
+        { subject:'Science', stage:'Stage 4', code:'SC4-WS-05', description:'Processing data and information – processes and represents data' },
+        { subject:'Science', stage:'Stage 4', code:'SC4-WS-06', description:'Analysing data and information – identifies trends, patterns and relationships' },
+        { subject:'Science', stage:'Stage 4', code:'SC4-WS-08', description:'Communicating – communicates scientific concepts and ideas' },
+        { subject:'Science', stage:'Stage 4', code:'SC4-LIV-01', description:'Living systems – describes the role, structure and function of living systems' },
+        { subject:'Science', stage:'Stage 4', code:'SC4-CLS-01', description:'Cells and classification – describes structural features used to classify organisms' },
+        { subject:'Science', stage:'Stage 4', code:'SC4-DA1-01', description:'Data science 1 – explains how data is used to model and predict phenomena' },
+        { subject:'Science', stage:'Stage 5', code:'SC5-WS-01', description:'Observing – selects and uses tools for accurate observations' },
+        { subject:'Science', stage:'Stage 5', code:'SC5-WS-06', description:'Analysing data and information – analyses data to identify trends and relationships' },
+        { subject:'Science', stage:'Stage 5', code:'SC5-WS-08', description:'Communicating – communicates scientific arguments using evidence and terminology' },
+        { subject:'Science', stage:'Stage 5', code:'SC5-DA2-01', description:'Data science 2 – assesses use of scientific knowledge and data in evidence-based decisions' },
+        { subject:'Science', stage:'Stage 5', code:'SC5-ENV-01', description:'Environmental sustainability – analyses impact of human activity on the natural world' },
+        { subject:'Science', stage:'Stage 5', code:'SC5-GEV-01', description:'Genetics and evolutionary change – describes relationship between diversity and evolution' }
       ];
       const [currentScreen, setCurrentScreen] = useState(savedProgress?.currentScreen || 'home');
       const [userLocation, setUserLocation] = useState(null);
@@ -376,7 +376,7 @@
       const [badges, setBadges] = useState(savedProgress?.badges || []);
       const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
 
-      // Step 1 \'96 Teacher/Student state
+      // Step 1 – Teacher/Student state
       const [studentName, setStudentName] = useState(() => { try { return JSON.parse(localStorage.getItem('tarongaStudentName')) || ''; } catch(e) { return ''; } });
       const [classCode, setClassCode] = useState(() => { try { return JSON.parse(localStorage.getItem('tarongaClassCode')) || ''; } catch(e) { return ''; } });
       const [teacherEmail, setTeacherEmail] = useState('');
@@ -394,7 +394,7 @@
       const [adminClassStudents, setAdminClassStudents] = useState([]);
       const [adminClassLoading, setAdminClassLoading] = useState(false);
 
-      // Step 2 \'96 Class creation state
+      // Step 2 – Class creation state
       const [teacherClasses, setTeacherClasses] = useState([]);
       const [teacherClassStudentCounts, setTeacherClassStudentCounts] = useState({});
       const [studentJoinError, setStudentJoinError] = useState('');
@@ -404,7 +404,7 @@
       const [newSchoolName, setNewSchoolName] = useState('');
       const [selectedClass, setSelectedClass] = useState(null);
 
-      // Step 4 \'96 Activity completion
+      // Step 4 – Activity completion
       const [activityCompleted, setActivityCompleted] = useState(savedProgress?.activityCompleted || false);
       const [sessionLocked, setSessionLocked] = useState(false);
       const [isSubmittingActivity, setIsSubmittingActivity] = useState(false);
@@ -417,6 +417,7 @@
       const [resources, setResources] = useState([]);
       const [resourcesLoading, setResourcesLoading] = useState(false);
       const [resourceSaved, setResourceSaved] = useState(false);
+      const [editingResourceId, setEditingResourceId] = useState(null);
       const [resourceTitle, setResourceTitle] = useState('');
       const [resourceDescription, setResourceDescription] = useState('');
       const [resourceUrl, setResourceUrl] = useState('');
@@ -437,7 +438,7 @@
       const [filterTopic, setFilterTopic] = useState('');
       const [filterFocusArea, setFilterFocusArea] = useState('');
 
-      // Step 5 \'96 Firestore live student data for teacher classDetails
+      // Step 5 – Firestore live student data for teacher classDetails
       const [firestoreStudents, setFirestoreStudents] = useState([]);
       const [firestoreLoading, setFirestoreLoading] = useState(true);
       const [observationsModal, setObservationsModal] = useState(null);
@@ -796,7 +797,7 @@
         fetchClassData();
       }, [selectedAdminClass, currentScreen]);
 
-      // Step 5 \'96 Real-time listener: fetch students from Firestore when teacher opens a class
+      // Step 5 – Real-time listener: fetch students from Firestore when teacher opens a class
       useEffect(() => {
         if (!selectedClass || currentScreen !== 'classDetails') {
           setFirestoreStudents([]);
@@ -985,7 +986,7 @@
         autosaveTimerRef.current = setTimeout(async () => {
           try {
             const code = normaliseCode(classCode);
-            // Canonical studentId \'97 same derivation as join write and completeActivity
+            // Canonical studentId — same derivation as join write and completeActivity
             const safeId = studentName.trim().replace(/[\\/#\\.$\\[\\]]/g, '_');
             const studentRef = window.db.collection('classes').doc(code).collection('students').doc(safeId);
 
@@ -1464,6 +1465,7 @@
         setResourceType(''); setResourceStages([]); setResourceTopics([]);
         setResourceFocusAreas([]); setResourceVenue(''); setResourceDraft(true);
         setResourceSyllabusLinks([]);
+        setEditingResourceId(null);
       };
 
 
@@ -1474,7 +1476,6 @@
         }
         setSavingResource(true);
         try {
-          const docRef = window.db.collection('resources').doc();
           const payload = {
             title: resourceTitle.trim(),
             description: resourceDescription.trim(),
@@ -1488,11 +1489,16 @@
             draft: !publish,
             active: publish,
             publishAt: publish ? firebase.firestore.FieldValue.serverTimestamp() : null,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             createdBy: adminAccessCode,
             previewImage: null
           };
-          await docRef.set(payload);
+          if (editingResourceId) {
+            await window.db.collection('resources').doc(editingResourceId).update(payload);
+          } else {
+            const docRef = window.db.collection('resources').doc();
+            payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            await docRef.set(payload);
+          }
           resetResourceForm();
           setResourceSaved(true);
           setTimeout(() => setResourceSaved(false), 2500);
@@ -1683,7 +1689,7 @@
               correct: 0, fact: 'Chimpanzees use sticks to fish for termites and stones to crack nuts.' },
             { q: 'How similar is chimpanzee DNA to human DNA?',
               options: ['50%', '75%', '98-99%', '100%'],
-              correct: 2, fact: 'Chimpanzees share around 98\'9699% of their DNA with humans.' },
+              correct: 2, fact: 'Chimpanzees share around 98–99% of their DNA with humans.' },
             { q: 'What is a group of chimpanzees called?',
               options: ['A pack', 'A community', 'A herd', 'A school'],
               correct: 1, fact: 'A group of chimpanzees is called a community.' }
@@ -1701,7 +1707,7 @@
               correct: 1, fact: 'The leader is called a silverback due to the silver hair on his back.' },
             { q: "What percentage of a gorilla's diet is plant-based?",
               options: ['50%', '75%', '95%+', '100%'],
-              correct: 2, fact: 'Gorillas are mostly herbivores \'97 over 95% of their diet is plants.' },
+              correct: 2, fact: 'Gorillas are mostly herbivores — over 95% of their diet is plants.' },
             { q: 'How do gorillas communicate?',
               options: ['Only through sounds', 'Vocalizations, gestures, and body language', 'Telepathy', 'Writing'],
               correct: 1, fact: 'Gorillas use sounds, facial expressions, and body language to communicate.' }
@@ -1722,7 +1728,7 @@
               correct: 1, fact: 'Female lions do most of the hunting and work together as a team.' },
             { q: 'How many hours a day do lions typically rest?',
               options: ['5 hours', '10 hours', '16-20 hours', '24 hours'],
-              correct: 2, fact: 'Lions can rest 16\'9620 hours a day to conserve energy.' }
+              correct: 2, fact: 'Lions can rest 16–20 hours a day to conserve energy.' }
           ],
           observationPrompt: 'Watch the lions. Describe their behavior and social interactions.',
           pointValue: 50
@@ -1756,7 +1762,7 @@
             { q: 'Which adaptation helps koalas climb and grip tree trunks effectively?',
               options: ['Sharp claws and opposable toes', 'Long tails for balance', 'Webbed feet for swimming', 'Flexible spines for jumping'],
               correct: 0, fact: 'Koalas have sharp claws and opposable toes for gripping.' },
-            { q: 'Why do koalas spend up to 18\'9620 hours a day sleeping?',
+            { q: 'Why do koalas spend up to 18–20 hours a day sleeping?',
               options: ['They are nocturnal predators', 'Their fur causes them to overheat', 'They are avoiding competition', 'Their diet is low in energy, requiring energy conservation'],
               correct: 3, fact: 'Eucalyptus leaves are low in energy, so koalas conserve energy by resting.' }
           ],
@@ -1867,7 +1873,7 @@
         setIsCorrect(correct);
         setShowResult(true);
 
-        // Lock in first-attempt result \'97 never overwritten if already set
+        // Lock in first-attempt result — never overwritten if already set
         setFirstAttemptResults(prev => {
           if (prev[questionIndex] !== undefined) return prev;
           return { ...prev, [questionIndex]: correct };
@@ -1950,7 +1956,7 @@
         setCurrentScreen('badge');
       };
 
-      // Step 4 \'96 Submit activity to Firestore
+      // Step 4 – Submit activity to Firestore
       const completeActivity = async () => {
         if (!studentName || !classCode) return;
         if (activityCompleted) return;
@@ -2196,7 +2202,7 @@
                 marginBottom: "20px",
                 fontWeight: "600"
               }}>
-                 Let's Track! \'96 Coming Soon
+                 Let's Track! – Coming Soon
               </h2>
 
               <p style={{
@@ -2529,9 +2535,7 @@
             </div>
 
             <div className="animate-scale-in" style={{ position:'relative', zIndex:10, background:'white', borderRadius:'28px', padding:'clamp(1.8rem, 5vh, 2.8rem)', maxWidth:'480px', width:'100%', textAlign:'center', boxShadow:'0 24px 64px rgba(0,0,0,0.35)' }}>
-              <div style={{ width:'80px', height:'80px', borderRadius:'50%', background:'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))', margin:'0 auto 1.2rem', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'2.4rem', boxShadow:'0 6px 20px rgba(26,82,56,0.4)' }}></div>
-
-              <h1 className="heading-display" style={{ fontSize:'clamp(1.9rem, 5vh, 2.6rem)', color:'var(--jungle-deep)', marginBottom:'0.2rem', lineHeight:1.1 }}>SUBMISSION COMPLETE</h1>
+              <div style={{ width:'80px', height:'80px', borderRadius:'50%', background:'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))', margin:'0 auto 1.2rem', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'2.4rem', boxShadow:'0 6px 20px rgba(26,82,56,0.4)' }}><img src="/logo.png" alt="Taronga Tracka" style={{ width:'60%', height:'60%', objectFit:'contain' }} /></div>
               <p className="serif-accent" style={{ color:'var(--jungle-light)', fontSize:'clamp(0.95rem, 2.2vh, 1.15rem)', marginBottom:'1.4rem' }}>Your results have been saved</p>
 
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'0.7rem', marginBottom:'1.4rem' }}>
@@ -2617,12 +2621,12 @@
         const handleJoin = async () => {
           if (!classCode.trim() || !studentName.trim()) return;
           const code = normaliseCode(classCode);
-          if (code.length !== 6) { setStudentJoinError('Code not found \'97 check with your teacher.'); return; }
+          if (code.length !== 6) { setStudentJoinError('Code not found — check with your teacher.'); return; }
           
           try {
             // Verify class exists
             const classDoc = await window.db.collection('classes').doc(code).get();
-            if (!classDoc.exists) { setStudentJoinError('Code not found \'97 check with your teacher.'); return; }
+            if (!classDoc.exists) { setStudentJoinError('Code not found — check with your teacher.'); return; }
             
             // Check for existing incomplete session
             const existingQuery = await window.db.collection('classes').doc(code)
@@ -2669,7 +2673,7 @@
             
           } catch (err) {
             console.error('Firestore join check failed:', err);
-            setStudentJoinError('Could not verify code \'97 please try again.');
+            setStudentJoinError('Could not verify code — please try again.');
             return;
           }
         };
@@ -2692,7 +2696,7 @@
               )}
               {lookedUpClass && !studentJoinError && (
                 <div style={{ background:'#F0FDF4', border:'1px solid #BBF7D0', borderRadius:'10px', padding:'0.55rem 0.75rem', marginBottom:'0.8rem' }}>
-                  <p style={{ color:'#16A34A', fontSize:'0.8rem', fontWeight:600 }}> {lookedUpClass.className} \'97 {lookedUpClass.yearGroup}</p>
+                  <p style={{ color:'#16A34A', fontSize:'0.8rem', fontWeight:600 }}> {lookedUpClass.className} — {lookedUpClass.yearGroup}</p>
                 </div>
               )}
               <label style={{ display:'block', fontSize:'0.82rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.35rem' }}>First Name</label>
@@ -3361,7 +3365,7 @@
                               : 0,
                             avgObservationScore: school.observationCount > 0
                               ? `${Math.round(school.observationScoreSum / school.observationCount)}%`
-                              : '\'97',
+                              : '—',
                             totalBadges: school.totalBadges
                           }));
                           
@@ -3542,7 +3546,7 @@
                           </div>
                         </div>
 
-                        {/* Syllabus Outcome Linking \'97 filter by selected stage(s) */}
+                        {/* Syllabus Outcome Linking — filter by selected stage(s) */}
                         <div>
                           <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.4rem' }}>Syllabus Outcomes</label>
                           {resourceStages.length === 0 ? (
@@ -3562,7 +3566,7 @@
                                           setResourceSyllabusLinks([...resourceSyllabusLinks, { code: o.code, description: o.description }]);
                                         }
                                       }} />
-                                    <span><strong style={{ color:'var(--jungle-deep)' }}>{o.code}</strong> \'97 {o.description}</span>
+                                    <span><strong style={{ color:'var(--jungle-deep)' }}>{o.code}</strong> — {o.description?.replace(/\\'9[67]/g, '').replace(/\\b7/g, '')}</span>
                                   </label>
                                 );
                               })}
@@ -3618,8 +3622,8 @@
                             <p style={{ fontWeight:600, color:'var(--jungle-deep)', fontSize:'0.88rem', marginBottom:'0.1rem' }}>{r.title}</p>
                             {r.type && <span style={{ fontSize:'0.7rem', color:'#999', textTransform:'capitalize' }}>{r.type}</span>}
                           </div>
-                          <div style={{ fontSize:'0.78rem', color:'#666' }}>{(r.stage || []).join(', ') || '\'97'}</div>
-                          <div style={{ fontSize:'0.78rem', color:'#666' }}>{(r.topics || []).join(', ') || '\'97'}</div>
+                          <div style={{ fontSize:'0.78rem', color:'#666' }}>{(r.stage || []).join(', ') || '—'}</div>
+                          <div style={{ fontSize:'0.78rem', color:'#666' }}>{(r.topics || []).join(', ') || '—'}</div>
                           <div>
                             {r.active
                               ? <span style={{ fontSize:'0.72rem', fontWeight:700, color:'#16A34A', background:'#F0FDF4', padding:'0.2rem 0.5rem', borderRadius:'6px' }}>Active</span>
@@ -3629,7 +3633,19 @@
                             }
                           </div>
                           <div style={{ display:'flex', gap:'0.4rem', flexWrap:'wrap' }}>
-                            <button onClick={()=>{}}
+                            <button onClick={()=>{
+                                setEditingResourceId(r.id);
+                                setResourceTitle(r.title || '');
+                                setResourceDescription(r.description || '');
+                                setResourceUrl(r.url || '');
+                                setResourceType(r.type || '');
+                                setResourceStages(r.stage || []);
+                                setResourceTopics(r.topics || []);
+                                setResourceFocusAreas(r.focusAreas || []);
+                                setResourceVenue(r.venue || '');
+                                setResourceSyllabusLinks(r.syllabusLinks || []);
+                                setResourceDraft(r.draft !== false);
+                              }}
                               style={{ padding:'0.3rem 0.6rem', borderRadius:'6px', border:'1.5px solid #E5E5E5', background:'white', color:'#888', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' }}
                               onMouseEnter={e=>{ e.currentTarget.style.borderColor='var(--jungle-mid)'; e.currentTarget.style.color='var(--jungle-mid)'; }}
                               onMouseLeave={e=>{ e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.color='#888'; }}>
@@ -3725,7 +3741,7 @@
                     <div>
                       <div style={{ fontSize:'0.75rem', fontWeight:600, color:'#999', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>Created</div>
                       <div style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)' }}>
-                        {adminClassData.createdAt ? new Date(adminClassData.createdAt.toDate()).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '\'97'}
+                        {adminClassData.createdAt ? new Date(adminClassData.createdAt.toDate()).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '—'}
                       </div>
                     </div>
                     <div>
@@ -3774,11 +3790,11 @@
                                 </td>
                                 <td style={{ padding:'0.85rem 0.5rem', textAlign:'center', fontWeight:600, color:'var(--jungle-mid)' }}>{student.totalPoints}</td>
                                 <td style={{ padding:'0.85rem 0.5rem', textAlign:'center', fontWeight:600, color:'var(--jungle-mid)' }}>
-                                  {student.quizPercentage !== undefined ? `${student.quizPercentage}%` : '\'97'}
+                                  {student.quizPercentage !== undefined ? `${student.quizPercentage}%` : '—'}
                                 </td>
                                 <td style={{ padding:'0.85rem 0.5rem', textAlign:'center', color:'#666' }}>{observationCount}</td>
                                 <td style={{ padding:'0.85rem 0.5rem', textAlign:'center', color:'#888', fontSize:'0.85rem' }}>
-                                  {student.completedAt ? new Date(student.completedAt).toLocaleDateString('en-AU', { day:'numeric', month:'short' }) : '\'97'}
+                                  {student.completedAt ? new Date(student.completedAt).toLocaleDateString('en-AU', { day:'numeric', month:'short' }) : '—'}
                                 </td>
                                 <td style={{ padding:'0.85rem 0.5rem', textAlign:'center' }}>
                                   {observationCount > 0 ? (
@@ -3786,7 +3802,7 @@
                                       View
                                     </button>
                                   ) : (
-                                    <span style={{ color:'#bbb', fontSize:'0.75rem' }}>\'97</span>
+                                    <span style={{ color:'#bbb', fontSize:'0.75rem' }}>—</span>
                                   )}
                                 </td>
                               </tr>
@@ -4073,7 +4089,7 @@
                     {filteredResources.map(r => (
                       <div key={r.id} className="fade-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem 1.5rem', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', display:'grid', gridTemplateColumns:'1fr 220px', gap:'1.25rem', alignItems:'start' }}>
 
-                        {/* Left column \'97 70% */}
+                        {/* Left column — 70% */}
                         <div>
                           <p style={{ fontWeight:700, color:'var(--jungle-deep)', fontSize:'1rem', marginBottom:'0.15rem' }}>{r.title}</p>
                           {r.type && <span style={{ fontSize:'0.7rem', color:'#999', textTransform:'capitalize', marginBottom:'0.5rem', display:'inline-block' }}>{r.type}</span>}
@@ -4086,13 +4102,13 @@
                           {(r.syllabusLinks || []).length > 0 && (
                             <div style={{ display:'flex', flexWrap:'wrap', gap:'0.25rem', marginTop:'0.25rem' }}>
                               {(r.syllabusLinks || []).map(l => (
-                                <span key={l.code} title={l.description} style={{ fontSize:'0.68rem', fontWeight:700, color:'var(--jungle-mid)', background:'#F0FDF4', padding:'0.15rem 0.45rem', borderRadius:'5px', cursor:'default' }}>{l.code}</span>
+                                <span key={l.code} title={l.description?.replace(/\\'9[67]/g, '').replace(/\\b7/g, '')} style={{ fontSize:'0.68rem', fontWeight:700, color:'var(--jungle-mid)', background:'#F0FDF4', padding:'0.15rem 0.45rem', borderRadius:'5px', cursor:'default' }}>{l.code}</span>
                               ))}
                             </div>
                           )}
                         </div>
 
-                        {/* Right column \'97 30% */}
+                        {/* Right column — 30% */}
                         <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem' }}>
                           {/* Resource Type Graphic */}
                           {renderResourceGraphic(r.type)}
@@ -4139,7 +4155,7 @@
                 b.quizResults.forEach(r => { totalQ++; if (r.correctOnFirstAttempt) correctQ++; });
               }
             });
-            const quizScoreStr = totalQ > 0 ? `${Math.round((correctQ / totalQ) * 100)}%` : '\'97';
+            const quizScoreStr = totalQ > 0 ? `${Math.round((correctQ / totalQ) * 100)}%` : '—';
             // Observations: one label per animal
             const obsStr = (s.badges || [])
               .filter(b => b.observation)
@@ -4151,8 +4167,8 @@
               s.badges ? s.badges.length : 0,
               quizScoreStr,
               s.completed ? 'Yes' : 'No',
-              s.completedAt ? s.completedAt.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : (lastBadge && lastBadge.timestamp ? new Date(lastBadge.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '\'97'),
-              obsStr || '\'97'
+              s.completedAt ? s.completedAt.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : (lastBadge && lastBadge.timestamp ? new Date(lastBadge.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '—'),
+              obsStr || '—'
             ];
           });
           const csv = [header, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\\\\n');
@@ -4220,7 +4236,7 @@
             <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1rem 1.5rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', flexShrink:0 }}>
               <div style={{ maxWidth:'720px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                 <div style={{ display:'flex', alignItems:'center', gap:'0.7rem' }}>
-                  <button onClick={()=>setCurrentScreen('teacherDashboard')} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', width:'34px', height:'34px', borderRadius:'50%', cursor:'pointer', fontSize:'1.1rem', display:'flex', alignItems:'center', justifyContent:'center' }}></button>
+                  <button onClick={()=>setCurrentScreen('teacherDashboard')} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', width:'34px', height:'34px', borderRadius:'50%', cursor:'pointer', fontSize:'1.1rem', display:'flex', alignItems:'center', justifyContent:'center' }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg></button>
                   <div>
                     <h1 className="heading-display" style={{ fontSize:'clamp(1.1rem, 2.8vw, 1.45rem)', color:'white', lineHeight:1.2 }}>{cls.className?.replace(/\\b7/g, '')}</h1>
                     <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.75rem' }}>{cls.yearGroup} · Code: <span style={{ fontFamily:'monospace', fontWeight:700 }}>{cls.classCode}</span></p>
@@ -4297,16 +4313,16 @@
                               <div style={{ fontWeight:700, color:'var(--sunset-orange)', fontSize:'0.9rem' }}>{s.totalPoints || 0}</div>
                               <div style={{ fontWeight:600, color:'var(--jungle-mid)', fontSize:'0.9rem' }}>{badgeCount}</div>
                               <div style={{ fontWeight:600, color:'var(--jungle-mid)', fontSize:'0.85rem' }}>
-                                {s.quizPercentage !== undefined ? `${s.quizPercentage}%` : '\'97'}
+                                {s.quizPercentage !== undefined ? `${s.quizPercentage}%` : '—'}
                               </div>
 
                               <div style={{ color: lastActiveDate ? 'var(--jungle-mid)' : '#bbb', fontSize:'0.75rem', fontWeight: lastActiveDate ? 600 : 400 }}>
-                                {lastActiveDate ? lastActiveDate.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '\'97'}
+                                {lastActiveDate ? lastActiveDate.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '—'}
                               </div>
                               <div>
                                 {hasObservations
                                   ? <button onClick={() => setObservationsModal(s)} style={{ background:'var(--jungle-deep)', color:'white', border:'none', padding:'0.25rem 0.6rem', borderRadius:'6px', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' }}>View</button>
-                                  : <span style={{ color:'#bbb', fontSize:'0.75rem' }}>\'97</span>
+                                  : <span style={{ color:'#bbb', fontSize:'0.75rem' }}>—</span>
                                 }
                               </div>
                               <div style={{ display:'flex', alignItems:'center', gap:'0.35rem' }}>
