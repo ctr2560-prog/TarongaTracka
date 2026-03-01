@@ -477,7 +477,7 @@
             if (studentDoc.exists) {
               const studentData = studentDoc.data();
               setStudentStatus(studentData?.status || 'incomplete');
-              if (studentData.completed) {
+              if (studentData.status === 'complete') {
                 setSessionLocked(true);
               }
             }
@@ -2272,7 +2272,7 @@
                 )}
   
                 <div className="fade-in" style={{ background:'#F0FDF4', border:'1px solid #BBF7D0', borderRadius:'12px', padding:'0.6rem 1rem', marginBottom:'1.4rem', display:'inline-block' }}>
-                  <p style={{ color:'#16A34A', fontSize:'0.8rem', fontWeight:600 }}> Saved to class <span style={{ fontFamily:'monospace', letterSpacing:'0.1em' }}>{normaliseCode(classCode)}</span> \'b7 {studentName}</p>
+                  <p style={{ color:'#16A34A', fontSize:'0.8rem', fontWeight:600 }}> Saved to class <span style={{ fontFamily:'monospace', letterSpacing:'0.1em' }}>{normaliseCode(classCode)}</span> · {studentName}</p>
                 </div>
   
                 <div>
@@ -2557,7 +2557,7 @@
               )}
 
               <div className="fade-in" style={{ background:'#F0FDF4', border:'1px solid #BBF7D0', borderRadius:'12px', padding:'0.6rem 1rem', marginBottom:'1.4rem', display:'inline-block' }}>
-                <p style={{ color:'#16A34A', fontSize:'0.8rem', fontWeight:600 }}> Saved to class <span style={{ fontFamily:'monospace', letterSpacing:'0.1em' }}>{normaliseCode(classCode)}</span> \'b7 {studentName}</p>
+                <p style={{ color:'#16A34A', fontSize:'0.8rem', fontWeight:600 }}> Saved to class <span style={{ fontFamily:'monospace', letterSpacing:'0.1em' }}>{normaliseCode(classCode)}</span> · {studentName}</p>
               </div>
 
               <div>
@@ -3136,7 +3136,7 @@
                                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'start', marginBottom:'0.75rem' }}>
                                       <div>
                                         <h3 style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.2rem' }}>
-                                          {cls.className}
+                                          {cls.className?.replace(/\\b7/g, '')}
                                         </h3>
                                         <p style={{ fontSize:'0.8rem', color:'#999', fontWeight:600, letterSpacing:'0.05em', marginBottom:'0.1rem' }}>
                                           {cls.classCode}
@@ -3817,7 +3817,7 @@
                     <div key={idx} style={{ borderLeft:'3px solid var(--jungle-mid)', background:'#F7FAF8', borderRadius:'0 10px 10px 0', padding:'0.75rem 1rem', marginBottom: idx < arr.length - 1 ? '0.75rem' : 0 }}>
                       <div style={{ display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.35rem' }}>
                         <span style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{b.animal}</span>
-                        {b.timestamp && <span style={{ fontSize:'0.65rem', color:'#aaa' }}>\'b7 {new Date(b.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short' })}</span>}
+                        {b.timestamp && <span style={{ fontSize:'0.65rem', color:'#aaa' }}>· {new Date(b.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short' })}</span>}
                       </div>
                       <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.55, margin:0 }}>{b.observation}</p>
                     </div>
@@ -3950,7 +3950,7 @@
                               <p style={{ color:'var(--jungle-mid)', fontSize:'0.75rem', marginBottom:'0.1rem', fontWeight:600 }}> {cls.schoolName}</p>
                             )}
                             <p style={{ color:'#888', fontSize:'0.78rem' }}>
-                              {cls.yearGroup} \'b7 {teacherClassStudentCounts[cls.classCode]?.total || 0} student{(teacherClassStudentCounts[cls.classCode]?.total || 0) !== 1 ? 's' : ''}
+                              {cls.yearGroup} · {teacherClassStudentCounts[cls.classCode]?.total || 0} student{(teacherClassStudentCounts[cls.classCode]?.total || 0) !== 1 ? 's' : ''}
                             </p>
                           </div>
                           <div style={{ display:'flex', alignItems:'center', gap:'0.75rem' }}>
@@ -4222,8 +4222,8 @@
                 <div style={{ display:'flex', alignItems:'center', gap:'0.7rem' }}>
                   <button onClick={()=>setCurrentScreen('teacherDashboard')} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', width:'34px', height:'34px', borderRadius:'50%', cursor:'pointer', fontSize:'1.1rem', display:'flex', alignItems:'center', justifyContent:'center' }}></button>
                   <div>
-                    <h1 className="heading-display" style={{ fontSize:'clamp(1.1rem, 2.8vw, 1.45rem)', color:'white', lineHeight:1.2 }}>{cls.className}</h1>
-                    <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.75rem' }}>{cls.yearGroup} \'b7 Code: <span style={{ fontFamily:'monospace', fontWeight:700 }}>{cls.classCode}</span></p>
+                    <h1 className="heading-display" style={{ fontSize:'clamp(1.1rem, 2.8vw, 1.45rem)', color:'white', lineHeight:1.2 }}>{cls.className?.replace(/\\b7/g, '')}</h1>
+                    <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.75rem' }}>{cls.yearGroup} · Code: <span style={{ fontFamily:'monospace', fontWeight:700 }}>{cls.classCode}</span></p>
                   </div>
                 </div>
                 <div style={{ display:'flex', alignItems:'center', gap:'0.5rem' }}>
@@ -4360,7 +4360,7 @@
                       <div key={idx} style={{ borderLeft:'3px solid var(--jungle-mid)', background:'#F7FAF8', borderRadius:'0 10px 10px 0', padding:'0.75rem 1rem', marginBottom: idx < arr.length - 1 ? '0.75rem' : 0 }}>
                         <div style={{ display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.35rem' }}>
                           <span style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{b.animal}</span>
-                          {b.timestamp && <span style={{ fontSize:'0.65rem', color:'#aaa' }}>\'b7 {new Date(b.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short' })}</span>}
+                          {b.timestamp && <span style={{ fontSize:'0.65rem', color:'#aaa' }}>· {new Date(b.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short' })}</span>}
                         </div>
                         <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.55, margin:0 }}>{b.observation}</p>
                       </div>
