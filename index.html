@@ -4268,7 +4268,7 @@
             });
 
             const classRef = window.db.collection('classes').doc(selectedClass);
-            batch.update(classRef, {
+            batch.set(classRef, {
               sessionClosed: true,
               quizAverage: quizAverage,
               focusAverages: {
@@ -4278,7 +4278,16 @@
               },
               weakestFocusArea: weakestFocusArea,
               difficultyBand: difficultyBand,
-              submittedAt: new Date()
+              submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+
+            console.log("AGGREGATES:", {
+              quizAverage,
+              behaviourAverage,
+              detailAverage,
+              literacyAverage,
+              weakestFocusArea,
+              difficultyBand
             });
 
             await batch.commit();
