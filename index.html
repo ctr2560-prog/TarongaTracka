@@ -4211,6 +4211,52 @@
           try {
             const snapshot = await window.db.collection('classes').doc(selectedClass).collection('students').get();
             const batch = window.db.batch();
+
+            // ---------- AGGREGATE CLASS PERFORMANCE ----------
+            let studentCount = 0;
+            let quizTotalSum = 0;
+            let behaviourSum = 0;
+            let detailSum = 0;
+            let literacySum = 0;
+            let badgeCount = 0;
+
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              if (typeof data.quizPercentage === 'number') {
+                quizTotalSum += data.quizPercentage;
+              }
+              studentCount++;
+              if (Array.isArray(data.badges)) {
+                data.badges.forEach(badge => {
+                  if (typeof badge.behaviourScore === 'number') {
+                    behaviourSum += (badge.behaviourScore / 15) * 100;
+                  }
+                  if (typeof badge.detailScore === 'number') {
+                    detailSum += (badge.detailScore / 15) * 100;
+                  }
+                  if (typeof badge.literacyScore === 'number') {
+                    literacySum += (badge.literacyScore / 15) * 100;
+                  }
+                  badgeCount++;
+                });
+              }
+            });
+
+            const quizAverage = studentCount > 0 ? Math.round(quizTotalSum / studentCount) : 0;
+            const behaviourAverage = badgeCount > 0 ? Math.round(behaviourSum / badgeCount) : 0;
+            const detailAverage = badgeCount > 0 ? Math.round(detailSum / badgeCount) : 0;
+            const literacyAverage = badgeCount > 0 ? Math.round(literacySum / badgeCount) : 0;
+
+            let weakestFocusArea = 'Behaviour';
+            let lowestValue = behaviourAverage;
+            if (detailAverage < lowestValue) { lowestValue = detailAverage; weakestFocusArea = 'Scientific Language'; }
+            if (literacyAverage < lowestValue) { lowestValue = literacyAverage; weakestFocusArea = 'Data & Evidence'; }
+
+            let difficultyBand = 'intervention';
+            if (quizAverage >= 80) { difficultyBand = 'extension'; }
+            else if (quizAverage >= 60) { difficultyBand = 'consolidation'; }
+            // ---------- END AGGREGATE ----------
+
             snapshot.docs.forEach(doc => {
               if ((doc.data().status || 'incomplete') !== 'complete') {
                 batch.update(doc.ref, {
@@ -4220,6 +4266,21 @@
                 });
               }
             });
+
+            const classRef = window.db.collection('classes').doc(selectedClass);
+            batch.update(classRef, {
+              sessionClosed: true,
+              quizAverage: quizAverage,
+              focusAverages: {
+                behaviour: behaviourAverage,
+                scientificLanguage: detailAverage,
+                dataEvidence: literacyAverage
+              },
+              weakestFocusArea: weakestFocusArea,
+              difficultyBand: difficultyBand,
+              submittedAt: new Date()
+            });
+
             await batch.commit();
             setSubmitSuccess(true);
             setTimeout(() => setSubmitSuccess(false), 2500);
