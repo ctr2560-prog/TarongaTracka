@@ -4160,46 +4160,71 @@
                 {resourceTab === 'recommended' ? (
                   Object.keys(recommendationsByClass).length === 0 ? (
                     <p style={{ color:'#bbb', fontSize:'0.85rem', fontStyle:'italic', textAlign:'center', padding:'2rem 0' }}>No recommendations available. Submit a class session to generate recommendations.</p>
-                  ) : (
-                    Object.entries(recommendationsByClass).map(([classId, data]) => (
+                  ) : (() => {
+                    const sortedRecommendations = Object.entries(recommendationsByClass)
+                      .sort((a, b) => {
+                        const aFocus = Math.min(
+                          a[1].classData.focusAverages?.behaviour ?? 100,
+                          a[1].classData.focusAverages?.scientificLanguage ?? 100,
+                          a[1].classData.focusAverages?.dataEvidence ?? 100
+                        );
+                        const bFocus = Math.min(
+                          b[1].classData.focusAverages?.behaviour ?? 100,
+                          b[1].classData.focusAverages?.scientificLanguage ?? 100,
+                          b[1].classData.focusAverages?.dataEvidence ?? 100
+                        );
+                        return aFocus - bFocus;
+                      });
+                    return sortedRecommendations.map(([classId, data]) => (
                       <div key={classId} style={{ marginBottom:'2rem' }}>
                         <div style={{ marginBottom:'0.75rem', paddingBottom:'0.5rem', borderBottom:'1.5px solid #E5E5E5' }}>
                           <h4 style={{ fontWeight:700, color:'var(--jungle-deep)', fontSize:'0.95rem', marginBottom:'0.15rem' }}>{data.classData.className || classId} {data.classData.stage ? `— ${data.classData.stage}` : ''}</h4>
                           <p style={{ fontSize:'0.78rem', color:'#888' }}>Focus: <strong style={{ color:'var(--jungle-mid)' }}>{data.classData.weakestFocusArea}</strong> &nbsp;·&nbsp; Band: <strong style={{ color:'var(--jungle-mid)', textTransform:'capitalize' }}>{data.classData.difficultyBand}</strong></p>
                         </div>
+                        <div style={{ background:'#F1F8F4', padding:'0.75rem 1rem', borderRadius:'8px', marginBottom:'1rem', fontSize:'0.85rem', color:'#1B5E20' }}>
+                          <div><strong>Quiz Average:</strong> {data.classData.quizAverage ?? 0}%</div>
+                          <div><strong>Weakest Focus:</strong> {data.classData.weakestFocusArea}</div>
+                          <div style={{ marginTop:'0.4rem' }}>
+                            Behaviour: {data.classData.focusAverages?.behaviour ?? 0}% |
+                            Scientific Language: {data.classData.focusAverages?.scientificLanguage ?? 0}% |
+                            Data &amp; Evidence: {data.classData.focusAverages?.dataEvidence ?? 0}%
+                          </div>
+                        </div>
                         <div style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
                           {data.resources.map(r => (
-                            <div key={r.id} className="fade-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem 1.5rem', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', display:'grid', gridTemplateColumns:'1fr 220px', gap:'1.25rem', alignItems:'start' }}>
-                              <div>
-                                <p style={{ fontWeight:700, color:'var(--jungle-deep)', fontSize:'1rem', marginBottom:'0.15rem' }}>{r.title}</p>
-                                {r.type && <span style={{ fontSize:'0.7rem', color:'#999', textTransform:'capitalize', marginBottom:'0.5rem', display:'inline-block' }}>{r.type}</span>}
-                                {r.description && <p style={{ color:'#666', fontSize:'0.82rem', lineHeight:1.55, marginBottom:'0.7rem' }}>{r.description}</p>}
-                                <div style={{ display:'flex', flexWrap:'wrap', gap:'0.1rem', marginBottom:'0.4rem' }}>
-                                  {(r.stage      || []).map(s => <span key={s} style={tagStyle('green')}>{s}</span>)}
-                                  {(r.topics     || []).map(t => <span key={t} style={tagStyle('blue')}>{t}</span>)}
-                                  {(r.focusAreas || []).map(f => <span key={f} style={tagStyle('orange')}>{f.replace(/_/g,' ')}</span>)}
-                                </div>
-                                {(r.syllabusLinks || []).length > 0 && (
-                                  <div style={{ display:'flex', flexWrap:'wrap', gap:'0.25rem', marginTop:'0.25rem' }}>
-                                    {(r.syllabusLinks || []).map(l => (
-                                      <span key={l.code} title={l.description?.replace(/\\'9[67]/g, '').replace(/\\b7/g, '')} style={{ fontSize:'0.68rem', fontWeight:700, color:'var(--jungle-mid)', background:'#F0FDF4', padding:'0.15rem 0.45rem', borderRadius:'5px', cursor:'default' }}>{l.code}</span>
-                                    ))}
+                            <div key={r.id} style={{ border:'1px solid #C8E6C9', borderLeft:'4px solid #2E7D32', borderRadius:'8px', padding:'0.5rem', marginBottom:'1rem' }}>
+                              <div className="fade-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem 1.5rem', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', display:'grid', gridTemplateColumns:'1fr 220px', gap:'1.25rem', alignItems:'start' }}>
+                                <div>
+                                  <p style={{ fontWeight:700, color:'var(--jungle-deep)', fontSize:'1rem', marginBottom:'0.15rem' }}>{r.title}</p>
+                                  {r.type && <span style={{ fontSize:'0.7rem', color:'#999', textTransform:'capitalize', marginBottom:'0.5rem', display:'inline-block' }}>{r.type}</span>}
+                                  {r.description && <p style={{ color:'#666', fontSize:'0.82rem', lineHeight:1.55, marginBottom:'0.7rem' }}>{r.description}</p>}
+                                  <div style={{ display:'flex', flexWrap:'wrap', gap:'0.1rem', marginBottom:'0.4rem' }}>
+                                    {(r.stage      || []).map(s => <span key={s} style={tagStyle('green')}>{s}</span>)}
+                                    {(r.topics     || []).map(t => <span key={t} style={tagStyle('blue')}>{t}</span>)}
+                                    {(r.focusAreas || []).map(f => <span key={f} style={tagStyle('orange')}>{f.replace(/_/g,' ')}</span>)}
                                   </div>
-                                )}
-                              </div>
-                              <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem' }}>
-                                {renderResourceGraphic(r.type)}
-                                <a href={r.url} target="_blank" rel="noopener noreferrer"
-                                  style={{ display:'block', width:'100%', padding:'0.65rem 0', borderRadius:'10px', background:'linear-gradient(135deg, var(--jungle-deep), var(--jungle-mid))', color:'white', fontSize:'0.85rem', fontWeight:700, textDecoration:'none', textAlign:'center', boxSizing:'border-box' }}>
-                                  Open Resource
-                                </a>
+                                  {(r.syllabusLinks || []).length > 0 && (
+                                    <div style={{ display:'flex', flexWrap:'wrap', gap:'0.25rem', marginTop:'0.25rem' }}>
+                                      {(r.syllabusLinks || []).map(l => (
+                                        <span key={l.code} title={l.description?.replace(/\\'9[67]/g, '').replace(/\\b7/g, '')} style={{ fontSize:'0.68rem', fontWeight:700, color:'var(--jungle-mid)', background:'#F0FDF4', padding:'0.15rem 0.45rem', borderRadius:'5px', cursor:'default' }}>{l.code}</span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                                <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem' }}>
+                                  {renderResourceGraphic(r.type)}
+                                  <a href={r.url} target="_blank" rel="noopener noreferrer"
+                                    style={{ display:'block', width:'100%', padding:'0.65rem 0', borderRadius:'10px', background:'linear-gradient(135deg, var(--jungle-deep), var(--jungle-mid))', color:'white', fontSize:'0.85rem', fontWeight:700, textDecoration:'none', textAlign:'center', boxSizing:'border-box' }}>
+                                    Open Resource
+                                  </a>
+                                </div>
                               </div>
                             </div>
                           ))}
                         </div>
                       </div>
-                    ))
-                  )
+                    ));
+                  })()
                 ) : (
                   <>
                     {/* Filters */}
