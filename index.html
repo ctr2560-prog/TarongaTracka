@@ -366,6 +366,7 @@
       const [userLocation, setUserLocation] = useState(null);
       const [locationEnabled, setLocationEnabled] = useState(savedProgress?.locationEnabled || false);
       const [foundAnimals, setFoundAnimals] = useState(new Set(savedProgress?.foundAnimals || []));
+      const [firestoreAnimals, setFirestoreAnimals] = useState([]);
       const [currentAnimal, setCurrentAnimal] = useState(null);
       const [quizAnswers, setQuizAnswers] = useState({});
       const [firstAttemptResults, setFirstAttemptResults] = useState({});
@@ -1766,6 +1767,24 @@
         link.click();
         document.body.removeChild(link);
       };
+
+      // ---------- FIRESTORE ANIMALS (Phase 1 — read only) ----------
+      useEffect(() => {
+        window.db.collection('animals')
+          .where('active', '==', true)
+          .get()
+          .then(snapshot => {
+            const animals = snapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            console.log("FIRESTORE ANIMALS:", animals);
+            setFirestoreAnimals(animals);
+          })
+          .catch(err => {
+            console.error("Animal fetch error:", err);
+          });
+      }, []);
 
       // ---------- DATA ----------
       const animals = [
