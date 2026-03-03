@@ -1958,9 +1958,11 @@
       };
 
       const checkAnimalProximity = (animal) => {
-        if (!userLocation) return { nearby: false, distance: null };
+        if (!userLocation) return { nearby: animal.id === 'koala', distance: null };
         const distance = calculateDistance(userLocation.latitude, userLocation.longitude, animal.latitude, animal.longitude);
-        return { nearby: distance <= animal.radius, distance: Math.round(distance) };
+        const isKoala = animal.id === 'koala';
+        const isNearby = isKoala ? true : distance <= animal.radius;
+        return { nearby: isNearby, distance: Math.round(distance) };
       };
 
       const discoverAnimal = (animal, event) => {
