@@ -331,12 +331,13 @@
         'Interdependence','Literacy'
       ];
 
-      const FOCUS_AREA_LIST = [
-        { label: 'Behaviour',           value: 'behaviour' },
-        { label: 'Scientific Language', value: 'scientific_language' },
-        { label: 'Evidence Use',        value: 'evidence_use' },
-        { label: 'Data Interpretation', value: 'data_interpretation' },
-        { label: 'Writing',             value: 'writing' }
+      const focusAreaOptions = [
+        'Behaviour',
+        'Observation',
+        'Scientific Language',
+        'Writing',
+        'Evidence Use',
+        'Data Interpretation'
       ];
 
       const SYLLABUS_OUTCOMES = [
@@ -427,6 +428,7 @@
       const [resourceFocusAreas, setResourceFocusAreas] = useState([]);
       const [resourceVenue, setResourceVenue] = useState('');
       const [resourceDraft, setResourceDraft] = useState(true);
+      const [resourceDifficulty, setResourceDifficulty] = useState('');
       const [savingResource, setSavingResource] = useState(false);
       const [resourceSyllabusLinks, setResourceSyllabusLinks] = useState([]);
       const [resourcePreviewImage, setResourcePreviewImage] = useState('');
@@ -434,6 +436,9 @@
       // Teacher Resource Hub state
       const [teacherResources, setTeacherResources] = useState([]);
       const [resourceLoading, setResourceLoading] = useState(false);
+      const [submittedClasses, setSubmittedClasses] = useState([]);
+      const [recommendationsByClass, setRecommendationsByClass] = useState({});
+      const [resourceTab, setResourceTab] = useState('recommended');
       const [filterStage, setFilterStage] = useState('');
       const [filterTopic, setFilterTopic] = useState('');
       const [filterFocusArea, setFilterFocusArea] = useState('');
@@ -1450,9 +1455,18 @@
           .where('active', '==', true)
           .orderBy('createdAt', 'desc')
           .get()
-          .then(snap => {
+          .then(async snap => {
             setTeacherResources(snap.docs.map(d => ({ id: d.id, ...d.data() })));
             setResourceLoading(false);
+            const classSnapshot = await window.db
+              .collection('classes')
+              .where('sessionClosed', '==', true)
+              .get();
+            const classes = classSnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            setSubmittedClasses(classes);
           })
           .catch(err => {
             console.error('Teacher resource load error:', err);
@@ -1460,11 +1474,86 @@
           });
       }, [currentScreen]);
 
+      // Teacher Resource Hub: compute recommendations per submitted class
+      const deriveStageFromYear = (year) => {
+        const yearNum = parseInt(String(year).replace(/[^0-9]/g, ''), 10);
+        if (yearNum <= 2) return "Stage 1";
+        if (yearNum <= 4) return "Stage 2";
+        if (yearNum <= 6) return "Stage 3";
+        if (yearNum <= 8) return "Stage 4";
+        if (yearNum <= 10) return "Stage 5";
+        return null;
+      };
+
+      const toTitleCase = (str) =>
+        str.replace(/\w\S*/g, txt =>
+          txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+        );
+
+      const mapFocusAreaToCategory = (focusArea) => {
+        const map = {
+          'Behaviour': 'behaviour',
+          'Observation': 'behaviour',
+          'Scientific Language': 'writing',
+          'Writing': 'writing',
+          'Evidence Use': 'detail',
+          'Data Interpretation': 'detail'
+        };
+        return map[focusArea] || null;
+      };
+
+      useEffect(() => {
+        if (!teacherResources.length || !submittedClasses.length) return;
+
+        const results = {};
+
+        submittedClasses.forEach(cls => {
+          const derivedStage = deriveStageFromYear(cls.year);
+          const weakestFocusArea = cls.weakestFocusArea;
+          const difficultyBand = cls.difficultyBand;
+
+          const scoredResources = teacherResources.map(resource => {
+            let score = 0;
+
+            if (Array.isArray(resource.stages) && resource.stages.includes(derivedStage)) {
+              score += 3;
+            }
+
+            if (Array.isArray(resource.focusAreas)) {
+              const mappedFocusAreas = resource.focusAreas
+                .map(f => mapFocusAreaToCategory(f))
+                .filter(Boolean);
+              if (mappedFocusAreas.includes(mapFocusAreaToCategory(weakestFocusArea))) {
+                score += 2;
+              }
+            }
+
+            if (resource.difficultyLevel && resource.difficultyLevel === difficultyBand) {
+              score += 1;
+            }
+
+            return { ...resource, _score: score };
+          })
+          .filter(r => r._score > 0)
+          .sort((a, b) => b._score - a._score);
+
+          if (scoredResources.length > 0) {
+            results[cls.id] = {
+              classData: cls,
+              resources: scoredResources
+            };
+          }
+        });
+
+        setRecommendationsByClass(results);
+
+      }, [teacherResources, submittedClasses]);
+
       const resetResourceForm = () => {
         setResourceTitle(''); setResourceDescription(''); setResourceUrl('');
         setResourceType(''); setResourceStages([]); setResourceTopics([]);
         setResourceFocusAreas([]); setResourceVenue(''); setResourceDraft(true);
-        setResourceSyllabusLinks([]);
+        setResourceSyllabusLinks([]); setResourceDifficulty('');
         setEditingResourceId(null);
       };
 
@@ -1486,6 +1575,7 @@
             focusAreas: resourceFocusAreas,
             syllabusLinks: resourceSyllabusLinks,
             venue: resourceVenue,
+            difficultyLevel: resourceDifficulty || null,
             draft: !publish,
             active: publish,
             publishAt: publish ? firebase.firestore.FieldValue.serverTimestamp() : null,
@@ -3537,10 +3627,10 @@
                           </div>
                           <div>
                             <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.4rem' }}>Focus Areas</label>
-                            {FOCUS_AREA_LIST.map(fa => (
-                              <label key={fa.value} style={{ display:'flex', alignItems:'center', gap:'0.4rem', fontSize:'0.82rem', color:'#555', marginBottom:'0.25rem', cursor:'pointer' }}>
-                                <input type="checkbox" checked={resourceFocusAreas.includes(fa.value)} onChange={()=>toggleMulti(setResourceFocusAreas, resourceFocusAreas, fa.value)} />
-                                {fa.label}
+                            {focusAreaOptions.map(f => (
+                              <label key={f} style={{ display:'flex', alignItems:'center', gap:'0.4rem', fontSize:'0.82rem', color:'#555', marginBottom:'0.25rem', cursor:'pointer' }}>
+                                <input type="checkbox" checked={resourceFocusAreas.includes(f)} onChange={()=>toggleMulti(setResourceFocusAreas, resourceFocusAreas, f)} />
+                                {toTitleCase(f)}
                               </label>
                             ))}
                           </div>
@@ -3575,6 +3665,17 @@
                           {resourceSyllabusLinks.length > 0 && (
                             <p style={{ fontSize:'0.72rem', color:'var(--jungle-mid)', marginTop:'0.35rem' }}>{resourceSyllabusLinks.length} outcome{resourceSyllabusLinks.length !== 1 ? 's' : ''} selected.</p>
                           )}
+                        </div>
+
+                        <div>
+                          <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Difficulty Level <span style={{ fontWeight:400, color:'#aaa' }}>(Optional)</span></label>
+                          <select value={resourceDifficulty} onChange={e=>setResourceDifficulty(e.target.value)}
+                            style={{ width:'100%', padding:'0.6rem 0.85rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', fontSize:'0.9rem', fontFamily:'DM Sans, sans-serif', background:'white' }}>
+                            <option value="">None</option>
+                            <option value="intervention">Intervention</option>
+                            <option value="consolidation">Consolidation</option>
+                            <option value="extension">Extension</option>
+                          </select>
                         </div>
 
                         <div>
@@ -3645,6 +3746,7 @@
                                 setResourceVenue(r.venue || '');
                                 setResourceSyllabusLinks(r.syllabusLinks || []);
                                 setResourceDraft(r.draft !== false);
+                                setResourceDifficulty(r.difficultyLevel || '');
                               }}
                               style={{ padding:'0.3rem 0.6rem', borderRadius:'6px', border:'1.5px solid #E5E5E5', background:'white', color:'#888', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' }}
                               onMouseEnter={e=>{ e.currentTarget.style.borderColor='var(--jungle-mid)'; e.currentTarget.style.color='var(--jungle-mid)'; }}
@@ -3870,6 +3972,7 @@
       }
 
       if (currentScreen === 'teacherDashboard') {
+        const hasRecommendations = recommendationsByClass && Object.keys(recommendationsByClass).length > 0;
         return (
           <div style={{ position:'fixed', inset:0, background:'var(--mist-light)', display:'flex', flexDirection:'column' }}>
             <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1rem 1.5rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0 }}>
@@ -3935,7 +4038,10 @@
                 </div>
 
                 {/* Resource Hub feature block */}
-                <div style={{ background:'linear-gradient(135deg, #0F3D2E 0%, #165A42 100%)', borderRadius:'20px', padding:'1.75rem 1.75rem', boxShadow:'0 8px 32px rgba(15,61,46,0.35)', marginBottom:'1.25rem', display:'flex', justifyContent:'space-between', alignItems:'center', gap:'1.5rem' }}>
+                <div style={{ position:'relative', background:'linear-gradient(135deg, #0F3D2E 0%, #165A42 100%)', borderRadius:'20px', padding:'1.75rem 1.75rem', boxShadow:'0 8px 32px rgba(15,61,46,0.35)', marginBottom:'1.25rem', display:'flex', justifyContent:'space-between', alignItems:'center', gap:'1.5rem' }}>
+                  {hasRecommendations && (
+                    <div style={{ position:'absolute', top:'10px', right:'10px', background:'rgba(255,255,255,0.18)', color:'#fff', border:'1px solid rgba(255,255,255,0.35)', borderRadius:'20px', padding:'0.35rem 0.8rem', fontSize:'0.75rem', fontWeight:500, letterSpacing:'0.3px' }}>Recommendations Available</div>
+                  )}
                   <div style={{ flex:1 }}>
                     <p style={{ fontSize:'0.68rem', fontWeight:700, color:'rgba(255,255,255,0.55)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:'0.4rem' }}>Resource Hub</p>
                     <h3 className="heading-display" style={{ fontSize:'1.25rem', color:'white', marginBottom:'0.4rem', lineHeight:1.25 }}>Curriculum-aligned teaching resources for your classes.</h3>
@@ -4052,76 +4158,158 @@
                 </div>
               </div>
             </div>
-
-            {/* Content */}
             <div style={{ flex:1, overflowY:'auto', padding:'1.5rem' }}>
               <div style={{ maxWidth:'820px', margin:'0 auto' }}>
 
-                {/* Filters */}
-                <div style={{ display:'flex', gap:'0.75rem', flexWrap:'wrap', marginBottom:'1.25rem', alignItems:'center' }}>
-                  <select value={filterStage} onChange={e=>setFilterStage(e.target.value)} style={selectStyle}>
-                    <option value="">All Stages</option>
-                    {allStages.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                  <select value={filterTopic} onChange={e=>setFilterTopic(e.target.value)} style={selectStyle}>
-                    <option value="">All Topics</option>
-                    {allTopics.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                  <select value={filterFocusArea} onChange={e=>setFilterFocusArea(e.target.value)} style={selectStyle}>
-                    <option value="">All Focus Areas</option>
-                    {allFocusAreas.map(f => <option key={f} value={f}>{f.replace(/_/g,' ')}</option>)}
-                  </select>
-                  {(filterStage || filterTopic || filterFocusArea) && (
-                    <button onClick={()=>{ setFilterStage(''); setFilterTopic(''); setFilterFocusArea(''); }}
-                      style={{ padding:'0.5rem 0.75rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', background:'white', color:'#888', fontSize:'0.78rem', fontWeight:600, cursor:'pointer' }}>
-                      Clear filters
-                    </button>
-                  )}
+                {/* Tab Switcher */}
+                <div style={{ display:'flex', gap:'0.5rem', marginBottom:'1.25rem' }}>
+                  <button onClick={()=>setResourceTab('library')}
+                    style={{ padding:'0.5rem 1.1rem', borderRadius:'50px', border:'1.5px solid', borderColor: resourceTab === 'library' ? 'var(--jungle-deep)' : '#E5E5E5', background: resourceTab === 'library' ? 'var(--jungle-deep)' : 'white', color: resourceTab === 'library' ? 'white' : '#888', fontSize:'0.82rem', fontWeight:700, cursor:'pointer', transition:'all 0.2s' }}>
+                    Library
+                  </button>
+                  <button onClick={()=>setResourceTab('recommended')}
+                    style={{ padding:'0.5rem 1.1rem', borderRadius:'50px', border:'1.5px solid', borderColor: resourceTab === 'recommended' ? 'var(--jungle-deep)' : '#E5E5E5', background: resourceTab === 'recommended' ? 'var(--jungle-deep)' : 'white', color: resourceTab === 'recommended' ? 'white' : '#888', fontSize:'0.82rem', fontWeight:700, cursor:'pointer', transition:'all 0.2s' }}>
+                    Recommended
+                  </button>
                 </div>
 
-                {/* Loading / Empty / List */}
-                {resourceLoading ? (
-                  <p style={{ color:'#aaa', fontSize:'0.85rem', fontStyle:'italic', textAlign:'center', padding:'2rem 0' }}>Loading resources...</p>
-                ) : filteredResources.length === 0 ? (
-                  <p style={{ color:'#bbb', fontSize:'0.85rem', fontStyle:'italic', textAlign:'center', padding:'2rem 0' }}>No resources available for the selected filters.</p>
-                ) : (
-                  <div style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
-                    {filteredResources.map(r => (
-                      <div key={r.id} className="fade-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem 1.5rem', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', display:'grid', gridTemplateColumns:'1fr 220px', gap:'1.25rem', alignItems:'start' }}>
-
-                        {/* Left column — 70% */}
-                        <div>
-                          <p style={{ fontWeight:700, color:'var(--jungle-deep)', fontSize:'1rem', marginBottom:'0.15rem' }}>{r.title}</p>
-                          {r.type && <span style={{ fontSize:'0.7rem', color:'#999', textTransform:'capitalize', marginBottom:'0.5rem', display:'inline-block' }}>{r.type}</span>}
-                          {r.description && <p style={{ color:'#666', fontSize:'0.82rem', lineHeight:1.55, marginBottom:'0.7rem' }}>{r.description}</p>}
-                          <div style={{ display:'flex', flexWrap:'wrap', gap:'0.1rem', marginBottom:'0.4rem' }}>
-                            {(r.stage      || []).map(s => <span key={s} style={tagStyle('green')}>{s}</span>)}
-                            {(r.topics     || []).map(t => <span key={t} style={tagStyle('blue')}>{t}</span>)}
-                            {(r.focusAreas || []).map(f => <span key={f} style={tagStyle('orange')}>{f.replace(/_/g,' ')}</span>)}
+                {resourceTab === 'recommended' ? (
+                  Object.keys(recommendationsByClass).length === 0 ? (
+                    <p style={{ color:'#bbb', fontSize:'0.85rem', fontStyle:'italic', textAlign:'center', padding:'2rem 0' }}>No recommendations available. Submit a class session to generate recommendations.</p>
+                  ) : (() => {
+                    const sortedRecommendations = Object.entries(recommendationsByClass)
+                      .sort((a, b) => {
+                        const aFocus = Math.min(
+                          a[1].classData.focusAverages?.behaviour ?? 100,
+                          a[1].classData.focusAverages?.scientificLanguage ?? 100,
+                          a[1].classData.focusAverages?.dataEvidence ?? 100
+                        );
+                        const bFocus = Math.min(
+                          b[1].classData.focusAverages?.behaviour ?? 100,
+                          b[1].classData.focusAverages?.scientificLanguage ?? 100,
+                          b[1].classData.focusAverages?.dataEvidence ?? 100
+                        );
+                        return aFocus - bFocus;
+                      });
+                    return sortedRecommendations.map(([classId, data]) => (
+                      <div key={classId} style={{ marginBottom:'2rem' }}>
+                        <div style={{ marginBottom:'0.75rem', paddingBottom:'0.5rem', borderBottom:'1.5px solid #E5E5E5' }}>
+                          <h4 style={{ fontWeight:700, color:'var(--jungle-deep)', fontSize:'0.95rem', marginBottom:'0.15rem' }}>{data.classData.className || classId} {data.classData.stage ? `— ${data.classData.stage}` : ''}</h4>
+                          <p style={{ fontSize:'0.78rem', color:'#888' }}>Focus: <strong style={{ color:'var(--jungle-mid)' }}>{data.classData.weakestFocusArea}</strong> &nbsp;·&nbsp; Band: <strong style={{ color:'var(--jungle-mid)', textTransform:'capitalize' }}>{data.classData.difficultyBand}</strong></p>
+                        </div>
+                        <div style={{ background:'#F4F8F6', padding:'0.85rem 1.1rem', borderRadius:'10px', marginBottom:'1rem', fontSize:'0.85rem', color:'#1B5E20' }}>
+                          <div style={{ marginBottom:'0.35rem' }}><strong>Quiz Average:</strong> {data.classData.quizAverage ?? 0}%</div>
+                          <div style={{ marginBottom:'0.35rem' }}><strong>Area of Growth:</strong> {data.classData.weakestFocusArea}</div>
+                          <div style={{ opacity:0.85 }}>
+                            Behaviour: {data.classData.focusAverages?.behaviour ?? 0}% |
+                            Writing: {data.classData.focusAverages?.scientificLanguage ?? 0}% |
+                            Detail: {data.classData.focusAverages?.dataEvidence ?? 0}%
                           </div>
-                          {(r.syllabusLinks || []).length > 0 && (
-                            <div style={{ display:'flex', flexWrap:'wrap', gap:'0.25rem', marginTop:'0.25rem' }}>
-                              {(r.syllabusLinks || []).map(l => (
-                                <span key={l.code} title={l.description?.replace(/\\'9[67]/g, '').replace(/\\b7/g, '')} style={{ fontSize:'0.68rem', fontWeight:700, color:'var(--jungle-mid)', background:'#F0FDF4', padding:'0.15rem 0.45rem', borderRadius:'5px', cursor:'default' }}>{l.code}</span>
-                              ))}
+                        </div>
+                        <div style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
+                          {data.resources.map(r => (
+                            <div key={r.id} style={{ border:'1px solid #E0EFE6', borderLeft:'4px solid #2E7D32', background:'#FCFEFD', borderRadius:'8px', padding:'0.5rem', marginBottom:'1rem' }}>
+                              <div className="fade-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem 1.5rem', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', display:'grid', gridTemplateColumns:'1fr 220px', gap:'1.25rem', alignItems:'start' }}>
+                                <div>
+                                  <p style={{ fontWeight:700, color:'var(--jungle-deep)', fontSize:'1rem', marginBottom:'0.15rem' }}>{r.title}</p>
+                                  {r.type && <span style={{ fontSize:'0.7rem', color:'#999', textTransform:'capitalize', marginBottom:'0.5rem', display:'inline-block' }}>{r.type}</span>}
+                                  {r.description && <p style={{ color:'#666', fontSize:'0.82rem', lineHeight:1.55, marginBottom:'0.7rem' }}>{r.description}</p>}
+                                  <div style={{ display:'flex', flexWrap:'wrap', gap:'0.1rem', marginBottom:'0.4rem' }}>
+                                    {(r.stage      || []).map(s => <span key={s} style={tagStyle('green')}>{s}</span>)}
+                                    {(r.topics     || []).map(t => <span key={t} style={tagStyle('blue')}>{t}</span>)}
+                                    {(r.focusAreas || []).map(f => <span key={f} style={tagStyle('orange')}>{f.replace(/_/g,' ')}</span>)}
+                                  </div>
+                                  {(r.syllabusLinks || []).length > 0 && (
+                                    <div style={{ display:'flex', flexWrap:'wrap', gap:'0.25rem', marginTop:'0.25rem' }}>
+                                      {(r.syllabusLinks || []).map(l => (
+                                        <span key={l.code} title={l.description?.replace(/\\'9[67]/g, '').replace(/\\b7/g, '')} style={{ fontSize:'0.68rem', fontWeight:700, color:'var(--jungle-mid)', background:'#F0FDF4', padding:'0.15rem 0.45rem', borderRadius:'5px', cursor:'default' }}>{l.code}</span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                                <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem' }}>
+                                  {renderResourceGraphic(r.type)}
+                                  <a href={r.url} target="_blank" rel="noopener noreferrer"
+                                    style={{ display:'block', width:'100%', padding:'0.65rem 0', borderRadius:'10px', background:'linear-gradient(135deg, var(--jungle-deep), var(--jungle-mid))', color:'white', fontSize:'0.85rem', fontWeight:700, textDecoration:'none', textAlign:'center', boxSizing:'border-box' }}>
+                                    Open Resource
+                                  </a>
+                                </div>
+                              </div>
                             </div>
-                          )}
+                          ))}
                         </div>
-
-                        {/* Right column — 30% */}
-                        <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem' }}>
-                          {/* Resource Type Graphic */}
-                          {renderResourceGraphic(r.type)}
-                          {/* Open button */}
-                          <a href={r.url} target="_blank" rel="noopener noreferrer"
-                            style={{ display:'block', width:'100%', padding:'0.65rem 0', borderRadius:'10px', background:'linear-gradient(135deg, var(--jungle-deep), var(--jungle-mid))', color:'white', fontSize:'0.85rem', fontWeight:700, textDecoration:'none', textAlign:'center', boxSizing:'border-box' }}>
-                            Open Resource
-                          </a>
-                        </div>
-
                       </div>
-                    ))}
-                  </div>
+                    ));
+                  })()
+                ) : (
+                  <>
+                    {/* Filters */}
+                    <div style={{ display:'flex', gap:'0.75rem', flexWrap:'wrap', marginBottom:'1.25rem', alignItems:'center' }}>
+                      <select value={filterStage} onChange={e=>setFilterStage(e.target.value)} style={selectStyle}>
+                        <option value="">All Stages</option>
+                        {allStages.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                      <select value={filterTopic} onChange={e=>setFilterTopic(e.target.value)} style={selectStyle}>
+                        <option value="">All Topics</option>
+                        {allTopics.map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                      <select value={filterFocusArea} onChange={e=>setFilterFocusArea(e.target.value)} style={selectStyle}>
+                        <option value="">All Focus Areas</option>
+                        {allFocusAreas.map(f => <option key={f} value={f}>{f.replace(/_/g,' ')}</option>)}
+                      </select>
+                      {(filterStage || filterTopic || filterFocusArea) && (
+                        <button onClick={()=>{ setFilterStage(''); setFilterTopic(''); setFilterFocusArea(''); }}
+                          style={{ padding:'0.5rem 0.75rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', background:'white', color:'#888', fontSize:'0.78rem', fontWeight:600, cursor:'pointer' }}>
+                          Clear filters
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Loading / Empty / List */}
+                    {resourceLoading ? (
+                      <p style={{ color:'#aaa', fontSize:'0.85rem', fontStyle:'italic', textAlign:'center', padding:'2rem 0' }}>Loading resources...</p>
+                    ) : filteredResources.length === 0 ? (
+                      <p style={{ color:'#bbb', fontSize:'0.85rem', fontStyle:'italic', textAlign:'center', padding:'2rem 0' }}>No resources available for the selected filters.</p>
+                    ) : (
+                      <div style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
+                        {filteredResources.map(r => (
+                          <div key={r.id} className="fade-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem 1.5rem', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', display:'grid', gridTemplateColumns:'1fr 220px', gap:'1.25rem', alignItems:'start' }}>
+
+                            {/* Left column — 70% */}
+                            <div>
+                              <p style={{ fontWeight:700, color:'var(--jungle-deep)', fontSize:'1rem', marginBottom:'0.15rem' }}>{r.title}</p>
+                              {r.type && <span style={{ fontSize:'0.7rem', color:'#999', textTransform:'capitalize', marginBottom:'0.5rem', display:'inline-block' }}>{r.type}</span>}
+                              {r.description && <p style={{ color:'#666', fontSize:'0.82rem', lineHeight:1.55, marginBottom:'0.7rem' }}>{r.description}</p>}
+                              <div style={{ display:'flex', flexWrap:'wrap', gap:'0.1rem', marginBottom:'0.4rem' }}>
+                                {(r.stage      || []).map(s => <span key={s} style={tagStyle('green')}>{s}</span>)}
+                                {(r.topics     || []).map(t => <span key={t} style={tagStyle('blue')}>{t}</span>)}
+                                {(r.focusAreas || []).map(f => <span key={f} style={tagStyle('orange')}>{f.replace(/_/g,' ')}</span>)}
+                              </div>
+                              {(r.syllabusLinks || []).length > 0 && (
+                                <div style={{ display:'flex', flexWrap:'wrap', gap:'0.25rem', marginTop:'0.25rem' }}>
+                                  {(r.syllabusLinks || []).map(l => (
+                                    <span key={l.code} title={l.description?.replace(/\\'9[67]/g, '').replace(/\\b7/g, '')} style={{ fontSize:'0.68rem', fontWeight:700, color:'var(--jungle-mid)', background:'#F0FDF4', padding:'0.15rem 0.45rem', borderRadius:'5px', cursor:'default' }}>{l.code}</span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Right column — 30% */}
+                            <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem' }}>
+                              {/* Resource Type Graphic */}
+                              {renderResourceGraphic(r.type)}
+                              {/* Open button */}
+                              <a href={r.url} target="_blank" rel="noopener noreferrer"
+                                style={{ display:'block', width:'100%', padding:'0.65rem 0', borderRadius:'10px', background:'linear-gradient(135deg, var(--jungle-deep), var(--jungle-mid))', color:'white', fontSize:'0.85rem', fontWeight:700, textDecoration:'none', textAlign:'center', boxSizing:'border-box' }}>
+                                Open Resource
+                              </a>
+                            </div>
+
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
 
               </div>
