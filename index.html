@@ -437,7 +437,7 @@
       const [resourceLoading, setResourceLoading] = useState(false);
       const [submittedClasses, setSubmittedClasses] = useState([]);
       const [recommendationsByClass, setRecommendationsByClass] = useState({});
-      const [resourceTab, setResourceTab] = useState('library');
+      const [resourceTab, setResourceTab] = useState('recommended');
       const [filterStage, setFilterStage] = useState('');
       const [filterTopic, setFilterTopic] = useState('');
       const [filterFocusArea, setFilterFocusArea] = useState('');
@@ -4017,7 +4017,7 @@
                 {/* Resource Hub feature block */}
                 <div style={{ position:'relative', background:'linear-gradient(135deg, #0F3D2E 0%, #165A42 100%)', borderRadius:'20px', padding:'1.75rem 1.75rem', boxShadow:'0 8px 32px rgba(15,61,46,0.35)', marginBottom:'1.25rem', display:'flex', justifyContent:'space-between', alignItems:'center', gap:'1.5rem' }}>
                   {hasRecommendations && (
-                    <div style={{ position:'absolute', top:'10px', right:'10px', background:'#E53935', color:'#fff', borderRadius:'50%', width:'20px', height:'20px', fontSize:'0.75rem', fontWeight:600, display:'flex', alignItems:'center', justifyContent:'center' }}>!</div>
+                    <div style={{ position:'absolute', top:'10px', right:'10px', background:'#2E7D32', color:'#fff', padding:'0.35rem 0.75rem', borderRadius:'20px', fontSize:'0.7rem', fontWeight:600, letterSpacing:'0.4px' }}>Recommendations Available</div>
                   )}
                   <div style={{ flex:1 }}>
                     <p style={{ fontSize:'0.68rem', fontWeight:700, color:'rgba(255,255,255,0.55)', textTransform:'uppercase', letterSpacing:'0.12em', marginBottom:'0.4rem' }}>Resource Hub</p>
