@@ -1898,6 +1898,14 @@
         }
       ];
 
+      const animalsToRender = React.useMemo(() => {
+        const baseAnimals = Array.isArray(animals) ? animals : [];
+        const fsAnimals = Array.isArray(firestoreAnimals) ? firestoreAnimals : [];
+        const hardcodedIds = new Set(baseAnimals.map(a => a.id));
+        const additionalAnimals = fsAnimals.filter(a => !hardcodedIds.has(a.id));
+        return [...baseAnimals, ...additionalAnimals];
+      }, [firestoreAnimals]);
+
       // ---------- HELPERS ----------
       const calculateDistance = (lat1, lon1, lat2, lon2) => {
         const R = 6371e3;
@@ -2346,14 +2354,6 @@
           </div>
         );
       }
-
-      const animalsToRender = React.useMemo(() => {
-        const baseAnimals = Array.isArray(animals) ? animals : [];
-        const fsAnimals = Array.isArray(firestoreAnimals) ? firestoreAnimals : [];
-        const hardcodedIds = new Set(baseAnimals.map(a => a.id));
-        const additionalAnimals = fsAnimals.filter(a => !hardcodedIds.has(a.id));
-        return [...baseAnimals, ...additionalAnimals];
-      }, [firestoreAnimals]);
 
       if (currentScreen === 'map') {
         if (!statusLoaded) {
