@@ -1474,18 +1474,30 @@
       }, [currentScreen]);
 
       // Teacher Resource Hub: compute recommendations per submitted class
+      const deriveStageFromYear = (year) => {
+        const yearNum = parseInt(String(year).replace(/[^0-9]/g, ''), 10);
+        if (yearNum <= 2) return "Stage 1";
+        if (yearNum <= 4) return "Stage 2";
+        if (yearNum <= 6) return "Stage 3";
+        if (yearNum <= 8) return "Stage 4";
+        if (yearNum <= 10) return "Stage 5";
+        return null;
+      };
+
       useEffect(() => {
         if (!teacherResources.length || !submittedClasses.length) return;
 
         const results = {};
 
         submittedClasses.forEach(cls => {
-          const { stage, weakestFocusArea, difficultyBand } = cls;
+          const derivedStage = deriveStageFromYear(cls.year);
+          const weakestFocusArea = cls.weakestFocusArea;
+          const difficultyBand = cls.difficultyBand;
 
           const scoredResources = teacherResources.map(resource => {
             let score = 0;
 
-            if (Array.isArray(resource.stages) && resource.stages.includes(stage)) {
+            if (Array.isArray(resource.stages) && resource.stages.includes(derivedStage)) {
               score += 3;
             }
 
