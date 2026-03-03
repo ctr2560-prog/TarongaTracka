@@ -2348,13 +2348,12 @@
       }
 
       const animalsToRender = React.useMemo(() => {
-        if (!firestoreAnimals || firestoreAnimals.length === 0) {
-          return animals;
-        }
-        const hardcodedIds = new Set(animals.map(a => a.id));
-        const additionalAnimals = firestoreAnimals.filter(a => !hardcodedIds.has(a.id));
-        return [...animals, ...additionalAnimals];
-      }, [animals, firestoreAnimals]);
+        const baseAnimals = Array.isArray(animals) ? animals : [];
+        const fsAnimals = Array.isArray(firestoreAnimals) ? firestoreAnimals : [];
+        const hardcodedIds = new Set(baseAnimals.map(a => a.id));
+        const additionalAnimals = fsAnimals.filter(a => !hardcodedIds.has(a.id));
+        return [...baseAnimals, ...additionalAnimals];
+      }, [firestoreAnimals]);
 
       if (currentScreen === 'map') {
         if (!statusLoaded) {
@@ -2438,7 +2437,7 @@
             </div>
             <div style={{ maxWidth:'1400px', margin:'0 auto', padding:'2rem 1rem' }}>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))', gap:'1.5rem' }}>
-                {animalsToRender.map(animal=>({...animal,...checkAnimalProximity(animal)}))
+                {Array.isArray(animalsToRender) && animalsToRender.map(animal=>({...animal,...checkAnimalProximity(animal)}))
                   .sort((a,b)=>{
                     if(foundAnimals.has(a.id)&&!foundAnimals.has(b.id)) return 1;
                     if(!foundAnimals.has(a.id)&&foundAnimals.has(b.id)) return -1;
@@ -2527,7 +2526,7 @@
                 <div style={{ background:'white', borderRadius:'16px', padding:'clamp(0.8rem, 2vh, 1.2rem)', boxShadow:'0 8px 32px rgba(0,0,0,0.1)', marginBottom:'1rem' }}>
                   <p style={{ fontSize:'clamp(0.9rem, 2vh, 1.1rem)', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'clamp(0.8rem, 1.5vh, 1rem)', lineHeight:1.3, textAlign:'center' }}>{currentQuestion.q}</p>
                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'clamp(0.5rem, 1vh, 0.8rem)', marginTop:'clamp(0.8rem, 1.5vh, 1rem)' }}>
-                    {currentQuestion.options.map((option,oIndex)=>(
+                    {Array.isArray(currentQuestion.options) && currentQuestion.options.map((option,oIndex)=>(
                       <button key={oIndex} onClick={()=>handleQuizAnswer(currentQuestionIndex,oIndex)}
                         style={{ textAlign:'center', padding:'clamp(1rem, 2.5vh, 1.5rem) clamp(0.5rem, 1vh, 0.8rem)', borderRadius:'12px', border:'3px solid var(--jungle-light)', background:'white', cursor:'pointer', transition:'all 0.2s ease', fontSize:'clamp(0.85rem, 1.8vh, 1rem)', fontWeight:600, color:'var(--jungle-deep)', lineHeight:1.2, minHeight:'clamp(70px, 12vh, 90px)', display:'flex', alignItems:'center', justifyContent:'center', touchAction:'manipulation', WebkitTapHighlightColor:'transparent' }}>
                         {option}
@@ -2591,7 +2590,7 @@
               ) : <div style={{ width:'80px' }} />}
             </div>
             <div style={{ maxWidth:'900px', margin:'0 auto', display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(170px, 1fr))', gap:'1.5rem', padding:'1rem' }}>
-              {animalsToRender.map(animal=>{
+              {Array.isArray(animalsToRender) && animalsToRender.map(animal=>{
                 const earned=foundAnimals.has(animal.id);
                 const badge=badges.find(b=>b.animalId===animal.id);
                 return (
