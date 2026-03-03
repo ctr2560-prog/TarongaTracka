@@ -2347,9 +2347,14 @@
         );
       }
 
-      const animalsToRender = firestoreAnimals && firestoreAnimals.length > 0
-        ? firestoreAnimals
-        : animals;
+      const animalsToRender = React.useMemo(() => {
+        if (!firestoreAnimals || firestoreAnimals.length === 0) {
+          return animals;
+        }
+        const hardcodedIds = new Set(animals.map(a => a.id));
+        const additionalAnimals = firestoreAnimals.filter(a => !hardcodedIds.has(a.id));
+        return [...animals, ...additionalAnimals];
+      }, [animals, firestoreAnimals]);
 
       if (currentScreen === 'map') {
         if (!statusLoaded) {
