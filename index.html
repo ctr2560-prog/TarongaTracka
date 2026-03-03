@@ -331,12 +331,13 @@
         'Interdependence','Literacy'
       ];
 
-      const FOCUS_AREA_LIST = [
-        { label: 'Behaviour',           value: 'behaviour' },
-        { label: 'Scientific Language', value: 'scientific_language' },
-        { label: 'Evidence Use',        value: 'evidence_use' },
-        { label: 'Data Interpretation', value: 'data_interpretation' },
-        { label: 'Writing',             value: 'writing' }
+      const focusAreaOptions = [
+        'Behaviour',
+        'Observation',
+        'Scientific Language',
+        'Writing',
+        'Evidence Use',
+        'Data Interpretation'
       ];
 
       const SYLLABUS_OUTCOMES = [
@@ -1484,6 +1485,23 @@
         return null;
       };
 
+      const toTitleCase = (str) =>
+        str.replace(/\w\S*/g, txt =>
+          txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+        );
+
+      const mapFocusAreaToCategory = (focusArea) => {
+        const map = {
+          'Behaviour': 'behaviour',
+          'Observation': 'behaviour',
+          'Scientific Language': 'writing',
+          'Writing': 'writing',
+          'Evidence Use': 'detail',
+          'Data Interpretation': 'detail'
+        };
+        return map[focusArea] || null;
+      };
+
       useEffect(() => {
         if (!teacherResources.length || !submittedClasses.length) return;
 
@@ -1501,8 +1519,13 @@
               score += 3;
             }
 
-            if (Array.isArray(resource.focusAreas) && resource.focusAreas.includes(weakestFocusArea)) {
-              score += 2;
+            if (Array.isArray(resource.focusAreas)) {
+              const mappedFocusAreas = resource.focusAreas
+                .map(f => mapFocusAreaToCategory(f))
+                .filter(Boolean);
+              if (mappedFocusAreas.includes(mapFocusAreaToCategory(weakestFocusArea))) {
+                score += 2;
+              }
             }
 
             if (resource.difficultyLevel && resource.difficultyLevel === difficultyBand) {
@@ -3604,10 +3627,10 @@
                           </div>
                           <div>
                             <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.4rem' }}>Focus Areas</label>
-                            {FOCUS_AREA_LIST.map(fa => (
-                              <label key={fa.value} style={{ display:'flex', alignItems:'center', gap:'0.4rem', fontSize:'0.82rem', color:'#555', marginBottom:'0.25rem', cursor:'pointer' }}>
-                                <input type="checkbox" checked={resourceFocusAreas.includes(fa.value)} onChange={()=>toggleMulti(setResourceFocusAreas, resourceFocusAreas, fa.value)} />
-                                {fa.label}
+                            {focusAreaOptions.map(f => (
+                              <label key={f} style={{ display:'flex', alignItems:'center', gap:'0.4rem', fontSize:'0.82rem', color:'#555', marginBottom:'0.25rem', cursor:'pointer' }}>
+                                <input type="checkbox" checked={resourceFocusAreas.includes(f)} onChange={()=>toggleMulti(setResourceFocusAreas, resourceFocusAreas, f)} />
+                                {toTitleCase(f)}
                               </label>
                             ))}
                           </div>
@@ -4179,8 +4202,8 @@
                           <div style={{ marginBottom:'0.35rem' }}><strong>Area of Growth:</strong> {data.classData.weakestFocusArea}</div>
                           <div style={{ opacity:0.85 }}>
                             Behaviour: {data.classData.focusAverages?.behaviour ?? 0}% |
-                            Scientific Language: {data.classData.focusAverages?.scientificLanguage ?? 0}% |
-                            Data &amp; Evidence: {data.classData.focusAverages?.dataEvidence ?? 0}%
+                            Writing: {data.classData.focusAverages?.scientificLanguage ?? 0}% |
+                            Detail: {data.classData.focusAverages?.dataEvidence ?? 0}%
                           </div>
                         </div>
                         <div style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
