@@ -4267,6 +4267,8 @@
               }
             });
 
+            console.log("CLASS ID BEING UPDATED:", selectedClass);
+            console.log("SNAPSHOT SIZE:", snapshot.size);
             const classRef = window.db.collection('classes').doc(selectedClass);
             batch.set(classRef, {
               sessionClosed: true,
@@ -4291,6 +4293,7 @@
             });
 
             await batch.commit();
+            console.log("BATCH COMMITTED");
             setSubmitSuccess(true);
             setTimeout(() => setSubmitSuccess(false), 2500);
           } catch (err) {
