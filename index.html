@@ -427,6 +427,7 @@
       const [resourceFocusAreas, setResourceFocusAreas] = useState([]);
       const [resourceVenue, setResourceVenue] = useState('');
       const [resourceDraft, setResourceDraft] = useState(true);
+      const [resourceDifficulty, setResourceDifficulty] = useState('');
       const [savingResource, setSavingResource] = useState(false);
       const [resourceSyllabusLinks, setResourceSyllabusLinks] = useState([]);
       const [resourcePreviewImage, setResourcePreviewImage] = useState('');
@@ -1464,7 +1465,7 @@
         setResourceTitle(''); setResourceDescription(''); setResourceUrl('');
         setResourceType(''); setResourceStages([]); setResourceTopics([]);
         setResourceFocusAreas([]); setResourceVenue(''); setResourceDraft(true);
-        setResourceSyllabusLinks([]);
+        setResourceSyllabusLinks([]); setResourceDifficulty('');
         setEditingResourceId(null);
       };
 
@@ -1486,6 +1487,7 @@
             focusAreas: resourceFocusAreas,
             syllabusLinks: resourceSyllabusLinks,
             venue: resourceVenue,
+            difficultyLevel: resourceDifficulty || null,
             draft: !publish,
             active: publish,
             publishAt: publish ? firebase.firestore.FieldValue.serverTimestamp() : null,
@@ -3578,6 +3580,17 @@
                         </div>
 
                         <div>
+                          <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Difficulty Level <span style={{ fontWeight:400, color:'#aaa' }}>(Optional)</span></label>
+                          <select value={resourceDifficulty} onChange={e=>setResourceDifficulty(e.target.value)}
+                            style={{ width:'100%', padding:'0.6rem 0.85rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', fontSize:'0.9rem', fontFamily:'DM Sans, sans-serif', background:'white' }}>
+                            <option value="">None</option>
+                            <option value="intervention">Intervention</option>
+                            <option value="consolidation">Consolidation</option>
+                            <option value="extension">Extension</option>
+                          </select>
+                        </div>
+
+                        <div>
                           <label style={{ display:'flex', alignItems:'center', gap:'0.5rem', fontSize:'0.82rem', color:'#555', cursor:'pointer' }}>
                             <input type="checkbox" checked={resourceDraft} onChange={e=>setResourceDraft(e.target.checked)} />
                             Save as draft (do not publish)
@@ -3645,6 +3658,7 @@
                                 setResourceVenue(r.venue || '');
                                 setResourceSyllabusLinks(r.syllabusLinks || []);
                                 setResourceDraft(r.draft !== false);
+                                setResourceDifficulty(r.difficultyLevel || '');
                               }}
                               style={{ padding:'0.3rem 0.6rem', borderRadius:'6px', border:'1.5px solid #E5E5E5', background:'white', color:'#888', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' }}
                               onMouseEnter={e=>{ e.currentTarget.style.borderColor='var(--jungle-mid)'; e.currentTarget.style.color='var(--jungle-mid)'; }}
