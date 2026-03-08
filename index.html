@@ -366,6 +366,7 @@
       const [userLocation, setUserLocation] = useState(null);
       const [locationEnabled, setLocationEnabled] = useState(savedProgress?.locationEnabled || false);
       const [foundAnimals, setFoundAnimals] = useState(new Set(savedProgress?.foundAnimals || []));
+      const [showZooMap, setShowZooMap] = useState(false);
       const [firestoreAnimals, setFirestoreAnimals] = useState([]);
       const [currentAnimal, setCurrentAnimal] = useState(null);
       const [quizAnswers, setQuizAnswers] = useState({});
@@ -2431,6 +2432,10 @@
                     {activityCompleted ? ' Submitted' : isSubmittingActivity ? ' Submitting...' : ' Complete Activity'}
                   </button>
                 )}
+                <button onClick={()=>setShowZooMap(true)}
+                  style={{ padding:'6px 12px', background:'#2E7D32', color:'#fff', border:'none', borderRadius:'6px', cursor:'pointer', marginLeft:'10px', fontSize:'0.82rem', fontWeight:600 }}>
+                  Zoo Map
+                </button>
                 <button className="points-card" onClick={()=>setCurrentScreen('collection')} style={{ background:'rgba(255,255,255,0.2)', border:'2px solid rgba(255,255,255,0.4)', color:'white', padding:'0.8rem', borderRadius:'16px', cursor:'pointer', textAlign:'right' }}>
                   <div style={{ fontSize:'2rem', color:'var(--safari-gold)', fontWeight:700, marginBottom:'0.2rem' }}>{totalPoints}</div>
                   <div style={{ color:'rgba(255,255,255,0.9)', fontSize:'0.85rem', fontWeight:600 }}> {foundAnimals.size}/{animalsToRender.length} Badges</div>
@@ -2475,11 +2480,22 @@
                   })}
               </div>
             </div>
+            {showZooMap && (
+              <div style={{ position:'fixed', top:0, left:0, width:'100%', height:'100%', background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999 }}>
+                <div style={{ background:'#fff', padding:'20px', borderRadius:'10px', maxWidth:'90%', maxHeight:'90%', textAlign:'center' }}>
+                  <img src="images/taronga-map.png" style={{ maxWidth:'100%', maxHeight:'70vh' }} alt="Zoo Map" />
+                  <div style={{ marginTop:'15px' }}>
+                    <button onClick={()=>setShowZooMap(false)}
+                      style={{ padding:'8px 16px', background:'#444', color:'#fff', border:'none', borderRadius:'6px', cursor:'pointer' }}>
+                      Close Map
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         );
       }
-
-      if (currentScreen === 'animal' && currentAnimal) {
         const currentQuestion = currentAnimal.questions[currentQuestionIndex];
         return (
           <div style={{ position:'fixed', inset:0, overflow:'hidden', background:showResult?(isCorrect?'linear-gradient(135deg, #10b981 0%, #059669 100%)':'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'):'var(--mist-light)', transition:'background 0.5s ease', display:'flex', flexDirection:'column' }}>
