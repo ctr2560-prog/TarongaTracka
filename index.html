@@ -1916,6 +1916,24 @@
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
       };
 
+      function getBearing(lat1, lon1, lat2, lon2) {
+        const toRad = deg => deg * Math.PI / 180;
+        const toDeg = rad => rad * 180 / Math.PI;
+        const φ1 = toRad(lat1), φ2 = toRad(lat2);
+        const Δλ = toRad(lon2 - lon1);
+        const y = Math.sin(Δλ) * Math.cos(φ2);
+        const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+        return (toDeg(Math.atan2(y, x)) + 360) % 360;
+      }
+
+      function getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371000;
+        const toRad = deg => deg * Math.PI / 180;
+        const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+        const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2);
+        return Math.round(6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+      }
+
       const enableLocation = () => {
         if (sessionLocked) return;
         
@@ -2454,6 +2472,10 @@
                   .map((animal,index)=>{
                     const {nearby,distance}=animal;
                     const alreadyFound=foundAnimals.has(animal.id);
+                    const userLat = userLocation?.latitude;
+                    const userLon = userLocation?.longitude;
+                    const compassBearing = animal.id === 'koala' ? 0 : (userLat && userLon ? getBearing(userLat, userLon, animal.latitude, animal.longitude) : 0);
+                    const compassDistance = animal.id === 'koala' ? 0 : (userLat && userLon ? getDistance(userLat, userLon, animal.latitude, animal.longitude) : null);
                     return (
                       <div key={animal.id} onClick={(e)=>{if(!alreadyFound)discoverAnimal(animal,e);}} className="animate-fade-in-up"
                         style={{ position:'relative', height:'400px', borderRadius:'16px', overflow:'hidden', cursor:alreadyFound?'default':'pointer', boxShadow:'0 8px 24px rgba(0,0,0,0.12)', transition:'all 0.4s ease', animationDelay:`${index*0.1}s`, transform:nearby&&!alreadyFound?'scale(1.03)':'scale(1)' }}
@@ -2463,7 +2485,13 @@
                         <div style={{ position:'absolute', inset:0, background:'linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.7) 100%)' }} />
                         <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'2rem', color:'white', zIndex:10 }}>
                           <h3 className="heading-display" style={{ fontSize:'2rem', marginBottom:'0.3rem', textShadow:'0 2px 8px rgba(0,0,0,0.3)' }}>{animal.name}</h3>
-                          <p className="serif-accent" style={{ fontSize:'1rem', opacity:0.9, marginBottom:'1rem' }}>{animal.scientificName}</p>
+                          <p className="serif-accent" style={{ fontSize:'1rem', opacity:0.9, marginBottom:'0.5rem' }}>{animal.scientificName}</p>
+                          {compassDistance !== null && !alreadyFound && (
+                            <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'0.75rem', fontSize:'0.85rem', color:'rgba(255,255,255,0.85)' }}>
+                              <div style={{ transform:`rotate(${compassBearing}deg)`, fontSize:'16px', lineHeight:1 }}>▲</div>
+                              <span>{compassDistance}m</span>
+                            </div>
+                          )}
                           {alreadyFound ? (
                             <div style={{ display:'inline-block', background:'rgba(46,125,85,0.9)', backdropFilter:'blur(10px)', padding:'0.6rem 1.5rem', borderRadius:'30px', fontWeight:600, fontSize:'0.95rem', border:'2px solid rgba(255,255,255,0.3)' }}> Discovered</div>
                           ) : nearby ? (
