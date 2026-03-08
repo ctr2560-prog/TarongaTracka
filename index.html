@@ -364,6 +364,7 @@
       ];
       const [currentScreen, setCurrentScreen] = useState(savedProgress?.currentScreen || 'home');
       const [userLocation, setUserLocation] = useState(null);
+      const [compassHeading, setCompassHeading] = useState(0);
       const [locationEnabled, setLocationEnabled] = useState(savedProgress?.locationEnabled || false);
       const [foundAnimals, setFoundAnimals] = useState(new Set(savedProgress?.foundAnimals || []));
       const [showZooMap, setShowZooMap] = useState(false);
@@ -1787,6 +1788,18 @@
           });
       }, []);
 
+      useEffect(() => {
+        const handleOrientation = (event) => {
+          if (event.alpha !== null) {
+            setCompassHeading(event.alpha);
+          }
+        };
+        window.addEventListener("deviceorientation", handleOrientation);
+        return () => {
+          window.removeEventListener("deviceorientation", handleOrientation);
+        };
+      }, []);
+
       // ---------- DATA ----------
       const animals = [
         {
@@ -2488,7 +2501,7 @@
                           <p className="serif-accent" style={{ fontSize:'1rem', opacity:0.9, marginBottom:'0.5rem' }}>{animal.scientificName}</p>
                           {compassDistance !== null && !alreadyFound && (
                             <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'0.75rem', fontSize:'0.85rem', color:'rgba(255,255,255,0.85)' }}>
-                              <div style={{ transform:`rotate(${compassBearing}deg)`, fontSize:'16px', lineHeight:1 }}>▲</div>
+                              <div style={{ transform:`rotate(${compassBearing - compassHeading}deg)`, fontSize:'16px', lineHeight:1 }}>→</div>
                               <span>{compassDistance}m</span>
                             </div>
                           )}
@@ -2511,7 +2524,9 @@
             {showZooMap && (
               <div style={{ position:'fixed', top:0, left:0, width:'100%', height:'100%', background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999 }}>
                 <div style={{ background:'#fff', padding:'20px', borderRadius:'10px', maxWidth:'90%', maxHeight:'90%', textAlign:'center' }}>
-                  <img src="images/taronga-map.png" style={{ maxWidth:'100%', maxHeight:'70vh' }} alt="Zoo Map" />
+                  <div style={{ overflow:'auto', maxHeight:'70vh' }}>
+                    <img src="images/taronga-map.png" style={{ width:'100%', transformOrigin:'top left' }} alt="Zoo Map" />
+                  </div>
                   <div style={{ marginTop:'15px' }}>
                     <button onClick={()=>setShowZooMap(false)}
                       style={{ padding:'8px 16px', background:'#444', color:'#fff', border:'none', borderRadius:'6px', cursor:'pointer' }}>
