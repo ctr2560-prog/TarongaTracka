@@ -364,7 +364,6 @@
       ];
       const [currentScreen, setCurrentScreen] = useState(savedProgress?.currentScreen || 'home');
       const [userLocation, setUserLocation] = useState(null);
-      const [compassHeading, setCompassHeading] = useState(0);
       const [locationEnabled, setLocationEnabled] = useState(savedProgress?.locationEnabled || false);
       const [foundAnimals, setFoundAnimals] = useState(new Set(savedProgress?.foundAnimals || []));
       const [showZooMap, setShowZooMap] = useState(false);
@@ -1788,30 +1787,6 @@
           });
       }, []);
 
-      useEffect(() => {
-        const enableCompass = async () => {
-          if (
-            typeof DeviceOrientationEvent !== "undefined" &&
-            typeof DeviceOrientationEvent.requestPermission === "function"
-          ) {
-            try {
-              const permission = await DeviceOrientationEvent.requestPermission();
-              if (permission === "granted") {
-                window.addEventListener("deviceorientation", handleOrientation);
-              }
-            } catch (err) {
-              console.error("Compass permission error:", err);
-            }
-          } else {
-            window.addEventListener("deviceorientation", handleOrientation);
-          }
-        };
-        enableCompass();
-        return () => {
-          window.removeEventListener("deviceorientation", handleOrientation);
-        };
-      }, []);
-
       // ---------- DATA ----------
       const animals = [
         {
@@ -1933,16 +1908,9 @@
       }, [firestoreAnimals]);
 
       // ---------- HELPERS ----------
-      function handleOrientation(event) {
-        let heading = null;
-        if (event.webkitCompassHeading !== undefined) {
-          heading = event.webkitCompassHeading;
-        } else if (event.alpha !== null) {
-          heading = event.alpha;
-        }
-        if (heading !== null) {
-          setCompassHeading(heading);
-        }
+      function bearingToArrow(bearing) {
+        const arrows = ['↑','↗','→','↘','↓','↙','←','↖'];
+        return arrows[Math.round(bearing / 45) % 8];
       }
 
       const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -2511,7 +2479,7 @@
                     const alreadyFound=foundAnimals.has(animal.id);
                     const userLat = userLocation?.latitude;
                     const userLon = userLocation?.longitude;
-                    const compassBearing = animal.id === 'koala' ? 0 : (userLat && userLon ? getBearing(userLat, userLon, animal.latitude, animal.longitude) : 0);
+                    const compassBearing = animal.id === 'koala' ? 0 : (userLat && userLon ? getBearing(userLat, userLon, animal.latitude, animal.longitude) : null);
                     const compassDistance = animal.id === 'koala' ? 0 : (userLat && userLon ? getDistance(userLat, userLon, animal.latitude, animal.longitude) : null);
                     return (
                       <div key={animal.id} onClick={(e)=>{if(!alreadyFound)discoverAnimal(animal,e);}} className="animate-fade-in-up"
@@ -2525,7 +2493,7 @@
                           <p className="serif-accent" style={{ fontSize:'1rem', opacity:0.9, marginBottom:'0.5rem' }}>{animal.scientificName}</p>
                           {compassDistance !== null && !alreadyFound && (
                             <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'0.75rem', fontSize:'0.85rem', color:'rgba(255,255,255,0.85)' }}>
-                              <div style={{ transform:`rotate(${compassBearing - compassHeading}deg)`, fontSize:'16px', lineHeight:1 }}>→</div>
+                              <span style={{ fontSize:'16px', lineHeight:1 }}>{bearingToArrow(compassBearing)}</span>
                               <span>{compassDistance}m</span>
                             </div>
                           )}
