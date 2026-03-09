@@ -311,9 +311,6 @@
     const { useState, useEffect, useRef } = React;
 
     const TarongaTracka = () => {
-      const DEMO_MODE = true;
-      const DEMO_COORDS = { lat: -33.8437, lon: 151.2415 };
-
       const loadProgress = () => {
         try {
           const saved = localStorage.getItem('tarongaTrackaProgress');
@@ -367,7 +364,6 @@
       ];
       const [currentScreen, setCurrentScreen] = useState(savedProgress?.currentScreen || 'home');
       const [userLocation, setUserLocation] = useState(null);
-      const [demoOrigin, setDemoOrigin] = useState(null);
       const [locationEnabled, setLocationEnabled] = useState(savedProgress?.locationEnabled || false);
       const [foundAnimals, setFoundAnimals] = useState(new Set(savedProgress?.foundAnimals || []));
       const [showZooMap, setShowZooMap] = useState(false);
@@ -1958,7 +1954,6 @@
           geoWatchIdRef.current = navigator.geolocation.watchPosition(
             (position) => {
               setUserLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy });
-              if (DEMO_MODE) setDemoOrigin(prev => prev ?? { lat: position.coords.latitude, lon: position.coords.longitude });
               setLocationEnabled(true);
               if (!hasEnteredMapRef.current) {
                 hasEnteredMapRef.current = true;
@@ -2484,14 +2479,8 @@
                     const alreadyFound=foundAnimals.has(animal.id);
                     const userLat = userLocation?.latitude;
                     const userLon = userLocation?.longitude;
-                    const effectiveLat = DEMO_MODE && demoOrigin && userLat
-                      ? DEMO_COORDS.lat + (userLat - demoOrigin.lat)
-                      : DEMO_MODE ? DEMO_COORDS.lat : userLat;
-                    const effectiveLon = DEMO_MODE && demoOrigin && userLon
-                      ? DEMO_COORDS.lon + (userLon - demoOrigin.lon)
-                      : DEMO_MODE ? DEMO_COORDS.lon : userLon;
-                    const compassBearing = animal.id === 'koala' ? 0 : (effectiveLat && effectiveLon ? getBearing(effectiveLat, effectiveLon, animal.latitude, animal.longitude) : null);
-                    const compassDistance = animal.id === 'koala' ? 0 : (effectiveLat && effectiveLon ? getDistance(effectiveLat, effectiveLon, animal.latitude, animal.longitude) : null);
+                    const compassBearing = animal.id === 'koala' ? 0 : (userLat && userLon ? getBearing(userLat, userLon, animal.latitude, animal.longitude) : null);
+                    const compassDistance = animal.id === 'koala' ? 0 : (userLat && userLon ? getDistance(userLat, userLon, animal.latitude, animal.longitude) : null);
                     return (
                       <div key={animal.id} onClick={(e)=>{if(!alreadyFound)discoverAnimal(animal,e);}} className="animate-fade-in-up"
                         style={{ position:'relative', height:'400px', borderRadius:'16px', overflow:'hidden', cursor:alreadyFound?'default':'pointer', boxShadow:'0 8px 24px rgba(0,0,0,0.12)', transition:'all 0.4s ease', animationDelay:`${index*0.1}s`, transform:nearby&&!alreadyFound?'scale(1.03)':'scale(1)' }}
