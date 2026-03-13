@@ -1055,7 +1055,9 @@
               literacyScore:  b.literacyScore || 0,
               quizResults:    (b.quizResults || []).map(qr => ({
                 question:              qr.question || '',
-                correctOnFirstAttempt: qr.correctOnFirstAttempt === true
+                correctOnFirstAttempt: qr.correctOnFirstAttempt === true,
+                missionType:           qr.missionType || 'knowledge',
+                ...(qr.reflectionScore !== undefined ? { reflectionScore: qr.reflectionScore } : {})
               })),
               observation:    b.observation || '',
               timestamp:      b.timestamp || ''
@@ -2358,7 +2360,12 @@
           literacyScore: b.literacyScore || 0,
           quizResults: (b.quizResults || []).map(qr => ({
             question: qr.question || "",
-            correctOnFirstAttempt: qr.correctOnFirstAttempt === true
+            correctOnFirstAttempt: qr.correctOnFirstAttempt === true,
+            missionType: qr.missionType || "knowledge",
+            ...(qr.reflectionScore !== undefined ? { reflectionScore: qr.reflectionScore } : {}),
+            ...(qr.detailScore !== undefined ? { detailScore: qr.detailScore } : {}),
+            ...(qr.languageScore !== undefined ? { languageScore: qr.languageScore } : {}),
+            ...(qr.writingScore !== undefined ? { writingScore: qr.writingScore } : {})
           })),
           observation: b.observation || "",
           timestamp: b.timestamp || ""
@@ -2886,10 +2893,10 @@
                     <button onClick={() => {
                         const wc = reflectionText.trim().split(/\s+/).filter(Boolean).length;
                         if (wc < 10) { alert(`Please write at least 10 words describing what you heard or smelled. You have ${wc}.`); return; }
-                        setImmersionActive(false);
+                        if (currentAnimal && currentAnimal.id === 'tiger') { submitTigerReflection(); } else { setImmersionActive(false); }
                       }}
                       style={{ marginTop:'1rem', width:'100%', padding:'1rem', background:'var(--sunset-orange)', color:'white', border:'none', borderRadius:'30px', fontWeight:700, fontSize:'1.1rem', cursor:'pointer' }}>
-                      Continue to Observation
+                      {currentAnimal && currentAnimal.id === 'tiger' ? 'Submit Reflection' : 'Continue to Observation'}
                     </button>
                   </div>
                 )}
