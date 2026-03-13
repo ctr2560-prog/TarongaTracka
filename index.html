@@ -1095,6 +1095,14 @@
       }, [currentScreen]);
 
       useEffect(() => {
+        if (currentScreen === 'animal' && currentAnimal?.id === 'tiger') {
+          startCamera();
+        } else {
+          stopCamera();
+        }
+      }, [currentScreen, currentAnimal]);
+
+      useEffect(() => {
         if (currentScreen === 'badge' && badges.length > 0) {
           const lastBadge = badges[badges.length - 1];
           const audio = new Audio(`images/sound-${lastBadge.animalId}.mp3`);
@@ -2050,9 +2058,6 @@
           { value: '3.5', label: '3.5 m' },
           { value: '4.5', label: '4.5 m' },
         ];
-        React.useEffect(() => {
-          return () => { stopCamera(); };
-        }, []);
         return (
           <div style={{ position:'fixed', inset:0, background:'var(--mist-light)', display:'flex', flexDirection:'column', overflow:'hidden' }}>
             <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'0.6rem 1rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', flex:'0 0 auto', zIndex:100 }}>
