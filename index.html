@@ -2011,8 +2011,11 @@
           setCameraStream(stream);
           setCameraActive(true);
           setTimeout(() => {
-            if (videoRef.current) { videoRef.current.srcObject = stream; }
-          }, 100);
+            if (videoRef.current) {
+              videoRef.current.srcObject = stream;
+              videoRef.current.play().catch(() => {});
+            }
+          }, 200);
         } catch (err) { console.error("Camera error:", err); }
       }
 
@@ -2070,7 +2073,7 @@
             </div>
             <div style={{ flex:'1 1 auto', overflowY:'auto', padding:'1rem', maxWidth:'900px', margin:'0 auto', width:'100%' }}>
               <div style={{ borderRadius:'16px', overflow:'hidden', marginBottom:'1rem', background:'#000', position:'relative', maxHeight:'40vh' }}>
-                <video ref={videoRef} autoPlay playsInline style={{ width:'100%', maxHeight:'40vh', objectFit:'cover', display:'block' }} />
+                <video ref={videoRef} autoPlay playsInline muted style={{ width:'100%', maxHeight:'40vh', objectFit:'cover', display:'block' }} />
                 <div style={{ position:'absolute', bottom:0, left:0, right:0, background:'rgba(0,0,0,0.55)', color:'white', textAlign:'center', padding:'0.4rem', fontSize:'0.8rem', letterSpacing:'0.05em', fontWeight:600 }}>
                   0m — 1m — 2m — 3m — 4m — 5m
                 </div>
@@ -2726,7 +2729,7 @@
           <div style={{ minHeight:'100vh', background:'var(--mist-light)', paddingBottom:'4rem' }}>
             {cameraActive && (
               <div style={{ position:'fixed', inset:0, background:'#000', zIndex:2000, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
-                <video ref={videoRef} autoPlay playsInline style={{ width:'100%', maxHeight:'70vh', objectFit:'cover' }} />
+                <video ref={videoRef} autoPlay playsInline muted style={{ width:'100%', maxHeight:'70vh', objectFit:'cover' }} />
                 <div style={{ color:'white', fontSize:'1rem', fontWeight:600, padding:'0.75rem 1.5rem', background:'rgba(0,0,0,0.5)', marginTop:'0.5rem', borderRadius:'8px', letterSpacing:'0.05em' }}>
                   0m --- 1m --- 2m --- 3m --- 4m --- 5m
                 </div>
