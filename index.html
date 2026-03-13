@@ -2002,14 +2002,21 @@
           const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
           setCameraStream(stream);
           setCameraActive(true);
-          if (videoRef.current) { videoRef.current.srcObject = stream; }
+          setTimeout(() => {
+            if (videoRef.current) { videoRef.current.srcObject = stream; }
+          }, 100);
         } catch (err) { console.error("Camera error:", err); }
       }
 
       function stopCamera() {
-        if (cameraStream) { cameraStream.getTracks().forEach(track => track.stop()); }
-        setCameraActive(false);
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(track => { track.stop(); });
+        }
+        if (videoRef.current) {
+          videoRef.current.srcObject = null;
+        }
         setCameraStream(null);
+        setCameraActive(false);
       }
 
       function submitTigerAnswer() {
@@ -2043,6 +2050,9 @@
           { value: '3.5', label: '3.5 m' },
           { value: '4.5', label: '4.5 m' },
         ];
+        React.useEffect(() => {
+          return () => { stopCamera(); };
+        }, []);
         return (
           <div style={{ position:'fixed', inset:0, background:'var(--mist-light)', display:'flex', flexDirection:'column', overflow:'hidden' }}>
             <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'0.6rem 1rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', flex:'0 0 auto', zIndex:100 }}>
