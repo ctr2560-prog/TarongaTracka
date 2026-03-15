@@ -506,8 +506,12 @@
       const animalChartInstanceRef = React.useRef(null);
       const quizChartRef = React.useRef(null);
       const quizChartInstanceRef = React.useRef(null);
+      const discoveryChartRef = React.useRef(null);
+      const discoveryChartInstanceRef = React.useRef(null);
       const radarChartRef = React.useRef(null);
       const radarChartInstanceRef = React.useRef(null);
+      const reflectionRadarRef = React.useRef(null);
+      const reflectionRadarInstanceRef = React.useRef(null);
 
       useEffect(() => { localStorage.setItem('tarongaStudentName', JSON.stringify(studentName)); }, [studentName]);
       useEffect(() => { localStorage.setItem('tarongaClassCode', JSON.stringify(classCode)); }, [classCode]);
@@ -1291,25 +1295,15 @@
         };
       }, [currentScreen, adminTab, adminClasses, adminDateRange]);
 
-      // Chart 2: Quiz Performance Distribution
+      // Chart 2a: Knowledge Performance Distribution
       useEffect(() => {
         if (currentScreen !== 'adminDashboard' || adminTab !== 'analytics') return;
         if (!window.Chart || !quizChartRef.current) return;
-
         try {
           const { Chart, registerables } = window;
-          if (registerables) {
-            Chart.register(...registerables);
-          }
-
-          if (quizChartInstanceRef.current) {
-            quizChartInstanceRef.current.destroy();
-          }
-
-          // Calculate quiz ranges — split by missionType using knowledgeAccuracy / discoveryAccuracy per class
+          if (registerables) Chart.register(...registerables);
+          if (quizChartInstanceRef.current) quizChartInstanceRef.current.destroy();
           const knowledgeRanges = { '0–25%': 0, '26–50%': 0, '51–75%': 0, '76–100%': 0 };
-          const discoveryRanges = { '0–25%': 0, '26–50%': 0, '51–75%': 0, '76–100%': 0 };
-
           const bucketScore = (score, ranges) => {
             if (score === null || score === undefined) return;
             if (score <= 25) ranges['0–25%']++;
@@ -1317,226 +1311,145 @@
             else if (score <= 75) ranges['51–75%']++;
             else ranges['76–100%']++;
           };
-
           adminClasses.forEach(cls => {
-            const count = cls.completedCount || 0;
-            if (count === 0) return;
+            if ((cls.completedCount || 0) === 0) return;
             if (cls.knowledgeAccuracy !== null && cls.knowledgeAccuracy !== undefined) bucketScore(cls.knowledgeAccuracy, knowledgeRanges);
-            if (cls.discoveryAccuracy !== null && cls.discoveryAccuracy !== undefined) bucketScore(cls.discoveryAccuracy, discoveryRanges);
           });
-
           const ctx = quizChartRef.current.getContext('2d');
           quizChartInstanceRef.current = new Chart(ctx, {
             type: 'bar',
             data: {
               labels: Object.keys(knowledgeRanges),
-              datasets: [
-                {
-                  label: 'Knowledge',
-                  data: Object.values(knowledgeRanges),
-                  backgroundColor: '#2E7D55',
-                  borderColor: '#2E7D55',
-                  borderWidth: 0,
-                  borderRadius: 6,
-                  barThickness: 36
-                },
-                {
-                  label: 'Discovery',
-                  data: Object.values(discoveryRanges),
-                  backgroundColor: '#f59e0b',
-                  borderColor: '#f59e0b',
-                  borderWidth: 0,
-                  borderRadius: 6,
-                  barThickness: 36
-                }
-              ]
+              datasets: [{ label: 'Knowledge Performance', data: Object.values(knowledgeRanges), backgroundColor: '#2E7D55', borderColor: '#2E7D55', borderWidth: 0, borderRadius: 8, barThickness: 56 }]
             },
             options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: true, position: 'top', labels: { color: '#444', font: { size: 12, family: "'DM Sans', sans-serif" }, boxWidth: 14, padding: 16 } },
-                tooltip: {
-                  backgroundColor: 'rgba(46, 125, 85, 0.9)',
-                  titleColor: '#fff',
-                  bodyColor: '#fff',
-                  borderColor: '#2E7D55',
-                  borderWidth: 1,
-                  padding: 12,
-                  callbacks: { label: (context) => `${context.dataset.label}: ${context.parsed.y} class${context.parsed.y !== 1 ? 'es' : ''}` }
-                }
-              },
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  ticks: { stepSize: 1, color: '#666', font: { size: 12, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' },
-                  grid: { color: '#F0EDE8', drawBorder: false }
-                },
-                x: {
-                  ticks: { color: '#666', font: { size: 12, family: "'DM Sans', sans-serif", weight: 600 } },
-                  grid: { display: false, drawBorder: false }
-                }
-              }
+              responsive: true, maintainAspectRatio: false,
+              plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(46,125,85,0.9)', titleColor: '#fff', bodyColor: '#fff', borderColor: '#2E7D55', borderWidth: 1, padding: 12, displayColors: false, callbacks: { label: (c) => `Classes: ${c.parsed.y}` } } },
+              scales: { y: { beginAtZero: true, ticks: { stepSize: 1, color: '#666', font: { size: 12, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' }, grid: { color: '#F0EDE8', drawBorder: false } }, x: { ticks: { color: '#666', font: { size: 12, family: "'DM Sans', sans-serif", weight: 600 } }, grid: { display: false, drawBorder: false } } }
             }
           });
-        } catch (error) {
-          console.error('Failed to create Quiz Distribution chart:', error);
-        }
-
-        return () => {
-          if (quizChartInstanceRef.current) {
-            quizChartInstanceRef.current.destroy();
-          }
-        };
+        } catch (error) { console.error('Failed to create Knowledge chart:', error); }
+        return () => { if (quizChartInstanceRef.current) quizChartInstanceRef.current.destroy(); };
       }, [currentScreen, adminTab, adminClasses, adminDateRange]);
 
-      // Chart 3: Observation Skill Breakdown (Radar)
+      // Chart 2b: Discovery Performance Distribution
+      useEffect(() => {
+        if (currentScreen !== 'adminDashboard' || adminTab !== 'analytics') return;
+        if (!window.Chart || !discoveryChartRef.current) return;
+        try {
+          const { Chart, registerables } = window;
+          if (registerables) Chart.register(...registerables);
+          if (discoveryChartInstanceRef.current) discoveryChartInstanceRef.current.destroy();
+          const discoveryRanges = { '0–25%': 0, '26–50%': 0, '51–75%': 0, '76–100%': 0 };
+          const bucketScore = (score, ranges) => {
+            if (score === null || score === undefined) return;
+            if (score <= 25) ranges['0–25%']++;
+            else if (score <= 50) ranges['26–50%']++;
+            else if (score <= 75) ranges['51–75%']++;
+            else ranges['76–100%']++;
+          };
+          adminClasses.forEach(cls => {
+            if ((cls.completedCount || 0) === 0) return;
+            if (cls.discoveryAccuracy !== null && cls.discoveryAccuracy !== undefined) bucketScore(cls.discoveryAccuracy, discoveryRanges);
+          });
+          const ctx = discoveryChartRef.current.getContext('2d');
+          discoveryChartInstanceRef.current = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: Object.keys(discoveryRanges),
+              datasets: [{ label: 'Discovery Performance', data: Object.values(discoveryRanges), backgroundColor: '#f59e0b', borderColor: '#f59e0b', borderWidth: 0, borderRadius: 8, barThickness: 56 }]
+            },
+            options: {
+              responsive: true, maintainAspectRatio: false,
+              plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(245,158,11,0.9)', titleColor: '#fff', bodyColor: '#fff', borderColor: '#f59e0b', borderWidth: 1, padding: 12, displayColors: false, callbacks: { label: (c) => `Classes: ${c.parsed.y}` } } },
+              scales: { y: { beginAtZero: true, ticks: { stepSize: 1, color: '#666', font: { size: 12, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' }, grid: { color: '#F0EDE8', drawBorder: false } }, x: { ticks: { color: '#666', font: { size: 12, family: "'DM Sans', sans-serif", weight: 600 } }, grid: { display: false, drawBorder: false } } }
+            }
+          });
+        } catch (error) { console.error('Failed to create Discovery chart:', error); }
+        return () => { if (discoveryChartInstanceRef.current) discoveryChartInstanceRef.current.destroy(); };
+      }, [currentScreen, adminTab, adminClasses, adminDateRange]);
+
+      // Chart 3a: Observation Skill Breakdown (Radar)
       useEffect(() => {
         if (currentScreen !== 'adminDashboard' || adminTab !== 'analytics') return;
         if (!window.Chart || !radarChartRef.current) return;
-
-        const buildRadarChart = async () => {
+        const buildObsRadar = async () => {
           try {
             const { Chart, registerables } = window;
-            if (registerables) {
-              Chart.register(...registerables);
-            }
-
-            if (radarChartInstanceRef.current) {
-              radarChartInstanceRef.current.destroy();
-            }
-
-            // Calculate real averages from badges — split observation vs reflection
+            if (registerables) Chart.register(...registerables);
+            if (radarChartInstanceRef.current) radarChartInstanceRef.current.destroy();
             let obsBehaviourTotal = 0, obsDetailTotal = 0, obsLiteracyTotal = 0, obsBadgeCount = 0;
-            let refDetailTotal = 0, refLiteracyTotal = 0, refBadgeCount = 0;
-
             for (const cls of adminClasses) {
               try {
-                const studentsSnapshot = await window.db
-                  .collection('classes')
-                  .doc(cls.classCode)
-                  .collection('students')
-                  .get();
-
-                studentsSnapshot.docs.forEach(studentDoc => {
-                  const studentData = studentDoc.data();
-                  
-                  // Date range filtering
-                  const completedAt = studentData.completedAt?.toDate?.();
+                const snap = await window.db.collection('classes').doc(cls.classCode).collection('students').get();
+                snap.docs.forEach(doc => {
+                  const d = doc.data();
+                  const completedAt = d.completedAt?.toDate?.();
                   if (!completedAt) return;
-
-                  if (adminDateRange !== 'all') {
-                    const days = parseInt(adminDateRange, 10);
-                    const cutoff = new Date();
-                    cutoff.setDate(cutoff.getDate() - days);
-                    if (completedAt < cutoff) return;
-                  }
-                  
-                  if (Array.isArray(studentData.badges)) {
-                    studentData.badges.forEach(badge => {
-                      const behaviourValue = badge.behaviourScore !== undefined ? badge.behaviourScore : (badge.behaviorScore || 0);
-                      if (badge.observationMissionType === 'immersion') {
-                        const score = badge.reflectionScore || 0;
-                        refDetailTotal += score;
-                        refLiteracyTotal += score;
-                        refBadgeCount++;
-                      } else {
-                        // Standard observation badge
-                        obsBehaviourTotal += behaviourValue;
-                        obsDetailTotal += badge.detailScore || 0;
-                        obsLiteracyTotal += badge.literacyScore || 0;
-                        obsBadgeCount++;
-                      }
-                    });
-                  }
+                  if (adminDateRange !== 'all') { const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - parseInt(adminDateRange, 10)); if (completedAt < cutoff) return; }
+                  if (Array.isArray(d.badges)) d.badges.forEach(badge => {
+                    if (badge.observationMissionType !== 'immersion') {
+                      const bv = badge.behaviourScore !== undefined ? badge.behaviourScore : (badge.behaviorScore || 0);
+                      obsBehaviourTotal += bv; obsDetailTotal += badge.detailScore || 0; obsLiteracyTotal += badge.literacyScore || 0; obsBadgeCount++;
+                    }
+                  });
                 });
-              } catch (err) {
-                console.error("Radar aggregation error:", err);
-              }
+              } catch (err) { console.error('Obs radar error:', err); }
             }
-
-            // Observation percentages (max: behaviour 15, detail 15, literacy 10)
             const obsB = obsBadgeCount ? Math.round(((obsBehaviourTotal / obsBadgeCount) / 15) * 100) : 0;
             const obsD = obsBadgeCount ? Math.round(((obsDetailTotal / obsBadgeCount) / 15) * 100) : 0;
             const obsW = obsBadgeCount ? Math.round(((obsLiteracyTotal / obsBadgeCount) / 10) * 100) : 0;
-
-            // Reflection percentages (no behaviour axis — use 0; detail /15, literacy /10)
-            const refB = 0;
-            const refD = refBadgeCount ? Math.round(((refDetailTotal / refBadgeCount) / 15) * 100) : 0;
-            const refW = refBadgeCount ? Math.round(((refLiteracyTotal / refBadgeCount) / 10) * 100) : 0;
-
             const ctx = radarChartRef.current.getContext('2d');
             radarChartInstanceRef.current = new Chart(ctx, {
               type: 'radar',
-              data: {
-                labels: ['Behaviour (%)', 'Detail (%)', 'Writing (%)'],
-                datasets: [
-                  {
-                    label: 'Observation',
-                    data: [obsB, obsD, obsW],
-                    backgroundColor: 'rgba(30, 79, 61, 0.2)',
-                    borderColor: '#2E7D55',
-                    borderWidth: 2,
-                    pointBackgroundColor: '#2E7D55',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointRadius: 5,
-                    pointHoverRadius: 7
-                  },
-                  {
-                    label: 'Reflection',
-                    data: [refB, refD, refW],
-                    backgroundColor: 'rgba(245, 158, 11, 0.2)',
-                    borderColor: '#f59e0b',
-                    borderWidth: 2,
-                    pointBackgroundColor: '#f59e0b',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointRadius: 5,
-                    pointHoverRadius: 7
-                  }
-                ]
-              },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: true, position: 'top', labels: { color: '#444', font: { size: 12, family: "'DM Sans', sans-serif" }, boxWidth: 14, padding: 16 } },
-                tooltip: {
-                  backgroundColor: 'rgba(30, 79, 61, 0.9)',
-                  titleColor: '#fff',
-                  bodyColor: '#fff',
-                  borderColor: '#1E4F3D',
-                  borderWidth: 1,
-                  padding: 12,
-                  callbacks: { label: (context) => `${context.dataset.label}: ${context.parsed.r}%` }
-                }
-              },
-              scales: {
-                r: {
-                  beginAtZero: true,
-                  min: 0,
-                  max: 100,
-                  ticks: { stepSize: 20, color: '#666', font: { size: 11, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' },
-                  grid: { color: '#E5E5E5' },
-                  angleLines: { color: '#E5E5E5' },
-                  pointLabels: { color: '#333', font: { size: 13, family: "'DM Sans', sans-serif", weight: 600 } }
-                }
-              }
+              data: { labels: ['Behaviour (%)', 'Detail (%)', 'Writing (%)'], datasets: [{ label: 'Observation Skills', data: [obsB, obsD, obsW], backgroundColor: 'rgba(30,79,61,0.2)', borderColor: '#2E7D55', borderWidth: 2, pointBackgroundColor: '#2E7D55', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5, pointHoverRadius: 7 }] },
+              options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(30,79,61,0.9)', titleColor: '#fff', bodyColor: '#fff', padding: 12, displayColors: false, callbacks: { label: (c) => `${c.parsed.r}%` } } }, scales: { r: { beginAtZero: true, min: 0, max: 100, ticks: { stepSize: 20, color: '#666', font: { size: 11, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' }, grid: { color: '#E5E5E5' }, angleLines: { color: '#E5E5E5' }, pointLabels: { color: '#333', font: { size: 13, family: "'DM Sans', sans-serif", weight: 600 } } } } }
+            });
+          } catch (error) { console.error('Failed to create Observation radar:', error); }
+        };
+        buildObsRadar();
+        return () => { if (radarChartInstanceRef.current) radarChartInstanceRef.current.destroy(); };
+      }, [currentScreen, adminTab, adminClasses, adminDateRange]);
+
+      // Chart 3b: Reflection Skill Breakdown (Radar)
+      useEffect(() => {
+        if (currentScreen !== 'adminDashboard' || adminTab !== 'analytics') return;
+        if (!window.Chart || !reflectionRadarRef.current) return;
+        const buildRefRadar = async () => {
+          try {
+            const { Chart, registerables } = window;
+            if (registerables) Chart.register(...registerables);
+            if (reflectionRadarInstanceRef.current) reflectionRadarInstanceRef.current.destroy();
+            let refDetailTotal = 0, refLiteracyTotal = 0, refBadgeCount = 0;
+            for (const cls of adminClasses) {
+              try {
+                const snap = await window.db.collection('classes').doc(cls.classCode).collection('students').get();
+                snap.docs.forEach(doc => {
+                  const d = doc.data();
+                  const completedAt = d.completedAt?.toDate?.();
+                  if (!completedAt) return;
+                  if (adminDateRange !== 'all') { const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - parseInt(adminDateRange, 10)); if (completedAt < cutoff) return; }
+                  if (Array.isArray(d.badges)) d.badges.forEach(badge => {
+                    if (badge.observationMissionType === 'immersion') {
+                      const score = badge.reflectionScore || 0;
+                      refDetailTotal += score; refLiteracyTotal += score; refBadgeCount++;
+                    }
+                  });
+                });
+              } catch (err) { console.error('Ref radar error:', err); }
             }
-          });
-          } catch (error) {
-            console.error('Failed to create Radar chart:', error);
-          }
+            const refD = refBadgeCount ? Math.round(((refDetailTotal / refBadgeCount) / 5) * 100) : 0;
+            const refW = refBadgeCount ? Math.round(((refLiteracyTotal / refBadgeCount) / 5) * 100) : 0;
+            const ctx = reflectionRadarRef.current.getContext('2d');
+            reflectionRadarInstanceRef.current = new Chart(ctx, {
+              type: 'radar',
+              data: { labels: ['Behaviour (%)', 'Detail (%)', 'Writing (%)'], datasets: [{ label: 'Reflection Skills', data: [0, refD, refW], backgroundColor: 'rgba(245,158,11,0.2)', borderColor: '#f59e0b', borderWidth: 2, pointBackgroundColor: '#f59e0b', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5, pointHoverRadius: 7 }] },
+              options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(245,158,11,0.9)', titleColor: '#fff', bodyColor: '#fff', padding: 12, displayColors: false, callbacks: { label: (c) => `${c.parsed.r}%` } } }, scales: { r: { beginAtZero: true, min: 0, max: 100, ticks: { stepSize: 20, color: '#666', font: { size: 11, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' }, grid: { color: '#E5E5E5' }, angleLines: { color: '#E5E5E5' }, pointLabels: { color: '#333', font: { size: 13, family: "'DM Sans', sans-serif", weight: 600 } } } } }
+            });
+          } catch (error) { console.error('Failed to create Reflection radar:', error); }
         };
-
-        buildRadarChart();
-
-        return () => {
-          if (radarChartInstanceRef.current) {
-            radarChartInstanceRef.current.destroy();
-          }
-        };
+        buildRefRadar();
+        return () => { if (reflectionRadarInstanceRef.current) reflectionRadarInstanceRef.current.destroy(); };
       }, [currentScreen, adminTab, adminClasses, adminDateRange]);
 
       // Resource Hub: load resources when tab opens
@@ -2177,7 +2090,7 @@
         }));
 
 
-        const quizCorrect = tigerQuizResults.filter(qr => qr.correctOnFirstAttempt && qr.missionType === 'knowledge').length;
+        const quizCorrect = tigerQuizResults.filter(qr => qr.correctOnFirstAttempt && (qr.missionType === 'knowledge' || qr.missionType === 'discovery')).length;
         const quizPoints = quizCorrect * 10;
         const totalEarned = quizPoints + 30 + detailScore + literacyScore + currentAnimal.pointValue;
 
@@ -3805,38 +3718,41 @@
                           </p>
                         </div>
 
-                        {/* Chart 2: Quiz Performance Distribution */}
+                        {/* Chart 2a: Knowledge Performance Distribution */}
                         <div style={{ marginBottom:'2rem' }}>
-                          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1rem' }}>
-                            <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', margin:0 }}>
-                              Quiz Performance Distribution
-                            </h2>
-                            <div style={{ display:'flex', gap:'1rem', fontSize:'0.82rem', fontWeight:600 }}>
-                              <span style={{ display:'flex', alignItems:'center', gap:'5px' }}><span style={{ width:12, height:12, borderRadius:3, background:'#2E7D55', display:'inline-block' }}></span>Knowledge</span>
-                              <span style={{ display:'flex', alignItems:'center', gap:'5px' }}><span style={{ width:12, height:12, borderRadius:3, background:'#f59e0b', display:'inline-block' }}></span>Discovery</span>
-                            </div>
-                          </div>
+                          <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
+                            Knowledge Performance
+                          </h2>
                           <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
-                            <div style={{ height:'350px', position:'relative' }}>
+                            <div style={{ height:'300px', position:'relative' }}>
                               <canvas ref={quizChartRef}></canvas>
                             </div>
                           </div>
                           <p style={{ color:'#888', fontSize:'0.85rem', marginTop:'1rem', textAlign:'center', fontStyle:'italic' }}>
-                            Distribution based on completed student quiz scores across all classes.
+                            Distribution of knowledge quiz accuracy across classes.
                           </p>
                         </div>
 
-                        {/* Chart 3: Observation Skill Breakdown (Radar) */}
+                        {/* Chart 2b: Discovery Performance Distribution */}
                         <div style={{ marginBottom:'2rem' }}>
-                          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'0.5rem' }}>
-                            <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', margin:0 }}>
-                              Observation Skill Breakdown
-                            </h2>
-                            <div style={{ display:'flex', gap:'1rem', fontSize:'0.82rem', fontWeight:600 }}>
-                              <span style={{ display:'flex', alignItems:'center', gap:'5px' }}><span style={{ width:12, height:12, borderRadius:3, background:'#2E7D55', display:'inline-block' }}></span>Observation</span>
-                              <span style={{ display:'flex', alignItems:'center', gap:'5px' }}><span style={{ width:12, height:12, borderRadius:3, background:'#f59e0b', display:'inline-block' }}></span>Reflection</span>
+                          <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
+                            Discovery Performance
+                          </h2>
+                          <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
+                            <div style={{ height:'300px', position:'relative' }}>
+                              <canvas ref={discoveryChartRef}></canvas>
                             </div>
                           </div>
+                          <p style={{ color:'#888', fontSize:'0.85rem', marginTop:'1rem', textAlign:'center', fontStyle:'italic' }}>
+                            Distribution of discovery mission accuracy across classes.
+                          </p>
+                        </div>
+
+                        {/* Chart 3a: Observation Skill Breakdown (Radar) */}
+                        <div style={{ marginBottom:'2rem' }}>
+                          <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>
+                            Observation Skill Breakdown
+                          </h2>
                           <div className="fade-in" style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
                             <div style={{ height:'400px', position:'relative' }}>
                               <canvas ref={radarChartRef}></canvas>
@@ -3860,7 +3776,22 @@
                             </div>
                           </div>
                           <p style={{ color:'#888', fontSize:'0.85rem', marginTop:'1rem', textAlign:'center', fontStyle:'italic' }}>
-                            Average scores across all completed student observations. Scores range from 0-100.
+                            Average scores across all completed student observations. Scores range from 0–100.
+                          </p>
+                        </div>
+
+                        {/* Chart 3b: Reflection Skill Breakdown (Radar) */}
+                        <div style={{ marginBottom:'2rem' }}>
+                          <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>
+                            Reflection Skill Breakdown
+                          </h2>
+                          <div className="fade-in" style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
+                            <div style={{ height:'400px', position:'relative' }}>
+                              <canvas ref={reflectionRadarRef}></canvas>
+                            </div>
+                          </div>
+                          <p style={{ color:'#888', fontSize:'0.85rem', marginTop:'1rem', textAlign:'center', fontStyle:'italic' }}>
+                            Sensory detail and writing quality from immersion reflections. Behaviour axis is not scored for reflection missions.
                           </p>
                         </div>
 
