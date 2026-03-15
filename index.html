@@ -1306,37 +1306,56 @@
             quizChartInstanceRef.current.destroy();
           }
 
-          // Calculate quiz ranges
-          const quizRanges = { '0-25%': 0, '26-50%': 0, '51-75%': 0, '76-100%': 0 };
+          // Calculate quiz ranges — split by missionType using knowledgeAccuracy / discoveryAccuracy per class
+          const knowledgeRanges = { '0–25%': 0, '26–50%': 0, '51–75%': 0, '76–100%': 0 };
+          const discoveryRanges = { '0–25%': 0, '26–50%': 0, '51–75%': 0, '76–100%': 0 };
+
+          const bucketScore = (score, ranges) => {
+            if (score === null || score === undefined) return;
+            if (score <= 25) ranges['0–25%']++;
+            else if (score <= 50) ranges['26–50%']++;
+            else if (score <= 75) ranges['51–75%']++;
+            else ranges['76–100%']++;
+          };
+
           adminClasses.forEach(cls => {
-            const avg = cls.quizAverage;
             const count = cls.completedCount || 0;
-            if (avg >= 0 && avg <= 25) quizRanges['0-25%'] += count;
-            else if (avg >= 26 && avg <= 50) quizRanges['26-50%'] += count;
-            else if (avg >= 51 && avg <= 75) quizRanges['51-75%'] += count;
-            else if (avg >= 76 && avg <= 100) quizRanges['76-100%'] += count;
+            if (count === 0) return;
+            if (cls.knowledgeAccuracy !== null && cls.knowledgeAccuracy !== undefined) bucketScore(cls.knowledgeAccuracy, knowledgeRanges);
+            if (cls.discoveryAccuracy !== null && cls.discoveryAccuracy !== undefined) bucketScore(cls.discoveryAccuracy, discoveryRanges);
           });
 
           const ctx = quizChartRef.current.getContext('2d');
           quizChartInstanceRef.current = new Chart(ctx, {
             type: 'bar',
             data: {
-              labels: Object.keys(quizRanges),
-              datasets: [{
-                label: 'Number of Students',
-                data: Object.values(quizRanges),
-                backgroundColor: '#2E7D55',
-                borderColor: '#2E7D55',
-                borderWidth: 0,
-                borderRadius: 8,
-                barThickness: 60
-              }]
+              labels: Object.keys(knowledgeRanges),
+              datasets: [
+                {
+                  label: 'Knowledge',
+                  data: Object.values(knowledgeRanges),
+                  backgroundColor: '#2E7D55',
+                  borderColor: '#2E7D55',
+                  borderWidth: 0,
+                  borderRadius: 6,
+                  barThickness: 36
+                },
+                {
+                  label: 'Discovery',
+                  data: Object.values(discoveryRanges),
+                  backgroundColor: '#f59e0b',
+                  borderColor: '#f59e0b',
+                  borderWidth: 0,
+                  borderRadius: 6,
+                  barThickness: 36
+                }
+              ]
             },
             options: {
               responsive: true,
               maintainAspectRatio: false,
               plugins: {
-                legend: { display: false },
+                legend: { display: true, position: 'top', labels: { color: '#444', font: { size: 12, family: "'DM Sans', sans-serif" }, boxWidth: 14, padding: 16 } },
                 tooltip: {
                   backgroundColor: 'rgba(46, 125, 85, 0.9)',
                   titleColor: '#fff',
@@ -1344,14 +1363,13 @@
                   borderColor: '#2E7D55',
                   borderWidth: 1,
                   padding: 12,
-                  displayColors: false,
-                  callbacks: { label: (context) => 'Students: ' + context.parsed.y }
+                  callbacks: { label: (context) => `${context.dataset.label}: ${context.parsed.y} class${context.parsed.y !== 1 ? 'es' : ''}` }
                 }
               },
               scales: {
                 y: {
                   beginAtZero: true,
-                  ticks: { stepSize: 5, color: '#666', font: { size: 12, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' },
+                  ticks: { stepSize: 1, color: '#666', font: { size: 12, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' },
                   grid: { color: '#F0EDE8', drawBorder: false }
                 },
                 x: {
@@ -1388,11 +1406,9 @@
               radarChartInstanceRef.current.destroy();
             }
 
-            // Calculate real averages from badges
-            let behaviourTotal = 0;
-            let detailTotal = 0;
-            let literacyTotal = 0;
-            let badgeCount = 0;
+            // Calculate real averages from badges — split observation vs reflection
+            let obsBehaviourTotal = 0, obsDetailTotal = 0, obsLiteracyTotal = 0, obsBadgeCount = 0;
+            let refDetailTotal = 0, refLiteracyTotal = 0, refBadgeCount = 0;
 
             for (const cls of adminClasses) {
               try {
@@ -1413,18 +1429,24 @@
                     const days = parseInt(adminDateRange, 10);
                     const cutoff = new Date();
                     cutoff.setDate(cutoff.getDate() - days);
-
                     if (completedAt < cutoff) return;
                   }
                   
                   if (Array.isArray(studentData.badges)) {
                     studentData.badges.forEach(badge => {
-                      // Backwards compatible: check behaviourScore first, fallback to behaviorScore
                       const behaviourValue = badge.behaviourScore !== undefined ? badge.behaviourScore : (badge.behaviorScore || 0);
-                      behaviourTotal += behaviourValue;
-                      detailTotal += badge.detailScore || 0;
-                      literacyTotal += badge.literacyScore || 0;
-                      badgeCount++;
+                      if (badge.observationMissionType === 'immersion') {
+                        // Reflection badge: score detail and literacy from reflectionScore
+                        refDetailTotal += badge.detailScore || 0;
+                        refLiteracyTotal += badge.literacyScore || 0;
+                        refBadgeCount++;
+                      } else {
+                        // Standard observation badge
+                        obsBehaviourTotal += behaviourValue;
+                        obsDetailTotal += badge.detailScore || 0;
+                        obsLiteracyTotal += badge.literacyScore || 0;
+                        obsBadgeCount++;
+                      }
                     });
                   }
                 });
@@ -1433,40 +1455,53 @@
               }
             }
 
-            const avgBehaviourRaw = badgeCount ? (behaviourTotal / badgeCount) : 0;
-            const avgDetailRaw = badgeCount ? (detailTotal / badgeCount) : 0;
-            const avgLiteracyRaw = badgeCount ? (literacyTotal / badgeCount) : 0;
+            // Observation percentages (max: behaviour 15, detail 15, literacy 10)
+            const obsB = obsBadgeCount ? Math.round(((obsBehaviourTotal / obsBadgeCount) / 15) * 100) : 0;
+            const obsD = obsBadgeCount ? Math.round(((obsDetailTotal / obsBadgeCount) / 15) * 100) : 0;
+            const obsW = obsBadgeCount ? Math.round(((obsLiteracyTotal / obsBadgeCount) / 10) * 100) : 0;
 
-            // Convert to percentage of category maximum
-            const avgBehaviourScore = Math.round((avgBehaviourRaw / 15) * 100);
-            const avgDetailScore = Math.round((avgDetailRaw / 15) * 100);
-            const avgLiteracyScore = Math.round((avgLiteracyRaw / 10) * 100);
+            // Reflection percentages (no behaviour axis — use 0; detail /15, literacy /10)
+            const refB = 0;
+            const refD = refBadgeCount ? Math.round(((refDetailTotal / refBadgeCount) / 15) * 100) : 0;
+            const refW = refBadgeCount ? Math.round(((refLiteracyTotal / refBadgeCount) / 10) * 100) : 0;
 
             const ctx = radarChartRef.current.getContext('2d');
             radarChartInstanceRef.current = new Chart(ctx, {
               type: 'radar',
               data: {
                 labels: ['Behaviour (%)', 'Detail (%)', 'Writing (%)'],
-                datasets: [{
-                  label: 'Average Score',
-                  data: [avgBehaviourScore, avgDetailScore, avgLiteracyScore],
-                  backgroundColor: 'rgba(30, 79, 61, 0.2)',
-                  borderColor: '#1E4F3D',
-                  borderWidth: 2,
-                  pointBackgroundColor: '#1E4F3D',
-                  pointBorderColor: '#fff',
-                  pointBorderWidth: 2,
-                  pointRadius: 5,
-                  pointHoverRadius: 7,
-                  pointHoverBackgroundColor: '#1A5238',
-                pointHoverBorderColor: '#fff'
-              }]
-            },
+                datasets: [
+                  {
+                    label: 'Observation',
+                    data: [obsB, obsD, obsW],
+                    backgroundColor: 'rgba(30, 79, 61, 0.2)',
+                    borderColor: '#2E7D55',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#2E7D55',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                  },
+                  {
+                    label: 'Reflection',
+                    data: [refB, refD, refW],
+                    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+                    borderColor: '#f59e0b',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#f59e0b',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                  }
+                ]
+              },
             options: {
               responsive: true,
               maintainAspectRatio: false,
               plugins: {
-                legend: { display: false },
+                legend: { display: true, position: 'top', labels: { color: '#444', font: { size: 12, family: "'DM Sans', sans-serif" }, boxWidth: 14, padding: 16 } },
                 tooltip: {
                   backgroundColor: 'rgba(30, 79, 61, 0.9)',
                   titleColor: '#fff',
@@ -1474,8 +1509,7 @@
                   borderColor: '#1E4F3D',
                   borderWidth: 1,
                   padding: 12,
-                  displayColors: false,
-                  callbacks: { label: (context) => 'Average: ' + context.parsed.r + '/100' }
+                  callbacks: { label: (context) => `${context.dataset.label}: ${context.parsed.r}%` }
                 }
               },
               scales: {
@@ -3773,9 +3807,15 @@
 
                         {/* Chart 2: Quiz Performance Distribution */}
                         <div style={{ marginBottom:'2rem' }}>
-                          <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
-                            Quiz Performance Distribution
-                          </h2>
+                          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1rem' }}>
+                            <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', margin:0 }}>
+                              Quiz Performance Distribution
+                            </h2>
+                            <div style={{ display:'flex', gap:'1rem', fontSize:'0.82rem', fontWeight:600 }}>
+                              <span style={{ display:'flex', alignItems:'center', gap:'5px' }}><span style={{ width:12, height:12, borderRadius:3, background:'#2E7D55', display:'inline-block' }}></span>Knowledge</span>
+                              <span style={{ display:'flex', alignItems:'center', gap:'5px' }}><span style={{ width:12, height:12, borderRadius:3, background:'#f59e0b', display:'inline-block' }}></span>Discovery</span>
+                            </div>
+                          </div>
                           <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
                             <div style={{ height:'350px', position:'relative' }}>
                               <canvas ref={quizChartRef}></canvas>
@@ -3788,9 +3828,15 @@
 
                         {/* Chart 3: Observation Skill Breakdown (Radar) */}
                         <div style={{ marginBottom:'2rem' }}>
-                          <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>
-                            Observation Skill Breakdown
-                          </h2>
+                          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'0.5rem' }}>
+                            <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', margin:0 }}>
+                              Observation Skill Breakdown
+                            </h2>
+                            <div style={{ display:'flex', gap:'1rem', fontSize:'0.82rem', fontWeight:600 }}>
+                              <span style={{ display:'flex', alignItems:'center', gap:'5px' }}><span style={{ width:12, height:12, borderRadius:3, background:'#2E7D55', display:'inline-block' }}></span>Observation</span>
+                              <span style={{ display:'flex', alignItems:'center', gap:'5px' }}><span style={{ width:12, height:12, borderRadius:3, background:'#f59e0b', display:'inline-block' }}></span>Reflection</span>
+                            </div>
+                          </div>
                           <div className="fade-in" style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
                             <div style={{ height:'400px', position:'relative' }}>
                               <canvas ref={radarChartRef}></canvas>
