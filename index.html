@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -14,19 +13,13 @@
   <title>Taronga Tracka v2.2 - Animal Discovery</title>
 
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <!-- Firebase SDKs -->
-
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 
 <script>
@@ -73,6 +66,7 @@
       touch-action: pan-y;
       overscroll-behavior: contain;
       background: transparent;
+      isolation: isolate;
     }
 
     #root {
@@ -317,32 +311,29 @@
         font-weight: 500;
       }
   </style>
-
 </head>
 
 <body>
 
-<video
-autoplay
-muted
-loop
-playsinline
-webkit-playsinline
-preload=“auto”
-style=”
-position: fixed;
-top: 0;
-left: 0;
-width: 100vw;
-height: 100vh;
-object-fit: cover;
-z-index: 0;
-“
-
-```
-<source src="./images/background-video.mp4" type="video/mp4">
-```
-
+  <video
+    autoplay
+    muted
+    loop
+    playsinline
+    webkit-playsinline
+    preload="auto"
+    style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: 0;
+      pointer-events: none;
+    "
+  >
+    <source src="./images/background-video.mp4" type="video/mp4">
   </video>
 
   <div id="root" style="position: relative; z-index: 1;"></div>
@@ -5125,6 +5116,5 @@ z-index: 0;
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<TarongaTracka />);
   </script>
-
 </body>
 </html>
