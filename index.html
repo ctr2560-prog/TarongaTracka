@@ -666,6 +666,9 @@
               let classLiteracyTotal = 0;
               let classBadgeCount = 0;
               let classTotalBadges = 0;
+              let classKnowledgeCorrect = 0; let classKnowledgeTotal = 0;
+              let classDiscoveryCorrect = 0; let classDiscoveryTotal = 0;
+              let classReflectionScores = [];
 
               studentsSnapshot.docs.forEach(studentDoc => {
                 const studentData = studentDoc.data();
@@ -709,6 +712,15 @@
                     classLiteracyTotal += badge.literacyScore || 0;
                     classBadgeCount++;
                     
+                    // Aggregate mission-type analytics from quizResults
+                    if (Array.isArray(badge.quizResults)) {
+                      badge.quizResults.forEach(qr => {
+                        if (qr.missionType === 'knowledge') { classKnowledgeTotal++; if (qr.correctOnFirstAttempt === true) classKnowledgeCorrect++; }
+                        if (qr.missionType === 'discovery') { classDiscoveryTotal++; if (qr.correctOnFirstAttempt === true) classDiscoveryCorrect++; }
+                        if (qr.missionType === 'immersion' && qr.reflectionScore !== undefined) classReflectionScores.push(qr.reflectionScore);
+                      });
+                    }
+                    
                     // Global tracking for platform-wide average
                     globalBehaviourTotal += behaviourValue;
                     globalDetailTotal += badge.detailScore || 0;
@@ -741,6 +753,9 @@
                 quizAverage: classQuizAvg,
                 averageObservationPercent: averageObservationPercent,
                 totalBadges: classTotalBadges,
+                knowledgeAccuracy: classKnowledgeTotal > 0 ? Math.round((classKnowledgeCorrect / classKnowledgeTotal) * 100) : null,
+                discoveryAccuracy: classDiscoveryTotal > 0 ? Math.round((classDiscoveryCorrect / classDiscoveryTotal) * 100) : null,
+                avgReflectionScore: classReflectionScores.length > 0 ? Math.round((classReflectionScores.reduce((a,b)=>a+b,0)/classReflectionScores.length)*10)/10 : null,
                 createdAt: classData.createdAt || null
               });
             }
@@ -3819,7 +3834,10 @@
                                 quizCount: 0,
                                 observationScoreSum: 0,
                                 observationCount: 0,
-                                totalBadges: 0
+                                totalBadges: 0,
+                                knowledgeCorrect: 0, knowledgeTotal: 0,
+                                discoveryCorrect: 0, discoveryTotal: 0,
+                                reflectionSum: 0, reflectionCount: 0
                               };
                             }
                             
@@ -3839,6 +3857,20 @@
                               school.observationScoreSum += cls.averageObservationPercent * cls.studentCount;
                               school.observationCount += cls.studentCount;
                             }
+
+                            // Add mission-type breakdown from class
+                            if (cls.knowledgeAccuracy !== null && cls.completedCount > 0) {
+                              school.knowledgeCorrect += Math.round((cls.knowledgeAccuracy / 100) * cls.completedCount);
+                              school.knowledgeTotal += cls.completedCount;
+                            }
+                            if (cls.discoveryAccuracy !== null && cls.completedCount > 0) {
+                              school.discoveryCorrect += Math.round((cls.discoveryAccuracy / 100) * cls.completedCount);
+                              school.discoveryTotal += cls.completedCount;
+                            }
+                            if (cls.avgReflectionScore !== null && cls.completedCount > 0) {
+                              school.reflectionSum += cls.avgReflectionScore * cls.completedCount;
+                              school.reflectionCount += cls.completedCount;
+                            }
                           });
                           
                           // Calculate averages and convert to array
@@ -3849,9 +3881,12 @@
                             avgQuizPercentage: school.quizCount > 0 
                               ? Math.round(school.quizPercentageSum / school.quizCount) 
                               : 0,
+                            knowledgeAccuracy: school.knowledgeTotal > 0 ? Math.round((school.knowledgeCorrect / school.knowledgeTotal) * 100) : null,
+                            discoveryAccuracy: school.discoveryTotal > 0 ? Math.round((school.discoveryCorrect / school.discoveryTotal) * 100) : null,
                             avgObservationScore: school.observationCount > 0
                               ? `${Math.round(school.observationScoreSum / school.observationCount)}%`
                               : '—',
+                            avgReflectionScore: school.reflectionCount > 0 ? Math.round((school.reflectionSum / school.reflectionCount) * 10) / 10 : null,
                             totalBadges: school.totalBadges
                           }));
                           
@@ -3889,6 +3924,12 @@
                                           Avg Quiz %
                                         </th>
                                         <th style={{ textAlign:'center', padding:'0.75rem 1rem', fontWeight:700, color:'var(--jungle-deep)', fontSize:'0.9rem', textTransform:'uppercase', letterSpacing:'0.05em' }}>
+                                          Knowledge %
+                                        </th>
+                                        <th style={{ textAlign:'center', padding:'0.75rem 1rem', fontWeight:700, color:'var(--jungle-deep)', fontSize:'0.9rem', textTransform:'uppercase', letterSpacing:'0.05em' }}>
+                                          Discovery %
+                                        </th>
+                                        <th style={{ textAlign:'center', padding:'0.75rem 1rem', fontWeight:700, color:'var(--jungle-deep)', fontSize:'0.9rem', textTransform:'uppercase', letterSpacing:'0.05em' }}>
                                           <span>
                                             Avg Observation %
                                             <span className="tooltip-wrapper" style={{ marginLeft:'6px' }}>
@@ -3898,6 +3939,9 @@
                                               </span>
                                             </span>
                                           </span>
+                                        </th>
+                                        <th style={{ textAlign:'center', padding:'0.75rem 1rem', fontWeight:700, color:'var(--jungle-deep)', fontSize:'0.9rem', textTransform:'uppercase', letterSpacing:'0.05em' }}>
+                                          Reflection Score
                                         </th>
                                       </tr>
                                     </thead>
@@ -3925,7 +3969,16 @@
                                             </span>
                                           </td>
                                           <td style={{ padding:'1rem', textAlign:'center', color:'#666', fontSize:'0.9rem' }}>
+                                            {school.knowledgeAccuracy !== null ? `${school.knowledgeAccuracy}%` : '—'}
+                                          </td>
+                                          <td style={{ padding:'1rem', textAlign:'center', color:'#666', fontSize:'0.9rem' }}>
+                                            {school.discoveryAccuracy !== null ? `${school.discoveryAccuracy}%` : '—'}
+                                          </td>
+                                          <td style={{ padding:'1rem', textAlign:'center', color:'#666', fontSize:'0.9rem' }}>
                                             {school.avgObservationScore}
+                                          </td>
+                                          <td style={{ padding:'1rem', textAlign:'center', color:'#666', fontSize:'0.9rem' }}>
+                                            {school.avgReflectionScore !== null ? school.avgReflectionScore : '—'}
                                           </td>
                                         </tr>
                                       ))}
