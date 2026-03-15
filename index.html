@@ -700,6 +700,15 @@
                     totalQuizPercentageSum += studentData.quizPercentage;
                     studentsWithQuizData++;
                   }
+                  // Aggregate mission-type accuracies from stored Firestore fields
+                  if (studentData.knowledgeAccuracy !== undefined && studentData.knowledgeAccuracy !== null) {
+                    classKnowledgeCorrect += studentData.knowledgeAccuracy;
+                    classKnowledgeTotal++;
+                  }
+                  if (studentData.discoveryAccuracy !== undefined && studentData.discoveryAccuracy !== null) {
+                    classDiscoveryCorrect += studentData.discoveryAccuracy;
+                    classDiscoveryTotal++;
+                  }
                 }
                 
                 // Aggregate observation scores from badges (per-class and global)
@@ -715,13 +724,18 @@
                     classDetailTotal += badge.detailScore || 0;
                     classLiteracyTotal += badge.literacyScore || 0;
                     classBadgeCount++;
+
+                    // Aggregate reflection score directly from immersion badges
+                    if (badge.observationMissionType === 'immersion' && badge.reflectionScore !== undefined) {
+                      const rs = badge.reflectionScore;
+                      const total = (rs && typeof rs === 'object') ? ((rs.behaviour||0)+(rs.detail||0)+(rs.writing||0)) : (typeof rs === 'number' ? rs : 0);
+                      classReflectionScores.push(total);
+                    }
                     
-                    // Aggregate mission-type analytics from quizResults
+                    // Aggregate mission-type analytics from quizResults (legacy path)
                     if (Array.isArray(badge.quizResults)) {
                       badge.quizResults.forEach(qr => {
-                        if (qr.missionType === 'knowledge') { classKnowledgeTotal++; if (qr.correctOnFirstAttempt === true) classKnowledgeCorrect++; }
-                        if (qr.missionType === 'discovery') { classDiscoveryTotal++; if (qr.correctOnFirstAttempt === true) classDiscoveryCorrect++; }
-                        if (qr.missionType === 'immersion' && qr.reflectionScore !== undefined) {
+                        if (qr.missionType === 'immersion' && qr.reflectionScore !== undefined && badge.observationMissionType !== 'immersion') {
                           const rs = qr.reflectionScore;
                           const total = (rs && typeof rs === 'object') ? ((rs.behaviour||0)+(rs.detail||0)+(rs.writing||0)) : (typeof rs === 'number' ? rs : 0);
                           classReflectionScores.push(total);
@@ -761,8 +775,8 @@
                 quizAverage: classQuizAvg,
                 averageObservationPercent: averageObservationPercent,
                 totalBadges: classTotalBadges,
-                knowledgeAccuracy: classKnowledgeTotal > 0 ? Math.round((classKnowledgeCorrect / classKnowledgeTotal) * 100) : null,
-                discoveryAccuracy: classDiscoveryTotal > 0 ? Math.round((classDiscoveryCorrect / classDiscoveryTotal) * 100) : null,
+                knowledgeAccuracy: classKnowledgeTotal > 0 ? Math.round(classKnowledgeCorrect / classKnowledgeTotal) : null,
+                discoveryAccuracy: classDiscoveryTotal > 0 ? Math.round(classDiscoveryCorrect / classDiscoveryTotal) : null,
                 avgReflectionScore: classReflectionScores.length > 0 ? Math.round((classReflectionScores.reduce((a,b)=>a+b,0)/classReflectionScores.length)*10)/10 : null,
                 createdAt: classData.createdAt || null
               });
@@ -2345,12 +2359,13 @@
               if (qr.correctOnFirstAttempt === true) quizCorrect++;
               if (qr.missionType === 'knowledge') { knowledgeTotal++; if (qr.correctOnFirstAttempt === true) knowledgeCorrect++; }
               if (qr.missionType === 'discovery') { discoveryTotal++; if (qr.correctOnFirstAttempt === true) discoveryCorrect++; }
-              if (qr.missionType === 'immersion' && qr.reflectionScore !== undefined) {
-                const rs = qr.reflectionScore;
-                const total = (rs && typeof rs === 'object') ? ((rs.behaviour||0)+(rs.detail||0)+(rs.writing||0)) : (typeof rs === 'number' ? rs : 0);
-                reflectionScores.push(total);
-              }
             });
+          }
+          // Read reflection directly from immersion badges
+          if (badge.observationMissionType === 'immersion' && badge.reflectionScore !== undefined) {
+            const rs = badge.reflectionScore;
+            const total = (rs && typeof rs === 'object') ? ((rs.behaviour||0)+(rs.detail||0)+(rs.writing||0)) : (typeof rs === 'number' ? rs : 0);
+            reflectionScores.push(total);
           }
           if (badge.observationMissionType === 'observation') {
             const obsScore = (badge.behaviourScore || 0) + (badge.detailScore || 0) + (badge.literacyScore || 0);
@@ -3957,7 +3972,7 @@
                                             {school.avgObservationScore}
                                           </td>
                                           <td style={{ padding:'1rem', textAlign:'center', color:'#666', fontSize:'0.9rem' }}>
-                                            {school.avgReflectionScore !== null ? school.avgReflectionScore : '—'}
+                                            {school.avgReflectionScore !== null ? `${Math.round((school.avgReflectionScore / 15) * 100)}%` : '—'}
                                           </td>
                                         </tr>
                                       ))}
