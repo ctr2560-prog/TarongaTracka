@@ -422,6 +422,7 @@
       const [badges, setBadges] = useState(savedProgress?.badges || []);
       const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
       const [tigerSelectedAnswer, setTigerSelectedAnswer] = useState(null);
+      const [tigerAttempted, setTigerAttempted] = useState(false);
       const [cameraActive, setCameraActive] = React.useState(false);
       const [cameraStream, setCameraStream] = React.useState(null);
       const videoRef = React.useRef(null);
@@ -1883,6 +1884,20 @@
       }, [firestoreAnimals]);
 
       // ---------- HELPERS ----------
+      function recordMissionResult(animalId, animalName, quizResults = [], reflectionScore = null) {
+        const badge = {
+          animalId,
+          animal: animalName,
+          quizResults,
+          reflectionScore,
+          timestamp: new Date().toISOString()
+        };
+        setBadges(prev => {
+          const alreadyExists = prev.some(b => b.animalId === animalId);
+          if (alreadyExists) return prev;
+          return [...prev, badge];
+        });
+      }
       function bearingToArrow(bearing) {
         const arrows = ['↑','↗','→','↘','↓','↙','←','↖'];
         return arrows[Math.round(bearing / 45) % 8];
@@ -1992,20 +2007,22 @@
       }
 
       function submitTigerAnswer() {
-        if (!tigerSelectedAnswer) { alert('Please select an answer first.'); return; }
-        const correct = tigerSelectedAnswer === '2.5';
-        if (!correct) {
+        if (!tigerSelectedAnswer) return;
+        const correctAnswer = '2.5';
+        const firstAttempt = !tigerAttempted;
+        setTigerAttempted(true);
+        if (tigerSelectedAnswer !== correctAnswer) {
           alert('Not quite — look carefully at the tiger and try again!');
           setTigerSelectedAnswer(null);
           return;
         }
-        // Discovery correct — record mission result immediately
-        setBadges(prev => ([...prev, {
-          animalId: 'tiger',
-          animal: 'Sumatran Tiger',
-          quizResults: [{ question: 'How long is a Sumatran tiger approximately?', correctOnFirstAttempt: true, missionType: 'discovery' }],
-          timestamp: new Date().toISOString()
-        }]));
+        const correctOnFirstAttempt = firstAttempt;
+        recordMissionResult(
+          'tiger',
+          'Sumatran Tiger',
+          [{ question: 'How long is a Sumatran tiger approximately?', correctOnFirstAttempt, missionType: 'discovery' }]
+        );
+        alert('Correct! Great observation.');
         stopCamera();
         startImmersion();
         setCurrentScreen('observation');
@@ -2047,18 +2064,7 @@
 
         setTotalPoints(p => p + totalEarned);
         setFoundAnimals(prev => new Set([...prev, currentAnimal.id]));
-        setBadges(prev => ([...prev, {
-          animalId: currentAnimal.id, animal: currentAnimal.name, points: totalEarned,
-          behaviourScore: reflectionScore.behaviour,
-          detailScore: reflectionScore.detail,
-          literacyScore: reflectionScore.writing,
-          quizResults: tigerQuizResults,
-          observation: '',
-          observationMissionType: 'immersion',
-          reflectionText: text,
-          reflectionScore,
-          timestamp: new Date().toISOString()
-        }]));
+        recordMissionResult('tiger', 'Sumatran Tiger', [], reflectionScore);
         setCurrentScreen('badge');
       }
       function renderTigerMission() {
@@ -3708,6 +3714,23 @@
                           <p style={{ color:'#888', fontSize:'0.85rem', marginTop:'1rem', textAlign:'center', fontStyle:'italic' }}>
                             Distribution of combined writing quality (observation + reflection) across classes.
                           </p>
+                          <div style={{ background:'#F7FAF8', border:'1px solid #E4EDE8', borderRadius:'14px', padding:'1.25rem 1.5rem', marginTop:'1rem' }}>
+                            <p style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:'0.85rem' }}>Writing Dimensions Explained</p>
+                            <div style={{ display:'flex', flexDirection:'column', gap:'0.65rem' }}>
+                              <div>
+                                <span style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-mid)' }}>Behaviour Observed </span>
+                                <span style={{ fontSize:'0.82rem', color:'#555', lineHeight:1.55 }}>Did the student identify real animal behaviour?</span>
+                              </div>
+                              <div>
+                                <span style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-mid)' }}>Detail &amp; Evidence </span>
+                                <span style={{ fontSize:'0.82rem', color:'#555', lineHeight:1.55 }}>Did the student include specific observations from the enclosure?</span>
+                              </div>
+                              <div>
+                                <span style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-mid)' }}>Quality of Writing </span>
+                                <span style={{ fontSize:'0.82rem', color:'#555', lineHeight:1.55 }}>Did the student clearly describe what they experienced?</span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
 
                         {(() => {
