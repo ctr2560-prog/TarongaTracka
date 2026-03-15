@@ -66,6 +66,7 @@
       touch-action: pan-y;
       overscroll-behavior: contain;
       background: transparent;
+      isolation: isolate;
     }
 
     #root {
@@ -269,6 +270,46 @@
     }
     /* ─────────────────────────────────────────────────────── */
 
+      .ruler-overlay {
+        position: absolute;
+        bottom: 90px;
+        left: 5%;
+        width: 90%;
+        text-align: center;
+      }
+      .ruler-line {
+        height: 6px;
+        background: white;
+        border-radius: 3px;
+        position: relative;
+      }
+      .ruler-line::before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+          to right,
+          white,
+          white 2px,
+          transparent 2px,
+          transparent 20%
+        );
+      }
+      .ruler-marks {
+        display: flex;
+        justify-content: space-between;
+        color: white;
+        font-size: 14px;
+        margin-top: 6px;
+      }
+      .ruler-instruction {
+        color: white;
+        font-size: 14px;
+        margin-top: 8px;
+        text-align: center;
+        font-weight: 500;
+      }
   </style>
 </head>
 
@@ -289,6 +330,7 @@
       height: 100vh;
       object-fit: cover;
       z-index: 0;
+      pointer-events: none;
     "
   >
     <source src="./images/background-video.mp4" type="video/mp4">
@@ -375,6 +417,7 @@
       const [showResult, setShowResult] = useState(false);
       const [isCorrect, setIsCorrect] = useState(false);
       const [observation, setObservation] = useState('');
+      const [reflectionText, setReflectionText] = useState('');
       const [totalPoints, setTotalPoints] = useState(savedProgress?.totalPoints || 0);
       const [badges, setBadges] = useState(savedProgress?.badges || []);
       const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
@@ -465,8 +508,12 @@
       const animalChartInstanceRef = React.useRef(null);
       const quizChartRef = React.useRef(null);
       const quizChartInstanceRef = React.useRef(null);
+      const discoveryChartRef = React.useRef(null);
+      const discoveryChartInstanceRef = React.useRef(null);
       const radarChartRef = React.useRef(null);
       const radarChartInstanceRef = React.useRef(null);
+      const reflectionRadarRef = React.useRef(null);
+      const reflectionRadarInstanceRef = React.useRef(null);
 
       useEffect(() => { localStorage.setItem('tarongaStudentName', JSON.stringify(studentName)); }, [studentName]);
       useEffect(() => { localStorage.setItem('tarongaClassCode', JSON.stringify(classCode)); }, [classCode]);
@@ -625,23 +672,21 @@
               let classLiteracyTotal = 0;
               let classBadgeCount = 0;
               let classTotalBadges = 0;
+              let classKnowledgeCorrect = 0; let classKnowledgeTotal = 0;
+              let classDiscoveryCorrect = 0; let classDiscoveryTotal = 0;
+              let classReflectionScores = [];
 
               studentsSnapshot.docs.forEach(studentDoc => {
                 const studentData = studentDoc.data();
                 
-                // Date range filtering
+                // Date range filtering — only skip quiz/completion metrics, not badge aggregation
                 const completedAt = studentData.completedAt?.toDate?.();
-                if (!completedAt) return;
+                const inDateRange = !completedAt ? false : (adminDateRange === 'all' ? true : (() => {
+                  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - parseInt(adminDateRange, 10));
+                  return completedAt >= cutoff;
+                })());
 
-                if (adminDateRange !== 'all') {
-                  const days = parseInt(adminDateRange, 10);
-                  const cutoff = new Date();
-                  cutoff.setDate(cutoff.getDate() - days);
-
-                  if (completedAt < cutoff) return;
-                }
-                
-                if (studentData.completed === true) {
+                if (inDateRange && studentData.completed === true) {
                   completedCount++;
                   totalCompleted++;
                   
@@ -651,6 +696,32 @@
                     classQuizCount++;
                     totalQuizPercentageSum += studentData.quizPercentage;
                     studentsWithQuizData++;
+                  }
+                  // Aggregate mission-type accuracies from stored Firestore fields
+                  if (studentData.knowledgeAccuracy !== undefined && studentData.knowledgeAccuracy !== null) {
+                    classKnowledgeCorrect += studentData.knowledgeAccuracy;
+                    classKnowledgeTotal++;
+                  } else if (Array.isArray(studentData.badges)) {
+                    // Fallback: compute from badge quizResults
+                    let kCorrect = 0, kTotal = 0;
+                    studentData.badges.forEach(badge => {
+                      if (Array.isArray(badge.quizResults)) badge.quizResults.forEach(qr => {
+                        if (qr.missionType === 'knowledge') { kTotal++; if (qr.correctOnFirstAttempt === true) kCorrect++; }
+                      });
+                    });
+                    if (kTotal > 0) { classKnowledgeCorrect += Math.round((kCorrect / kTotal) * 100); classKnowledgeTotal++; }
+                  }
+                  if (studentData.discoveryAccuracy !== undefined && studentData.discoveryAccuracy !== null) {
+                    classDiscoveryCorrect += studentData.discoveryAccuracy;
+                    classDiscoveryTotal++;
+                  } else if (Array.isArray(studentData.badges)) {
+                    let dCorrect = 0, dTotal = 0;
+                    studentData.badges.forEach(badge => {
+                      if (Array.isArray(badge.quizResults)) badge.quizResults.forEach(qr => {
+                        if (qr.missionType === 'discovery') { dTotal++; if (qr.correctOnFirstAttempt === true) dCorrect++; }
+                      });
+                    });
+                    if (dTotal > 0) { classDiscoveryCorrect += Math.round((dCorrect / dTotal) * 100); classDiscoveryTotal++; }
                   }
                 }
                 
@@ -667,6 +738,24 @@
                     classDetailTotal += badge.detailScore || 0;
                     classLiteracyTotal += badge.literacyScore || 0;
                     classBadgeCount++;
+
+                    // Aggregate reflection score directly from immersion badges
+                    if (badge.observationMissionType === 'immersion' && badge.reflectionScore !== undefined) {
+                      const rs = badge.reflectionScore;
+                      const total = (rs && typeof rs === 'object') ? ((rs.behaviour||0)+(rs.detail||0)+(rs.writing||0)) : (typeof rs === 'number' ? rs : 0);
+                      classReflectionScores.push(total);
+                    }
+                    
+                    // Aggregate mission-type analytics from quizResults (legacy path)
+                    if (Array.isArray(badge.quizResults)) {
+                      badge.quizResults.forEach(qr => {
+                        if (qr.missionType === 'immersion' && qr.reflectionScore !== undefined && badge.observationMissionType !== 'immersion') {
+                          const rs = qr.reflectionScore;
+                          const total = (rs && typeof rs === 'object') ? ((rs.behaviour||0)+(rs.detail||0)+(rs.writing||0)) : (typeof rs === 'number' ? rs : 0);
+                          classReflectionScores.push(total);
+                        }
+                      });
+                    }
                     
                     // Global tracking for platform-wide average
                     globalBehaviourTotal += behaviourValue;
@@ -679,9 +768,9 @@
 
               totalStudents += studentCount;
 
-              // Calculate per-class combined observation percentage (out of 40 total per badge)
+              // Calculate per-class combined observation percentage (out of 15 total per badge: behaviour 5 + detail 5 + writing 5)
               const classTotalScore = classBehaviourTotal + classDetailTotal + classLiteracyTotal;
-              const classMaxPossible = classBadgeCount * 40;
+              const classMaxPossible = classBadgeCount * 15;
               const averageObservationPercent = classMaxPossible > 0 
                 ? Math.round((classTotalScore / classMaxPossible) * 100) 
                 : 0;
@@ -700,15 +789,18 @@
                 quizAverage: classQuizAvg,
                 averageObservationPercent: averageObservationPercent,
                 totalBadges: classTotalBadges,
+                knowledgeAccuracy: classKnowledgeTotal > 0 ? Math.round(classKnowledgeCorrect / classKnowledgeTotal) : null,
+                discoveryAccuracy: classDiscoveryTotal > 0 ? Math.round(classDiscoveryCorrect / classDiscoveryTotal) : null,
+                avgReflectionScore: classReflectionScores.length > 0 ? Math.round((classReflectionScores.reduce((a,b)=>a+b,0)/classReflectionScores.length)*10)/10 : null,
                 createdAt: classData.createdAt || null
               });
             }
 
             const platformQuizAvg = studentsWithQuizData > 0 ? Math.round(totalQuizPercentageSum / studentsWithQuizData) : 0;
             
-            // Calculate average combined observation percentage (behaviour + detail + writing out of 40)
+            // Calculate average combined observation percentage (behaviour + detail + writing out of 15)
             const globalTotalScore = globalBehaviourTotal + globalDetailTotal + literacyTotal;
-            const globalMaxPossible = badgeCount * 40;
+            const globalMaxPossible = badgeCount * 15;
             const averageObservationPercent = globalMaxPossible > 0 
               ? Math.round((globalTotalScore / globalMaxPossible) * 100) 
               : 0;
@@ -1014,18 +1106,22 @@
               literacyScore:  b.literacyScore || 0,
               quizResults:    (b.quizResults || []).map(qr => ({
                 question:              qr.question || '',
-                correctOnFirstAttempt: qr.correctOnFirstAttempt === true
+                correctOnFirstAttempt: qr.correctOnFirstAttempt === true,
+                missionType:           qr.missionType || 'knowledge',
+                ...(qr.reflectionScore !== undefined ? { reflectionScore: qr.reflectionScore } : {})
               })),
               observation:    b.observation || '',
               timestamp:      b.timestamp || ''
             }));
 
-            // Compute quiz metrics from sanitised badges
+            // Compute quiz metrics from sanitised badges — knowledge and discovery only
             let qCorrect = 0, qTotal = 0;
             savedBadges.forEach(b => {
               b.quizResults.forEach(qr => {
-                qTotal++;
-                if (qr.correctOnFirstAttempt === true) qCorrect++;
+                if (qr.missionType === 'knowledge' || qr.missionType === 'discovery') {
+                  qTotal++;
+                  if (qr.correctOnFirstAttempt === true) qCorrect++;
+                }
               });
             });
             const qPct = qTotal > 0 ? Math.round((qCorrect / qTotal) * 100) : 0;
@@ -1233,218 +1329,167 @@
         };
       }, [currentScreen, adminTab, adminClasses, adminDateRange]);
 
-      // Chart 2: Quiz Performance Distribution
+      // Chart 2a: Knowledge Performance Distribution
       useEffect(() => {
         if (currentScreen !== 'adminDashboard' || adminTab !== 'analytics') return;
         if (!window.Chart || !quizChartRef.current) return;
-
         try {
           const { Chart, registerables } = window;
-          if (registerables) {
-            Chart.register(...registerables);
-          }
-
-          if (quizChartInstanceRef.current) {
-            quizChartInstanceRef.current.destroy();
-          }
-
-          // Calculate quiz ranges
-          const quizRanges = { '0-25%': 0, '26-50%': 0, '51-75%': 0, '76-100%': 0 };
+          if (registerables) Chart.register(...registerables);
+          if (quizChartInstanceRef.current) quizChartInstanceRef.current.destroy();
+          const knowledgeRanges = { '0–25%': 0, '26–50%': 0, '51–75%': 0, '76–100%': 0 };
+          const bucketScore = (score, ranges) => {
+            if (score === null || score === undefined) return;
+            if (score <= 25) ranges['0–25%']++;
+            else if (score <= 50) ranges['26–50%']++;
+            else if (score <= 75) ranges['51–75%']++;
+            else ranges['76–100%']++;
+          };
           adminClasses.forEach(cls => {
-            const avg = cls.quizAverage;
-            const count = cls.completedCount || 0;
-            if (avg >= 0 && avg <= 25) quizRanges['0-25%'] += count;
-            else if (avg >= 26 && avg <= 50) quizRanges['26-50%'] += count;
-            else if (avg >= 51 && avg <= 75) quizRanges['51-75%'] += count;
-            else if (avg >= 76 && avg <= 100) quizRanges['76-100%'] += count;
+            if ((cls.completedCount || 0) === 0) return;
+            if (cls.knowledgeAccuracy !== null && cls.knowledgeAccuracy !== undefined) {
+              const knowledgePercent = cls.knowledgeAccuracy <= 1 ? cls.knowledgeAccuracy * 100 : cls.knowledgeAccuracy;
+              bucketScore(knowledgePercent, knowledgeRanges);
+            }
           });
-
           const ctx = quizChartRef.current.getContext('2d');
           quizChartInstanceRef.current = new Chart(ctx, {
             type: 'bar',
             data: {
-              labels: Object.keys(quizRanges),
-              datasets: [{
-                label: 'Number of Students',
-                data: Object.values(quizRanges),
-                backgroundColor: '#2E7D55',
-                borderColor: '#2E7D55',
-                borderWidth: 0,
-                borderRadius: 8,
-                barThickness: 60
-              }]
+              labels: Object.keys(knowledgeRanges),
+              datasets: [{ label: 'Knowledge Performance', data: Object.values(knowledgeRanges), backgroundColor: '#2E7D55', borderColor: '#2E7D55', borderWidth: 0, borderRadius: 8, barThickness: 56 }]
             },
             options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  backgroundColor: 'rgba(46, 125, 85, 0.9)',
-                  titleColor: '#fff',
-                  bodyColor: '#fff',
-                  borderColor: '#2E7D55',
-                  borderWidth: 1,
-                  padding: 12,
-                  displayColors: false,
-                  callbacks: { label: (context) => 'Students: ' + context.parsed.y }
-                }
-              },
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  ticks: { stepSize: 5, color: '#666', font: { size: 12, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' },
-                  grid: { color: '#F0EDE8', drawBorder: false }
-                },
-                x: {
-                  ticks: { color: '#666', font: { size: 12, family: "'DM Sans', sans-serif", weight: 600 } },
-                  grid: { display: false, drawBorder: false }
-                }
-              }
+              responsive: true, maintainAspectRatio: false,
+              plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(46,125,85,0.9)', titleColor: '#fff', bodyColor: '#fff', borderColor: '#2E7D55', borderWidth: 1, padding: 12, displayColors: false, callbacks: { label: (c) => `Classes: ${c.parsed.y}` } } },
+              scales: { y: { beginAtZero: true, ticks: { stepSize: 1, color: '#666', font: { size: 12, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' }, grid: { color: '#F0EDE8', drawBorder: false } }, x: { ticks: { color: '#666', font: { size: 12, family: "'DM Sans', sans-serif", weight: 600 } }, grid: { display: false, drawBorder: false } } }
             }
           });
-        } catch (error) {
-          console.error('Failed to create Quiz Distribution chart:', error);
-        }
-
-        return () => {
-          if (quizChartInstanceRef.current) {
-            quizChartInstanceRef.current.destroy();
-          }
-        };
+        } catch (error) { console.error('Failed to create Knowledge chart:', error); }
+        return () => { if (quizChartInstanceRef.current) quizChartInstanceRef.current.destroy(); };
       }, [currentScreen, adminTab, adminClasses, adminDateRange]);
 
-      // Chart 3: Observation Skill Breakdown (Radar)
+      // Chart 2b: Discovery Performance Distribution
+      useEffect(() => {
+        if (currentScreen !== 'adminDashboard' || adminTab !== 'analytics') return;
+        if (!window.Chart || !discoveryChartRef.current) return;
+        try {
+          const { Chart, registerables } = window;
+          if (registerables) Chart.register(...registerables);
+          if (discoveryChartInstanceRef.current) discoveryChartInstanceRef.current.destroy();
+          const discoveryRanges = { '0–25%': 0, '26–50%': 0, '51–75%': 0, '76–100%': 0 };
+          const bucketScore = (score, ranges) => {
+            if (score === null || score === undefined) return;
+            if (score <= 25) ranges['0–25%']++;
+            else if (score <= 50) ranges['26–50%']++;
+            else if (score <= 75) ranges['51–75%']++;
+            else ranges['76–100%']++;
+          };
+          adminClasses.forEach(cls => {
+            if ((cls.completedCount || 0) === 0) return;
+            if (cls.discoveryAccuracy !== null && cls.discoveryAccuracy !== undefined) {
+              const discoveryPercent = cls.discoveryAccuracy <= 1 ? cls.discoveryAccuracy * 100 : cls.discoveryAccuracy;
+              bucketScore(discoveryPercent, discoveryRanges);
+            }
+          });
+          const ctx = discoveryChartRef.current.getContext('2d');
+          discoveryChartInstanceRef.current = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: Object.keys(discoveryRanges),
+              datasets: [{ label: 'Discovery Performance', data: Object.values(discoveryRanges), backgroundColor: '#f59e0b', borderColor: '#f59e0b', borderWidth: 0, borderRadius: 8, barThickness: 56 }]
+            },
+            options: {
+              responsive: true, maintainAspectRatio: false,
+              plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(245,158,11,0.9)', titleColor: '#fff', bodyColor: '#fff', borderColor: '#f59e0b', borderWidth: 1, padding: 12, displayColors: false, callbacks: { label: (c) => `Classes: ${c.parsed.y}` } } },
+              scales: { y: { beginAtZero: true, ticks: { stepSize: 1, color: '#666', font: { size: 12, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' }, grid: { color: '#F0EDE8', drawBorder: false } }, x: { ticks: { color: '#666', font: { size: 12, family: "'DM Sans', sans-serif", weight: 600 } }, grid: { display: false, drawBorder: false } } }
+            }
+          });
+        } catch (error) { console.error('Failed to create Discovery chart:', error); }
+        return () => { if (discoveryChartInstanceRef.current) discoveryChartInstanceRef.current.destroy(); };
+      }, [currentScreen, adminTab, adminClasses, adminDateRange]);
+
+      // Chart 3a: Observation Skill Breakdown (Radar)
       useEffect(() => {
         if (currentScreen !== 'adminDashboard' || adminTab !== 'analytics') return;
         if (!window.Chart || !radarChartRef.current) return;
-
-        const buildRadarChart = async () => {
+        const buildObsRadar = async () => {
           try {
             const { Chart, registerables } = window;
-            if (registerables) {
-              Chart.register(...registerables);
-            }
-
-            if (radarChartInstanceRef.current) {
-              radarChartInstanceRef.current.destroy();
-            }
-
-            // Calculate real averages from badges
-            let behaviourTotal = 0;
-            let detailTotal = 0;
-            let literacyTotal = 0;
-            let badgeCount = 0;
-
+            if (registerables) Chart.register(...registerables);
+            if (radarChartInstanceRef.current) radarChartInstanceRef.current.destroy();
+            let obsBehaviourTotal = 0, obsDetailTotal = 0, obsLiteracyTotal = 0, obsBadgeCount = 0;
             for (const cls of adminClasses) {
               try {
-                const studentsSnapshot = await window.db
-                  .collection('classes')
-                  .doc(cls.classCode)
-                  .collection('students')
-                  .get();
-
-                studentsSnapshot.docs.forEach(studentDoc => {
-                  const studentData = studentDoc.data();
-                  
-                  // Date range filtering
-                  const completedAt = studentData.completedAt?.toDate?.();
+                const snap = await window.db.collection('classes').doc(cls.classCode).collection('students').get();
+                snap.docs.forEach(doc => {
+                  const d = doc.data();
+                  const completedAt = d.completedAt?.toDate?.();
                   if (!completedAt) return;
-
-                  if (adminDateRange !== 'all') {
-                    const days = parseInt(adminDateRange, 10);
-                    const cutoff = new Date();
-                    cutoff.setDate(cutoff.getDate() - days);
-
-                    if (completedAt < cutoff) return;
-                  }
-                  
-                  if (Array.isArray(studentData.badges)) {
-                    studentData.badges.forEach(badge => {
-                      // Backwards compatible: check behaviourScore first, fallback to behaviorScore
-                      const behaviourValue = badge.behaviourScore !== undefined ? badge.behaviourScore : (badge.behaviorScore || 0);
-                      behaviourTotal += behaviourValue;
-                      detailTotal += badge.detailScore || 0;
-                      literacyTotal += badge.literacyScore || 0;
-                      badgeCount++;
-                    });
-                  }
+                  if (adminDateRange !== 'all') { const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - parseInt(adminDateRange, 10)); if (completedAt < cutoff) return; }
+                  if (Array.isArray(d.badges)) d.badges.forEach(badge => {
+                    if (badge.observationMissionType !== 'immersion') {
+                      const bv = badge.behaviourScore !== undefined ? badge.behaviourScore : (badge.behaviorScore || 0);
+                      obsBehaviourTotal += bv; obsDetailTotal += badge.detailScore || 0; obsLiteracyTotal += badge.literacyScore || 0; obsBadgeCount++;
+                    }
+                  });
                 });
-              } catch (err) {
-                console.error("Radar aggregation error:", err);
-              }
+              } catch (err) { console.error('Obs radar error:', err); }
             }
-
-            const avgBehaviourRaw = badgeCount ? (behaviourTotal / badgeCount) : 0;
-            const avgDetailRaw = badgeCount ? (detailTotal / badgeCount) : 0;
-            const avgLiteracyRaw = badgeCount ? (literacyTotal / badgeCount) : 0;
-
-            // Convert to percentage of category maximum
-            const avgBehaviourScore = Math.round((avgBehaviourRaw / 15) * 100);
-            const avgDetailScore = Math.round((avgDetailRaw / 15) * 100);
-            const avgLiteracyScore = Math.round((avgLiteracyRaw / 10) * 100);
-
+            const obsB = obsBadgeCount ? Math.round(((obsBehaviourTotal / obsBadgeCount) / 5) * 100) : 0;
+            const obsD = obsBadgeCount ? Math.round(((obsDetailTotal / obsBadgeCount) / 5) * 100) : 0;
+            const obsW = obsBadgeCount ? Math.round(((obsLiteracyTotal / obsBadgeCount) / 5) * 100) : 0;
             const ctx = radarChartRef.current.getContext('2d');
             radarChartInstanceRef.current = new Chart(ctx, {
               type: 'radar',
-              data: {
-                labels: ['Behaviour (%)', 'Detail (%)', 'Writing (%)'],
-                datasets: [{
-                  label: 'Average Score',
-                  data: [avgBehaviourScore, avgDetailScore, avgLiteracyScore],
-                  backgroundColor: 'rgba(30, 79, 61, 0.2)',
-                  borderColor: '#1E4F3D',
-                  borderWidth: 2,
-                  pointBackgroundColor: '#1E4F3D',
-                  pointBorderColor: '#fff',
-                  pointBorderWidth: 2,
-                  pointRadius: 5,
-                  pointHoverRadius: 7,
-                  pointHoverBackgroundColor: '#1A5238',
-                pointHoverBorderColor: '#fff'
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  backgroundColor: 'rgba(30, 79, 61, 0.9)',
-                  titleColor: '#fff',
-                  bodyColor: '#fff',
-                  borderColor: '#1E4F3D',
-                  borderWidth: 1,
-                  padding: 12,
-                  displayColors: false,
-                  callbacks: { label: (context) => 'Average: ' + context.parsed.r + '/100' }
-                }
-              },
-              scales: {
-                r: {
-                  beginAtZero: true,
-                  min: 0,
-                  max: 100,
-                  ticks: { stepSize: 20, color: '#666', font: { size: 11, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' },
-                  grid: { color: '#E5E5E5' },
-                  angleLines: { color: '#E5E5E5' },
-                  pointLabels: { color: '#333', font: { size: 13, family: "'DM Sans', sans-serif", weight: 600 } }
-                }
-              }
+              data: { labels: ['Behaviour (%)', 'Detail (%)', 'Writing (%)'], datasets: [{ label: 'Observation Skills', data: [obsB, obsD, obsW], backgroundColor: 'rgba(30,79,61,0.2)', borderColor: '#2E7D55', borderWidth: 2, pointBackgroundColor: '#2E7D55', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5, pointHoverRadius: 7 }] },
+              options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(30,79,61,0.9)', titleColor: '#fff', bodyColor: '#fff', padding: 12, displayColors: false, callbacks: { label: (c) => `${c.parsed.r}%` } } }, scales: { r: { beginAtZero: true, min: 0, max: 100, ticks: { stepSize: 20, color: '#666', font: { size: 11, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' }, grid: { color: '#E5E5E5' }, angleLines: { color: '#E5E5E5' }, pointLabels: { color: '#333', font: { size: 13, family: "'DM Sans', sans-serif", weight: 600 } } } } }
+            });
+          } catch (error) { console.error('Failed to create Observation radar:', error); }
+        };
+        buildObsRadar();
+        return () => { if (radarChartInstanceRef.current) radarChartInstanceRef.current.destroy(); };
+      }, [currentScreen, adminTab, adminClasses, adminDateRange]);
+
+      // Chart 3b: Reflection Skill Breakdown (Radar)
+      useEffect(() => {
+        if (currentScreen !== 'adminDashboard' || adminTab !== 'analytics') return;
+        if (!window.Chart || !reflectionRadarRef.current) return;
+        const buildRefRadar = async () => {
+          try {
+            const { Chart, registerables } = window;
+            if (registerables) Chart.register(...registerables);
+            if (reflectionRadarInstanceRef.current) reflectionRadarInstanceRef.current.destroy();
+            let refBehaviourTotal = 0, refDetailTotal = 0, refWritingTotal = 0, refBadgeCount = 0;
+            for (const cls of adminClasses) {
+              try {
+                const snap = await window.db.collection('classes').doc(cls.classCode).collection('students').get();
+                snap.docs.forEach(doc => {
+                  const d = doc.data();
+                  if (Array.isArray(d.badges)) d.badges.forEach(badge => {
+                    if (badge.observationMissionType === 'immersion') {
+                      refBehaviourTotal += badge.reflectionScore?.behaviour || 0;
+                      refDetailTotal += badge.reflectionScore?.detail || 0;
+                      refWritingTotal += badge.reflectionScore?.writing || 0;
+                      refBadgeCount++;
+                    }
+                  });
+                });
+              } catch (err) { console.error('Ref radar error:', err); }
             }
-          });
-          } catch (error) {
-            console.error('Failed to create Radar chart:', error);
-          }
+            const refB = refBadgeCount ? Math.round((refBehaviourTotal / (refBadgeCount * 5)) * 100) : 0;
+            const refD = refBadgeCount ? Math.round((refDetailTotal / (refBadgeCount * 5)) * 100) : 0;
+            const refW = refBadgeCount ? Math.round((refWritingTotal / (refBadgeCount * 5)) * 100) : 0;
+            const ctx = reflectionRadarRef.current.getContext('2d');
+            reflectionRadarInstanceRef.current = new Chart(ctx, {
+              type: 'radar',
+              data: { labels: ['Behaviour (%)', 'Detail (%)', 'Writing (%)'], datasets: [{ label: 'Reflection Skills', data: [refB, refD, refW], backgroundColor: 'rgba(245,158,11,0.2)', borderColor: '#f59e0b', borderWidth: 2, pointBackgroundColor: '#f59e0b', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5, pointHoverRadius: 7 }] },
+              options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(245,158,11,0.9)', titleColor: '#fff', bodyColor: '#fff', padding: 12, displayColors: false, callbacks: { label: (c) => `${c.parsed.r}%` } } }, scales: { r: { beginAtZero: true, min: 0, max: 100, ticks: { stepSize: 20, color: '#666', font: { size: 11, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' }, grid: { color: '#E5E5E5' }, angleLines: { color: '#E5E5E5' }, pointLabels: { color: '#333', font: { size: 13, family: "'DM Sans', sans-serif", weight: 600 } } } } }
+            });
+          } catch (error) { console.error('Failed to create Reflection radar:', error); }
         };
-
-        buildRadarChart();
-
-        return () => {
-          if (radarChartInstanceRef.current) {
-            radarChartInstanceRef.current.destroy();
-          }
-        };
+        buildRefRadar();
+        return () => { if (reflectionRadarInstanceRef.current) reflectionRadarInstanceRef.current.destroy(); };
       }, [currentScreen, adminTab, adminClasses, adminDateRange]);
 
       // Resource Hub: load resources when tab opens
@@ -2038,22 +2083,62 @@
           setTigerSelectedAnswer(null);
           return;
         }
-        // Record discovery with a synthetic quiz result
-        const totalEarned = 10 + currentAnimal.pointValue;
-        setTotalPoints(p => p + totalEarned);
-        setFoundAnimals(prev => new Set([...prev, currentAnimal.id]));
-        setBadges(prev => ([...prev, {
-          animalId: currentAnimal.id, animal: currentAnimal.name, points: totalEarned,
-          behaviourScore: 0, detailScore: 0, literacyScore: 0,
-          quizResults: [{ question: 'How long is a Sumatran tiger approximately?', correctOnFirstAttempt: true }],
-          observation: '',
-          timestamp: new Date().toISOString()
-        }]));
+        // Discovery correct — advance to immersion. Badge awarded after reflection only.
         stopCamera();
         startImmersion();
         setCurrentScreen('observation');
       }
 
+      function submitTigerReflection() {
+        const text = reflectionText.trim();
+        const lower = text.toLowerCase();
+        const wc = text.split(/\s+/).filter(Boolean).length;
+        if (wc < 10) { alert(`Please write at least 10 words. You have ${wc}.`); return; }
+
+        // Reflection scoring: 0–5 per axis. Behaviour = 0 (immersion doesn't score animal behaviour).
+        const reflectionKeywords = ['hear','heard','sound','bird','wind','smell','trees','leaves','water','people','animals','nature'];
+        const sensoryHits = reflectionKeywords.filter(w => lower.includes(w)).length;
+        const refDetail = Math.min(5, sensoryHits);
+
+        let refWriting = 0;
+        if (/^[A-Z]/.test(text)) refWriting++;
+        if (/[.!?]$/.test(text)) refWriting++;
+        if (text.split(/[.!?]+/).filter(s => s.trim().length > 0).length >= 2) refWriting++;
+        const words = lower.split(/\s+/).filter(Boolean);
+        if (words.length > 0 && new Set(words).size / words.length > 0.6) refWriting++;
+        refWriting = Math.min(5, refWriting);
+
+        const reflectionScore = { behaviour: 0, detail: refDetail, writing: refWriting };
+        const reflectionPoints = reflectionScore.behaviour + reflectionScore.detail + reflectionScore.writing;
+
+        // Include discovery question in quiz results
+        const tigerQuizResults = [
+          { question: 'How long is a Sumatran tiger approximately?', correctOnFirstAttempt: true, missionType: 'discovery' },
+          ...currentAnimal.questions.map((q, i) => ({
+            question: q.question, correctOnFirstAttempt: firstAttemptResults[i] === true, missionType: 'knowledge'
+          }))
+        ];
+
+        const quizCorrect = tigerQuizResults.filter(qr => qr.correctOnFirstAttempt && (qr.missionType === 'knowledge' || qr.missionType === 'discovery')).length;
+        const quizPoints = quizCorrect * 10;
+        const totalEarned = quizPoints + reflectionPoints + currentAnimal.pointValue;
+
+        setTotalPoints(p => p + totalEarned);
+        setFoundAnimals(prev => new Set([...prev, currentAnimal.id]));
+        setBadges(prev => ([...prev, {
+          animalId: currentAnimal.id, animal: currentAnimal.name, points: totalEarned,
+          behaviourScore: reflectionScore.behaviour,
+          detailScore: reflectionScore.detail,
+          literacyScore: reflectionScore.writing,
+          quizResults: tigerQuizResults,
+          observation: '',
+          observationMissionType: 'immersion',
+          reflectionText: text,
+          reflectionScore,
+          timestamp: new Date().toISOString()
+        }]));
+        setCurrentScreen('badge');
+      }
       function renderTigerMission() {
         const options = [
           { value: '1.5', label: '1.5 m' },
@@ -2105,7 +2190,7 @@
 
       function startImmersion() {
         setImmersionActive(true);
-        setImmersionTimer(60);
+        setImmersionTimer(30);
       }
 
       React.useEffect(() => {
@@ -2179,8 +2264,11 @@
         const quizResults = currentAnimal.questions.map((q, i) => {
           const wasCorrect = firstAttemptResults[i] === true;
           if (wasCorrect) correctCount++;
-          return { question: q.question, correctOnFirstAttempt: wasCorrect };
+          return { question: q.question, correctOnFirstAttempt: wasCorrect, missionType: "knowledge" };
         });
+        if (reflectionText.trim().length > 0) {
+          quizResults.push({ question: 'Immersion reflection', correctOnFirstAttempt: reflectionScore >= 2, missionType: "immersion", reflectionScore });
+        }
         const quizPoints = correctCount * 10;
 
         const text = observation.trim();
@@ -2189,29 +2277,36 @@
         const behaviorWords = ['sleeping','eating','walking','climbing','jumping','playing','sitting','running','resting','moving','looking','watching','grooming','scratching','lying','standing','hanging','swinging','chewing','drinking','hiding','stretching','yawning','sniffing','touching','holding','grabbing'];
         let behaviorCount = 0;
         behaviorWords.forEach(w => { if (lower.includes(w)) behaviorCount++; });
-        // Tier rubric: 0\uc0\u8594 0, 1 action\u8594 7 (50%), 2 actions or contextual\u8594 11 (75%), 2+ with context\u8594 15 (100%)
-        const hasContext = /\\b(while|as|when|then|after|before|near|towards|away|together|each other|another|slowly|carefully|quickly|gently)\\b/.test(lower);
+        // Rubric 0–5: 0 actions→0, 1 action→2, 2 actions or contextual→3, 2+ with context→5
+        const hasContext = /\b(while|as|when|then|after|before|near|towards|away|together|each other|another|slowly|carefully|quickly|gently)\b/.test(lower);
         let behaviourBonus = 0;
-        if (behaviorCount >= 1) behaviourBonus = 7;
-        if (behaviorCount >= 2 || (behaviorCount >= 1 && hasContext)) behaviourBonus = 11;
-        if (behaviorCount >= 2 && hasContext) behaviourBonus = 15;
+        if (behaviorCount >= 1) behaviourBonus = 2;
+        if (behaviorCount >= 2 || (behaviorCount >= 1 && hasContext)) behaviourBonus = 3;
+        if (behaviorCount >= 2 && hasContext) behaviourBonus = 5;
+
+        const reflectionKeywords = ['hear','heard','sound','bird','wind','smell','trees','leaves','water','people','animals','nature'];
+        const reflectionLower = reflectionText.trim().toLowerCase();
+        const reflectionHitCount = reflectionKeywords.filter(w => reflectionLower.includes(w)).length;
+        const reflectionScore = Math.min(5, Math.max(reflectionHitCount > 0 ? reflectionHitCount : 0, 0));
 
         const detailWords = ['fur','color','colour','eyes','ears','tail','paws','claws','nose','mouth','teeth','stripes','spots','pattern','size','big','small','long','short','thick','thin','soft','rough','dark','light','brown','black','white','orange','grey','gray','quietly','slowly','quickly','feathers','scales','beak','wings','mane','trunk','pouch','shell','horns','claws','snout','belly','neck'];
         let detailCount = 0;
         detailWords.forEach(w => { if (lower.includes(w)) detailCount++; });
-        // Tier rubric: 0\uc0\u8594 0, 1 detail\u8594 7 (50%), 2 details\u8594 11 (75%), 2+ linked to behaviour/habitat\u8594 15 (100%)
-        const hasLink = /\\b(because|when|while|near|on the|in the|against|behind|under|above|beside|around|enclosure|tree|rock|branch|ground|water|fence|wall)\\b/.test(lower);
+        // Rubric 0–5: 0 details→0, 1 detail→2, 2 details→3, 2+ linked→5
+        const hasLink = /\b(because|when|while|near|on the|in the|against|behind|under|above|beside|around|enclosure|tree|rock|branch|ground|water|fence|wall)\b/.test(lower);
         let detailBonus = 0;
-        if (detailCount >= 1) detailBonus = 7;
-        if (detailCount >= 2) detailBonus = 11;
-        if (detailCount >= 2 && hasLink) detailBonus = 15;
+        if (detailCount >= 1) detailBonus = 2;
+        if (detailCount >= 2) detailBonus = 3;
+        if (detailCount >= 2 && hasLink) detailBonus = 5;
 
+        // Rubric 0–5: 1pt capital, 1pt punctuation, 1pt multiple sentences, 1pt vocabulary, 1pt length bonus
         let literacyBonus = 0;
-        if (/^[A-Z]/.test(text)) literacyBonus += 3;
-        if (/[.!?]$/.test(text)) literacyBonus += 2;
-        if (text.split(/[.!?]+/).filter(s => s.trim().length > 0).length >= 2) literacyBonus += 3;
-        const words = lower.split(/\\s+/).filter(Boolean);
-        if (words.length > 0 && new Set(words).size / words.length > 0.6) literacyBonus += 2;
+        if (/^[A-Z]/.test(text)) literacyBonus += 1;
+        if (/[.!?]$/.test(text)) literacyBonus += 1;
+        if (text.split(/[.!?]+/).filter(s => s.trim().length > 0).length >= 2) literacyBonus += 1;
+        const words = lower.split(/\s+/).filter(Boolean);
+        if (words.length > 0 && new Set(words).size / words.length > 0.6) literacyBonus += 1;
+        if (words.length >= 20) literacyBonus += 1;
 
         const totalEarned = quizPoints + 30 + behaviourBonus + detailBonus + literacyBonus + currentAnimal.pointValue;
 
@@ -2222,6 +2317,9 @@
           behaviourScore: behaviourBonus, detailScore: detailBonus, literacyScore: literacyBonus,
           quizResults: quizResults,
           observation: text,
+          observationMissionType: "observation",
+          reflectionText: reflectionText.trim(),
+          reflectionScore,
           timestamp: new Date().toISOString()
         }]));
         setCurrentScreen('badge');
@@ -2256,7 +2354,12 @@
           literacyScore: b.literacyScore || 0,
           quizResults: (b.quizResults || []).map(qr => ({
             question: qr.question || "",
-            correctOnFirstAttempt: qr.correctOnFirstAttempt === true
+            correctOnFirstAttempt: qr.correctOnFirstAttempt === true,
+            missionType: qr.missionType || "knowledge",
+            ...(qr.reflectionScore !== undefined ? { reflectionScore: qr.reflectionScore } : {}),
+            ...(qr.detailScore !== undefined ? { detailScore: qr.detailScore } : {}),
+            ...(qr.languageScore !== undefined ? { languageScore: qr.languageScore } : {}),
+            ...(qr.writingScore !== undefined ? { writingScore: qr.writingScore } : {})
           })),
           observation: b.observation || "",
           timestamp: b.timestamp || ""
@@ -2265,15 +2368,37 @@
         // Calculate quiz metrics from cleanBadges
         let quizCorrect = 0;
         let quizTotal = 0;
+        let knowledgeCorrect = 0; let knowledgeTotal = 0;
+        let discoveryCorrect = 0; let discoveryTotal = 0;
+        const observationScores = [];
+        const reflectionScores = [];
         cleanBadges.forEach(badge => {
           if (badge.quizResults) {
             badge.quizResults.forEach(qr => {
-              quizTotal++;
-              if (qr.correctOnFirstAttempt === true) quizCorrect++;
+              if (qr.missionType === 'knowledge' || qr.missionType === 'discovery') {
+                quizTotal++;
+                if (qr.correctOnFirstAttempt === true) quizCorrect++;
+              }
+              if (qr.missionType === 'knowledge') { knowledgeTotal++; if (qr.correctOnFirstAttempt === true) knowledgeCorrect++; }
+              if (qr.missionType === 'discovery') { discoveryTotal++; if (qr.correctOnFirstAttempt === true) discoveryCorrect++; }
             });
+          }
+          // Read reflection directly from immersion badges
+          if (badge.observationMissionType === 'immersion' && badge.reflectionScore !== undefined) {
+            const rs = badge.reflectionScore;
+            const total = (rs && typeof rs === 'object') ? ((rs.behaviour||0)+(rs.detail||0)+(rs.writing||0)) : (typeof rs === 'number' ? rs : 0);
+            reflectionScores.push(total);
+          }
+          if (badge.observationMissionType === 'observation') {
+            const obsScore = (badge.behaviourScore || 0) + (badge.detailScore || 0) + (badge.literacyScore || 0);
+            observationScores.push(obsScore);
           }
         });
         const quizPercentage = quizTotal > 0 ? Math.round((quizCorrect / quizTotal) * 100) : 0;
+        const knowledgeAccuracy = knowledgeTotal > 0 ? Math.round((knowledgeCorrect / knowledgeTotal) * 100) : null;
+        const discoveryAccuracy = discoveryTotal > 0 ? Math.round((discoveryCorrect / discoveryTotal) * 100) : null;
+        const avgObservationScore = observationScores.length > 0 ? Math.round(observationScores.reduce((a, b) => a + b, 0) / observationScores.length) : null;
+        const avgReflectionScore = reflectionScores.length > 0 ? Math.round((reflectionScores.reduce((a, b) => a + b, 0) / reflectionScores.length) * 10) / 10 : null;
 
         try {
           await window.db.collection('classes').doc(code)
@@ -2286,6 +2411,9 @@
               quizCorrect: quizCorrect,
               quizTotal: quizTotal,
               quizPercentage: quizPercentage,
+              knowledgeCorrect, knowledgeTotal, knowledgeAccuracy,
+              discoveryCorrect, discoveryTotal, discoveryAccuracy,
+              avgObservationScore, avgReflectionScore,
               completed: true,
               completedAt: firebase.firestore.FieldValue.serverTimestamp(),
               status: "complete"
@@ -2730,15 +2858,24 @@
             {cameraActive && (
               <div style={{ position:'fixed', inset:0, background:'#000', zIndex:2000, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
                 <video ref={videoRef} autoPlay playsInline muted style={{ width:'100%', maxHeight:'70vh', objectFit:'cover' }} />
-                <div style={{ color:'white', fontSize:'1rem', fontWeight:600, padding:'0.75rem 1.5rem', background:'rgba(0,0,0,0.5)', marginTop:'0.5rem', borderRadius:'8px', letterSpacing:'0.05em' }}>
-                  0m --- 1m --- 2m --- 3m --- 4m --- 5m
+                <div className="ruler-overlay">
+                  <div className="ruler-line"></div>
+                  <div className="ruler-marks">
+                    <span>0m</span>
+                    <span>1m</span>
+                    <span>2m</span>
+                    <span>3m</span>
+                    <span>4m</span>
+                    <span>5m</span>
+                  </div>
+                  <div className="ruler-instruction">Align the ruler with the animal to estimate size</div>
                 </div>
                 <button onClick={stopCamera} style={{ marginTop:'1rem', padding:'0.75rem 2rem', background:'var(--sunset-orange)', color:'white', border:'none', borderRadius:'30px', fontWeight:700, fontSize:'1rem', cursor:'pointer' }}>
                   Close Camera
                 </button>
               </div>
             )}
-            {immersionActive && (
+            {immersionActive && currentAnimal?.id === 'tiger' && (
               <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, #1a3a2a 0%, #2e5c3e 100%)', zIndex:1900, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'2rem', color:'white', textAlign:'center' }}>
                 <h2 className="heading-display" style={{ fontSize:'2.5rem', marginBottom:'1rem' }}>Silent Forest</h2>
                 <p style={{ fontSize:'1.1rem', opacity:0.9, maxWidth:'500px', lineHeight:1.7, marginBottom:'2rem' }}>
@@ -2748,12 +2885,19 @@
                 {immersionTimer === 0 && (
                   <div style={{ width:'100%', maxWidth:'600px' }}>
                     <p style={{ fontSize:'1.1rem', marginBottom:'1rem' }}>What did you hear or smell around the habitat?</p>
-                    <textarea value={observation} onChange={e => setObservation(e.target.value)}
+                    <textarea value={reflectionText} onChange={e => setReflectionText(e.target.value)}
                       placeholder="Describe what you heard or smelled..."
                       style={{ width:'100%', minHeight:'140px', padding:'1rem', borderRadius:'12px', border:'none', fontSize:'1rem', fontFamily:'DM Sans, sans-serif', resize:'vertical' }} />
-                    <button onClick={() => setImmersionActive(false)}
+                    <div style={{ marginTop:'0.5rem', fontSize:'0.9rem', color: (reflectionText.trim().split(/\s+/).filter(Boolean).length >= 10) ? 'rgba(255,255,255,0.9)' : 'rgba(255,180,100,0.9)', fontWeight:600 }}>
+                      {reflectionText.trim().split(/\s+/).filter(Boolean).length}/10 words
+                    </div>
+                    <button onClick={() => {
+                        const wc = reflectionText.trim().split(/\s+/).filter(Boolean).length;
+                        if (wc < 10) { alert(`Please write at least 10 words describing what you heard or smelled. You have ${wc}.`); return; }
+                        if (currentAnimal && currentAnimal.id === 'tiger') { submitTigerReflection(); } else { setImmersionActive(false); }
+                      }}
                       style={{ marginTop:'1rem', width:'100%', padding:'1rem', background:'var(--sunset-orange)', color:'white', border:'none', borderRadius:'30px', fontWeight:700, fontSize:'1.1rem', cursor:'pointer' }}>
-                      Continue to Observation
+                      {currentAnimal && currentAnimal.id === 'tiger' ? 'Submit Reflection' : 'Continue to Observation'}
                     </button>
                   </div>
                 )}
@@ -2765,7 +2909,17 @@
               </div>
             </div>
             <div style={{ maxWidth:'900px', margin:'0 auto', padding:'3rem 2rem' }}>
-              <div style={{ background:'white', borderRadius:'20px', padding:'2.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
+              {currentAnimal.id === 'tiger' ? (
+                <div style={{ background:'white', borderRadius:'20px', padding:'2.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)', textAlign:'center' }}>
+                  <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'1rem' }}>Tiger Immersion Complete</h2>
+                  <p style={{ color:'#666', marginBottom:'2rem', lineHeight:1.6 }}>Your reflection has been recorded. Submit to earn your badge.</p>
+                  <button onClick={submitTigerReflection}
+                    style={{ width:'100%', padding:'1.5rem', borderRadius:'50px', border:'none', background:'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))', color:'white', fontSize:'1.3rem', fontWeight:700, cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.1em', boxShadow:'0 8px 24px rgba(232,106,51,0.4)' }}>
+                     Submit & Earn Badge
+                  </button>
+                </div>
+              ) : (
+                <div style={{ background:'white', borderRadius:'20px', padding:'2.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
                 <h2 className="heading-display" style={{ fontSize:'2.5rem', color:'var(--jungle-deep)', marginBottom:'1rem', textAlign:'center' }}>Your Observations</h2>
                 <p style={{ color:'#666', marginBottom:'1.2rem', lineHeight:1.6, fontSize:'1.1rem', textAlign:'center' }}>{currentAnimal.observationPrompt}</p>
                 <div style={{ display:'flex', flexWrap:'wrap', gap:'0.6rem', justifyContent:'center', marginBottom:'1.5rem' }}>
@@ -2786,6 +2940,7 @@
                   {wordCount<10?'Write More to Continue':' Submit & Earn Badge'}
                 </button>
               </div>
+              )}
             </div>
           </div>
         );
@@ -3602,22 +3757,37 @@
                           </p>
                         </div>
 
-                        {/* Chart 2: Quiz Performance Distribution */}
+                        {/* Chart 2a: Knowledge Performance Distribution */}
                         <div style={{ marginBottom:'2rem' }}>
                           <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
-                            Quiz Performance Distribution
+                            Knowledge Performance
                           </h2>
                           <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
-                            <div style={{ height:'350px', position:'relative' }}>
+                            <div style={{ height:'300px', position:'relative' }}>
                               <canvas ref={quizChartRef}></canvas>
                             </div>
                           </div>
                           <p style={{ color:'#888', fontSize:'0.85rem', marginTop:'1rem', textAlign:'center', fontStyle:'italic' }}>
-                            Distribution based on completed student quiz scores across all classes.
+                            Distribution of knowledge quiz accuracy across classes.
                           </p>
                         </div>
 
-                        {/* Chart 3: Observation Skill Breakdown (Radar) */}
+                        {/* Chart 2b: Discovery Performance Distribution */}
+                        <div style={{ marginBottom:'2rem' }}>
+                          <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
+                            Discovery Performance
+                          </h2>
+                          <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
+                            <div style={{ height:'300px', position:'relative' }}>
+                              <canvas ref={discoveryChartRef}></canvas>
+                            </div>
+                          </div>
+                          <p style={{ color:'#888', fontSize:'0.85rem', marginTop:'1rem', textAlign:'center', fontStyle:'italic' }}>
+                            Distribution of discovery mission accuracy across classes.
+                          </p>
+                        </div>
+
+                        {/* Chart 3a: Observation Skill Breakdown (Radar) */}
                         <div style={{ marginBottom:'2rem' }}>
                           <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>
                             Observation Skill Breakdown
@@ -3645,7 +3815,22 @@
                             </div>
                           </div>
                           <p style={{ color:'#888', fontSize:'0.85rem', marginTop:'1rem', textAlign:'center', fontStyle:'italic' }}>
-                            Average scores across all completed student observations. Scores range from 0-100.
+                            Average scores across all completed student observations. Scores range from 0–100.
+                          </p>
+                        </div>
+
+                        {/* Chart 3b: Reflection Skill Breakdown (Radar) */}
+                        <div style={{ marginBottom:'2rem' }}>
+                          <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>
+                            Reflection Skill Breakdown
+                          </h2>
+                          <div className="fade-in" style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
+                            <div style={{ height:'400px', position:'relative' }}>
+                              <canvas ref={reflectionRadarRef}></canvas>
+                            </div>
+                          </div>
+                          <p style={{ color:'#888', fontSize:'0.85rem', marginTop:'1rem', textAlign:'center', fontStyle:'italic' }}>
+                            Sensory detail and writing quality from immersion reflections. Behaviour axis is not scored for reflection missions.
                           </p>
                         </div>
 
@@ -3665,7 +3850,10 @@
                                 quizCount: 0,
                                 observationScoreSum: 0,
                                 observationCount: 0,
-                                totalBadges: 0
+                                totalBadges: 0,
+                                knowledgeCorrect: 0, knowledgeTotal: 0,
+                                discoveryCorrect: 0, discoveryTotal: 0,
+                                reflectionSum: 0, reflectionCount: 0
                               };
                             }
                             
@@ -3685,6 +3873,20 @@
                               school.observationScoreSum += cls.averageObservationPercent * cls.studentCount;
                               school.observationCount += cls.studentCount;
                             }
+
+                            // Add mission-type breakdown from class
+                            if (cls.knowledgeAccuracy !== null && cls.completedCount > 0) {
+                              school.knowledgeCorrect += Math.round((cls.knowledgeAccuracy / 100) * cls.completedCount);
+                              school.knowledgeTotal += cls.completedCount;
+                            }
+                            if (cls.discoveryAccuracy !== null && cls.completedCount > 0) {
+                              school.discoveryCorrect += Math.round((cls.discoveryAccuracy / 100) * cls.completedCount);
+                              school.discoveryTotal += cls.completedCount;
+                            }
+                            if (cls.avgReflectionScore !== null && cls.completedCount > 0) {
+                              school.reflectionSum += cls.avgReflectionScore * cls.completedCount;
+                              school.reflectionCount += cls.completedCount;
+                            }
                           });
                           
                           // Calculate averages and convert to array
@@ -3695,9 +3897,12 @@
                             avgQuizPercentage: school.quizCount > 0 
                               ? Math.round(school.quizPercentageSum / school.quizCount) 
                               : 0,
+                            knowledgeAccuracy: school.knowledgeTotal > 0 ? Math.round((school.knowledgeCorrect / school.knowledgeTotal) * 100) : null,
+                            discoveryAccuracy: school.discoveryTotal > 0 ? Math.round((school.discoveryCorrect / school.discoveryTotal) * 100) : null,
                             avgObservationScore: school.observationCount > 0
                               ? `${Math.round(school.observationScoreSum / school.observationCount)}%`
                               : '—',
+                            avgReflectionScore: school.reflectionCount > 0 ? Math.round((school.reflectionSum / school.reflectionCount) * 10) / 10 : null,
                             totalBadges: school.totalBadges
                           }));
                           
@@ -3735,15 +3940,24 @@
                                           Avg Quiz %
                                         </th>
                                         <th style={{ textAlign:'center', padding:'0.75rem 1rem', fontWeight:700, color:'var(--jungle-deep)', fontSize:'0.9rem', textTransform:'uppercase', letterSpacing:'0.05em' }}>
+                                          Knowledge %
+                                        </th>
+                                        <th style={{ textAlign:'center', padding:'0.75rem 1rem', fontWeight:700, color:'var(--jungle-deep)', fontSize:'0.9rem', textTransform:'uppercase', letterSpacing:'0.05em' }}>
+                                          Discovery %
+                                        </th>
+                                        <th style={{ textAlign:'center', padding:'0.75rem 1rem', fontWeight:700, color:'var(--jungle-deep)', fontSize:'0.9rem', textTransform:'uppercase', letterSpacing:'0.05em' }}>
                                           <span>
                                             Avg Observation %
                                             <span className="tooltip-wrapper" style={{ marginLeft:'6px' }}>
                                               
                                               <span className="tooltip-text">
-                                                Combined score from: Behaviour (15) + Detail (15) + Writing (10). Displayed as a percentage of 40 total points.
+                                                Combined score from: Behaviour (5) + Detail (5) + Writing (5). Displayed as a percentage of 15 total points.
                                               </span>
                                             </span>
                                           </span>
+                                        </th>
+                                        <th style={{ textAlign:'center', padding:'0.75rem 1rem', fontWeight:700, color:'var(--jungle-deep)', fontSize:'0.9rem', textTransform:'uppercase', letterSpacing:'0.05em' }}>
+                                          Reflection Score
                                         </th>
                                       </tr>
                                     </thead>
@@ -3771,7 +3985,16 @@
                                             </span>
                                           </td>
                                           <td style={{ padding:'1rem', textAlign:'center', color:'#666', fontSize:'0.9rem' }}>
+                                            {school.knowledgeAccuracy !== null ? `${school.knowledgeAccuracy}%` : '—'}
+                                          </td>
+                                          <td style={{ padding:'1rem', textAlign:'center', color:'#666', fontSize:'0.9rem' }}>
+                                            {school.discoveryAccuracy !== null ? `${school.discoveryAccuracy}%` : '—'}
+                                          </td>
+                                          <td style={{ padding:'1rem', textAlign:'center', color:'#666', fontSize:'0.9rem' }}>
                                             {school.avgObservationScore}
+                                          </td>
+                                          <td style={{ padding:'1rem', textAlign:'center', color:'#666', fontSize:'0.9rem' }}>
+                                            {school.avgReflectionScore !== null ? `${Math.round((school.avgReflectionScore / 15) * 100)}%` : '—'}
                                           </td>
                                         </tr>
                                       ))}
