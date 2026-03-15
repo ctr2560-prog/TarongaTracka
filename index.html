@@ -690,10 +690,16 @@
                   completedCount++;
                   totalCompleted++;
                   
-                  // Aggregate quiz percentage
-                  if (studentData.quizPercentage !== undefined) {
+                  // Aggregate quiz percentage — knowledge and discovery only
+                  if (studentData.knowledgeAccuracy !== undefined && studentData.knowledgeAccuracy !== null) {
+                    classQuizSum += studentData.knowledgeAccuracy;
+                    classQuizCount++;
+                  } else if (studentData.quizPercentage !== undefined) {
+                    // Legacy fallback for older submissions without split accuracy
                     classQuizSum += studentData.quizPercentage;
                     classQuizCount++;
+                  }
+                  if (studentData.quizPercentage !== undefined) {
                     totalQuizPercentageSum += studentData.quizPercentage;
                     studentsWithQuizData++;
                   }
@@ -1115,15 +1121,18 @@
             }));
 
             // Compute quiz metrics from sanitised badges — knowledge and discovery only
-            let qCorrect = 0, qTotal = 0;
+            let qKnowledgeCorrect = 0, qKnowledgeTotal = 0;
+            let qDiscoveryCorrect = 0, qDiscoveryTotal = 0;
             savedBadges.forEach(b => {
               b.quizResults.forEach(qr => {
-                if (qr.missionType === 'knowledge' || qr.missionType === 'discovery') {
-                  qTotal++;
-                  if (qr.correctOnFirstAttempt === true) qCorrect++;
-                }
+                if (qr.missionType === 'knowledge') { qKnowledgeTotal++; if (qr.correctOnFirstAttempt === true) qKnowledgeCorrect++; }
+                if (qr.missionType === 'discovery') { qDiscoveryTotal++; if (qr.correctOnFirstAttempt === true) qDiscoveryCorrect++; }
               });
             });
+            const qKnowledgePct = qKnowledgeTotal > 0 ? Math.round((qKnowledgeCorrect / qKnowledgeTotal) * 100) : null;
+            const qDiscoveryPct = qDiscoveryTotal > 0 ? Math.round((qDiscoveryCorrect / qDiscoveryTotal) * 100) : null;
+            const qTotal = qKnowledgeTotal + qDiscoveryTotal;
+            const qCorrect = qKnowledgeCorrect + qDiscoveryCorrect;
             const qPct = qTotal > 0 ? Math.round((qCorrect / qTotal) * 100) : 0;
 
             // Payload matches EXACTLY what onSnapshot maps + what dashboard derives
@@ -1135,6 +1144,8 @@
               quizCorrect:     qCorrect,        // read: derived in CSV builder from badges, but stored for convenience
               quizTotal:       qTotal,
               quizPercentage:  qPct,            // read: s.quizPercentage
+              knowledgeAccuracy: qKnowledgePct,
+              discoveryAccuracy: qDiscoveryPct,
               completed:       false,
               status:          'incomplete',    // read: s.status
               lastActiveAt:    firebase.firestore.FieldValue.serverTimestamp()  // read: for Last Active column
