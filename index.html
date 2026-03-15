@@ -1436,9 +1436,9 @@
                     studentData.badges.forEach(badge => {
                       const behaviourValue = badge.behaviourScore !== undefined ? badge.behaviourScore : (badge.behaviorScore || 0);
                       if (badge.observationMissionType === 'immersion') {
-                        // Reflection badge: score detail and literacy from reflectionScore
-                        refDetailTotal += badge.detailScore || 0;
-                        refLiteracyTotal += badge.literacyScore || 0;
+                        const score = badge.reflectionScore || 0;
+                        refDetailTotal += score;
+                        refLiteracyTotal += score;
                         refBadgeCount++;
                       } else {
                         // Standard observation badge
@@ -2175,7 +2175,7 @@
         const tigerQuizResults = currentAnimal.questions.map((q, i) => ({
           question: q.question, correctOnFirstAttempt: firstAttemptResults[i] === true, missionType: "knowledge"
         }));
-        tigerQuizResults.push({ question: 'Tiger immersion reflection', correctOnFirstAttempt: reflectionScore >= 2, missionType: "immersion", reflectionScore });
+
 
         const quizCorrect = tigerQuizResults.filter(qr => qr.correctOnFirstAttempt && qr.missionType === 'knowledge').length;
         const quizPoints = quizCorrect * 10;
@@ -2923,7 +2923,7 @@
                 </button>
               </div>
             )}
-            {immersionActive && (
+            {immersionActive && currentAnimal?.id === 'tiger' && (
               <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, #1a3a2a 0%, #2e5c3e 100%)', zIndex:1900, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'2rem', color:'white', textAlign:'center' }}>
                 <h2 className="heading-display" style={{ fontSize:'2.5rem', marginBottom:'1rem' }}>Silent Forest</h2>
                 <p style={{ fontSize:'1.1rem', opacity:0.9, maxWidth:'500px', lineHeight:1.7, marginBottom:'2rem' }}>
