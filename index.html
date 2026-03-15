@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -13,13 +14,19 @@
   <title>Taronga Tracka v2.2 - Animal Discovery</title>
 
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <!-- Firebase SDKs -->
+
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 
 <script>
@@ -310,28 +317,32 @@
         font-weight: 500;
       }
   </style>
+
 </head>
 
 <body>
 
-  <video
-    autoplay
-    muted
-    loop
-    playsinline
-    webkit-playsinline
-    preload="auto"
-    style="
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
-      z-index: 0;
-    "
-  >
-    <source src="./images/background-video.mp4" type="video/mp4">
+<video
+autoplay
+muted
+loop
+playsinline
+webkit-playsinline
+preload=“auto”
+style=”
+position: fixed;
+top: 0;
+left: 0;
+width: 100vw;
+height: 100vh;
+object-fit: cover;
+z-index: 0;
+“
+
+```
+<source src="./images/background-video.mp4" type="video/mp4">
+```
+
   </video>
 
   <div id="root" style="position: relative; z-index: 1;"></div>
@@ -677,19 +688,14 @@
               studentsSnapshot.docs.forEach(studentDoc => {
                 const studentData = studentDoc.data();
                 
-                // Date range filtering
+                // Date range filtering — only skip quiz/completion metrics, not badge aggregation
                 const completedAt = studentData.completedAt?.toDate?.();
-                if (!completedAt) return;
+                const inDateRange = !completedAt ? false : (adminDateRange === 'all' ? true : (() => {
+                  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - parseInt(adminDateRange, 10));
+                  return completedAt >= cutoff;
+                })());
 
-                if (adminDateRange !== 'all') {
-                  const days = parseInt(adminDateRange, 10);
-                  const cutoff = new Date();
-                  cutoff.setDate(cutoff.getDate() - days);
-
-                  if (completedAt < cutoff) return;
-                }
-                
-                if (studentData.completed === true) {
+                if (inDateRange && studentData.completed === true) {
                   completedCount++;
                   totalCompleted++;
                   
@@ -704,10 +710,27 @@
                   if (studentData.knowledgeAccuracy !== undefined && studentData.knowledgeAccuracy !== null) {
                     classKnowledgeCorrect += studentData.knowledgeAccuracy;
                     classKnowledgeTotal++;
+                  } else if (Array.isArray(studentData.badges)) {
+                    // Fallback: compute from badge quizResults
+                    let kCorrect = 0, kTotal = 0;
+                    studentData.badges.forEach(badge => {
+                      if (Array.isArray(badge.quizResults)) badge.quizResults.forEach(qr => {
+                        if (qr.missionType === 'knowledge') { kTotal++; if (qr.correctOnFirstAttempt === true) kCorrect++; }
+                      });
+                    });
+                    if (kTotal > 0) { classKnowledgeCorrect += Math.round((kCorrect / kTotal) * 100); classKnowledgeTotal++; }
                   }
                   if (studentData.discoveryAccuracy !== undefined && studentData.discoveryAccuracy !== null) {
                     classDiscoveryCorrect += studentData.discoveryAccuracy;
                     classDiscoveryTotal++;
+                  } else if (Array.isArray(studentData.badges)) {
+                    let dCorrect = 0, dTotal = 0;
+                    studentData.badges.forEach(badge => {
+                      if (Array.isArray(badge.quizResults)) badge.quizResults.forEach(qr => {
+                        if (qr.missionType === 'discovery') { dTotal++; if (qr.correctOnFirstAttempt === true) dCorrect++; }
+                      });
+                    });
+                    if (dTotal > 0) { classDiscoveryCorrect += Math.round((dCorrect / dTotal) * 100); classDiscoveryTotal++; }
                   }
                 }
                 
@@ -1331,7 +1354,10 @@
           };
           adminClasses.forEach(cls => {
             if ((cls.completedCount || 0) === 0) return;
-            if (cls.knowledgeAccuracy !== null && cls.knowledgeAccuracy !== undefined) bucketScore(cls.knowledgeAccuracy, knowledgeRanges);
+            if (cls.knowledgeAccuracy !== null && cls.knowledgeAccuracy !== undefined) {
+              const knowledgePercent = cls.knowledgeAccuracy <= 1 ? cls.knowledgeAccuracy * 100 : cls.knowledgeAccuracy;
+              bucketScore(knowledgePercent, knowledgeRanges);
+            }
           });
           const ctx = quizChartRef.current.getContext('2d');
           quizChartInstanceRef.current = new Chart(ctx, {
@@ -1368,7 +1394,10 @@
           };
           adminClasses.forEach(cls => {
             if ((cls.completedCount || 0) === 0) return;
-            if (cls.discoveryAccuracy !== null && cls.discoveryAccuracy !== undefined) bucketScore(cls.discoveryAccuracy, discoveryRanges);
+            if (cls.discoveryAccuracy !== null && cls.discoveryAccuracy !== undefined) {
+              const discoveryPercent = cls.discoveryAccuracy <= 1 ? cls.discoveryAccuracy * 100 : cls.discoveryAccuracy;
+              bucketScore(discoveryPercent, discoveryRanges);
+            }
           });
           const ctx = discoveryChartRef.current.getContext('2d');
           discoveryChartInstanceRef.current = new Chart(ctx, {
@@ -1438,32 +1467,30 @@
             const { Chart, registerables } = window;
             if (registerables) Chart.register(...registerables);
             if (reflectionRadarInstanceRef.current) reflectionRadarInstanceRef.current.destroy();
-            let refDetailTotal = 0, refLiteracyTotal = 0, refBadgeCount = 0;
+            let refBehaviourTotal = 0, refDetailTotal = 0, refWritingTotal = 0, refBadgeCount = 0;
             for (const cls of adminClasses) {
               try {
                 const snap = await window.db.collection('classes').doc(cls.classCode).collection('students').get();
                 snap.docs.forEach(doc => {
                   const d = doc.data();
-                  const completedAt = d.completedAt?.toDate?.();
-                  if (!completedAt) return;
-                  if (adminDateRange !== 'all') { const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - parseInt(adminDateRange, 10)); if (completedAt < cutoff) return; }
                   if (Array.isArray(d.badges)) d.badges.forEach(badge => {
                     if (badge.observationMissionType === 'immersion') {
-                      const rs = badge.reflectionScore;
-                      const detail = (rs && typeof rs === 'object') ? (rs.detail || 0) : (typeof rs === 'number' ? rs : 0);
-                      const writing = (rs && typeof rs === 'object') ? (rs.writing || 0) : (typeof rs === 'number' ? rs : 0);
-                      refDetailTotal += detail; refLiteracyTotal += writing; refBadgeCount++;
+                      refBehaviourTotal += badge.reflectionScore?.behaviour || 0;
+                      refDetailTotal += badge.reflectionScore?.detail || 0;
+                      refWritingTotal += badge.reflectionScore?.writing || 0;
+                      refBadgeCount++;
                     }
                   });
                 });
               } catch (err) { console.error('Ref radar error:', err); }
             }
-            const refD = refBadgeCount ? Math.round(((refDetailTotal / refBadgeCount) / 5) * 100) : 0;
-            const refW = refBadgeCount ? Math.round(((refLiteracyTotal / refBadgeCount) / 5) * 100) : 0;
+            const refB = refBadgeCount ? Math.round((refBehaviourTotal / (refBadgeCount * 5)) * 100) : 0;
+            const refD = refBadgeCount ? Math.round((refDetailTotal / (refBadgeCount * 5)) * 100) : 0;
+            const refW = refBadgeCount ? Math.round((refWritingTotal / (refBadgeCount * 5)) * 100) : 0;
             const ctx = reflectionRadarRef.current.getContext('2d');
             reflectionRadarInstanceRef.current = new Chart(ctx, {
               type: 'radar',
-              data: { labels: ['Behaviour (%)', 'Detail (%)', 'Writing (%)'], datasets: [{ label: 'Reflection Skills', data: [0, refD, refW], backgroundColor: 'rgba(245,158,11,0.2)', borderColor: '#f59e0b', borderWidth: 2, pointBackgroundColor: '#f59e0b', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5, pointHoverRadius: 7 }] },
+              data: { labels: ['Behaviour (%)', 'Detail (%)', 'Writing (%)'], datasets: [{ label: 'Reflection Skills', data: [refB, refD, refW], backgroundColor: 'rgba(245,158,11,0.2)', borderColor: '#f59e0b', borderWidth: 2, pointBackgroundColor: '#f59e0b', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5, pointHoverRadius: 7 }] },
               options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(245,158,11,0.9)', titleColor: '#fff', bodyColor: '#fff', padding: 12, displayColors: false, callbacks: { label: (c) => `${c.parsed.r}%` } } }, scales: { r: { beginAtZero: true, min: 0, max: 100, ticks: { stepSize: 20, color: '#666', font: { size: 11, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' }, grid: { color: '#E5E5E5' }, angleLines: { color: '#E5E5E5' }, pointLabels: { color: '#333', font: { size: 13, family: "'DM Sans', sans-serif", weight: 600 } } } } }
             });
           } catch (error) { console.error('Failed to create Reflection radar:', error); }
@@ -5098,5 +5125,6 @@
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<TarongaTracka />);
   </script>
+
 </body>
 </html>
