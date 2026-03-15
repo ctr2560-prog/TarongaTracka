@@ -520,7 +520,7 @@
 
       // Check if student session is already completed
       useEffect(() => {
-        if (!studentName || !classCode) {
+        if (!studentName || !classCode || currentScreen !== 'discoverAnimals') {
           setStatusLoaded(true);
           return;
         }
