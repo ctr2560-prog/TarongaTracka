@@ -721,7 +721,11 @@
                       badge.quizResults.forEach(qr => {
                         if (qr.missionType === 'knowledge') { classKnowledgeTotal++; if (qr.correctOnFirstAttempt === true) classKnowledgeCorrect++; }
                         if (qr.missionType === 'discovery') { classDiscoveryTotal++; if (qr.correctOnFirstAttempt === true) classDiscoveryCorrect++; }
-                        if (qr.missionType === 'immersion' && qr.reflectionScore !== undefined) classReflectionScores.push(qr.reflectionScore);
+                        if (qr.missionType === 'immersion' && qr.reflectionScore !== undefined) {
+                          const rs = qr.reflectionScore;
+                          const total = (rs && typeof rs === 'object') ? ((rs.behaviour||0)+(rs.detail||0)+(rs.writing||0)) : (typeof rs === 'number' ? rs : 0);
+                          classReflectionScores.push(total);
+                        }
                       });
                     }
                     
@@ -736,9 +740,9 @@
 
               totalStudents += studentCount;
 
-              // Calculate per-class combined observation percentage (out of 40 total per badge)
+              // Calculate per-class combined observation percentage (out of 15 total per badge: behaviour 5 + detail 5 + writing 5)
               const classTotalScore = classBehaviourTotal + classDetailTotal + classLiteracyTotal;
-              const classMaxPossible = classBadgeCount * 40;
+              const classMaxPossible = classBadgeCount * 15;
               const averageObservationPercent = classMaxPossible > 0 
                 ? Math.round((classTotalScore / classMaxPossible) * 100) 
                 : 0;
@@ -766,9 +770,9 @@
 
             const platformQuizAvg = studentsWithQuizData > 0 ? Math.round(totalQuizPercentageSum / studentsWithQuizData) : 0;
             
-            // Calculate average combined observation percentage (behaviour + detail + writing out of 40)
+            // Calculate average combined observation percentage (behaviour + detail + writing out of 15)
             const globalTotalScore = globalBehaviourTotal + globalDetailTotal + literacyTotal;
-            const globalMaxPossible = badgeCount * 40;
+            const globalMaxPossible = badgeCount * 15;
             const averageObservationPercent = globalMaxPossible > 0 
               ? Math.round((globalTotalScore / globalMaxPossible) * 100) 
               : 0;
@@ -1396,9 +1400,9 @@
                 });
               } catch (err) { console.error('Obs radar error:', err); }
             }
-            const obsB = obsBadgeCount ? Math.round(((obsBehaviourTotal / obsBadgeCount) / 15) * 100) : 0;
-            const obsD = obsBadgeCount ? Math.round(((obsDetailTotal / obsBadgeCount) / 15) * 100) : 0;
-            const obsW = obsBadgeCount ? Math.round(((obsLiteracyTotal / obsBadgeCount) / 10) * 100) : 0;
+            const obsB = obsBadgeCount ? Math.round(((obsBehaviourTotal / obsBadgeCount) / 5) * 100) : 0;
+            const obsD = obsBadgeCount ? Math.round(((obsDetailTotal / obsBadgeCount) / 5) * 100) : 0;
+            const obsW = obsBadgeCount ? Math.round(((obsLiteracyTotal / obsBadgeCount) / 5) * 100) : 0;
             const ctx = radarChartRef.current.getContext('2d');
             radarChartInstanceRef.current = new Chart(ctx, {
               type: 'radar',
@@ -1431,8 +1435,10 @@
                   if (adminDateRange !== 'all') { const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - parseInt(adminDateRange, 10)); if (completedAt < cutoff) return; }
                   if (Array.isArray(d.badges)) d.badges.forEach(badge => {
                     if (badge.observationMissionType === 'immersion') {
-                      const score = badge.reflectionScore || 0;
-                      refDetailTotal += score; refLiteracyTotal += score; refBadgeCount++;
+                      const rs = badge.reflectionScore;
+                      const detail = (rs && typeof rs === 'object') ? (rs.detail || 0) : (typeof rs === 'number' ? rs : 0);
+                      const writing = (rs && typeof rs === 'object') ? (rs.writing || 0) : (typeof rs === 'number' ? rs : 0);
+                      refDetailTotal += detail; refLiteracyTotal += writing; refBadgeCount++;
                     }
                   });
                 });
@@ -2043,17 +2049,7 @@
           setTigerSelectedAnswer(null);
           return;
         }
-        // Record discovery with a synthetic quiz result
-        const totalEarned = 10 + currentAnimal.pointValue;
-        setTotalPoints(p => p + totalEarned);
-        setFoundAnimals(prev => new Set([...prev, currentAnimal.id]));
-        setBadges(prev => ([...prev, {
-          animalId: currentAnimal.id, animal: currentAnimal.name, points: totalEarned,
-          behaviourScore: 0, detailScore: 0, literacyScore: 0,
-          quizResults: [{ question: 'How long is a Sumatran tiger approximately?', correctOnFirstAttempt: true, missionType: "discovery" }],
-          observation: '',
-          timestamp: new Date().toISOString()
-        }]));
+        // Discovery correct — advance to immersion. Badge awarded after reflection only.
         stopCamera();
         startImmersion();
         setCurrentScreen('observation');
@@ -2065,50 +2061,50 @@
         const wc = text.split(/\s+/).filter(Boolean).length;
         if (wc < 10) { alert(`Please write at least 10 words. You have ${wc}.`); return; }
 
+        // Reflection scoring: 0–5 per axis. Behaviour = 0 (immersion doesn't score animal behaviour).
         const reflectionKeywords = ['hear','heard','sound','bird','wind','smell','trees','leaves','water','people','animals','nature'];
-        const reflectionHitCount = reflectionKeywords.filter(w => lower.includes(w)).length;
-        const reflectionScore = Math.min(5, Math.max(reflectionHitCount, 0));
+        const sensoryHits = reflectionKeywords.filter(w => lower.includes(w)).length;
+        const refDetail = Math.min(5, sensoryHits);
 
-        const detailWords = ['fur','color','colour','eyes','ears','tail','paws','claws','nose','mouth','teeth','stripes','spots','pattern','size','big','small','long','short','thick','thin','soft','rough','dark','light','brown','black','white','orange','grey','gray','quietly','slowly','quickly','feathers','scales','beak','wings','mane','trunk','pouch','shell','horns','claws','snout','belly','neck'];
-        let detailCount = 0;
-        detailWords.forEach(w => { if (lower.includes(w)) detailCount++; });
-        const hasLink = /\b(because|when|while|near|on the|in the|against|behind|under|above|beside|around|enclosure|tree|rock|branch|ground|water|fence|wall)\b/.test(lower);
-        let detailScore = 0;
-        if (detailCount >= 1) detailScore = 7;
-        if (detailCount >= 2) detailScore = 11;
-        if (detailCount >= 2 && hasLink) detailScore = 15;
-
-        let literacyScore = 0;
-        if (/^[A-Z]/.test(text)) literacyScore += 3;
-        if (/[.!?]$/.test(text)) literacyScore += 2;
-        if (text.split(/[.!?]+/).filter(s => s.trim().length > 0).length >= 2) literacyScore += 3;
+        let refWriting = 0;
+        if (/^[A-Z]/.test(text)) refWriting++;
+        if (/[.!?]$/.test(text)) refWriting++;
+        if (text.split(/[.!?]+/).filter(s => s.trim().length > 0).length >= 2) refWriting++;
         const words = lower.split(/\s+/).filter(Boolean);
-        if (words.length > 0 && new Set(words).size / words.length > 0.6) literacyScore += 2;
+        if (words.length > 0 && new Set(words).size / words.length > 0.6) refWriting++;
+        refWriting = Math.min(5, refWriting);
 
-        const tigerQuizResults = currentAnimal.questions.map((q, i) => ({
-          question: q.question, correctOnFirstAttempt: firstAttemptResults[i] === true, missionType: "knowledge"
-        }));
+        const reflectionScore = { behaviour: 0, detail: refDetail, writing: refWriting };
+        const reflectionPoints = reflectionScore.behaviour + reflectionScore.detail + reflectionScore.writing;
 
+        // Include discovery question in quiz results
+        const tigerQuizResults = [
+          { question: 'How long is a Sumatran tiger approximately?', correctOnFirstAttempt: true, missionType: 'discovery' },
+          ...currentAnimal.questions.map((q, i) => ({
+            question: q.question, correctOnFirstAttempt: firstAttemptResults[i] === true, missionType: 'knowledge'
+          }))
+        ];
 
         const quizCorrect = tigerQuizResults.filter(qr => qr.correctOnFirstAttempt && (qr.missionType === 'knowledge' || qr.missionType === 'discovery')).length;
         const quizPoints = quizCorrect * 10;
-        const totalEarned = quizPoints + 30 + detailScore + literacyScore + currentAnimal.pointValue;
+        const totalEarned = quizPoints + reflectionPoints + currentAnimal.pointValue;
 
         setTotalPoints(p => p + totalEarned);
         setFoundAnimals(prev => new Set([...prev, currentAnimal.id]));
         setBadges(prev => ([...prev, {
           animalId: currentAnimal.id, animal: currentAnimal.name, points: totalEarned,
-          behaviourScore: 0, detailScore, literacyScore,
+          behaviourScore: reflectionScore.behaviour,
+          detailScore: reflectionScore.detail,
+          literacyScore: reflectionScore.writing,
           quizResults: tigerQuizResults,
           observation: '',
-          observationMissionType: "immersion",
+          observationMissionType: 'immersion',
           reflectionText: text,
           reflectionScore,
           timestamp: new Date().toISOString()
         }]));
         setCurrentScreen('badge');
       }
-
       function renderTigerMission() {
         const options = [
           { value: '1.5', label: '1.5 m' },
@@ -2247,12 +2243,12 @@
         const behaviorWords = ['sleeping','eating','walking','climbing','jumping','playing','sitting','running','resting','moving','looking','watching','grooming','scratching','lying','standing','hanging','swinging','chewing','drinking','hiding','stretching','yawning','sniffing','touching','holding','grabbing'];
         let behaviorCount = 0;
         behaviorWords.forEach(w => { if (lower.includes(w)) behaviorCount++; });
-        // Tier rubric: 0\uc0\u8594 0, 1 action\u8594 7 (50%), 2 actions or contextual\u8594 11 (75%), 2+ with context\u8594 15 (100%)
-        const hasContext = /\\b(while|as|when|then|after|before|near|towards|away|together|each other|another|slowly|carefully|quickly|gently)\\b/.test(lower);
+        // Rubric 0–5: 0 actions→0, 1 action→2, 2 actions or contextual→3, 2+ with context→5
+        const hasContext = /\b(while|as|when|then|after|before|near|towards|away|together|each other|another|slowly|carefully|quickly|gently)\b/.test(lower);
         let behaviourBonus = 0;
-        if (behaviorCount >= 1) behaviourBonus = 7;
-        if (behaviorCount >= 2 || (behaviorCount >= 1 && hasContext)) behaviourBonus = 11;
-        if (behaviorCount >= 2 && hasContext) behaviourBonus = 15;
+        if (behaviorCount >= 1) behaviourBonus = 2;
+        if (behaviorCount >= 2 || (behaviorCount >= 1 && hasContext)) behaviourBonus = 3;
+        if (behaviorCount >= 2 && hasContext) behaviourBonus = 5;
 
         const reflectionKeywords = ['hear','heard','sound','bird','wind','smell','trees','leaves','water','people','animals','nature'];
         const reflectionLower = reflectionText.trim().toLowerCase();
@@ -2262,19 +2258,21 @@
         const detailWords = ['fur','color','colour','eyes','ears','tail','paws','claws','nose','mouth','teeth','stripes','spots','pattern','size','big','small','long','short','thick','thin','soft','rough','dark','light','brown','black','white','orange','grey','gray','quietly','slowly','quickly','feathers','scales','beak','wings','mane','trunk','pouch','shell','horns','claws','snout','belly','neck'];
         let detailCount = 0;
         detailWords.forEach(w => { if (lower.includes(w)) detailCount++; });
-        // Tier rubric: 0\uc0\u8594 0, 1 detail\u8594 7 (50%), 2 details\u8594 11 (75%), 2+ linked to behaviour/habitat\u8594 15 (100%)
-        const hasLink = /\\b(because|when|while|near|on the|in the|against|behind|under|above|beside|around|enclosure|tree|rock|branch|ground|water|fence|wall)\\b/.test(lower);
+        // Rubric 0–5: 0 details→0, 1 detail→2, 2 details→3, 2+ linked→5
+        const hasLink = /\b(because|when|while|near|on the|in the|against|behind|under|above|beside|around|enclosure|tree|rock|branch|ground|water|fence|wall)\b/.test(lower);
         let detailBonus = 0;
-        if (detailCount >= 1) detailBonus = 7;
-        if (detailCount >= 2) detailBonus = 11;
-        if (detailCount >= 2 && hasLink) detailBonus = 15;
+        if (detailCount >= 1) detailBonus = 2;
+        if (detailCount >= 2) detailBonus = 3;
+        if (detailCount >= 2 && hasLink) detailBonus = 5;
 
+        // Rubric 0–5: 1pt capital, 1pt punctuation, 1pt multiple sentences, 1pt vocabulary, 1pt length bonus
         let literacyBonus = 0;
-        if (/^[A-Z]/.test(text)) literacyBonus += 3;
-        if (/[.!?]$/.test(text)) literacyBonus += 2;
-        if (text.split(/[.!?]+/).filter(s => s.trim().length > 0).length >= 2) literacyBonus += 3;
-        const words = lower.split(/\\s+/).filter(Boolean);
-        if (words.length > 0 && new Set(words).size / words.length > 0.6) literacyBonus += 2;
+        if (/^[A-Z]/.test(text)) literacyBonus += 1;
+        if (/[.!?]$/.test(text)) literacyBonus += 1;
+        if (text.split(/[.!?]+/).filter(s => s.trim().length > 0).length >= 2) literacyBonus += 1;
+        const words = lower.split(/\s+/).filter(Boolean);
+        if (words.length > 0 && new Set(words).size / words.length > 0.6) literacyBonus += 1;
+        if (words.length >= 20) literacyBonus += 1;
 
         const totalEarned = quizPoints + 30 + behaviourBonus + detailBonus + literacyBonus + currentAnimal.pointValue;
 
@@ -2347,7 +2345,11 @@
               if (qr.correctOnFirstAttempt === true) quizCorrect++;
               if (qr.missionType === 'knowledge') { knowledgeTotal++; if (qr.correctOnFirstAttempt === true) knowledgeCorrect++; }
               if (qr.missionType === 'discovery') { discoveryTotal++; if (qr.correctOnFirstAttempt === true) discoveryCorrect++; }
-              if (qr.missionType === 'immersion' && qr.reflectionScore !== undefined) reflectionScores.push(qr.reflectionScore);
+              if (qr.missionType === 'immersion' && qr.reflectionScore !== undefined) {
+                const rs = qr.reflectionScore;
+                const total = (rs && typeof rs === 'object') ? ((rs.behaviour||0)+(rs.detail||0)+(rs.writing||0)) : (typeof rs === 'number' ? rs : 0);
+                reflectionScores.push(total);
+              }
             });
           }
           if (badge.observationMissionType === 'observation') {
@@ -3912,7 +3914,7 @@
                                             <span className="tooltip-wrapper" style={{ marginLeft:'6px' }}>
                                               
                                               <span className="tooltip-text">
-                                                Combined score from: Behaviour (15) + Detail (15) + Writing (10). Displayed as a percentage of 40 total points.
+                                                Combined score from: Behaviour (5) + Detail (5) + Writing (5). Displayed as a percentage of 15 total points.
                                               </span>
                                             </span>
                                           </span>
