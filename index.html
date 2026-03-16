@@ -2061,10 +2061,9 @@
         const correctOnFirstAttempt = firstAttempt;
         const tigerQuizResults = [{
           question: 'How long is a Sumatran tiger approximately?',
-          correctOnFirstAttempt,
-          missionType: 'discovery'
+          correctOnFirstAttempt
         }];
-        recordMissionResult('tiger', 'Sumatran Tiger', tigerQuizResults);
+        recordMissionResult('tiger', 'Sumatran Tiger', tigerQuizResults, null);
         setTigerShowFact(true);
       }
 
@@ -2082,23 +2081,13 @@
           detail: detailScore || 0,
           writing: writingScore || 0
         };
+
         const observationPoints = observationScore.behaviour + observationScore.detail + observationScore.writing;
-
-        // Include discovery question in quiz results
-        const tigerQuizResults = [
-          { question: 'How long is a Sumatran tiger approximately?', correctOnFirstAttempt: true, missionType: 'discovery' },
-          ...currentAnimal.questions.map((q, i) => ({
-            question: q.question, correctOnFirstAttempt: firstAttemptResults[i] === true, missionType: 'knowledge'
-          }))
-        ];
-
-        const quizCorrect = tigerQuizResults.filter(qr => qr.correctOnFirstAttempt).length;
-        const quizPoints = quizCorrect * 10;
-        const totalEarned = quizPoints + observationPoints + currentAnimal.pointValue;
+        const totalEarned = observationPoints + currentAnimal.pointValue;
 
         setTotalPoints(p => p + totalEarned);
         setFoundAnimals(prev => new Set([...prev, currentAnimal.id]));
-        recordMissionResult('tiger', 'Sumatran Tiger', tigerQuizResults, observationScore);
+        recordMissionResult('tiger', 'Sumatran Tiger', [], observationScore);
         setCurrentScreen('badge');
       }
       function renderTigerMission() {
