@@ -423,6 +423,7 @@
       const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
       const [tigerSelectedAnswer, setTigerSelectedAnswer] = useState(null);
       const [tigerAttempted, setTigerAttempted] = useState(false);
+      const [tigerShowFact, setTigerShowFact] = useState(false);
       const [cameraActive, setCameraActive] = React.useState(false);
       const [cameraStream, setCameraStream] = React.useState(null);
       const videoRef = React.useRef(null);
@@ -669,7 +670,7 @@
               let classLiteracyTotal = 0;
               let classBadgeCount = 0;
               let classTotalBadges = 0;
-              let classReflectionScores = [];
+              let classObservationScores = [];
               const classStudentBadges = [];
 
               studentsSnapshot.docs.forEach(studentDoc => {
@@ -711,22 +712,13 @@
                     classLiteracyTotal += badge.literacyScore || 0;
                     classBadgeCount++;
 
-                    // Aggregate reflection score directly from immersion badges
-                    if (badge.observationMissionType === 'immersion' && badge.reflectionScore !== undefined) {
-                      const rs = badge.reflectionScore;
-                      const total = (rs && typeof rs === 'object') ? ((rs.behaviour||0)+(rs.detail||0)+(rs.writing||0)) : (typeof rs === 'number' ? rs : 0);
-                      classReflectionScores.push(total);
-                    }
-                    
-                    // Aggregate mission-type analytics from quizResults (legacy path)
-                    if (Array.isArray(badge.quizResults)) {
-                      badge.quizResults.forEach(qr => {
-                        if (qr.missionType === 'immersion' && qr.reflectionScore !== undefined && badge.observationMissionType !== 'immersion') {
-                          const rs = qr.reflectionScore;
-                          const total = (rs && typeof rs === 'object') ? ((rs.behaviour||0)+(rs.detail||0)+(rs.writing||0)) : (typeof rs === 'number' ? rs : 0);
-                          classReflectionScores.push(total);
-                        }
-                      });
+                    // Aggregate observation score from any badge that has one
+                    if (badge.observationScore && typeof badge.observationScore === 'object') {
+                      const total = (badge.observationScore.behaviour||0) + (badge.observationScore.detail||0) + (badge.observationScore.writing||0);
+                      classObservationScores.push(total);
+                    } else if (badge.behaviourScore !== undefined || badge.detailScore !== undefined) {
+                      // Legacy badge fallback
+                      classObservationScores.push((badge.behaviourScore||0) + (badge.detailScore||0) + (badge.literacyScore||0));
                     }
                     
                     // Global tracking for platform-wide average
@@ -740,12 +732,9 @@
 
               totalStudents += studentCount;
 
-              // Calculate per-class combined observation percentage (out of 15 total per badge: behaviour 5 + detail 5 + writing 5)
-              const classTotalScore = classBehaviourTotal + classDetailTotal + classLiteracyTotal;
-              const classMaxPossible = classBadgeCount * 15;
-              const averageObservationPercent = classMaxPossible > 0 
-                ? Math.round((classTotalScore / classMaxPossible) * 100) 
-                : 0;
+              // Calculate observation % — convert each badge's raw score to % first, then average
+              const observationPercent = classObservationScores.length === 0 ? 0
+                : Math.round(classObservationScores.map(s => (s / 15) * 100).reduce((a,b)=>a+b,0) / classObservationScores.length);
 
               // Store class with stats including quiz average and observation percentage
               const classQuizAvg = classQuizCount > 0 ? Math.round(classQuizSum / classQuizCount) : 0;
@@ -760,16 +749,8 @@
                 completionPercent: studentCount > 0 ? Math.round((completedCount / studentCount) * 100) : 0,
                 quizAverage: classQuizAvg,
                 quizPercent: classQuizAvg,
-                averageObservationPercent: averageObservationPercent,
-                writingPercent: (() => {
-                  const scores = [];
-                  if (classBadgeCount > 0) {
-                    const obsTotal = classBehaviourTotal + classDetailTotal + classLiteracyTotal;
-                    if (obsTotal > 0) scores.push(Math.round((obsTotal / (classBadgeCount * 15)) * 100));
-                  }
-                  classReflectionScores.forEach(s => scores.push(Math.round((s / 15) * 100)));
-                  return scores.length > 0 ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : null;
-                })(),
+                averageObservationPercent: observationPercent,
+                writingPercent: observationPercent || null,
                 totalBadges: classTotalBadges,
                 studentBadges: classStudentBadges,
                 createdAt: classData.createdAt || null
@@ -1087,10 +1068,10 @@
               quizResults:    (b.quizResults || []).map(qr => ({
                 question:              qr.question || '',
                 correctOnFirstAttempt: qr.correctOnFirstAttempt === true,
-                missionType:           qr.missionType || 'knowledge',
-                ...(qr.reflectionScore !== undefined ? { reflectionScore: qr.reflectionScore } : {})
+                missionType:           qr.missionType || 'knowledge'
               })),
               observation:    b.observation || '',
+              observationScore: (b.observationScore && typeof b.observationScore === 'object') ? b.observationScore : null,
               timestamp:      b.timestamp || ''
             }));
 
@@ -1359,12 +1340,12 @@
                 snap.docs.forEach(doc => {
                   const d = doc.data();
                   if (Array.isArray(d.badges)) d.badges.forEach(badge => {
-                    if (badge.reflectionScore && typeof badge.reflectionScore === 'object') {
-                      behaviourScores.push((badge.reflectionScore.behaviour || 0) / 5 * 100);
-                      detailScores.push((badge.reflectionScore.detail || 0) / 5 * 100);
-                      writingScores.push((badge.reflectionScore.writing || 0) / 5 * 100);
-                    }
-                    if (badge.observationMissionType === 'observation') {
+                    if (badge.observationScore && typeof badge.observationScore === 'object') {
+                      behaviourScores.push((badge.observationScore.behaviour || 0) / 5 * 100);
+                      detailScores.push((badge.observationScore.detail || 0) / 5 * 100);
+                      writingScores.push((badge.observationScore.writing || 0) / 5 * 100);
+                    } else if (badge.behaviourScore !== undefined || badge.detailScore !== undefined || badge.literacyScore !== undefined) {
+                      // Legacy badge fallback
                       behaviourScores.push(Math.min(100, ((badge.behaviourScore || 0) / 5) * 100));
                       detailScores.push(Math.min(100, ((badge.detailScore || 0) / 5) * 100));
                       writingScores.push(Math.min(100, ((badge.literacyScore || 0) / 5) * 100));
@@ -1896,12 +1877,47 @@
       }, [firestoreAnimals]);
 
       // ---------- HELPERS ----------
-      function recordMissionResult(animalId, animalName, quizResults = [], reflectionScore = null) {
+      function calculateBehaviourScore(text) {
+        const lower = text.toLowerCase();
+        const behaviorWords = ['sleeping','eating','walking','climbing','jumping','playing','sitting','running','resting','moving','looking','watching','grooming','scratching','lying','standing','hanging','swinging','chewing','drinking','hiding','stretching','yawning','sniffing','touching','holding','grabbing','pacing','calling','splashing','digging','rolling','basking'];
+        let count = 0;
+        behaviorWords.forEach(w => { if (lower.includes(w)) count++; });
+        const hasContext = /\b(while|as|when|then|after|before|near|towards|away|together|slowly|carefully|quickly|gently)\b/.test(lower);
+        if (count === 0) return 0;
+        if (count >= 2 && hasContext) return 5;
+        if (count >= 2 || (count >= 1 && hasContext)) return 3;
+        return 2;
+      }
+
+      function calculateDetailScore(text) {
+        const lower = text.toLowerCase();
+        const detailWords = ['fur','color','colour','eyes','ears','tail','paws','claws','nose','mouth','teeth','stripes','spots','pattern','size','big','small','long','short','thick','thin','soft','rough','dark','light','brown','black','white','orange','grey','gray','feathers','scales','beak','wings','mane','trunk','shell','horns','snout','belly','neck','quietly','slowly','quickly'];
+        let count = 0;
+        detailWords.forEach(w => { if (lower.includes(w)) count++; });
+        const hasLink = /\b(because|when|while|near|on the|in the|against|behind|under|above|beside|around|enclosure|tree|rock|branch|ground|water|fence|wall)\b/.test(lower);
+        if (count === 0) return 0;
+        if (count >= 2 && hasLink) return 5;
+        if (count >= 2) return 3;
+        return 2;
+      }
+
+      function calculateWritingScore(text) {
+        const lower = text.toLowerCase();
+        let score = 0;
+        if (/^[A-Z]/.test(text)) score++;
+        if (/[.!?]$/.test(text)) score++;
+        if (text.split(/[.!?]+/).filter(s => s.trim().length > 0).length >= 2) score++;
+        const words = lower.split(/\s+/).filter(Boolean);
+        if (words.length > 0 && new Set(words).size / words.length > 0.6) score++;
+        if (words.length >= 15) score++;
+        return Math.min(5, score);
+      }
+      function recordMissionResult(animalId, animalName, quizResults = [], observationScore = null) {
         const badge = {
           animalId,
           animal: animalName,
           quizResults,
-          reflectionScore,
+          observationScore,
           timestamp: new Date().toISOString()
         };
         setBadges(prev => {
@@ -1910,12 +1926,12 @@
             // No badge yet — add fresh
             return [...prev, badge];
           }
-          if (reflectionScore !== null) {
+          if (observationScore !== null) {
             // Badge exists but we're adding reflection — merge it in
             const updated = [...prev];
             updated[existingIndex] = {
               ...updated[existingIndex],
-              reflectionScore,
+              observationScore,
               quizResults: quizResults.length > 0 ? quizResults : updated[existingIndex].quizResults
             };
             return updated;
@@ -2034,57 +2050,39 @@
 
       function submitTigerAnswer() {
         if (!tigerSelectedAnswer) return;
-        const correctAnswer = '2.5';
+        const correctAnswer = '2.5m';
         const firstAttempt = !tigerAttempted;
         setTigerAttempted(true);
         if (tigerSelectedAnswer !== correctAnswer) {
-          alert('Not quite — look carefully at the tiger and try again!');
+          alert('Not quite.\n\nTry using the camera measurement tool to estimate the tiger\'s length from nose to tail.');
           setTigerSelectedAnswer(null);
           return;
         }
         const correctOnFirstAttempt = firstAttempt;
-        recordMissionResult(
-          'tiger',
-          'Sumatran Tiger',
-          [{ question: 'How long is a Sumatran tiger approximately?', correctOnFirstAttempt, missionType: 'discovery' }]
-        );
-        stopCamera();
-        startImmersion();
-        setCurrentScreen('observation');
+        const tigerQuizResults = [{
+          question: 'How long is a Sumatran tiger approximately?',
+          correctOnFirstAttempt,
+          missionType: 'discovery'
+        }];
+        recordMissionResult('tiger', 'Sumatran Tiger', tigerQuizResults);
+        setTigerShowFact(true);
       }
 
       function submitTigerReflection() {
         const text = reflectionText.trim();
-        const lower = text.toLowerCase();
         const wc = text.split(/\s+/).filter(Boolean).length;
         if (wc < 10) { alert(`Please write at least 10 words. You have ${wc}.`); return; }
 
-        // Calculate behaviour score: sensory/environmental keywords (0–5)
-        const reflectionKeywords = ['hear','heard','sound','bird','wind','smell','trees','leaves','water','people','animals','nature'];
-        const sensoryHits = reflectionKeywords.filter(w => lower.includes(w)).length;
-        const behaviourScore = Math.min(5, sensoryHits);
+        const behaviourScore = calculateBehaviourScore(text);
+        const detailScore = calculateDetailScore(text);
+        const writingScore = calculateWritingScore(text);
 
-        // Calculate detail score: specific descriptive words (0–5)
-        const detailWords = ['fur','color','colour','eyes','ears','tail','paws','claws','nose','mouth','teeth','stripes','spots','pattern','size','big','small','long','short','thick','thin','soft','rough','dark','light','brown','black','white','orange','grey','gray','feathers','scales','beak','wings','mane','trunk','shell','horns','snout','belly','neck'];
-        const detailHits = detailWords.filter(w => lower.includes(w)).length;
-        const detailScore = Math.min(5, detailHits > 0 ? (detailHits >= 2 ? 3 : 2) : 0);
-
-        // Calculate writing score: literacy markers (0–5)
-        let writingScore = 0;
-        if (/^[A-Z]/.test(text)) writingScore++;
-        if (/[.!?]$/.test(text)) writingScore++;
-        if (text.split(/[.!?]+/).filter(s => s.trim().length > 0).length >= 2) writingScore++;
-        const words = lower.split(/\s+/).filter(Boolean);
-        if (words.length > 0 && new Set(words).size / words.length > 0.6) writingScore++;
-        if (words.length >= 15) writingScore++;
-        writingScore = Math.min(5, writingScore);
-
-        const reflectionScore = {
+        const observationScore = {
           behaviour: behaviourScore || 0,
           detail: detailScore || 0,
           writing: writingScore || 0
         };
-        const reflectionPoints = reflectionScore.behaviour + reflectionScore.detail + reflectionScore.writing;
+        const observationPoints = observationScore.behaviour + observationScore.detail + observationScore.writing;
 
         // Include discovery question in quiz results
         const tigerQuizResults = [
@@ -2096,20 +2094,40 @@
 
         const quizCorrect = tigerQuizResults.filter(qr => qr.correctOnFirstAttempt).length;
         const quizPoints = quizCorrect * 10;
-        const totalEarned = quizPoints + reflectionPoints + currentAnimal.pointValue;
+        const totalEarned = quizPoints + observationPoints + currentAnimal.pointValue;
 
         setTotalPoints(p => p + totalEarned);
         setFoundAnimals(prev => new Set([...prev, currentAnimal.id]));
-        recordMissionResult('tiger', 'Sumatran Tiger', tigerQuizResults, reflectionScore);
+        recordMissionResult('tiger', 'Sumatran Tiger', tigerQuizResults, observationScore);
         setCurrentScreen('badge');
       }
       function renderTigerMission() {
         const options = [
-          { value: '1.5', label: '1.5 m' },
-          { value: '2.5', label: '2.5 m' },
-          { value: '3.5', label: '3.5 m' },
-          { value: '4.5', label: '4.5 m' },
+          { value: '1.5m', label: '1.5 m' },
+          { value: '2.5m', label: '2.5 m' },
+          { value: '3.5m', label: '3.5 m' },
+          { value: '4.5m', label: '4.5 m' },
         ];
+        if (tigerShowFact) {
+          return (
+            <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, #1a3a2a 0%, #2e5c3e 100%)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'2rem', color:'white', textAlign:'center', zIndex:500 }}>
+              <div style={{ fontSize:'3rem', marginBottom:'1rem' }}>✔</div>
+              <h2 className="heading-display" style={{ fontSize:'2rem', color:'#4ade80', marginBottom:'1.5rem' }}>Correct!</h2>
+              <div style={{ background:'rgba(255,255,255,0.1)', borderRadius:'16px', padding:'1.5rem', maxWidth:'480px', marginBottom:'2rem', backdropFilter:'blur(8px)' }}>
+                <p style={{ fontSize:'1rem', lineHeight:1.7, marginBottom:'0.75rem' }}>
+                  🐅 A Sumatran tiger can grow to about <strong>2.5 metres</strong> from nose to tail.
+                </p>
+                <p style={{ fontSize:'0.9rem', opacity:0.85, lineHeight:1.6 }}>
+                  Their tail alone can be nearly 1 metre long — it helps them balance when moving through dense rainforest.
+                </p>
+              </div>
+              <button onClick={() => { setTigerShowFact(false); stopCamera(); startImmersion(); setCurrentScreen('observation'); }}
+                style={{ background:'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))', color:'white', border:'none', padding:'1rem 2.5rem', borderRadius:'30px', fontSize:'1.1rem', fontWeight:700, cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.08em', boxShadow:'0 4px 15px rgba(232,106,51,0.5)' }}>
+                Continue to Observation →
+              </button>
+            </div>
+          );
+        }
         return (
           <div style={{ position:'fixed', inset:0, background:'var(--mist-light)', display:'flex', flexDirection:'column', overflow:'hidden' }}>
             <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'0.6rem 1rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', flex:'0 0 auto', zIndex:100 }}>
@@ -2234,50 +2252,17 @@
         const text = observation.trim();
         const lower = text.toLowerCase();
 
-        const behaviorWords = ['sleeping','eating','walking','climbing','jumping','playing','sitting','running','resting','moving','looking','watching','grooming','scratching','lying','standing','hanging','swinging','chewing','drinking','hiding','stretching','yawning','sniffing','touching','holding','grabbing'];
-        let behaviorCount = 0;
-        behaviorWords.forEach(w => { if (lower.includes(w)) behaviorCount++; });
-        // Rubric 0–5: 0 actions→0, 1 action→2, 2 actions or contextual→3, 2+ with context→5
-        const hasContext = /\b(while|as|when|then|after|before|near|towards|away|together|each other|another|slowly|carefully|quickly|gently)\b/.test(lower);
-        let behaviourBonus = 0;
-        if (behaviorCount >= 1) behaviourBonus = 2;
-        if (behaviorCount >= 2 || (behaviorCount >= 1 && hasContext)) behaviourBonus = 3;
-        if (behaviorCount >= 2 && hasContext) behaviourBonus = 5;
+        const behaviourBonus = calculateBehaviourScore(text);
+        const detailBonus = calculateDetailScore(text);
+        const literacyBonus = calculateWritingScore(text);
 
-        const reflectionKeywords = ['hear','heard','sound','bird','wind','smell','trees','leaves','water','people','animals','nature'];
-        const reflectionLower = reflectionText.trim().toLowerCase();
-        const reflectionHitCount = reflectionKeywords.filter(w => reflectionLower.includes(w)).length;
-        const reflectionRaw = Math.min(5, Math.max(reflectionHitCount, 0));
-
-        const detailWords = ['fur','color','colour','eyes','ears','tail','paws','claws','nose','mouth','teeth','stripes','spots','pattern','size','big','small','long','short','thick','thin','soft','rough','dark','light','brown','black','white','orange','grey','gray','quietly','slowly','quickly','feathers','scales','beak','wings','mane','trunk','pouch','shell','horns','claws','snout','belly','neck'];
-        let detailCount = 0;
-        detailWords.forEach(w => { if (lower.includes(w)) detailCount++; });
-        // Rubric 0–5: 0 details→0, 1 detail→2, 2 details→3, 2+ linked→5
-        const hasLink = /\b(because|when|while|near|on the|in the|against|behind|under|above|beside|around|enclosure|tree|rock|branch|ground|water|fence|wall)\b/.test(lower);
-        let detailBonus = 0;
-        if (detailCount >= 1) detailBonus = 2;
-        if (detailCount >= 2) detailBonus = 3;
-        if (detailCount >= 2 && hasLink) detailBonus = 5;
-
-        // Rubric 0–5: 1pt capital, 1pt punctuation, 1pt multiple sentences, 1pt vocabulary, 1pt length bonus
-        let literacyBonus = 0;
-        if (/^[A-Z]/.test(text)) literacyBonus += 1;
-        if (/[.!?]$/.test(text)) literacyBonus += 1;
-        if (text.split(/[.!?]+/).filter(s => s.trim().length > 0).length >= 2) literacyBonus += 1;
-        const words = lower.split(/\s+/).filter(Boolean);
-        if (words.length > 0 && new Set(words).size / words.length > 0.6) literacyBonus += 1;
-        if (words.length >= 20) literacyBonus += 1;
-
-        // Build reflectionScore object — used by analytics radar and quizResults
-        const reflectionScore = {
+        // Build observationScore object — feeds analytics radar
+        const observationScore = {
           behaviour: behaviourBonus || 0,
           detail: detailBonus || 0,
           writing: literacyBonus || 0
         };
 
-        if (reflectionText.trim().length > 0) {
-          quizResults.push({ question: 'Immersion reflection', correctOnFirstAttempt: (reflectionScore.behaviour + reflectionScore.detail + reflectionScore.writing) >= 2, missionType: "immersion", reflectionScore });
-        }
         const quizPoints = correctCount * 10;
 
         const totalEarned = quizPoints + 30 + behaviourBonus + detailBonus + literacyBonus + currentAnimal.pointValue;
@@ -2289,12 +2274,9 @@
           if (alreadyExists) return prev;
           return [...prev, {
             animalId: currentAnimal.id, animal: currentAnimal.name, points: totalEarned,
-            behaviourScore: behaviourBonus, detailScore: detailBonus, literacyScore: literacyBonus,
             quizResults: quizResults,
             observation: text,
-            observationMissionType: "observation",
-            reflectionText: reflectionText.trim(),
-            reflectionScore,
+            observationScore,
             timestamp: new Date().toISOString()
           }];
         });
@@ -2331,13 +2313,10 @@
           quizResults: (b.quizResults || []).map(qr => ({
             question: qr.question || "",
             correctOnFirstAttempt: qr.correctOnFirstAttempt === true,
-            missionType: qr.missionType || "knowledge",
-            ...(qr.reflectionScore !== undefined ? { reflectionScore: qr.reflectionScore } : {}),
-            ...(qr.detailScore !== undefined ? { detailScore: qr.detailScore } : {}),
-            ...(qr.languageScore !== undefined ? { languageScore: qr.languageScore } : {}),
-            ...(qr.writingScore !== undefined ? { writingScore: qr.writingScore } : {})
+            missionType: qr.missionType || "knowledge"
           })),
           observation: b.observation || "",
+          observationScore: (b.observationScore && typeof b.observationScore === 'object') ? b.observationScore : null,
           timestamp: b.timestamp || ""
         }));
 
@@ -3882,7 +3861,7 @@
                                           Quiz %
                                         </th>
                                         <th style={{ textAlign:'center', padding:'0.75rem 1rem', fontWeight:700, color:'var(--jungle-deep)', fontSize:'0.9rem', textTransform:'uppercase', letterSpacing:'0.05em' }}>
-                                          Writing %
+                                          Observation %
                                         </th>
                                       </tr>
                                     </thead>
