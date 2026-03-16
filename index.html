@@ -1905,9 +1905,23 @@
           timestamp: new Date().toISOString()
         };
         setBadges(prev => {
-          const alreadyExists = prev.some(b => b.animalId === animalId);
-          if (alreadyExists) return prev;
-          return [...prev, badge];
+          const existingIndex = prev.findIndex(b => b.animalId === animalId);
+          if (existingIndex === -1) {
+            // No badge yet — add fresh
+            return [...prev, badge];
+          }
+          if (reflectionScore !== null) {
+            // Badge exists but we're adding reflection — merge it in
+            const updated = [...prev];
+            updated[existingIndex] = {
+              ...updated[existingIndex],
+              reflectionScore,
+              quizResults: quizResults.length > 0 ? quizResults : updated[existingIndex].quizResults
+            };
+            return updated;
+          }
+          // Badge exists and no new reflection — leave unchanged
+          return prev;
         });
       }
       function bearingToArrow(bearing) {
@@ -2045,20 +2059,31 @@
         const wc = text.split(/\s+/).filter(Boolean).length;
         if (wc < 10) { alert(`Please write at least 10 words. You have ${wc}.`); return; }
 
-        // Reflection scoring: 0–5 per axis. Behaviour = 0 (immersion doesn't score animal behaviour).
+        // Calculate behaviour score: sensory/environmental keywords (0–5)
         const reflectionKeywords = ['hear','heard','sound','bird','wind','smell','trees','leaves','water','people','animals','nature'];
         const sensoryHits = reflectionKeywords.filter(w => lower.includes(w)).length;
-        const refDetail = Math.min(5, sensoryHits);
+        const behaviourScore = Math.min(5, sensoryHits);
 
-        let refWriting = 0;
-        if (/^[A-Z]/.test(text)) refWriting++;
-        if (/[.!?]$/.test(text)) refWriting++;
-        if (text.split(/[.!?]+/).filter(s => s.trim().length > 0).length >= 2) refWriting++;
+        // Calculate detail score: specific descriptive words (0–5)
+        const detailWords = ['fur','color','colour','eyes','ears','tail','paws','claws','nose','mouth','teeth','stripes','spots','pattern','size','big','small','long','short','thick','thin','soft','rough','dark','light','brown','black','white','orange','grey','gray','feathers','scales','beak','wings','mane','trunk','shell','horns','snout','belly','neck'];
+        const detailHits = detailWords.filter(w => lower.includes(w)).length;
+        const detailScore = Math.min(5, detailHits > 0 ? (detailHits >= 2 ? 3 : 2) : 0);
+
+        // Calculate writing score: literacy markers (0–5)
+        let writingScore = 0;
+        if (/^[A-Z]/.test(text)) writingScore++;
+        if (/[.!?]$/.test(text)) writingScore++;
+        if (text.split(/[.!?]+/).filter(s => s.trim().length > 0).length >= 2) writingScore++;
         const words = lower.split(/\s+/).filter(Boolean);
-        if (words.length > 0 && new Set(words).size / words.length > 0.6) refWriting++;
-        refWriting = Math.min(5, refWriting);
+        if (words.length > 0 && new Set(words).size / words.length > 0.6) writingScore++;
+        if (words.length >= 15) writingScore++;
+        writingScore = Math.min(5, writingScore);
 
-        const reflectionScore = { behaviour: 0, detail: refDetail, writing: refWriting };
+        const reflectionScore = {
+          behaviour: behaviourScore || 0,
+          detail: detailScore || 0,
+          writing: writingScore || 0
+        };
         const reflectionPoints = reflectionScore.behaviour + reflectionScore.detail + reflectionScore.writing;
 
         // Include discovery question in quiz results
@@ -2069,13 +2094,13 @@
           }))
         ];
 
-        const quizCorrect = tigerQuizResults.filter(qr => qr.correctOnFirstAttempt && (qr.missionType === 'knowledge' || qr.missionType === 'discovery')).length;
+        const quizCorrect = tigerQuizResults.filter(qr => qr.correctOnFirstAttempt).length;
         const quizPoints = quizCorrect * 10;
         const totalEarned = quizPoints + reflectionPoints + currentAnimal.pointValue;
 
         setTotalPoints(p => p + totalEarned);
         setFoundAnimals(prev => new Set([...prev, currentAnimal.id]));
-        recordMissionResult('tiger', 'Sumatran Tiger', [], reflectionScore);
+        recordMissionResult('tiger', 'Sumatran Tiger', tigerQuizResults, reflectionScore);
         setCurrentScreen('badge');
       }
       function renderTigerMission() {
@@ -2205,10 +2230,6 @@
           if (wasCorrect) correctCount++;
           return { question: q.question, correctOnFirstAttempt: wasCorrect, missionType: "knowledge" };
         });
-        if (reflectionText.trim().length > 0) {
-          quizResults.push({ question: 'Immersion reflection', correctOnFirstAttempt: (reflectionScore.behaviour + reflectionScore.detail + reflectionScore.writing) >= 2, missionType: "immersion", reflectionScore });
-        }
-        const quizPoints = correctCount * 10;
 
         const text = observation.trim();
         const lower = text.toLowerCase();
@@ -2226,7 +2247,7 @@
         const reflectionKeywords = ['hear','heard','sound','bird','wind','smell','trees','leaves','water','people','animals','nature'];
         const reflectionLower = reflectionText.trim().toLowerCase();
         const reflectionHitCount = reflectionKeywords.filter(w => reflectionLower.includes(w)).length;
-        const reflectionScore = Math.min(5, Math.max(reflectionHitCount > 0 ? reflectionHitCount : 0, 0));
+        const reflectionRaw = Math.min(5, Math.max(reflectionHitCount, 0));
 
         const detailWords = ['fur','color','colour','eyes','ears','tail','paws','claws','nose','mouth','teeth','stripes','spots','pattern','size','big','small','long','short','thick','thin','soft','rough','dark','light','brown','black','white','orange','grey','gray','quietly','slowly','quickly','feathers','scales','beak','wings','mane','trunk','pouch','shell','horns','claws','snout','belly','neck'];
         let detailCount = 0;
@@ -2246,6 +2267,18 @@
         const words = lower.split(/\s+/).filter(Boolean);
         if (words.length > 0 && new Set(words).size / words.length > 0.6) literacyBonus += 1;
         if (words.length >= 20) literacyBonus += 1;
+
+        // Build reflectionScore object — used by analytics radar and quizResults
+        const reflectionScore = {
+          behaviour: behaviourBonus || 0,
+          detail: detailBonus || 0,
+          writing: literacyBonus || 0
+        };
+
+        if (reflectionText.trim().length > 0) {
+          quizResults.push({ question: 'Immersion reflection', correctOnFirstAttempt: (reflectionScore.behaviour + reflectionScore.detail + reflectionScore.writing) >= 2, missionType: "immersion", reflectionScore });
+        }
+        const quizPoints = correctCount * 10;
 
         const totalEarned = quizPoints + 30 + behaviourBonus + detailBonus + literacyBonus + currentAnimal.pointValue;
 
