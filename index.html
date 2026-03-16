@@ -2889,8 +2889,19 @@
                     <h3 style={{ fontSize:'1.1rem', fontWeight:700, color:earned?'var(--jungle-deep)':'white', marginBottom:'0.5rem' }}>{animal.name}</h3>
                     {earned&&badge&&(
                       <div>
-                        <p style={{ fontSize:'1.5rem', fontWeight:700, color:'var(--sunset-orange)', marginBottom:'0.3rem' }}>{badge.points} pts</p>
-                        <p style={{ fontSize:'0.7rem', color:'#666', lineHeight:1.3 }}>Behaviour: +{badge.behaviourScore !== undefined ? badge.behaviourScore : (badge.behaviorScore || 0)}<br/>Detail: +{badge.detailScore}<br/>Writing: +{badge.literacyScore}</p>
+                        {(() => {
+                          const obs = badge.observationScore;
+                          const b = obs ? (obs.behaviour || 0) : (badge.behaviourScore ?? badge.behaviorScore ?? 0);
+                          const d = obs ? (obs.detail || 0) : (badge.detailScore || 0);
+                          const w = obs ? (obs.writing || 0) : (badge.literacyScore || 0);
+                          const pts = badge.points ?? (b + d + w + (currentAnimal?.pointValue || 0));
+                          return (
+                            <>
+                              <p style={{ fontSize:'1.5rem', fontWeight:700, color:'var(--sunset-orange)', marginBottom:'0.3rem' }}>{pts} pts</p>
+                              <p style={{ fontSize:'0.7rem', color:'#666', lineHeight:1.3 }}>Behaviour: +{b}<br/>Detail: +{d}<br/>Writing: +{w}</p>
+                            </>
+                          );
+                        })()}
                       </div>
                     )}
                     {!earned&&(<p style={{ fontSize:'0.85rem', color:'rgba(255,255,255,0.6)' }}>Not yet discovered</p>)}
@@ -4765,14 +4776,15 @@
               studentCount++;
               if (Array.isArray(data.badges)) {
                 data.badges.forEach(badge => {
-                  if (typeof badge.behaviourScore === 'number') {
-                    behaviourSum += (badge.behaviourScore / 15) * 100;
-                  }
-                  if (typeof badge.detailScore === 'number') {
-                    detailSum += (badge.detailScore / 15) * 100;
-                  }
-                  if (typeof badge.literacyScore === 'number') {
-                    literacySum += (badge.literacyScore / 15) * 100;
+                  const obs = badge.observationScore;
+                  if (obs && typeof obs === 'object') {
+                    behaviourSum += ((obs.behaviour || 0) / 5) * 100;
+                    detailSum += ((obs.detail || 0) / 5) * 100;
+                    literacySum += ((obs.writing || 0) / 5) * 100;
+                  } else {
+                    if (typeof badge.behaviourScore === 'number') behaviourSum += (badge.behaviourScore / 15) * 100;
+                    if (typeof badge.detailScore === 'number') detailSum += (badge.detailScore / 15) * 100;
+                    if (typeof badge.literacyScore === 'number') literacySum += (badge.literacyScore / 15) * 100;
                   }
                   badgeCount++;
                 });
