@@ -1879,38 +1879,36 @@
       // ---------- HELPERS ----------
       function calculateBehaviourScore(text) {
         const lower = text.toLowerCase();
-        const behaviorWords = ['sleeping','eating','walking','climbing','jumping','playing','sitting','running','resting','moving','looking','watching','grooming','scratching','lying','standing','hanging','swinging','chewing','drinking','hiding','stretching','yawning','sniffing','touching','holding','grabbing','pacing','calling','splashing','digging','rolling','basking'];
-        let count = 0;
-        behaviorWords.forEach(w => { if (lower.includes(w)) count++; });
-        const hasContext = /\b(while|as|when|then|after|before|near|towards|away|together|slowly|carefully|quickly|gently)\b/.test(lower);
-        if (count === 0) return 0;
-        if (count >= 2 && hasContext) return 5;
-        if (count >= 2 || (count >= 1 && hasContext)) return 3;
-        return 2;
+        const behaviourRoots = [
+          'walk','run','jump','climb','pace','rest','sleep',
+          'eat','drink','move','look','watch','sit','stand',
+          'stretch','play','hunt','feed'
+        ];
+        const matches = behaviourRoots.filter(root => lower.includes(root));
+        return Math.min(matches.length + 1, 5);
       }
 
       function calculateDetailScore(text) {
         const lower = text.toLowerCase();
-        const detailWords = ['fur','color','colour','eyes','ears','tail','paws','claws','nose','mouth','teeth','stripes','spots','pattern','size','big','small','long','short','thick','thin','soft','rough','dark','light','brown','black','white','orange','grey','gray','feathers','scales','beak','wings','mane','trunk','shell','horns','snout','belly','neck','quietly','slowly','quickly'];
-        let count = 0;
-        detailWords.forEach(w => { if (lower.includes(w)) count++; });
-        const hasLink = /\b(because|when|while|near|on the|in the|against|behind|under|above|beside|around|enclosure|tree|rock|branch|ground|water|fence|wall)\b/.test(lower);
-        if (count === 0) return 0;
-        if (count >= 2 && hasLink) return 5;
-        if (count >= 2) return 3;
-        return 2;
+        const detailRoots = [
+          'tree','rock','water','grass','shade','log','branch',
+          'leaf','fence','platform','ground','enclosure',
+          'bird','wind','sound','noise','smell',
+          'stripe','fur','tail','claw'
+        ];
+        const matches = detailRoots.filter(root => lower.includes(root));
+        return Math.min(matches.length + 1, 5);
       }
 
       function calculateWritingScore(text) {
-        const lower = text.toLowerCase();
-        let score = 0;
-        if (/^[A-Z]/.test(text)) score++;
-        if (/[.!?]$/.test(text)) score++;
-        if (text.split(/[.!?]+/).filter(s => s.trim().length > 0).length >= 2) score++;
-        const words = lower.split(/\s+/).filter(Boolean);
-        if (words.length > 0 && new Set(words).size / words.length > 0.6) score++;
-        if (words.length >= 15) score++;
-        return Math.min(5, score);
+        const trimmed = text.trim();
+        if (!trimmed) return 0;
+        const wordCount = trimmed.split(/\s+/).length;
+        let score = Math.min(Math.floor(wordCount / 4) + 1, 5);
+        const hasCapital = /^[A-Z]/.test(trimmed);
+        const hasPunctuation = /[.!?]$/.test(trimmed);
+        if (hasCapital && hasPunctuation) score = Math.min(score + 1, 5);
+        return score;
       }
       function recordMissionResult(animalId, animalName, quizResults = [], observationScore = null) {
         const badge = {
@@ -2894,7 +2892,10 @@
                           const b = obs ? (obs.behaviour || 0) : (badge.behaviourScore ?? badge.behaviorScore ?? 0);
                           const d = obs ? (obs.detail || 0) : (badge.detailScore || 0);
                           const w = obs ? (obs.writing || 0) : (badge.literacyScore || 0);
-                          const pts = badge.points ?? (b + d + w + (currentAnimal?.pointValue || 0));
+                          const observationTotal = b + d + w;
+                          const observationPoints = observationTotal * 20;
+                          const quizPoints = (badge.quizResults || []).filter(q => q.correctOnFirstAttempt).length * 20;
+                          const pts = badge.points ?? (observationPoints + quizPoints);
                           return (
                             <>
                               <p style={{ fontSize:'1.5rem', fontWeight:700, color:'var(--sunset-orange)', marginBottom:'0.3rem' }}>{pts} pts</p>
