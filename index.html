@@ -1877,7 +1877,18 @@
       }, [firestoreAnimals]);
 
       // ---------- HELPERS ----------
-      function calculateBehaviourScore(text) {
+      function calculateAnimalPoints(badge) {
+        if (!badge) return 0;
+        const behaviour = badge.observationScore?.behaviour || 0;
+        const detail = badge.observationScore?.detail || 0;
+        const writing = badge.observationScore?.writing || 0;
+        const observationTotal = behaviour + detail + writing;
+        const observationPoints = Math.round((observationTotal / 15) * 100);
+        const quizPoints = (badge.quizResults || []).filter(q => q.correctOnFirstAttempt).length * 20;
+        return observationPoints + quizPoints;
+      }
+
+
         const lower = text.toLowerCase();
         const behaviourRoots = [
           'walk','run','jump','climb','pace','rest','sleep',
@@ -2892,10 +2903,7 @@
                           const b = obs ? (obs.behaviour || 0) : (badge.behaviourScore ?? badge.behaviorScore ?? 0);
                           const d = obs ? (obs.detail || 0) : (badge.detailScore || 0);
                           const w = obs ? (obs.writing || 0) : (badge.literacyScore || 0);
-                          const observationTotal = b + d + w;
-                          const observationPoints = observationTotal * 20;
-                          const quizPoints = (badge.quizResults || []).filter(q => q.correctOnFirstAttempt).length * 20;
-                          const pts = badge.points ?? (observationPoints + quizPoints);
+                          const pts = badge.points ?? calculateAnimalPoints(badge);
                           return (
                             <>
                               <p style={{ fontSize:'1.5rem', fontWeight:700, color:'var(--sunset-orange)', marginBottom:'0.3rem' }}>{pts} pts</p>
@@ -2930,7 +2938,7 @@
               <h2 className="heading-display" style={{ fontSize:'clamp(1.8rem, 4vh, 2.5rem)', color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>BADGE EARNED!</h2>
               <p className="serif-accent" style={{ fontSize:'clamp(1rem, 2.5vh, 1.3rem)', color:'var(--sunset-orange)', marginBottom:'clamp(0.8rem, 1.5vh, 1rem)' }}>{lastBadge.animal}</p>
               <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'16px', padding:'clamp(1rem, 2vh, 1.5rem)', marginBottom:'clamp(0.8rem, 1.5vh, 1rem)' }}>
-                <div style={{ fontSize:'clamp(2rem, 5vh, 3rem)', fontWeight:700, color:'var(--earth-clay)', marginBottom:'0.3rem' }}>+{lastBadge.points}</div>
+                <div style={{ fontSize:'clamp(2rem, 5vh, 3rem)', fontWeight:700, color:'var(--earth-clay)', marginBottom:'0.3rem' }}>+{lastBadge.points ?? calculateAnimalPoints(lastBadge)}</div>
                 <div style={{ color:'#666', fontSize:'clamp(0.8rem, 1.8vh, 0.95rem)' }}>Points</div>
               </div>
               <div style={{ background:'#F5F3EE', borderRadius:'16px', padding:'clamp(1rem, 2vh, 1.5rem)', marginBottom:'clamp(0.8rem, 1.5vh, 1rem)' }}>
