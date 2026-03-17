@@ -2242,11 +2242,8 @@
         if (wc < 10) { alert(`Your observation needs at least 10 words. You have ${wc}.`); return; }
 
         // Quiz score = questions correct on first attempt only
-        let correctCount = 0;
-        const totalQuestions = currentAnimal.questions.length;
         const quizResults = currentAnimal.questions.map((q, i) => {
           const wasCorrect = firstAttemptResults[i] === true;
-          if (wasCorrect) correctCount++;
           return { question: q.question, correctOnFirstAttempt: wasCorrect, missionType: "knowledge" };
         });
 
@@ -2264,16 +2261,12 @@
           writing: literacyBonus || 0
         };
 
-        const quizPoints = correctCount * 10;
-
-        const totalEarned = quizPoints + 30 + behaviourBonus + detailBonus + literacyBonus + currentAnimal.pointValue;
-
         setFoundAnimals(prev => new Set([...prev, currentAnimal.id]));
         setBadges(prev => {
           const alreadyExists = prev.some(b => b.animalId === currentAnimal.id);
           if (alreadyExists) return prev;
           return [...prev, {
-            animalId: currentAnimal.id, animal: currentAnimal.name, points: totalEarned,
+            animalId: currentAnimal.id, animal: currentAnimal.name,
             quizResults: quizResults,
             observation: text,
             observationScore,
@@ -2905,7 +2898,7 @@
                           const b = obs ? (obs.behaviour || 0) : (badge.behaviourScore ?? badge.behaviorScore ?? 0);
                           const d = obs ? (obs.detail || 0) : (badge.detailScore || 0);
                           const w = obs ? (obs.writing || 0) : (badge.literacyScore || 0);
-                          const pts = badge.points ?? calculateAnimalPoints(badge);
+                          const pts = calculateAnimalPoints(badge);
                           return (
                             <>
                               <p style={{ fontSize:'1.5rem', fontWeight:700, color:'var(--sunset-orange)', marginBottom:'0.3rem' }}>{pts} pts</p>
@@ -2940,7 +2933,7 @@
               <h2 className="heading-display" style={{ fontSize:'clamp(1.8rem, 4vh, 2.5rem)', color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>BADGE EARNED!</h2>
               <p className="serif-accent" style={{ fontSize:'clamp(1rem, 2.5vh, 1.3rem)', color:'var(--sunset-orange)', marginBottom:'clamp(0.8rem, 1.5vh, 1rem)' }}>{lastBadge.animal}</p>
               <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'16px', padding:'clamp(1rem, 2vh, 1.5rem)', marginBottom:'clamp(0.8rem, 1.5vh, 1rem)' }}>
-                <div style={{ fontSize:'clamp(2rem, 5vh, 3rem)', fontWeight:700, color:'var(--earth-clay)', marginBottom:'0.3rem' }}>+{lastBadge.points ?? calculateAnimalPoints(lastBadge)}</div>
+                <div style={{ fontSize:'clamp(2rem, 5vh, 3rem)', fontWeight:700, color:'var(--earth-clay)', marginBottom:'0.3rem' }}>+{calculateAnimalPoints(lastBadge)}</div>
                 <div style={{ color:'#666', fontSize:'clamp(0.8rem, 1.8vh, 0.95rem)' }}>Points</div>
               </div>
               <div style={{ background:'#F5F3EE', borderRadius:'16px', padding:'clamp(1rem, 2vh, 1.5rem)', marginBottom:'clamp(0.8rem, 1.5vh, 1rem)' }}>
