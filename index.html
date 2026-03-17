@@ -689,7 +689,14 @@
                   return completedAt >= cutoff;
                 })());
 
-                if (inDateRange && studentData.completed === true) {
+                // Consider complete if formally submitted OR has badge data with observations/quiz results
+                const hasBadgeData = Array.isArray(studentData.badges) && studentData.badges.some(b =>
+                  (b.observationScore && typeof b.observationScore === 'object') ||
+                  (Array.isArray(b.quizResults) && b.quizResults.length > 0)
+                );
+                const isStudentComplete = studentData.completed === true || hasBadgeData;
+
+                if (inDateRange && isStudentComplete) {
                   completedCount++;
                   totalCompleted++;
                   
@@ -1091,18 +1098,24 @@
             const qCorrect = allQuizResults.filter(q => q.correctOnFirstAttempt === true).length;
             const qPct = qTotal === 0 ? 0 : Math.round((qCorrect / qTotal) * 100);
 
+            // Derive completion from badge data — student is complete if any badge has observation or quiz results
+            const hasCompletedAnimal = savedBadges.some(b =>
+              (b.observationScore && typeof b.observationScore === 'object') ||
+              (Array.isArray(b.quizResults) && b.quizResults.length > 0)
+            );
+
             // Payload matches EXACTLY what onSnapshot maps + what dashboard derives
             await studentRef.set({
               name:            studentName,
               classCode:       code,
-              totalPoints:     totalPoints,     // read: s.totalPoints
-              badges:          savedBadges,     // read: s.badges[].quizResults / behaviourScore / detailScore / literacyScore / observation
+              totalPoints:     totalPoints,
+              badges:          savedBadges,
               quizCorrect:     qCorrect,
               quizTotal:       qTotal,
               quizPercentage:  qPct,
               quizPercent:     qPct,
-              completed:       false,
-              status:          'incomplete',    // read: s.status
+              completed:       hasCompletedAnimal,
+              status:          hasCompletedAnimal ? 'complete' : 'incomplete',
               lastActiveAt:    firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
           } catch (err) {
@@ -1928,12 +1941,13 @@
         if (hasCapital && hasPunctuation) score = Math.min(score + 1, 5);
         return score;
       }
-      function recordMissionResult(animalId, animalName, quizResults = [], observationScore = null) {
+      function recordMissionResult(animalId, animalName, quizResults = [], observationScore = null, observation = '') {
         const badge = {
           animalId,
           animal: animalName,
           quizResults,
           observationScore,
+          observation: observation || '',
           timestamp: new Date().toISOString()
         };
         setBadges(prev => {
@@ -1943,16 +1957,17 @@
             return [...prev, badge];
           }
           if (observationScore !== null) {
-            // Badge exists but we're adding reflection — merge it in
+            // Badge exists — merge observation score and text in
             const updated = [...prev];
             updated[existingIndex] = {
               ...updated[existingIndex],
               observationScore,
+              observation: observation || updated[existingIndex].observation || '',
               quizResults: quizResults.length > 0 ? quizResults : updated[existingIndex].quizResults
             };
             return updated;
           }
-          // Badge exists and no new reflection — leave unchanged
+          // Badge exists and no new observation — leave unchanged
           return prev;
         });
       }
@@ -2099,7 +2114,7 @@
         };
 
         setFoundAnimals(prev => new Set([...prev, currentAnimal.id]));
-        recordMissionResult('tiger', 'Sumatran Tiger', [], observationScore);
+        recordMissionResult('tiger', 'Sumatran Tiger', [], observationScore, text);
         setCurrentScreen('badge');
       }
       function renderTigerMission() {
@@ -2295,14 +2310,10 @@
           database: firebase.app().options.databaseURL || "(default)"
         });
 
-        // Sanitize badges: ensure no undefined fields, including nested quizResults
+        // Sanitize badges: ensure no undefined fields, preserve observationScore
         const cleanBadges = badges.map(b => ({
           animalId: b.animalId || "",
           animal: b.animal || "",
-          points: b.points || 0,
-          behaviourScore: b.behaviourScore !== undefined ? b.behaviourScore : (b.behaviorScore || 0),
-          detailScore: b.detailScore || 0,
-          literacyScore: b.literacyScore || 0,
           quizResults: (b.quizResults || []).map(qr => ({
             question: qr.question || "",
             correctOnFirstAttempt: qr.correctOnFirstAttempt === true,
