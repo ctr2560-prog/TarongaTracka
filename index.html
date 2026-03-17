@@ -418,8 +418,14 @@
       const [isCorrect, setIsCorrect] = useState(false);
       const [observation, setObservation] = useState('');
       const [reflectionText, setReflectionText] = useState('');
-      const [totalPoints, setTotalPoints] = useState(savedProgress?.totalPoints || 0);
       const [badges, setBadges] = useState(savedProgress?.badges || []);
+      const totalPoints = React.useMemo(() => badges.reduce((sum, b) => {
+        const obs = b.observationScore || {};
+        const obsTotal = (obs.behaviour||0) + (obs.detail||0) + (obs.writing||0);
+        const obsPoints = Math.round((obsTotal / 15) * 100);
+        const qPoints = (b.quizResults||[]).filter(q => q.correctOnFirstAttempt).length * 20;
+        return sum + obsPoints + qPoints;
+      }, 0), [badges]);
       const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
       const [tigerSelectedAnswer, setTigerSelectedAnswer] = useState(null);
       const [tigerAttempted, setTigerAttempted] = useState(false);
@@ -2092,10 +2098,6 @@
           writing: writingScore || 0
         };
 
-        const observationPoints = observationScore.behaviour + observationScore.detail + observationScore.writing;
-        const totalEarned = observationPoints + currentAnimal.pointValue;
-
-        setTotalPoints(p => p + totalEarned);
         setFoundAnimals(prev => new Set([...prev, currentAnimal.id]));
         recordMissionResult('tiger', 'Sumatran Tiger', [], observationScore);
         setCurrentScreen('badge');
@@ -2266,7 +2268,6 @@
 
         const totalEarned = quizPoints + 30 + behaviourBonus + detailBonus + literacyBonus + currentAnimal.pointValue;
 
-        setTotalPoints(p => p + totalEarned);
         setFoundAnimals(prev => new Set([...prev, currentAnimal.id]));
         setBadges(prev => {
           const alreadyExists = prev.some(b => b.animalId === currentAnimal.id);
@@ -3066,7 +3067,6 @@
               const existingData = existingDoc.data();
               
               // Restore session data
-              setTotalPoints(existingData.totalPoints || 0);
               setBadges(existingData.badges || []);
               setFoundAnimals(new Set(existingData.badges?.map(b => b.animalId) || []));
               
