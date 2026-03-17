@@ -434,6 +434,7 @@
       const [tigerSelectedAnswer, setTigerSelectedAnswer] = useState(null);
       const [tigerAttempted, setTigerAttempted] = useState(false);
       const [tigerShowFact, setTigerShowFact] = useState(false);
+      const [tigerFeedback, setTigerFeedback] = useState(null);
       const [cameraActive, setCameraActive] = React.useState(false);
       const [cameraStream, setCameraStream] = React.useState(null);
       const videoRef = React.useRef(null);
@@ -2095,7 +2096,7 @@
         const firstAttempt = !tigerAttempted;
         setTigerAttempted(true);
         if (tigerSelectedAnswer !== correctAnswer) {
-          alert('Not quite.\n\nTry using the camera measurement tool to estimate the tiger\'s length from nose to tail.');
+          setTigerFeedback({ type: 'incorrect' });
           setTigerSelectedAnswer(null);
           return;
         }
@@ -2134,6 +2135,28 @@
           { value: '3.5m', label: '3.5 m' },
           { value: '4.5m', label: '4.5 m' },
         ];
+        if (tigerFeedback) {
+          const isCorrect = tigerFeedback.type === 'correct';
+          return (
+            <div style={{ position:'fixed', inset:0, background: isCorrect ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'clamp(1rem, 5vw, 2rem)' }}>
+              <div className="animate-scale-in" style={{ textAlign:'center', padding:'clamp(1.5rem, 3vh, 2rem)', background:'rgba(255,255,255,0.95)', borderRadius:'20px', boxShadow:'0 8px 32px rgba(0,0,0,0.2)', maxWidth:'480px', width:'100%' }}>
+                <div style={{ fontSize:'clamp(3rem, 8vh, 4.5rem)', marginBottom:'0.5rem' }}>{isCorrect ? '✔' : ''}</div>
+                <h2 className="heading-display" style={{ fontSize:'clamp(2rem, 5vh, 3rem)', color: isCorrect ? '#10b981' : '#ef4444', marginBottom:'0.4rem', lineHeight:1.1 }}>
+                  {isCorrect ? 'Correct!' : 'Try Again'}
+                </h2>
+                {!isCorrect && (
+                  <p style={{ fontSize:'clamp(0.9rem, 2vh, 1rem)', color:'#555', marginBottom:'1rem', lineHeight:1.6 }}>
+                    Not quite — try using the camera measurement tool to estimate the tiger's length from nose to tail.
+                  </p>
+                )}
+                <button onClick={() => setTigerFeedback(null)}
+                  style={{ background: isCorrect ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)', color:'white', border:'none', padding:'clamp(0.8rem, 2vh, 1.2rem) clamp(2rem, 5vw, 3rem)', fontSize:'clamp(1rem, 2.5vh, 1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.05em', boxShadow:'0 4px 12px rgba(0,0,0,0.2)', marginTop:'0.5rem' }}>
+                  Try Again
+                </button>
+              </div>
+            </div>
+          );
+        }
         if (tigerShowFact) {
           return (
             <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, #1a3a2a 0%, #2e5c3e 100%)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'2rem', color:'white', textAlign:'center', zIndex:500 }}>
