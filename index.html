@@ -4245,7 +4245,7 @@
                         <tbody>
                           {adminClassStudents.map((student, i) => {
                             // Count observations
-                            const observationCount = (student.badges || []).filter(b => b.observation && b.observation.trim()).length;
+                            const observationCount = (student.badges || []).filter(b => b.observationScore || (b.observation && b.observation.trim())).length;
 
                             return (
                               <tr key={i} style={{ borderBottom:'1px solid #F5F3EE' }}>
@@ -4294,15 +4294,28 @@
                   <button onClick={() => setObservationsModal(null)} style={{ background:'none', border:'none', fontSize:'1.4rem', color:'#aaa', cursor:'pointer', lineHeight:1, padding:'0.2rem 0.4rem' }}>x</button>
                 </div>
                 <div style={{ padding:'1rem 1.4rem 1.4rem' }}>
-                  {(observationsModal.badges || []).filter(b => b.observation && b.observation.trim()).map((b, idx, arr) => (
+                  {(observationsModal.badges || []).filter(b => b.observationScore || (b.observation && b.observation.trim())).map((b, idx, arr) => (
                     <div key={idx} style={{ borderLeft:'3px solid var(--jungle-mid)', background:'#F7FAF8', borderRadius:'0 10px 10px 0', padding:'0.75rem 1rem', marginBottom: idx < arr.length - 1 ? '0.75rem' : 0 }}>
                       <div style={{ display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.35rem' }}>
-                        <span style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{b.animal}</span>
+                        <span style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{b.animal} – Observation</span>
                         {b.timestamp && <span style={{ fontSize:'0.65rem', color:'#aaa' }}>· {new Date(b.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short' })}</span>}
                       </div>
-                      <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.55, margin:0 }}>{b.observation}</p>
+                      {b.observation && b.observation.trim() && (
+                        <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.55, margin:'0 0 0.4rem' }}>{b.observation}</p>
+                      )}
+                      {b.observationScore && (
+                        <div style={{ display:'flex', gap:'0.75rem', flexWrap:'wrap' }}>
+                          <span style={{ fontSize:'0.7rem', color:'#666' }}>Behaviour: <strong style={{ color:'var(--jungle-mid)' }}>{b.observationScore.behaviour ?? 0}/5</strong></span>
+                          <span style={{ fontSize:'0.7rem', color:'#666' }}>Detail: <strong style={{ color:'var(--jungle-mid)' }}>{b.observationScore.detail ?? 0}/5</strong></span>
+                          <span style={{ fontSize:'0.7rem', color:'#666' }}>Writing: <strong style={{ color:'var(--jungle-mid)' }}>{b.observationScore.writing ?? 0}/5</strong></span>
+                        </div>
+                      )}
                     </div>
                   ))}
+                  {(observationsModal.badges || []).filter(b => b.observationScore || (b.observation && b.observation.trim())).length === 0 && (
+                    <p style={{ fontSize:'0.85rem', color:'#aaa', textAlign:'center', padding:'1rem 0' }}>No observations recorded yet.</p>
+                  )}
+                </div>
                 </div>
               </div>
             </div>
@@ -4997,15 +5010,28 @@
                     <button onClick={() => setObservationsModal(null)} style={{ background:'none', border:'none', fontSize:'1.4rem', color:'#aaa', cursor:'pointer', lineHeight:1, padding:'0.2rem 0.4rem' }}>x</button>
                   </div>
                   <div style={{ padding:'1rem 1.4rem 1.4rem' }}>
-                    {(observationsModal.badges || []).filter(b => b.observation).map((b, idx, arr) => (
+                    {(observationsModal.badges || []).filter(b => b.observationScore || (b.observation && b.observation.trim())).map((b, idx, arr) => (
                       <div key={idx} style={{ borderLeft:'3px solid var(--jungle-mid)', background:'#F7FAF8', borderRadius:'0 10px 10px 0', padding:'0.75rem 1rem', marginBottom: idx < arr.length - 1 ? '0.75rem' : 0 }}>
                         <div style={{ display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.35rem' }}>
-                          <span style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{b.animal}</span>
+                          <span style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{b.animal} – Observation</span>
                           {b.timestamp && <span style={{ fontSize:'0.65rem', color:'#aaa' }}>· {new Date(b.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short' })}</span>}
                         </div>
-                        <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.55, margin:0 }}>{b.observation}</p>
+                        {b.observation && b.observation.trim() && (
+                          <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.55, margin:'0 0 0.4rem' }}>{b.observation}</p>
+                        )}
+                        {b.observationScore && (
+                          <div style={{ display:'flex', gap:'0.75rem', flexWrap:'wrap' }}>
+                            <span style={{ fontSize:'0.7rem', color:'#666' }}>Behaviour: <strong style={{ color:'var(--jungle-mid)' }}>{b.observationScore.behaviour ?? 0}/5</strong></span>
+                            <span style={{ fontSize:'0.7rem', color:'#666' }}>Detail: <strong style={{ color:'var(--jungle-mid)' }}>{b.observationScore.detail ?? 0}/5</strong></span>
+                            <span style={{ fontSize:'0.7rem', color:'#666' }}>Writing: <strong style={{ color:'var(--jungle-mid)' }}>{b.observationScore.writing ?? 0}/5</strong></span>
+                          </div>
+                        )}
                       </div>
                     ))}
+                    {(observationsModal.badges || []).filter(b => b.observationScore || (b.observation && b.observation.trim())).length === 0 && (
+                      <p style={{ fontSize:'0.85rem', color:'#aaa', textAlign:'center', padding:'1rem 0' }}>No observations recorded yet.</p>
+                    )}
+                  </div>
                   </div>
                 </div>
               </div>
