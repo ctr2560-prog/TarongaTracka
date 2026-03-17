@@ -66,6 +66,7 @@
       touch-action: pan-y;
       overscroll-behavior: contain;
       background: transparent;
+      isolation: isolate;
     }
 
     #root {
@@ -269,6 +270,46 @@
     }
     /* ─────────────────────────────────────────────────────── */
 
+      .ruler-overlay {
+        position: absolute;
+        bottom: 90px;
+        left: 5%;
+        width: 90%;
+        text-align: center;
+      }
+      .ruler-line {
+        height: 6px;
+        background: white;
+        border-radius: 3px;
+        position: relative;
+      }
+      .ruler-line::before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+          to right,
+          white,
+          white 2px,
+          transparent 2px,
+          transparent 20%
+        );
+      }
+      .ruler-marks {
+        display: flex;
+        justify-content: space-between;
+        color: white;
+        font-size: 14px;
+        margin-top: 6px;
+      }
+      .ruler-instruction {
+        color: white;
+        font-size: 14px;
+        margin-top: 8px;
+        text-align: center;
+        font-weight: 500;
+      }
   </style>
 </head>
 
@@ -289,6 +330,7 @@
       height: 100vh;
       object-fit: cover;
       z-index: 0;
+      pointer-events: none;
     "
   >
     <source src="./images/background-video.mp4" type="video/mp4">
@@ -375,9 +417,24 @@
       const [showResult, setShowResult] = useState(false);
       const [isCorrect, setIsCorrect] = useState(false);
       const [observation, setObservation] = useState('');
-      const [totalPoints, setTotalPoints] = useState(savedProgress?.totalPoints || 0);
+      const [reflectionText, setReflectionText] = useState('');
       const [badges, setBadges] = useState(savedProgress?.badges || []);
+      const totalPoints = React.useMemo(() => badges.reduce((sum, b) => {
+        const obs = b.observationScore || {};
+        const obsTotal = (obs.behaviour||0) + (obs.detail||0) + (obs.writing||0);
+        const obsPoints = Math.round((obsTotal / 15) * 100);
+        const qPoints = (b.quizResults||[]).filter(q => q.correctOnFirstAttempt).length * 20;
+        return sum + obsPoints + qPoints;
+      }, 0), [badges]);
       const [isProcessingAnswer, setIsProcessingAnswer] = useState(false);
+      const [tigerSelectedAnswer, setTigerSelectedAnswer] = useState(null);
+      const [tigerAttempted, setTigerAttempted] = useState(false);
+      const [tigerShowFact, setTigerShowFact] = useState(false);
+      const [cameraActive, setCameraActive] = React.useState(false);
+      const [cameraStream, setCameraStream] = React.useState(null);
+      const videoRef = React.useRef(null);
+      const [immersionActive, setImmersionActive] = React.useState(false);
+      const [immersionTimer, setImmersionTimer] = React.useState(60);
 
       // Step 1 – Teacher/Student state
       const [studentName, setStudentName] = useState(() => { try { return JSON.parse(localStorage.getItem('tarongaStudentName')) || ''; } catch(e) { return ''; } });
@@ -459,15 +516,15 @@
       const animalChartInstanceRef = React.useRef(null);
       const quizChartRef = React.useRef(null);
       const quizChartInstanceRef = React.useRef(null);
-      const radarChartRef = React.useRef(null);
-      const radarChartInstanceRef = React.useRef(null);
+      const writingChartRef = React.useRef(null);
+      const writingChartInstanceRef = React.useRef(null);
 
       useEffect(() => { localStorage.setItem('tarongaStudentName', JSON.stringify(studentName)); }, [studentName]);
       useEffect(() => { localStorage.setItem('tarongaClassCode', JSON.stringify(classCode)); }, [classCode]);
 
       // Check if student session is already completed
       useEffect(() => {
-        if (!studentName || !classCode) {
+        if (!studentName || !classCode || currentScreen !== 'discoverAnimals') {
           setStatusLoaded(true);
           return;
         }
@@ -619,31 +676,36 @@
               let classLiteracyTotal = 0;
               let classBadgeCount = 0;
               let classTotalBadges = 0;
+              let classObservationScores = [];
+              const classStudentBadges = [];
 
               studentsSnapshot.docs.forEach(studentDoc => {
                 const studentData = studentDoc.data();
                 
-                // Date range filtering
+                // Date range filtering — only skip quiz/completion metrics, not badge aggregation
                 const completedAt = studentData.completedAt?.toDate?.();
-                if (!completedAt) return;
+                const inDateRange = !completedAt ? false : (adminDateRange === 'all' ? true : (() => {
+                  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - parseInt(adminDateRange, 10));
+                  return completedAt >= cutoff;
+                })());
 
-                if (adminDateRange !== 'all') {
-                  const days = parseInt(adminDateRange, 10);
-                  const cutoff = new Date();
-                  cutoff.setDate(cutoff.getDate() - days);
+                // Consider complete if formally submitted OR has badge data with observations/quiz results
+                const hasBadgeData = Array.isArray(studentData.badges) && studentData.badges.some(b =>
+                  (b.observationScore && typeof b.observationScore === 'object') ||
+                  (Array.isArray(b.quizResults) && b.quizResults.length > 0)
+                );
+                const isStudentComplete = studentData.completed === true || hasBadgeData;
 
-                  if (completedAt < cutoff) return;
-                }
-                
-                if (studentData.completed === true) {
+                if (inDateRange && isStudentComplete) {
                   completedCount++;
                   totalCompleted++;
                   
-                  // Aggregate quiz percentage
-                  if (studentData.quizPercentage !== undefined) {
-                    classQuizSum += studentData.quizPercentage;
+                  // Aggregate quiz percentage — all quiz missions combined
+                  const qPctValue = studentData.quizPercent ?? studentData.quizPercentage;
+                  if (qPctValue !== undefined && qPctValue !== null) {
+                    classQuizSum += qPctValue;
                     classQuizCount++;
-                    totalQuizPercentageSum += studentData.quizPercentage;
+                    totalQuizPercentageSum += qPctValue;
                     studentsWithQuizData++;
                   }
                 }
@@ -652,6 +714,7 @@
                 if (Array.isArray(studentData.badges)) {
                   classTotalBadges += studentData.badges.length;
                   totalBadges += studentData.badges.length;
+                  studentData.badges.forEach(b => classStudentBadges.push(b));
                   
                   studentData.badges.forEach(badge => {
                     // Backwards compatible: check behaviourScore first, fallback to behaviorScore
@@ -661,6 +724,15 @@
                     classDetailTotal += badge.detailScore || 0;
                     classLiteracyTotal += badge.literacyScore || 0;
                     classBadgeCount++;
+
+                    // Aggregate observation score from any badge that has one
+                    if (badge.observationScore && typeof badge.observationScore === 'object') {
+                      const total = (badge.observationScore.behaviour||0) + (badge.observationScore.detail||0) + (badge.observationScore.writing||0);
+                      classObservationScores.push(total);
+                    } else if (badge.behaviourScore !== undefined || badge.detailScore !== undefined) {
+                      // Legacy badge fallback
+                      classObservationScores.push((badge.behaviourScore||0) + (badge.detailScore||0) + (badge.literacyScore||0));
+                    }
                     
                     // Global tracking for platform-wide average
                     globalBehaviourTotal += behaviourValue;
@@ -673,12 +745,9 @@
 
               totalStudents += studentCount;
 
-              // Calculate per-class combined observation percentage (out of 40 total per badge)
-              const classTotalScore = classBehaviourTotal + classDetailTotal + classLiteracyTotal;
-              const classMaxPossible = classBadgeCount * 40;
-              const averageObservationPercent = classMaxPossible > 0 
-                ? Math.round((classTotalScore / classMaxPossible) * 100) 
-                : 0;
+              // Calculate observation % — convert each badge's raw score to % first, then average
+              const observationPercent = classObservationScores.length === 0 ? 0
+                : Math.round(classObservationScores.map(s => (s / 15) * 100).reduce((a,b)=>a+b,0) / classObservationScores.length);
 
               // Store class with stats including quiz average and observation percentage
               const classQuizAvg = classQuizCount > 0 ? Math.round(classQuizSum / classQuizCount) : 0;
@@ -692,17 +761,20 @@
                 completedCount: completedCount,
                 completionPercent: studentCount > 0 ? Math.round((completedCount / studentCount) * 100) : 0,
                 quizAverage: classQuizAvg,
-                averageObservationPercent: averageObservationPercent,
+                quizPercent: classQuizAvg,
+                averageObservationPercent: observationPercent,
+                writingPercent: observationPercent || null,
                 totalBadges: classTotalBadges,
+                studentBadges: classStudentBadges,
                 createdAt: classData.createdAt || null
               });
             }
 
             const platformQuizAvg = studentsWithQuizData > 0 ? Math.round(totalQuizPercentageSum / studentsWithQuizData) : 0;
             
-            // Calculate average combined observation percentage (behaviour + detail + writing out of 40)
+            // Calculate average combined observation percentage (behaviour + detail + writing out of 15)
             const globalTotalScore = globalBehaviourTotal + globalDetailTotal + literacyTotal;
-            const globalMaxPossible = badgeCount * 40;
+            const globalMaxPossible = badgeCount * 15;
             const averageObservationPercent = globalMaxPossible > 0 
               ? Math.round((globalTotalScore / globalMaxPossible) * 100) 
               : 0;
@@ -1008,34 +1080,43 @@
               literacyScore:  b.literacyScore || 0,
               quizResults:    (b.quizResults || []).map(qr => ({
                 question:              qr.question || '',
-                correctOnFirstAttempt: qr.correctOnFirstAttempt === true
+                correctOnFirstAttempt: qr.correctOnFirstAttempt === true,
+                missionType:           qr.missionType || 'knowledge'
               })),
               observation:    b.observation || '',
+              observationScore: (b.observationScore && typeof b.observationScore === 'object') ? b.observationScore : null,
               timestamp:      b.timestamp || ''
             }));
 
-            // Compute quiz metrics from sanitised badges
-            let qCorrect = 0, qTotal = 0;
+            // Compute quiz metrics from sanitised badges — all quiz missions combined
+            const allQuizResults = [];
             savedBadges.forEach(b => {
-              b.quizResults.forEach(qr => {
-                qTotal++;
-                if (qr.correctOnFirstAttempt === true) qCorrect++;
-              });
+              if (!b.quizResults) return;
+              b.quizResults.forEach(q => allQuizResults.push(q));
             });
-            const qPct = qTotal > 0 ? Math.round((qCorrect / qTotal) * 100) : 0;
+            const qTotal = allQuizResults.length;
+            const qCorrect = allQuizResults.filter(q => q.correctOnFirstAttempt === true).length;
+            const qPct = qTotal === 0 ? 0 : Math.round((qCorrect / qTotal) * 100);
+
+            // Derive completion from badge data — student is complete if any badge has observation or quiz results
+            const hasCompletedAnimal = savedBadges.some(b =>
+              (b.observationScore && typeof b.observationScore === 'object') ||
+              (Array.isArray(b.quizResults) && b.quizResults.length > 0)
+            );
 
             // Payload matches EXACTLY what onSnapshot maps + what dashboard derives
             await studentRef.set({
               name:            studentName,
               classCode:       code,
-              totalPoints:     totalPoints,     // read: s.totalPoints
-              badges:          savedBadges,     // read: s.badges[].quizResults / behaviourScore / detailScore / literacyScore / observation
-              quizCorrect:     qCorrect,        // read: derived in CSV builder from badges, but stored for convenience
+              totalPoints:     totalPoints,
+              badges:          savedBadges,
+              quizCorrect:     qCorrect,
               quizTotal:       qTotal,
-              quizPercentage:  qPct,            // read: s.quizPercentage
-              completed:       false,
-              status:          'incomplete',    // read: s.status
-              lastActiveAt:    firebase.firestore.FieldValue.serverTimestamp()  // read: for Last Active column
+              quizPercentage:  qPct,
+              quizPercent:     qPct,
+              completed:       hasCompletedAnimal,
+              status:          hasCompletedAnimal ? 'complete' : 'incomplete',
+              lastActiveAt:    firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
           } catch (err) {
             console.warn('Autosave failed (non-critical):', err);
@@ -1087,6 +1168,14 @@
           };
         }
       }, [currentScreen]);
+
+      useEffect(() => {
+        if (currentScreen === 'animal' && currentAnimal?.id === 'tiger') {
+          startCamera();
+        } else {
+          stopCamera();
+        }
+      }, [currentScreen, currentAnimal]);
 
       useEffect(() => {
         if (currentScreen === 'badge' && badges.length > 0) {
@@ -1219,221 +1308,120 @@
         };
       }, [currentScreen, adminTab, adminClasses, adminDateRange]);
 
-      // Chart 2: Quiz Performance Distribution
+      // Chart 2: Quiz Mastery Distribution
       useEffect(() => {
         if (currentScreen !== 'adminDashboard' || adminTab !== 'analytics') return;
         if (!window.Chart || !quizChartRef.current) return;
-
         try {
           const { Chart, registerables } = window;
-          if (registerables) {
-            Chart.register(...registerables);
-          }
-
-          if (quizChartInstanceRef.current) {
-            quizChartInstanceRef.current.destroy();
-          }
-
-          // Calculate quiz ranges
-          const quizRanges = { '0-25%': 0, '26-50%': 0, '51-75%': 0, '76-100%': 0 };
+          if (registerables) Chart.register(...registerables);
+          if (quizChartInstanceRef.current) quizChartInstanceRef.current.destroy();
+          const ranges = { '0–25%': 0, '26–50%': 0, '51–75%': 0, '76–100%': 0 };
+          const bucket = (score) => {
+            if (score === null || score === undefined) return;
+            const pct = score <= 1 ? score * 100 : score;
+            if (pct <= 25) ranges['0–25%']++;
+            else if (pct <= 50) ranges['26–50%']++;
+            else if (pct <= 75) ranges['51–75%']++;
+            else ranges['76–100%']++;
+          };
           adminClasses.forEach(cls => {
-            const avg = cls.quizAverage;
-            const count = cls.completedCount || 0;
-            if (avg >= 0 && avg <= 25) quizRanges['0-25%'] += count;
-            else if (avg >= 26 && avg <= 50) quizRanges['26-50%'] += count;
-            else if (avg >= 51 && avg <= 75) quizRanges['51-75%'] += count;
-            else if (avg >= 76 && avg <= 100) quizRanges['76-100%'] += count;
+            if ((cls.completedCount || 0) === 0) return;
+            bucket(cls.quizPercent !== undefined ? cls.quizPercent : cls.quizAverage);
           });
-
           const ctx = quizChartRef.current.getContext('2d');
           quizChartInstanceRef.current = new Chart(ctx, {
             type: 'bar',
-            data: {
-              labels: Object.keys(quizRanges),
-              datasets: [{
-                label: 'Number of Students',
-                data: Object.values(quizRanges),
-                backgroundColor: '#2E7D55',
-                borderColor: '#2E7D55',
-                borderWidth: 0,
-                borderRadius: 8,
-                barThickness: 60
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  backgroundColor: 'rgba(46, 125, 85, 0.9)',
-                  titleColor: '#fff',
-                  bodyColor: '#fff',
-                  borderColor: '#2E7D55',
-                  borderWidth: 1,
-                  padding: 12,
-                  displayColors: false,
-                  callbacks: { label: (context) => 'Students: ' + context.parsed.y }
-                }
-              },
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  ticks: { stepSize: 5, color: '#666', font: { size: 12, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' },
-                  grid: { color: '#F0EDE8', drawBorder: false }
-                },
-                x: {
-                  ticks: { color: '#666', font: { size: 12, family: "'DM Sans', sans-serif", weight: 600 } },
-                  grid: { display: false, drawBorder: false }
-                }
-              }
-            }
+            data: { labels: Object.keys(ranges), datasets: [{ label: 'Quiz Mastery', data: Object.values(ranges), backgroundColor: '#2E7D55', borderColor: '#2E7D55', borderWidth: 0, borderRadius: 8, barThickness: 56 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(46,125,85,0.9)', titleColor: '#fff', bodyColor: '#fff', borderColor: '#2E7D55', borderWidth: 1, padding: 12, displayColors: false, callbacks: { label: (c) => `Classes: ${c.parsed.y}` } } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1, color: '#666', font: { size: 12, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' }, grid: { color: '#F0EDE8', drawBorder: false } }, x: { ticks: { color: '#666', font: { size: 12, family: "'DM Sans', sans-serif", weight: 600 } }, grid: { display: false, drawBorder: false } } } }
           });
-        } catch (error) {
-          console.error('Failed to create Quiz Distribution chart:', error);
-        }
-
-        return () => {
-          if (quizChartInstanceRef.current) {
-            quizChartInstanceRef.current.destroy();
-          }
-        };
+        } catch (error) { console.error('Failed to create Quiz Mastery chart:', error); }
+        return () => { if (quizChartInstanceRef.current) quizChartInstanceRef.current.destroy(); };
       }, [currentScreen, adminTab, adminClasses, adminDateRange]);
 
       // Chart 3: Observation Skill Breakdown (Radar)
       useEffect(() => {
         if (currentScreen !== 'adminDashboard' || adminTab !== 'analytics') return;
-        if (!window.Chart || !radarChartRef.current) return;
-
-        const buildRadarChart = async () => {
+        if (!window.Chart || !writingChartRef.current) return;
+        const buildRadar = async () => {
           try {
             const { Chart, registerables } = window;
-            if (registerables) {
-              Chart.register(...registerables);
-            }
+            if (registerables) Chart.register(...registerables);
+            if (writingChartInstanceRef.current) writingChartInstanceRef.current.destroy();
 
-            if (radarChartInstanceRef.current) {
-              radarChartInstanceRef.current.destroy();
-            }
-
-            // Calculate real averages from badges
-            let behaviourTotal = 0;
-            let detailTotal = 0;
-            let literacyTotal = 0;
-            let badgeCount = 0;
+            let behaviourScores = [];
+            let detailScores = [];
+            let writingScores = [];
 
             for (const cls of adminClasses) {
               try {
-                const studentsSnapshot = await window.db
-                  .collection('classes')
-                  .doc(cls.classCode)
-                  .collection('students')
-                  .get();
-
-                studentsSnapshot.docs.forEach(studentDoc => {
-                  const studentData = studentDoc.data();
-                  
-                  // Date range filtering
-                  const completedAt = studentData.completedAt?.toDate?.();
-                  if (!completedAt) return;
-
-                  if (adminDateRange !== 'all') {
-                    const days = parseInt(adminDateRange, 10);
-                    const cutoff = new Date();
-                    cutoff.setDate(cutoff.getDate() - days);
-
-                    if (completedAt < cutoff) return;
-                  }
-                  
-                  if (Array.isArray(studentData.badges)) {
-                    studentData.badges.forEach(badge => {
-                      // Backwards compatible: check behaviourScore first, fallback to behaviorScore
-                      const behaviourValue = badge.behaviourScore !== undefined ? badge.behaviourScore : (badge.behaviorScore || 0);
-                      behaviourTotal += behaviourValue;
-                      detailTotal += badge.detailScore || 0;
-                      literacyTotal += badge.literacyScore || 0;
-                      badgeCount++;
-                    });
-                  }
+                const snap = await window.db.collection('classes').doc(cls.classCode).collection('students').get();
+                snap.docs.forEach(doc => {
+                  const d = doc.data();
+                  if (Array.isArray(d.badges)) d.badges.forEach(badge => {
+                    if (badge.observationScore && typeof badge.observationScore === 'object') {
+                      behaviourScores.push((badge.observationScore.behaviour || 0) / 5 * 100);
+                      detailScores.push((badge.observationScore.detail || 0) / 5 * 100);
+                      writingScores.push((badge.observationScore.writing || 0) / 5 * 100);
+                    } else if (badge.behaviourScore !== undefined || badge.detailScore !== undefined || badge.literacyScore !== undefined) {
+                      // Legacy badge fallback
+                      behaviourScores.push(Math.min(100, ((badge.behaviourScore || 0) / 5) * 100));
+                      detailScores.push(Math.min(100, ((badge.detailScore || 0) / 5) * 100));
+                      writingScores.push(Math.min(100, ((badge.literacyScore || 0) / 5) * 100));
+                    }
+                  });
                 });
-              } catch (err) {
-                console.error("Radar aggregation error:", err);
-              }
+              } catch (err) { console.error('Writing radar error:', err); }
             }
 
-            const avgBehaviourRaw = badgeCount ? (behaviourTotal / badgeCount) : 0;
-            const avgDetailRaw = badgeCount ? (detailTotal / badgeCount) : 0;
-            const avgLiteracyRaw = badgeCount ? (literacyTotal / badgeCount) : 0;
+            const avg = arr => arr.length === 0 ? 0 : Math.round(arr.reduce((a,b)=>a+b,0)/arr.length);
+            const avgBehaviour = avg(behaviourScores);
+            const avgDetail = avg(detailScores);
+            const avgWriting = avg(writingScores);
 
-            // Convert to percentage of category maximum
-            const avgBehaviourScore = Math.round((avgBehaviourRaw / 15) * 100);
-            const avgDetailScore = Math.round((avgDetailRaw / 15) * 100);
-            const avgLiteracyScore = Math.round((avgLiteracyRaw / 10) * 100);
-
-            const ctx = radarChartRef.current.getContext('2d');
-            radarChartInstanceRef.current = new Chart(ctx, {
+            const ctx = writingChartRef.current.getContext('2d');
+            writingChartInstanceRef.current = new Chart(ctx, {
               type: 'radar',
               data: {
                 labels: ['Behaviour (%)', 'Detail (%)', 'Writing (%)'],
                 datasets: [{
-                  label: 'Average Score',
-                  data: [avgBehaviourScore, avgDetailScore, avgLiteracyScore],
-                  backgroundColor: 'rgba(30, 79, 61, 0.2)',
-                  borderColor: '#1E4F3D',
+                  label: 'Writing Skills',
+                  data: [avgBehaviour, avgDetail, avgWriting],
+                  backgroundColor: 'rgba(30,79,61,0.2)',
+                  borderColor: '#2E7D55',
                   borderWidth: 2,
-                  pointBackgroundColor: '#1E4F3D',
+                  pointBackgroundColor: '#2E7D55',
                   pointBorderColor: '#fff',
                   pointBorderWidth: 2,
                   pointRadius: 5,
-                  pointHoverRadius: 7,
-                  pointHoverBackgroundColor: '#1A5238',
-                pointHoverBorderColor: '#fff'
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  backgroundColor: 'rgba(30, 79, 61, 0.9)',
-                  titleColor: '#fff',
-                  bodyColor: '#fff',
-                  borderColor: '#1E4F3D',
-                  borderWidth: 1,
-                  padding: 12,
-                  displayColors: false,
-                  callbacks: { label: (context) => 'Average: ' + context.parsed.r + '/100' }
-                }
+                  pointHoverRadius: 7
+                }]
               },
-              scales: {
-                r: {
-                  beginAtZero: true,
-                  min: 0,
-                  max: 100,
-                  ticks: { stepSize: 20, color: '#666', font: { size: 11, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' },
-                  grid: { color: '#E5E5E5' },
-                  angleLines: { color: '#E5E5E5' },
-                  pointLabels: { color: '#333', font: { size: 13, family: "'DM Sans', sans-serif", weight: 600 } }
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { display: false },
+                  tooltip: { backgroundColor: 'rgba(30,79,61,0.9)', titleColor: '#fff', bodyColor: '#fff', padding: 12, displayColors: false, callbacks: { label: (c) => `${c.parsed.r}%` } }
+                },
+                scales: {
+                  r: {
+                    beginAtZero: true, min: 0, max: 100,
+                    ticks: { stepSize: 20, color: '#666', font: { size: 11, family: "'DM Sans', sans-serif" }, backdropColor: 'transparent' },
+                    grid: { color: '#E5E5E5' },
+                    angleLines: { color: '#E5E5E5' },
+                    pointLabels: { color: '#333', font: { size: 13, family: "'DM Sans', sans-serif", weight: 600 } }
+                  }
                 }
               }
-            }
-          });
-          } catch (error) {
-            console.error('Failed to create Radar chart:', error);
-          }
+            });
+          } catch (error) { console.error('Failed to create writing radar:', error); }
         };
-
-        buildRadarChart();
-
-        return () => {
-          if (radarChartInstanceRef.current) {
-            radarChartInstanceRef.current.destroy();
-          }
-        };
+        buildRadar();
+        return () => { if (writingChartInstanceRef.current) writingChartInstanceRef.current.destroy(); };
       }, [currentScreen, adminTab, adminClasses, adminDateRange]);
 
-      // Resource Hub: load resources when tab opens
+            // Resource Hub: load resources when tab opens
       useEffect(() => {
         if (currentScreen !== 'adminDashboard' || adminTab !== 'resources') return;
         setResourcesLoading(true);
@@ -1908,6 +1896,88 @@
       }, [firestoreAnimals]);
 
       // ---------- HELPERS ----------
+      function calculateAnimalPoints(badge) {
+        if (!badge) return 0;
+        const behaviour = badge.observationScore?.behaviour || 0;
+        const detail = badge.observationScore?.detail || 0;
+        const writing = badge.observationScore?.writing || 0;
+        const observationTotal = behaviour + detail + writing;
+        const observationPoints = Math.round((observationTotal / 15) * 100);
+        const quizPoints = (badge.quizResults || []).filter(q => q.correctOnFirstAttempt).length * 20;
+        return observationPoints + quizPoints;
+      }
+
+
+      function calculateBehaviourScore(text) {
+        const lower = text.toLowerCase();
+        const behaviourRoots = [
+          'walk','run','jump','climb','pace','rest','sleep',
+          'eat','drink','move','look','watch','sit','stand',
+          'stretch','play','hunt','feed'
+        ];
+        const matches = behaviourRoots.filter(root => lower.includes(root));
+        return Math.min(matches.length + 1, 5);
+      }
+
+      function calculateDetailScore(text) {
+        const lower = text.toLowerCase();
+        const detailRoots = [
+          'tree','rock','water','grass','shade','log','branch',
+          'leaf','fence','platform','ground','enclosure',
+          'bird','wind','sound','noise','smell',
+          'stripe','fur','tail','claw'
+        ];
+        const matches = detailRoots.filter(root => lower.includes(root));
+        return Math.min(matches.length + 1, 5);
+      }
+
+      function calculateWritingScore(studentResponse) {
+        const text = studentResponse.trim();
+        if (!text) return 0;
+        const wordCount = text.split(/\s+/).length;
+        const hasCapital = /^[A-Z]/.test(text);
+        const hasPunctuation = /[.!?]$/.test(text);
+        const hasSentenceStructure = wordCount >= 5 && text.includes(' ');
+        const sentences = text.split(/[.!?]/).filter(s => s.trim().length > 0);
+        const hasMultipleSentences = sentences.length >= 2;
+        const isAllCaps = text === text.toUpperCase();
+        let score = 1;
+        if (hasSentenceStructure) score = 2;
+        if (hasCapital && hasPunctuation) score = 3;
+        if (hasMultipleSentences) score = 4;
+        if (isAllCaps) score = Math.max(score - 1, 1);
+        return Math.min(score, 5);
+      }
+      function recordMissionResult(animalId, animalName, quizResults = [], observationScore = null, observation = '') {
+        const badge = {
+          animalId,
+          animal: animalName,
+          quizResults,
+          observationScore,
+          observation: observation || '',
+          timestamp: new Date().toISOString()
+        };
+        setBadges(prev => {
+          const existingIndex = prev.findIndex(b => b.animalId === animalId);
+          if (existingIndex === -1) {
+            // No badge yet — add fresh
+            return [...prev, badge];
+          }
+          if (observationScore !== null) {
+            // Badge exists — merge observation score and text in
+            const updated = [...prev];
+            updated[existingIndex] = {
+              ...updated[existingIndex],
+              observationScore,
+              observation: observation || updated[existingIndex].observation || '',
+              quizResults: quizResults.length > 0 ? quizResults : updated[existingIndex].quizResults
+            };
+            return updated;
+          }
+          // Badge exists and no new observation — leave unchanged
+          return prev;
+        });
+      }
       function bearingToArrow(bearing) {
         const arrows = ['↑','↗','→','↘','↓','↙','←','↖'];
         return arrows[Math.round(bearing / 45) % 8];
@@ -1985,9 +2055,155 @@
         if (!userLocation) return { nearby: animal.id === 'koala', distance: null };
         const distance = calculateDistance(userLocation.latitude, userLocation.longitude, animal.latitude, animal.longitude);
         const isKoala = animal.id === 'koala';
-        const isNearby = isKoala ? true : distance <= animal.radius;
+        // TEMP: Tiger GPS unlock disabled for local testing
+        const isTiger = animal.id === 'tiger';
+        const isNearby = isKoala || isTiger ? true : distance <= animal.radius;
         return { nearby: isNearby, distance: Math.round(distance) };
       };
+
+      async function startCamera() {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+          setCameraStream(stream);
+          setCameraActive(true);
+          setTimeout(() => {
+            if (videoRef.current) {
+              videoRef.current.srcObject = stream;
+              videoRef.current.play().catch(() => {});
+            }
+          }, 200);
+        } catch (err) { console.error("Camera error:", err); }
+      }
+
+      function stopCamera() {
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(track => { track.stop(); });
+        }
+        if (videoRef.current) {
+          videoRef.current.srcObject = null;
+        }
+        setCameraStream(null);
+        setCameraActive(false);
+      }
+
+      function submitTigerAnswer() {
+        if (!tigerSelectedAnswer) return;
+        const correctAnswer = '2.5m';
+        const firstAttempt = !tigerAttempted;
+        setTigerAttempted(true);
+        if (tigerSelectedAnswer !== correctAnswer) {
+          alert('Not quite.\n\nTry using the camera measurement tool to estimate the tiger\'s length from nose to tail.');
+          setTigerSelectedAnswer(null);
+          return;
+        }
+        const correctOnFirstAttempt = firstAttempt;
+        const tigerQuizResults = [{
+          question: 'How long is a Sumatran tiger approximately?',
+          correctOnFirstAttempt
+        }];
+        recordMissionResult('tiger', 'Sumatran Tiger', tigerQuizResults, null);
+        setTigerShowFact(true);
+      }
+
+      function submitTigerReflection() {
+        const text = reflectionText.trim();
+        const wc = text.split(/\s+/).filter(Boolean).length;
+        if (wc < 10) { alert(`Please write at least 10 words. You have ${wc}.`); return; }
+
+        const behaviourScore = calculateBehaviourScore(text);
+        const detailScore = calculateDetailScore(text);
+        const writingScore = calculateWritingScore(text);
+
+        const observationScore = {
+          behaviour: behaviourScore || 0,
+          detail: detailScore || 0,
+          writing: writingScore || 0
+        };
+
+        setFoundAnimals(prev => new Set([...prev, currentAnimal.id]));
+        recordMissionResult('tiger', 'Sumatran Tiger', [], observationScore, text);
+        setCurrentScreen('badge');
+      }
+      function renderTigerMission() {
+        const options = [
+          { value: '1.5m', label: '1.5 m' },
+          { value: '2.5m', label: '2.5 m' },
+          { value: '3.5m', label: '3.5 m' },
+          { value: '4.5m', label: '4.5 m' },
+        ];
+        if (tigerShowFact) {
+          return (
+            <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, #1a3a2a 0%, #2e5c3e 100%)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'2rem', color:'white', textAlign:'center', zIndex:500 }}>
+              <div style={{ fontSize:'3rem', marginBottom:'1rem' }}>✔</div>
+              <h2 className="heading-display" style={{ fontSize:'2rem', color:'#4ade80', marginBottom:'1.5rem' }}>Correct!</h2>
+              <div style={{ background:'rgba(255,255,255,0.1)', borderRadius:'16px', padding:'1.5rem', maxWidth:'480px', marginBottom:'2rem', backdropFilter:'blur(8px)' }}>
+                <p style={{ fontSize:'1rem', lineHeight:1.7, marginBottom:'0.75rem' }}>
+                  🐅 A Sumatran tiger can grow to about <strong>2.5 metres</strong> from nose to tail.
+                </p>
+                <p style={{ fontSize:'0.9rem', opacity:0.85, lineHeight:1.6 }}>
+                  Their tail alone can be nearly 1 metre long — it helps them balance when moving through dense rainforest.
+                </p>
+              </div>
+              <button onClick={() => { setTigerShowFact(false); stopCamera(); startImmersion(); setCurrentScreen('observation'); }}
+                style={{ background:'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))', color:'white', border:'none', padding:'1rem 2.5rem', borderRadius:'30px', fontSize:'1.1rem', fontWeight:700, cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.08em', boxShadow:'0 4px 15px rgba(232,106,51,0.5)' }}>
+                Continue to Observation →
+              </button>
+            </div>
+          );
+        }
+        return (
+          <div style={{ position:'fixed', inset:0, background:'var(--mist-light)', display:'flex', flexDirection:'column', overflow:'hidden' }}>
+            <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'0.6rem 1rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', flex:'0 0 auto', zIndex:100 }}>
+              <div style={{ maxWidth:'900px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <button onClick={()=>{ stopCamera(); setCurrentScreen('map'); }}
+                  style={{ background:'rgba(255,255,255,0.2)', border:'none', color:'white', padding:'0.5rem 1rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.85rem', fontWeight:600 }}> Back</button>
+                <img src="images/logo.png" alt="Taronga Tracka" style={{ height:'45px', width:'auto' }} onError={(e)=>{ e.target.style.display='none'; }} />
+                <div style={{ width:'70px' }} />
+              </div>
+            </div>
+            <div style={{ flex:'1 1 auto', overflowY:'auto', padding:'1rem', maxWidth:'900px', margin:'0 auto', width:'100%' }}>
+              <div style={{ borderRadius:'16px', overflow:'hidden', marginBottom:'1rem', background:'#000', position:'relative', maxHeight:'40vh' }}>
+                <video ref={videoRef} autoPlay playsInline muted style={{ width:'100%', maxHeight:'40vh', objectFit:'cover', display:'block' }} />
+                <div style={{ position:'absolute', bottom:0, left:0, right:0, background:'rgba(0,0,0,0.55)', color:'white', textAlign:'center', padding:'0.4rem', fontSize:'0.8rem', letterSpacing:'0.05em', fontWeight:600 }}>
+                  0m — 1m — 2m — 3m — 4m — 5m
+                </div>
+              </div>
+              <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
+                <h3 style={{ fontSize:'clamp(1rem, 2.5vh, 1.2rem)', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem', textAlign:'center', lineHeight:1.3 }}>
+                  How long is a Sumatran tiger approximately?
+                </h3>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem', marginBottom:'1.2rem' }}>
+                  {options.map(opt => (
+                    <label key={opt.value} style={{ display:'flex', alignItems:'center', gap:'0.6rem', background: tigerSelectedAnswer === opt.value ? 'var(--jungle-deep)' : '#f4f8f6', color: tigerSelectedAnswer === opt.value ? 'white' : 'var(--jungle-deep)', borderRadius:'12px', padding:'0.8rem 1rem', cursor:'pointer', fontWeight:600, fontSize:'0.95rem', border: tigerSelectedAnswer === opt.value ? '2px solid var(--jungle-deep)' : '2px solid transparent', transition:'all 0.2s' }}>
+                      <input type="radio" name="tigerAnswer" value={opt.value}
+                        checked={tigerSelectedAnswer === opt.value}
+                        onChange={()=>setTigerSelectedAnswer(opt.value)}
+                        style={{ display:'none' }} />
+                      {opt.label}
+                    </label>
+                  ))}
+                </div>
+                <button onClick={submitTigerAnswer}
+                  style={{ width:'100%', background:'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))', color:'white', border:'none', padding:'0.9rem', borderRadius:'12px', fontSize:'1rem', fontWeight:700, cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.08em', boxShadow:'0 4px 12px rgba(232,106,51,0.4)' }}>
+                  Submit Answer
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      function startImmersion() {
+        setImmersionActive(true);
+        setImmersionTimer(30);
+      }
+
+      React.useEffect(() => {
+        if (!immersionActive) return;
+        if (immersionTimer <= 0) return;
+        const timer = setTimeout(() => { setImmersionTimer(t => t - 1); }, 1000);
+        return () => clearTimeout(timer);
+      }, [immersionTimer, immersionActive]);
 
       const discoverAnimal = (animal, event) => {
         if (event) event.stopPropagation();
@@ -2004,6 +2220,7 @@
         setObservation('');
         setIsProcessingAnswer(false);
         setCurrentScreen('animal');
+        if (animal.id === 'tiger') { startCamera(); }
         setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 0);
       };
 
@@ -2035,6 +2252,7 @@
         if (currentQuestionIndex < currentAnimal.questions.length - 1) {
           setCurrentQuestionIndex(i => i + 1);
         } else {
+          if (currentAnimal.id === 'tiger') { stopCamera(); startImmersion(); }
           setCurrentScreen('observation');
         }
       };
@@ -2046,56 +2264,37 @@
         if (wc < 10) { alert(`Your observation needs at least 10 words. You have ${wc}.`); return; }
 
         // Quiz score = questions correct on first attempt only
-        let correctCount = 0;
-        const totalQuestions = currentAnimal.questions.length;
         const quizResults = currentAnimal.questions.map((q, i) => {
           const wasCorrect = firstAttemptResults[i] === true;
-          if (wasCorrect) correctCount++;
-          return { question: q.question, correctOnFirstAttempt: wasCorrect };
+          return { question: q.question, correctOnFirstAttempt: wasCorrect, missionType: "knowledge" };
         });
-        const quizPoints = correctCount * 10;
 
         const text = observation.trim();
         const lower = text.toLowerCase();
 
-        const behaviorWords = ['sleeping','eating','walking','climbing','jumping','playing','sitting','running','resting','moving','looking','watching','grooming','scratching','lying','standing','hanging','swinging','chewing','drinking','hiding','stretching','yawning','sniffing','touching','holding','grabbing'];
-        let behaviorCount = 0;
-        behaviorWords.forEach(w => { if (lower.includes(w)) behaviorCount++; });
-        // Tier rubric: 0\uc0\u8594 0, 1 action\u8594 7 (50%), 2 actions or contextual\u8594 11 (75%), 2+ with context\u8594 15 (100%)
-        const hasContext = /\\b(while|as|when|then|after|before|near|towards|away|together|each other|another|slowly|carefully|quickly|gently)\\b/.test(lower);
-        let behaviourBonus = 0;
-        if (behaviorCount >= 1) behaviourBonus = 7;
-        if (behaviorCount >= 2 || (behaviorCount >= 1 && hasContext)) behaviourBonus = 11;
-        if (behaviorCount >= 2 && hasContext) behaviourBonus = 15;
+        const behaviourBonus = calculateBehaviourScore(text);
+        const detailBonus = calculateDetailScore(text);
+        const literacyBonus = calculateWritingScore(text);
 
-        const detailWords = ['fur','color','colour','eyes','ears','tail','paws','claws','nose','mouth','teeth','stripes','spots','pattern','size','big','small','long','short','thick','thin','soft','rough','dark','light','brown','black','white','orange','grey','gray','quietly','slowly','quickly','feathers','scales','beak','wings','mane','trunk','pouch','shell','horns','claws','snout','belly','neck'];
-        let detailCount = 0;
-        detailWords.forEach(w => { if (lower.includes(w)) detailCount++; });
-        // Tier rubric: 0\uc0\u8594 0, 1 detail\u8594 7 (50%), 2 details\u8594 11 (75%), 2+ linked to behaviour/habitat\u8594 15 (100%)
-        const hasLink = /\\b(because|when|while|near|on the|in the|against|behind|under|above|beside|around|enclosure|tree|rock|branch|ground|water|fence|wall)\\b/.test(lower);
-        let detailBonus = 0;
-        if (detailCount >= 1) detailBonus = 7;
-        if (detailCount >= 2) detailBonus = 11;
-        if (detailCount >= 2 && hasLink) detailBonus = 15;
+        // Build observationScore object — feeds analytics radar
+        const observationScore = {
+          behaviour: behaviourBonus || 0,
+          detail: detailBonus || 0,
+          writing: literacyBonus || 0
+        };
 
-        let literacyBonus = 0;
-        if (/^[A-Z]/.test(text)) literacyBonus += 3;
-        if (/[.!?]$/.test(text)) literacyBonus += 2;
-        if (text.split(/[.!?]+/).filter(s => s.trim().length > 0).length >= 2) literacyBonus += 3;
-        const words = lower.split(/\\s+/).filter(Boolean);
-        if (words.length > 0 && new Set(words).size / words.length > 0.6) literacyBonus += 2;
-
-        const totalEarned = quizPoints + 30 + behaviourBonus + detailBonus + literacyBonus + currentAnimal.pointValue;
-
-        setTotalPoints(p => p + totalEarned);
         setFoundAnimals(prev => new Set([...prev, currentAnimal.id]));
-        setBadges(prev => ([...prev, {
-          animalId: currentAnimal.id, animal: currentAnimal.name, points: totalEarned,
-          behaviourScore: behaviourBonus, detailScore: detailBonus, literacyScore: literacyBonus,
-          quizResults: quizResults,
-          observation: text,
-          timestamp: new Date().toISOString()
-        }]));
+        setBadges(prev => {
+          const alreadyExists = prev.some(b => b.animalId === currentAnimal.id);
+          if (alreadyExists) return prev;
+          return [...prev, {
+            animalId: currentAnimal.id, animal: currentAnimal.name,
+            quizResults: quizResults,
+            observation: text,
+            observationScore,
+            timestamp: new Date().toISOString()
+          }];
+        });
         setCurrentScreen('badge');
       };
 
@@ -2118,34 +2317,29 @@
           database: firebase.app().options.databaseURL || "(default)"
         });
 
-        // Sanitize badges: ensure no undefined fields, including nested quizResults
+        // Sanitize badges: ensure no undefined fields, preserve observationScore
         const cleanBadges = badges.map(b => ({
           animalId: b.animalId || "",
           animal: b.animal || "",
-          points: b.points || 0,
-          behaviourScore: b.behaviourScore !== undefined ? b.behaviourScore : (b.behaviorScore || 0),
-          detailScore: b.detailScore || 0,
-          literacyScore: b.literacyScore || 0,
           quizResults: (b.quizResults || []).map(qr => ({
             question: qr.question || "",
-            correctOnFirstAttempt: qr.correctOnFirstAttempt === true
+            correctOnFirstAttempt: qr.correctOnFirstAttempt === true,
+            missionType: qr.missionType || "knowledge"
           })),
           observation: b.observation || "",
+          observationScore: (b.observationScore && typeof b.observationScore === 'object') ? b.observationScore : null,
           timestamp: b.timestamp || ""
         }));
 
-        // Calculate quiz metrics from cleanBadges
-        let quizCorrect = 0;
-        let quizTotal = 0;
+        // Calculate quiz metrics from cleanBadges — all quiz missions combined
+        const allQuizResults = [];
         cleanBadges.forEach(badge => {
-          if (badge.quizResults) {
-            badge.quizResults.forEach(qr => {
-              quizTotal++;
-              if (qr.correctOnFirstAttempt === true) quizCorrect++;
-            });
-          }
+          if (!badge.quizResults) return;
+          badge.quizResults.forEach(q => allQuizResults.push(q));
         });
-        const quizPercentage = quizTotal > 0 ? Math.round((quizCorrect / quizTotal) * 100) : 0;
+        const quizTotal = allQuizResults.length;
+        const quizCorrect = allQuizResults.filter(q => q.correctOnFirstAttempt === true).length;
+        const quizPercent = quizTotal === 0 ? 0 : Math.round((quizCorrect / quizTotal) * 100);
 
         try {
           await window.db.collection('classes').doc(code)
@@ -2157,7 +2351,8 @@
               badges: cleanBadges,
               quizCorrect: quizCorrect,
               quizTotal: quizTotal,
-              quizPercentage: quizPercentage,
+              quizPercentage: quizPercent,
+              quizPercent: quizPercent,
               completed: true,
               completedAt: firebase.firestore.FieldValue.serverTimestamp(),
               status: "complete"
@@ -2532,6 +2727,7 @@
       }
 
       if (currentScreen === 'animal' && currentAnimal) {
+        if (currentAnimal.id === 'tiger') { return renderTigerMission(); }
         const currentQuestion = currentAnimal.questions[currentQuestionIndex];
         return (
           <div style={{ position:'fixed', inset:0, overflow:'hidden', background:showResult?(isCorrect?'linear-gradient(135deg, #10b981 0%, #059669 100%)':'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'):'var(--mist-light)', transition:'background 0.5s ease', display:'flex', flexDirection:'column' }}>
@@ -2563,8 +2759,9 @@
               </div>
               {showResult&&(
                 <div className="animate-scale-in" style={{ textAlign:'center', padding:'clamp(1.5rem, 3vh, 2rem)', background:'rgba(255,255,255,0.95)', borderRadius:'20px', boxShadow:'0 8px 32px rgba(0,0,0,0.2)', margin:'clamp(1rem, 2vh, 1.5rem)', maxWidth:'90%', marginLeft:'auto', marginRight:'auto' }}>
-                  <div style={{ fontSize:'clamp(3rem, 8vh, 4.5rem)', marginBottom:'0.5rem' }}>{isCorrect?'':''}</div>
-                  <h2 className="heading-display" style={{ fontSize:'clamp(2rem, 5vh, 3rem)', color:isCorrect?'#10b981':'#ef4444', marginBottom:'0.8rem', lineHeight:1.1 }}>{isCorrect?'CORRECT!':'TRY AGAIN'}</h2>
+                  <div style={{ fontSize:'clamp(3rem, 8vh, 4.5rem)', marginBottom:'0.5rem' }}>{isCorrect ? '✔' : ''}</div>
+                  <h2 className="heading-display" style={{ fontSize:'clamp(2rem, 5vh, 3rem)', color:isCorrect?'#10b981':'#ef4444', marginBottom:'0.4rem', lineHeight:1.1 }}>{isCorrect?'Correct!':'Try Again'}</h2>
+                  {isCorrect&&(<p style={{ fontSize:'clamp(0.95rem, 2.2vh, 1.1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>Great observation.</p>)}
                   {isCorrect&&currentQuestion.fact&&(
                     <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'12px', padding:'clamp(1rem, 2vh, 1.5rem)', marginTop:'0.8rem', marginBottom:'1rem' }}>
                       <p style={{ color:'#333', fontSize:'clamp(0.9rem, 2vh, 1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentQuestion.fact}</p>
@@ -2598,13 +2795,71 @@
         const wordCount = observation.trim().match(/\b\w+\b/g)?.length || 0;
         return (
           <div style={{ minHeight:'100vh', background:'var(--mist-light)', paddingBottom:'4rem' }}>
+            {cameraActive && (
+              <div style={{ position:'fixed', inset:0, background:'#000', zIndex:2000, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
+                <video ref={videoRef} autoPlay playsInline muted style={{ width:'100%', maxHeight:'70vh', objectFit:'cover' }} />
+                <div className="ruler-overlay">
+                  <div className="ruler-line"></div>
+                  <div className="ruler-marks">
+                    <span>0m</span>
+                    <span>1m</span>
+                    <span>2m</span>
+                    <span>3m</span>
+                    <span>4m</span>
+                    <span>5m</span>
+                  </div>
+                  <div className="ruler-instruction">Align the ruler with the animal to estimate size</div>
+                </div>
+                <button onClick={stopCamera} style={{ marginTop:'1rem', padding:'0.75rem 2rem', background:'var(--sunset-orange)', color:'white', border:'none', borderRadius:'30px', fontWeight:700, fontSize:'1rem', cursor:'pointer' }}>
+                  Close Camera
+                </button>
+              </div>
+            )}
+            {immersionActive && currentAnimal?.id === 'tiger' && (
+              <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, #1a3a2a 0%, #2e5c3e 100%)', zIndex:1900, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'2rem', color:'white', textAlign:'center' }}>
+                <h2 className="heading-display" style={{ fontSize:'2.5rem', marginBottom:'1rem' }}>Silent Forest</h2>
+                <p style={{ fontSize:'1.1rem', opacity:0.9, maxWidth:'500px', lineHeight:1.7, marginBottom:'2rem' }}>
+                  Stop and experience the world around you. Put the iPad down and observe the habitat.
+                </p>
+                <h3 style={{ fontSize:'5rem', fontWeight:800, marginBottom:'2rem', fontVariantNumeric:'tabular-nums' }}>{immersionTimer}</h3>
+                {immersionTimer === 0 && (
+                  <div style={{ width:'100%', maxWidth:'600px' }}>
+                    <p style={{ fontSize:'1.1rem', marginBottom:'1rem' }}>What did you hear or smell around the habitat?</p>
+                    <textarea value={reflectionText} onChange={e => setReflectionText(e.target.value)}
+                      placeholder="Describe what you heard or smelled..."
+                      style={{ width:'100%', minHeight:'140px', padding:'1rem', borderRadius:'12px', border:'none', fontSize:'1rem', fontFamily:'DM Sans, sans-serif', resize:'vertical' }} />
+                    <div style={{ marginTop:'0.5rem', fontSize:'0.9rem', color: (reflectionText.trim().split(/\s+/).filter(Boolean).length >= 10) ? 'rgba(255,255,255,0.9)' : 'rgba(255,180,100,0.9)', fontWeight:600 }}>
+                      {reflectionText.trim().split(/\s+/).filter(Boolean).length}/10 words
+                    </div>
+                    <button onClick={() => {
+                        const wc = reflectionText.trim().split(/\s+/).filter(Boolean).length;
+                        if (wc < 10) { alert(`Please write at least 10 words describing what you heard or smelled. You have ${wc}.`); return; }
+                        if (currentAnimal && currentAnimal.id === 'tiger') { submitTigerReflection(); } else { setImmersionActive(false); }
+                      }}
+                      style={{ marginTop:'1rem', width:'100%', padding:'1rem', background:'var(--sunset-orange)', color:'white', border:'none', borderRadius:'30px', fontWeight:700, fontSize:'1.1rem', cursor:'pointer' }}>
+                      {currentAnimal && currentAnimal.id === 'tiger' ? 'Submit Reflection' : 'Continue to Observation'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
             <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)' }}>
               <div style={{ maxWidth:'900px', margin:'0 auto', display:'flex', justifyContent:'center', alignItems:'center' }}>
                 <img src="images/logo.png" alt="Taronga Tracka" style={{ height:'60px', width:'auto' }} onError={(e)=>{ e.target.style.display='none'; }} />
               </div>
             </div>
             <div style={{ maxWidth:'900px', margin:'0 auto', padding:'3rem 2rem' }}>
-              <div style={{ background:'white', borderRadius:'20px', padding:'2.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
+              {currentAnimal.id === 'tiger' ? (
+                <div style={{ background:'white', borderRadius:'20px', padding:'2.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)', textAlign:'center' }}>
+                  <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'1rem' }}>Tiger Immersion Complete</h2>
+                  <p style={{ color:'#666', marginBottom:'2rem', lineHeight:1.6 }}>Your reflection has been recorded. Submit to earn your badge.</p>
+                  <button onClick={submitTigerReflection}
+                    style={{ width:'100%', padding:'1.5rem', borderRadius:'50px', border:'none', background:'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))', color:'white', fontSize:'1.3rem', fontWeight:700, cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.1em', boxShadow:'0 8px 24px rgba(232,106,51,0.4)' }}>
+                     Submit & Earn Badge
+                  </button>
+                </div>
+              ) : (
+                <div style={{ background:'white', borderRadius:'20px', padding:'2.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
                 <h2 className="heading-display" style={{ fontSize:'2.5rem', color:'var(--jungle-deep)', marginBottom:'1rem', textAlign:'center' }}>Your Observations</h2>
                 <p style={{ color:'#666', marginBottom:'1.2rem', lineHeight:1.6, fontSize:'1.1rem', textAlign:'center' }}>{currentAnimal.observationPrompt}</p>
                 <div style={{ display:'flex', flexWrap:'wrap', gap:'0.6rem', justifyContent:'center', marginBottom:'1.5rem' }}>
@@ -2625,6 +2880,7 @@
                   {wordCount<10?'Write More to Continue':' Submit & Earn Badge'}
                 </button>
               </div>
+              )}
             </div>
           </div>
         );
@@ -2655,8 +2911,19 @@
                     <h3 style={{ fontSize:'1.1rem', fontWeight:700, color:earned?'var(--jungle-deep)':'white', marginBottom:'0.5rem' }}>{animal.name}</h3>
                     {earned&&badge&&(
                       <div>
-                        <p style={{ fontSize:'1.5rem', fontWeight:700, color:'var(--sunset-orange)', marginBottom:'0.3rem' }}>{badge.points} pts</p>
-                        <p style={{ fontSize:'0.7rem', color:'#666', lineHeight:1.3 }}>Behaviour: +{badge.behaviourScore !== undefined ? badge.behaviourScore : (badge.behaviorScore || 0)}<br/>Detail: +{badge.detailScore}<br/>Writing: +{badge.literacyScore}</p>
+                        {(() => {
+                          const obs = badge.observationScore;
+                          const b = obs ? (obs.behaviour || 0) : (badge.behaviourScore ?? badge.behaviorScore ?? 0);
+                          const d = obs ? (obs.detail || 0) : (badge.detailScore || 0);
+                          const w = obs ? (obs.writing || 0) : (badge.literacyScore || 0);
+                          const pts = calculateAnimalPoints(badge);
+                          return (
+                            <>
+                              <p style={{ fontSize:'1.5rem', fontWeight:700, color:'var(--sunset-orange)', marginBottom:'0.3rem' }}>{pts} pts</p>
+                              <p style={{ fontSize:'0.7rem', color:'#666', lineHeight:1.3 }}>Behaviour: +{b}<br/>Detail: +{d}<br/>Writing: +{w}</p>
+                            </>
+                          );
+                        })()}
                       </div>
                     )}
                     {!earned&&(<p style={{ fontSize:'0.85rem', color:'rgba(255,255,255,0.6)' }}>Not yet discovered</p>)}
@@ -2684,7 +2951,7 @@
               <h2 className="heading-display" style={{ fontSize:'clamp(1.8rem, 4vh, 2.5rem)', color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>BADGE EARNED!</h2>
               <p className="serif-accent" style={{ fontSize:'clamp(1rem, 2.5vh, 1.3rem)', color:'var(--sunset-orange)', marginBottom:'clamp(0.8rem, 1.5vh, 1rem)' }}>{lastBadge.animal}</p>
               <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'16px', padding:'clamp(1rem, 2vh, 1.5rem)', marginBottom:'clamp(0.8rem, 1.5vh, 1rem)' }}>
-                <div style={{ fontSize:'clamp(2rem, 5vh, 3rem)', fontWeight:700, color:'var(--earth-clay)', marginBottom:'0.3rem' }}>+{lastBadge.points}</div>
+                <div style={{ fontSize:'clamp(2rem, 5vh, 3rem)', fontWeight:700, color:'var(--earth-clay)', marginBottom:'0.3rem' }}>+{calculateAnimalPoints(lastBadge)}</div>
                 <div style={{ color:'#666', fontSize:'clamp(0.8rem, 1.8vh, 0.95rem)' }}>Points</div>
               </div>
               <div style={{ background:'#F5F3EE', borderRadius:'16px', padding:'clamp(1rem, 2vh, 1.5rem)', marginBottom:'clamp(0.8rem, 1.5vh, 1rem)' }}>
@@ -2811,7 +3078,6 @@
               const existingData = existingDoc.data();
               
               // Restore session data
-              setTotalPoints(existingData.totalPoints || 0);
               setBadges(existingData.badges || []);
               setFoundAnimals(new Set(existingData.badges?.map(b => b.animalId) || []));
               
@@ -3441,29 +3707,29 @@
                           </p>
                         </div>
 
-                        {/* Chart 2: Quiz Performance Distribution */}
+                        {/* Chart 2: Quiz Mastery Distribution */}
                         <div style={{ marginBottom:'2rem' }}>
                           <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
-                            Quiz Performance Distribution
+                            Quiz Mastery Distribution
                           </h2>
                           <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
-                            <div style={{ height:'350px', position:'relative' }}>
+                            <div style={{ height:'300px', position:'relative' }}>
                               <canvas ref={quizChartRef}></canvas>
                             </div>
                           </div>
                           <p style={{ color:'#888', fontSize:'0.85rem', marginTop:'1rem', textAlign:'center', fontStyle:'italic' }}>
-                            Distribution based on completed student quiz scores across all classes.
+                            Distribution of combined quiz accuracy (knowledge + discovery) across classes.
                           </p>
                         </div>
 
                         {/* Chart 3: Observation Skill Breakdown (Radar) */}
                         <div style={{ marginBottom:'2rem' }}>
-                          <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>
+                          <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
                             Observation Skill Breakdown
                           </h2>
                           <div className="fade-in" style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
                             <div style={{ height:'400px', position:'relative' }}>
-                              <canvas ref={radarChartRef}></canvas>
+                              <canvas ref={writingChartRef}></canvas>
                             </div>
                           </div>
                           <div style={{ background:'#F7FAF8', border:'1px solid #E4EDE8', borderRadius:'14px', padding:'1.25rem 1.5rem', marginTop:'1rem' }}>
@@ -3471,26 +3737,71 @@
                             <div style={{ display:'flex', flexDirection:'column', gap:'0.65rem' }}>
                               <div>
                                 <span style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-mid)' }}>Behaviour (%) </span>
-                                <span style={{ fontSize:'0.82rem', color:'#555', lineHeight:1.55 }}>Measures use of observable animal actions (what the animal is doing). Higher scores include specific verbs such as "foraging", "grooming", or "resting" rather than general opinions.</span>
+                                <span style={{ fontSize:'0.82rem', color:'#555', lineHeight:1.55 }}>For observations: did the student identify real animal behaviour (pacing, grooming, feeding)? For reflections: did the student describe environmental activity or sensory experience (birds calling, wind, movement)?</span>
                               </div>
                               <div>
                                 <span style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-mid)' }}>Detail (%) </span>
-                                <span style={{ fontSize:'0.82rem', color:'#555', lineHeight:1.55 }}>Measures specificity and sensory detail (colour, texture, movement, habitat features). Higher scores include concrete, visible evidence from the observation.</span>
+                                <span style={{ fontSize:'0.82rem', color:'#555', lineHeight:1.55 }}>Did the student include specific evidence? Examples: colour, texture, sound, movement, enclosure features, habitat elements. Applies equally to observation and reflection tasks.</span>
                               </div>
                               <div>
                                 <span style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-mid)' }}>Writing (%) </span>
-                                <span style={{ fontSize:'0.82rem', color:'#555', lineHeight:1.55 }}>Measures clarity and structure (complete sentences, punctuation, logical flow). Higher scores demonstrate readable, well-structured responses.</span>
+                                <span style={{ fontSize:'0.82rem', color:'#555', lineHeight:1.55 }}>Measures sentence clarity, descriptive language, structure, and grammar. The same standard applies to all writing tasks — observation and reflection alike.</span>
                               </div>
                             </div>
                           </div>
                           <p style={{ color:'#888', fontSize:'0.85rem', marginTop:'1rem', textAlign:'center', fontStyle:'italic' }}>
-                            Average scores across all completed student observations. Scores range from 0-100.
+                            Average scores across all completed student writing. Scores range from 0–100.
                           </p>
                         </div>
+
+                        {/* Hardest Questions Panel */}
+                        {(() => {
+                          const questionStats = {};
+                          adminClasses.forEach(cls => {
+                            if (!Array.isArray(cls.studentBadges)) return;
+                            cls.studentBadges.forEach(badge => {
+                              if (!Array.isArray(badge.quizResults)) return;
+                              badge.quizResults.forEach(qr => {
+                                if (!qr.question) return;
+                                if (!questionStats[qr.question]) questionStats[qr.question] = { attempts: 0, correct: 0 };
+                                questionStats[qr.question].attempts++;
+                                if (qr.correctOnFirstAttempt === true) questionStats[qr.question].correct++;
+                              });
+                            });
+                          });
+                          const insights = Object.keys(questionStats).map(q => {
+                            const { attempts, correct } = questionStats[q];
+                            return { question: q, attempts, correct, percentCorrect: attempts === 0 ? 0 : Math.round((correct / attempts) * 100) };
+                          }).sort((a, b) => a.percentCorrect - b.percentCorrect).slice(0, 5);
+                          if (insights.length === 0) return null;
+                          return (
+                            <div style={{ marginBottom:'2rem' }}>
+                              <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>Hardest Questions</h2>
+                              <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
+                                {insights.map((item, i) => (
+                                  <div key={i} style={{ display:'flex', alignItems:'center', gap:'1rem', padding:'0.75rem 0', borderBottom: i < insights.length - 1 ? '1px solid #F0EDE8' : 'none' }}>
+                                    <span style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)', minWidth:'1.5rem' }}>{i + 1}.</span>
+                                    <div style={{ flex:1 }}>
+                                      <p style={{ fontSize:'0.9rem', fontWeight:600, color:'#333', margin:0, lineHeight:1.4 }}>{item.question}</p>
+                                      <p style={{ fontSize:'0.8rem', color:'#888', margin:'0.2rem 0 0' }}>{item.attempts} attempt{item.attempts !== 1 ? 's' : ''}</p>
+                                    </div>
+                                    <span style={{ fontSize:'1rem', fontWeight:700, color: item.percentCorrect < 50 ? '#DC2626' : item.percentCorrect < 75 ? '#D97706' : 'var(--jungle-mid)', minWidth:'3.5rem', textAlign:'right' }}>
+                                      {item.percentCorrect}%
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                              <p style={{ color:'#888', fontSize:'0.85rem', marginTop:'1rem', textAlign:'center', fontStyle:'italic' }}>
+                                Questions with lowest first-attempt success rate. Helps identify confusing signage or difficult concepts.
+                              </p>
+                            </div>
+                          );
+                        })()}
 
                         {(() => {
                           // Group classes by school and calculate performance metrics
                           const schoolStats = {};
+
                           
                           adminClasses.forEach(cls => {
                             const schoolName = cls.schoolName || 'Unknown School';
@@ -3502,8 +3813,8 @@
                                 totalStudents: 0,
                                 quizPercentageSum: 0,
                                 quizCount: 0,
-                                observationScoreSum: 0,
-                                observationCount: 0,
+                                writingPercentageSum: 0,
+                                writingCount: 0,
                                 totalBadges: 0
                               };
                             }
@@ -3513,16 +3824,17 @@
                             school.totalStudents += cls.studentCount || 0;
                             school.totalBadges += cls.totalBadges || 0;
                             
-                            // Add quiz data
-                            if (cls.quizAverage && cls.completedCount > 0) {
-                              school.quizPercentageSum += cls.quizAverage * cls.completedCount;
+                            // Quiz %
+                            const clsQuiz = cls.quizPercent !== undefined ? cls.quizPercent : cls.quizAverage;
+                            if (clsQuiz !== null && clsQuiz !== undefined && cls.completedCount > 0) {
+                              school.quizPercentageSum += clsQuiz * cls.completedCount;
                               school.quizCount += cls.completedCount;
                             }
                             
-                            // Add observation (writing) percentage data from class
-                            if (cls.averageObservationPercent !== undefined && cls.studentCount > 0) {
-                              school.observationScoreSum += cls.averageObservationPercent * cls.studentCount;
-                              school.observationCount += cls.studentCount;
+                            // Writing %
+                            if (cls.writingPercent !== null && cls.writingPercent !== undefined && cls.completedCount > 0) {
+                              school.writingPercentageSum += cls.writingPercent * cls.completedCount;
+                              school.writingCount += cls.completedCount;
                             }
                           });
                           
@@ -3531,12 +3843,8 @@
                             schoolName: school.schoolName,
                             totalClasses: school.totalClasses,
                             totalStudents: school.totalStudents,
-                            avgQuizPercentage: school.quizCount > 0 
-                              ? Math.round(school.quizPercentageSum / school.quizCount) 
-                              : 0,
-                            avgObservationScore: school.observationCount > 0
-                              ? `${Math.round(school.observationScoreSum / school.observationCount)}%`
-                              : '—',
+                            quizPercent: school.quizCount > 0 ? Math.round(school.quizPercentageSum / school.quizCount) : null,
+                            writingPercent: school.writingCount > 0 ? Math.round(school.writingPercentageSum / school.writingCount) : null,
                             totalBadges: school.totalBadges
                           }));
                           
@@ -3571,18 +3879,10 @@
                                           Students
                                         </th>
                                         <th style={{ textAlign:'center', padding:'0.75rem 1rem', fontWeight:700, color:'var(--jungle-deep)', fontSize:'0.9rem', textTransform:'uppercase', letterSpacing:'0.05em' }}>
-                                          Avg Quiz %
+                                          Quiz %
                                         </th>
                                         <th style={{ textAlign:'center', padding:'0.75rem 1rem', fontWeight:700, color:'var(--jungle-deep)', fontSize:'0.9rem', textTransform:'uppercase', letterSpacing:'0.05em' }}>
-                                          <span>
-                                            Avg Observation %
-                                            <span className="tooltip-wrapper" style={{ marginLeft:'6px' }}>
-                                              
-                                              <span className="tooltip-text">
-                                                Combined score from: Behaviour (15) + Detail (15) + Writing (10). Displayed as a percentage of 40 total points.
-                                              </span>
-                                            </span>
-                                          </span>
+                                          Observation %
                                         </th>
                                       </tr>
                                     </thead>
@@ -3605,12 +3905,12 @@
                                             {school.totalStudents}
                                           </td>
                                           <td style={{ padding:'1rem', textAlign:'center', fontWeight:700, fontSize:'0.95rem' }}>
-                                            <span style={{ color: school.avgQuizPercentage >= 75 ? 'var(--jungle-mid)' : school.avgQuizPercentage >= 50 ? '#D97706' : '#DC2626' }}>
-                                              {school.avgQuizPercentage}%
+                                            <span style={{ color: (school.quizPercent||0) >= 75 ? 'var(--jungle-mid)' : (school.quizPercent||0) >= 50 ? '#D97706' : '#DC2626' }}>
+                                              {school.quizPercent !== null ? `${school.quizPercent}%` : '—'}
                                             </span>
                                           </td>
                                           <td style={{ padding:'1rem', textAlign:'center', color:'#666', fontSize:'0.9rem' }}>
-                                            {school.avgObservationScore}
+                                            {school.writingPercent !== null ? `${school.writingPercent}%` : '—'}
                                           </td>
                                         </tr>
                                       ))}
@@ -3963,7 +4263,7 @@
                         <tbody>
                           {adminClassStudents.map((student, i) => {
                             // Count observations
-                            const observationCount = (student.badges || []).filter(b => b.observation && b.observation.trim()).length;
+                            const observationCount = (student.badges || []).filter(b => b.observationScore || (b.observation && b.observation.trim())).length;
 
                             return (
                               <tr key={i} style={{ borderBottom:'1px solid #F5F3EE' }}>
@@ -4012,15 +4312,27 @@
                   <button onClick={() => setObservationsModal(null)} style={{ background:'none', border:'none', fontSize:'1.4rem', color:'#aaa', cursor:'pointer', lineHeight:1, padding:'0.2rem 0.4rem' }}>x</button>
                 </div>
                 <div style={{ padding:'1rem 1.4rem 1.4rem' }}>
-                  {(observationsModal.badges || []).filter(b => b.observation && b.observation.trim()).map((b, idx, arr) => (
+                  {(observationsModal.badges || []).filter(b => b.observationScore || (b.observation && b.observation.trim())).map((b, idx, arr) => (
                     <div key={idx} style={{ borderLeft:'3px solid var(--jungle-mid)', background:'#F7FAF8', borderRadius:'0 10px 10px 0', padding:'0.75rem 1rem', marginBottom: idx < arr.length - 1 ? '0.75rem' : 0 }}>
                       <div style={{ display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.35rem' }}>
-                        <span style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{b.animal}</span>
+                        <span style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{b.animal} – Observation</span>
                         {b.timestamp && <span style={{ fontSize:'0.65rem', color:'#aaa' }}>· {new Date(b.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short' })}</span>}
                       </div>
-                      <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.55, margin:0 }}>{b.observation}</p>
+                      {b.observation && b.observation.trim() && (
+                        <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.55, margin:'0 0 0.4rem' }}>{b.observation}</p>
+                      )}
+                      {b.observationScore && (
+                        <div style={{ display:'flex', gap:'0.75rem', flexWrap:'wrap' }}>
+                          <span style={{ fontSize:'0.7rem', color:'#666' }}>Behaviour: <strong style={{ color:'var(--jungle-mid)' }}>{b.observationScore.behaviour ?? 0}/5</strong></span>
+                          <span style={{ fontSize:'0.7rem', color:'#666' }}>Detail: <strong style={{ color:'var(--jungle-mid)' }}>{b.observationScore.detail ?? 0}/5</strong></span>
+                          <span style={{ fontSize:'0.7rem', color:'#666' }}>Writing: <strong style={{ color:'var(--jungle-mid)' }}>{b.observationScore.writing ?? 0}/5</strong></span>
+                        </div>
+                      )}
                     </div>
                   ))}
+                  {(observationsModal.badges || []).filter(b => b.observationScore || (b.observation && b.observation.trim())).length === 0 && (
+                    <p style={{ fontSize:'0.85rem', color:'#aaa', textAlign:'center', padding:'1rem 0' }}>No observations recorded yet.</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -4497,14 +4809,15 @@
               studentCount++;
               if (Array.isArray(data.badges)) {
                 data.badges.forEach(badge => {
-                  if (typeof badge.behaviourScore === 'number') {
-                    behaviourSum += (badge.behaviourScore / 15) * 100;
-                  }
-                  if (typeof badge.detailScore === 'number') {
-                    detailSum += (badge.detailScore / 15) * 100;
-                  }
-                  if (typeof badge.literacyScore === 'number') {
-                    literacySum += (badge.literacyScore / 15) * 100;
+                  const obs = badge.observationScore;
+                  if (obs && typeof obs === 'object') {
+                    behaviourSum += ((obs.behaviour || 0) / 5) * 100;
+                    detailSum += ((obs.detail || 0) / 5) * 100;
+                    literacySum += ((obs.writing || 0) / 5) * 100;
+                  } else {
+                    if (typeof badge.behaviourScore === 'number') behaviourSum += (badge.behaviourScore / 15) * 100;
+                    if (typeof badge.detailScore === 'number') detailSum += (badge.detailScore / 15) * 100;
+                    if (typeof badge.literacyScore === 'number') literacySum += (badge.literacyScore / 15) * 100;
                   }
                   badgeCount++;
                 });
@@ -4714,15 +5027,27 @@
                     <button onClick={() => setObservationsModal(null)} style={{ background:'none', border:'none', fontSize:'1.4rem', color:'#aaa', cursor:'pointer', lineHeight:1, padding:'0.2rem 0.4rem' }}>x</button>
                   </div>
                   <div style={{ padding:'1rem 1.4rem 1.4rem' }}>
-                    {(observationsModal.badges || []).filter(b => b.observation).map((b, idx, arr) => (
+                    {(observationsModal.badges || []).filter(b => b.observationScore || (b.observation && b.observation.trim())).map((b, idx, arr) => (
                       <div key={idx} style={{ borderLeft:'3px solid var(--jungle-mid)', background:'#F7FAF8', borderRadius:'0 10px 10px 0', padding:'0.75rem 1rem', marginBottom: idx < arr.length - 1 ? '0.75rem' : 0 }}>
                         <div style={{ display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.35rem' }}>
-                          <span style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{b.animal}</span>
+                          <span style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{b.animal} – Observation</span>
                           {b.timestamp && <span style={{ fontSize:'0.65rem', color:'#aaa' }}>· {new Date(b.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short' })}</span>}
                         </div>
-                        <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.55, margin:0 }}>{b.observation}</p>
+                        {b.observation && b.observation.trim() && (
+                          <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.55, margin:'0 0 0.4rem' }}>{b.observation}</p>
+                        )}
+                        {b.observationScore && (
+                          <div style={{ display:'flex', gap:'0.75rem', flexWrap:'wrap' }}>
+                            <span style={{ fontSize:'0.7rem', color:'#666' }}>Behaviour: <strong style={{ color:'var(--jungle-mid)' }}>{b.observationScore.behaviour ?? 0}/5</strong></span>
+                            <span style={{ fontSize:'0.7rem', color:'#666' }}>Detail: <strong style={{ color:'var(--jungle-mid)' }}>{b.observationScore.detail ?? 0}/5</strong></span>
+                            <span style={{ fontSize:'0.7rem', color:'#666' }}>Writing: <strong style={{ color:'var(--jungle-mid)' }}>{b.observationScore.writing ?? 0}/5</strong></span>
+                          </div>
+                        )}
                       </div>
                     ))}
+                    {(observationsModal.badges || []).filter(b => b.observationScore || (b.observation && b.observation.trim())).length === 0 && (
+                      <p style={{ fontSize:'0.85rem', color:'#aaa', textAlign:'center', padding:'1rem 0' }}>No observations recorded yet.</p>
+                    )}
                   </div>
                 </div>
               </div>
