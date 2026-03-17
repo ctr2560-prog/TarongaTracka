@@ -1931,15 +1931,22 @@
         return Math.min(matches.length + 1, 5);
       }
 
-      function calculateWritingScore(text) {
-        const trimmed = text.trim();
-        if (!trimmed) return 0;
-        const wordCount = trimmed.split(/\s+/).length;
-        let score = Math.min(Math.floor(wordCount / 4) + 1, 5);
-        const hasCapital = /^[A-Z]/.test(trimmed);
-        const hasPunctuation = /[.!?]$/.test(trimmed);
-        if (hasCapital && hasPunctuation) score = Math.min(score + 1, 5);
-        return score;
+      function calculateWritingScore(studentResponse) {
+        const text = studentResponse.trim();
+        if (!text) return 0;
+        const wordCount = text.split(/\s+/).length;
+        const hasCapital = /^[A-Z]/.test(text);
+        const hasPunctuation = /[.!?]$/.test(text);
+        const hasSentenceStructure = wordCount >= 5 && text.includes(' ');
+        const sentences = text.split(/[.!?]/).filter(s => s.trim().length > 0);
+        const hasMultipleSentences = sentences.length >= 2;
+        const isAllCaps = text === text.toUpperCase();
+        let score = 1;
+        if (hasSentenceStructure) score = 2;
+        if (hasCapital && hasPunctuation) score = 3;
+        if (hasMultipleSentences) score = 4;
+        if (isAllCaps) score = Math.max(score - 1, 1);
+        return Math.min(score, 5);
       }
       function recordMissionResult(animalId, animalName, quizResults = [], observationScore = null, observation = '') {
         const badge = {
