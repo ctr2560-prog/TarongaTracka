@@ -353,6 +353,10 @@
     const { useState, useEffect, useRef } = React;
 
     const TarongaTracka = () => {
+      // ---- DEV SETTINGS (set to false for production) ----
+      const DEV_GPS_OVERRIDE = true;
+      const DEV_KOALA_LAT = -34.206927872669155;
+      const DEV_KOALA_LNG = 150.57988056189498;
       const loadProgress = () => {
         try {
           const saved = localStorage.getItem('tarongaTrackaProgress');
@@ -2053,11 +2057,10 @@
 
       const checkAnimalProximity = (animal) => {
         if (!userLocation) return { nearby: animal.id === 'koala', distance: null };
-        const distance = calculateDistance(userLocation.latitude, userLocation.longitude, animal.latitude, animal.longitude);
-        const isKoala = animal.id === 'koala';
-        // TEMP: Tiger GPS unlock disabled for local testing
-        const isTiger = animal.id === 'tiger';
-        const isNearby = isKoala || isTiger ? true : distance <= animal.radius;
+        const animalLat = DEV_GPS_OVERRIDE ? DEV_KOALA_LAT : animal.latitude;
+        const animalLng = DEV_GPS_OVERRIDE ? DEV_KOALA_LNG : animal.longitude;
+        const distance = calculateDistance(userLocation.latitude, userLocation.longitude, animalLat, animalLng);
+        const isNearby = distance <= (animal.radius || 50);
         return { nearby: isNearby, distance: Math.round(distance) };
       };
 
@@ -2674,8 +2677,10 @@
                     const alreadyFound=foundAnimals.has(animal.id);
                     const userLat = userLocation?.latitude;
                     const userLon = userLocation?.longitude;
-                    const compassBearing = animal.id === 'koala' ? 0 : (userLat && userLon ? getBearing(userLat, userLon, animal.latitude, animal.longitude) : null);
-                    const compassDistance = animal.id === 'koala' ? 0 : (userLat && userLon ? getDistance(userLat, userLon, animal.latitude, animal.longitude) : null);
+                    const animalLat = DEV_GPS_OVERRIDE ? DEV_KOALA_LAT : animal.latitude;
+                    const animalLng = DEV_GPS_OVERRIDE ? DEV_KOALA_LNG : animal.longitude;
+                    const compassBearing = userLat && userLon ? getBearing(userLat, userLon, animalLat, animalLng) : null;
+                    const compassDistance = userLat && userLon ? getDistance(userLat, userLon, animalLat, animalLng) : null;
                     return (
                       <div key={animal.id} onClick={(e)=>{if(!alreadyFound)discoverAnimal(animal,e);}} className="animate-fade-in-up"
                         style={{ position:'relative', height:'400px', borderRadius:'16px', overflow:'hidden', cursor:alreadyFound?'default':'pointer', boxShadow:'0 8px 24px rgba(0,0,0,0.12)', transition:'all 0.4s ease', animationDelay:`${index*0.1}s`, transform:nearby&&!alreadyFound?'scale(1.03)':'scale(1)' }}
