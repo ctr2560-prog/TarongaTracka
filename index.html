@@ -2158,7 +2158,7 @@
                 )}
                 <button onClick={() => { if (isCorrect) { handleNextQuestion(); } else { setIsProcessingAnswer(false); setShowResult(false); } }}
                   style={{ background: isCorrect ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)', color:'white', border:'none', padding:'clamp(0.8rem, 2vh, 1.2rem) clamp(2rem, 5vw, 3rem)', fontSize:'clamp(1rem, 2.5vh, 1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.05em', boxShadow:'0 4px 12px rgba(0,0,0,0.2)', marginTop:'0.5rem' }}>
-                  {isCorrect ? 'Continue to Observation ' : 'Try Again'}
+                  {isCorrect ? 'Continue to Reflection ' : 'Try Again'}
                 </button>
               </div>
             )}
@@ -3063,7 +3063,7 @@
                   <div style={{ marginTop:'1rem', fontSize:'0.95rem', color: wordCount >= 10 ? '#059669' : '#E86A33', fontWeight:600 }}>{wordCount}/10 words minimum</div>
                   <button onClick={submitObservation} disabled={wordCount < 10}
                     style={{ width:'100%', padding:'1.5rem', borderRadius:'50px', border:'none', background: wordCount >= 10 ? 'linear-gradient(135deg, #D4A574, #A0714A)' : '#CCC', color:'white', fontSize:'1.3rem', fontWeight:700, cursor: wordCount >= 10 ? 'pointer' : 'not-allowed', transition:'all 0.3s ease', textTransform:'uppercase', letterSpacing:'0.1em', marginTop:'2rem', boxShadow: wordCount >= 10 ? '0 8px 24px rgba(212,165,116,0.4)' : 'none' }}>
-                    {wordCount < 10 ? 'Write More to Continue' : '🦁 Submit Conservation Reflection'}
+                    {wordCount < 10 ? 'Write More to Continue' : 'Submit Conservation Reflection'}
                   </button>
                 </div>
               ) : (
