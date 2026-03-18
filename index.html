@@ -2149,7 +2149,7 @@
                     Not quite — try using the camera measurement tool to estimate the tiger's length from nose to tail.
                   </p>
                 )}
-                <button onClick={() => setTigerFeedback(null)}
+                <button onClick={() => { setTigerFeedback(null); stopCamera(); setTimeout(() => startCamera(), 100); }}
                   style={{ background: isCorrect ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)', color:'white', border:'none', padding:'clamp(0.8rem, 2vh, 1.2rem) clamp(2rem, 5vw, 3rem)', fontSize:'clamp(1rem, 2.5vh, 1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.05em', boxShadow:'0 4px 12px rgba(0,0,0,0.2)', marginTop:'0.5rem' }}>
                   Try Again
                 </button>
