@@ -1825,18 +1825,10 @@
           image: 'images/lion.jpg', latitude: -33.8427, longitude: 151.2393,
           radius: 50, color: '#D4A574',
           questions: [
-            { q: 'Lions are apex predators. What does this mean?',
-              options: ['They eat plants', 'They are at the top of the food chain', 'They live underground', 'They only eat insects'],
-              correct: 1, fact: 'Apex predators like lions sit at the top of the food chain, keeping prey populations balanced and ecosystems healthy.' },
-            { q: "How far can a lion's roar be heard?",
-              options: ['500 meters', '2 kilometers', '8 kilometers', '20 kilometers'],
-              correct: 2, fact: "A lion's roar can be heard up to about 8 km away." },
-            { q: 'Who does most of the hunting in a lion pride?',
-              options: ['Male lions', 'Female lions', 'Cubs', 'All equally'],
-              correct: 1, fact: 'Female lions do most of the hunting and work together as a team.' },
-            { q: 'How many hours a day do lions typically rest?',
-              options: ['5 hours', '10 hours', '16-20 hours', '24 hours'],
-              correct: 2, fact: 'Lions can rest 16–20 hours a day to conserve energy.' }
+            { q: 'Lion Micro Investigation',
+              options: ['A', 'B', 'C', 'D'],
+              correct: 1,
+              fact: 'Lions are apex predators.' }
           ],
           observationPrompt: 'Watch the lions. Describe their behavior and social interactions.',
           pointValue: 50
@@ -2137,7 +2129,6 @@
         const zoomOptions = ['2×', '5×', '10×', '20×'];
         const correctZoom = '5×';
 
-        const lionAnswers = ['They eat plants', 'They are at the top of the food chain', 'They live underground', 'They only eat insects'];
         const correctAnswerIndex = 1;
 
         return (
@@ -2226,18 +2217,6 @@
                       {/* Live camera feed with zoom */}
                       <video ref={videoRef} autoPlay playsInline muted
                         style={{ width:'100%', height:'100%', objectFit:'cover', transform:`scale(${scale})`, transformOrigin:'center', transition:'transform 0.3s ease' }} />
-                      {/* Question text overlay */}
-                      <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', justifyContent:'center', padding:'1.25rem', background:'rgba(0,0,0,0.52)' }}>
-                        <p style={{ color:'white', fontSize:'clamp(0.72rem,1.8vw,0.88rem)', lineHeight:1.9, margin:0, userSelect:'none',
-                          filter: lionZoom === '5×' ? 'none' : `blur(${Math.max(0, 6 - (zoomMap[lionZoom]||1) * 1.5)}px)`,
-                          transition:'filter 0.3s ease' }}>
-                          Lions are apex predators. What does this mean?<br/>
-                          A: They eat plants<br/>
-                          B: They are at the top of the food chain<br/>
-                          C: They live underground<br/>
-                          D: They only eat insects
-                        </p>
-                      </div>
                       {/* Zoom badge */}
                       <div style={{ position:'absolute', top:'0.5rem', right:'0.6rem', background:'rgba(0,0,0,0.6)', color:'white', fontSize:'0.7rem', fontWeight:700, padding:'0.2rem 0.5rem', borderRadius:'8px' }}>
                         {lionZoom ? `${lionZoom} zoom` : 'No zoom'}
@@ -2250,10 +2229,10 @@
                 <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.08)' }}>
                   <p style={{ fontSize:'0.85rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.75rem', textAlign:'center' }}>Select your answer:</p>
                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' }}>
-                    {lionAnswers.map((ans, i) => (
+                    {['A','B','C','D'].map((label, i) => (
                       <button key={i} onClick={() => handleQuizAnswer(0, i)}
-                        style={{ padding:'0.9rem 0.75rem', borderRadius:'12px', border:'2px solid transparent', background: quizAnswers[0] === i ? (i === correctAnswerIndex ? '#D1FAE5' : '#FEE2E2') : '#f4f8f6', color:'var(--jungle-deep)', fontSize:'0.88rem', fontWeight:600, cursor:'pointer', textAlign:'left', transition:'all 0.2s', lineHeight:1.3 }}>
-                        <span style={{ fontWeight:700, marginRight:'0.4rem' }}>{String.fromCharCode(65+i)}.</span>{ans}
+                        style={{ padding:'0.9rem', borderRadius:'12px', border:'2px solid transparent', background: quizAnswers[0] === i ? (i === correctAnswerIndex ? '#D1FAE5' : '#FEE2E2') : '#f4f8f6', color:'var(--jungle-deep)', fontSize:'1.2rem', fontWeight:700, cursor:'pointer', textAlign:'center', transition:'all 0.2s' }}>
+                        {label}
                       </button>
                     ))}
                   </div>
