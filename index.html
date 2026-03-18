@@ -2133,7 +2133,6 @@
       function renderLionMission() {
         const zoomOptions = ['2×', '5×', '10×', '20×'];
         const correctZoom = '5×';
-        const isReadable = lionZoom === correctZoom;
 
         const lionAnswers = ['They eat plants', 'They are at the top of the food chain', 'They live underground', 'They only eat insects'];
         const correctAnswerIndex = 1;
@@ -2216,30 +2215,37 @@
                 </div>
 
                 {/* Camera / text view */}
-                <div style={{ borderRadius:'16px', overflow:'hidden', marginBottom:'1rem', background:'#111', minHeight:'120px', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 8px 24px rgba(0,0,0,0.2)', position:'relative' }}>
-                  {!isReadable ? (
-                    <p style={{ color:'rgba(255,255,255,0.35)', fontSize:'clamp(0.6rem,1.5vw,0.75rem)', letterSpacing:'0.25em', textAlign:'center', padding:'2rem', filter:'blur(3px)', userSelect:'none', lineHeight:2 }}>
-                      Lions are apex predators. What does this mean?{'\n'}A: They eat plants{'\n'}B: They are at the top of the food chain{'\n'}C: They live underground{'\n'}D: They only eat insects
-                    </p>
-                  ) : (
-                    <div style={{ padding:'1.5rem', color:'white', textAlign:'left', width:'100%' }}>
-                      <p style={{ fontSize:'clamp(0.82rem,2vw,0.95rem)', fontWeight:600, marginBottom:'0.75rem', lineHeight:1.5 }}>Lions are apex predators. What does this mean?</p>
-                      {['A: They eat plants','B: They are at the top of the food chain','C: They live underground','D: They only eat insects'].map((opt, i) => (
-                        <p key={i} style={{ fontSize:'clamp(0.78rem,1.8vw,0.9rem)', marginBottom:'0.3rem', color: i === correctAnswerIndex ? '#4ade80' : 'rgba(255,255,255,0.85)' }}>{opt}</p>
-                      ))}
+                {(() => {
+                  const zoomMap = { '2×': 1, '5×': 2, '10×': 3, '20×': 4 };
+                  const scale = zoomMap[lionZoom] || 1;
+                  return (
+                    <div style={{ borderRadius:'16px', overflow:'hidden', marginBottom:'1rem', background:'#111', minHeight:'120px', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 8px 24px rgba(0,0,0,0.2)', position:'relative' }}>
+                      <div style={{ transform:`scale(${scale})`, transformOrigin:'center', transition:'transform 0.3s ease', width:'100%' }}>
+                        <p style={{ color:'rgba(255,255,255,0.85)', fontSize:'clamp(0.6rem,1.5vw,0.75rem)', letterSpacing:'0.15em', textAlign:'center', padding:'2rem', userSelect:'none', lineHeight:2 }}>
+                          Lions are apex predators. What does this mean?{'\n'}A: They eat plants{'\n'}B: They are at the top of the food chain{'\n'}C: They live underground{'\n'}D: They only eat insects
+                        </p>
+                      </div>
+                      <div style={{ position:'absolute', top:'0.5rem', right:'0.6rem', background:'rgba(0,0,0,0.5)', color:'white', fontSize:'0.7rem', fontWeight:700, padding:'0.2rem 0.5rem', borderRadius:'8px' }}>
+                        {lionZoom ? `${lionZoom} zoom` : 'No zoom selected'}
+                      </div>
                     </div>
-                  )}
-                  <div style={{ position:'absolute', top:'0.5rem', right:'0.6rem', background:'rgba(0,0,0,0.5)', color:'white', fontSize:'0.7rem', fontWeight:700, padding:'0.2rem 0.5rem', borderRadius:'8px' }}>
-                    {lionZoom ? `${lionZoom} zoom` : 'No zoom selected'}
-                  </div>
-                </div>
+                  );
+                })()}
 
                 {/* Answer buttons */}
                 <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.08)' }}>
                   <p style={{ fontSize:'0.85rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.75rem', textAlign:'center' }}>Select your answer:</p>
                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' }}>
                     {lionAnswers.map((ans, i) => (
-                      <button key={i} onClick={() => handleQuizAnswer(0, i)}
+                      <button key={i} onClick={() => {
+                          if (sessionLocked || isProcessingAnswer) return;
+                          setIsProcessingAnswer(true);
+                          const correct = i === correctAnswerIndex;
+                          setIsCorrect(correct);
+                          setShowResult(true);
+                          setFirstAttemptResults(prev => prev[0] !== undefined ? prev : { ...prev, 0: correct });
+                          if (correct) setQuizAnswers(prev => ({ ...prev, 0: i }));
+                        }}
                         style={{ padding:'0.9rem 0.75rem', borderRadius:'12px', border:'2px solid transparent', background: quizAnswers[0] === i ? (i === correctAnswerIndex ? '#D1FAE5' : '#FEE2E2') : '#f4f8f6', color:'var(--jungle-deep)', fontSize:'0.88rem', fontWeight:600, cursor:'pointer', textAlign:'left', transition:'all 0.2s', lineHeight:1.3 }}>
                         <span style={{ fontWeight:700, marginRight:'0.4rem' }}>{String.fromCharCode(65+i)}.</span>{ans}
                       </button>
