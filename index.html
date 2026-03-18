@@ -435,6 +435,7 @@
       const [tigerAttempted, setTigerAttempted] = useState(false);
       const [tigerShowFact, setTigerShowFact] = useState(false);
       const [tigerFeedback, setTigerFeedback] = useState(null);
+      const [lionZoom, setLionZoom] = useState(null);
       const [cameraActive, setCameraActive] = React.useState(false);
       const [cameraStream, setCameraStream] = React.useState(null);
       const videoRef = React.useRef(null);
@@ -2128,6 +2129,130 @@
         recordMissionResult('tiger', 'Sumatran Tiger', [], observationScore, text);
         setCurrentScreen('badge');
       }
+      function renderLionMission() {
+        const zoomOptions = ['2×', '5×', '10×', '20×'];
+        const correctZoom = '5×';
+        const isReadable = lionZoom === correctZoom;
+        const [hintVisible, setHintVisible] = React.useState(false);
+
+        const lionAnswers = ['They eat plants', 'They are at the top of the food chain', 'They live underground', 'They only eat insects'];
+        const correctAnswerIndex = 1;
+
+        return (
+          <div style={{ position:'fixed', inset:0, background: showResult ? (isCorrect ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)') : 'var(--mist-light)', transition:'background 0.5s ease', display:'flex', flexDirection:'column' }}>
+            {/* Header */}
+            <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'0.6rem 1rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', flex:'0 0 auto', zIndex:100 }}>
+              <div style={{ maxWidth:'900px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <button onClick={() => setCurrentScreen('map')} style={{ background:'rgba(255,255,255,0.2)', border:'none', color:'white', padding:'0.5rem 1rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.85rem', fontWeight:600 }}> Back</button>
+                <img src="images/logo.png" alt="Taronga Tracka" style={{ height:'45px', width:'auto' }} onError={(e) => { e.target.style.display='none'; }} />
+                <div style={{ width:'70px' }} />
+              </div>
+            </div>
+
+            {/* Result overlay */}
+            {showResult && (
+              <div className="animate-scale-in" style={{ textAlign:'center', padding:'clamp(1.5rem, 3vh, 2rem)', background:'rgba(255,255,255,0.95)', borderRadius:'20px', boxShadow:'0 8px 32px rgba(0,0,0,0.2)', margin:'clamp(1rem, 2vh, 1.5rem)', maxWidth:'90%', marginLeft:'auto', marginRight:'auto', marginTop:'clamp(1rem,3vh,2rem)' }}>
+                <div style={{ fontSize:'clamp(3rem, 8vh, 4.5rem)', marginBottom:'0.5rem' }}>{isCorrect ? '✔' : ''}</div>
+                <h2 className="heading-display" style={{ fontSize:'clamp(2rem, 5vh, 3rem)', color: isCorrect ? '#10b981' : '#ef4444', marginBottom:'0.4rem', lineHeight:1.1 }}>
+                  {isCorrect ? 'Correct!' : 'Try Again'}
+                </h2>
+                {isCorrect && <p style={{ fontSize:'clamp(0.95rem, 2.2vh, 1.1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>You used magnification effectively to observe the lion.</p>}
+                {!isCorrect && <p style={{ fontSize:'clamp(0.9rem, 2vh, 1rem)', color:'#555', marginBottom:'0.8rem', lineHeight:1.6 }}>Not quite — adjust your zoom and read the question carefully.</p>}
+                {isCorrect && currentAnimal.questions[0].fact && (
+                  <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'12px', padding:'clamp(1rem, 2vh, 1.5rem)', marginTop:'0.8rem', marginBottom:'1rem' }}>
+                    <p style={{ color:'#333', fontSize:'clamp(0.9rem, 2vh, 1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentAnimal.questions[0].fact}</p>
+                  </div>
+                )}
+                <button onClick={() => { if (isCorrect) { handleNextQuestion(); } else { setIsProcessingAnswer(false); setShowResult(false); } }}
+                  style={{ background: isCorrect ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)', color:'white', border:'none', padding:'clamp(0.8rem, 2vh, 1.2rem) clamp(2rem, 5vw, 3rem)', fontSize:'clamp(1rem, 2.5vh, 1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.05em', boxShadow:'0 4px 12px rgba(0,0,0,0.2)', marginTop:'0.5rem' }}>
+                  {isCorrect ? 'Continue to Observation ' : 'Try Again'}
+                </button>
+              </div>
+            )}
+
+            {/* Main content */}
+            {!showResult && (
+              <div style={{ flex:'1 1 auto', overflowY:'auto', padding:'1rem', maxWidth:'600px', margin:'0 auto', width:'100%' }}>
+
+                {/* Title */}
+                <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
+                  <h2 style={{ fontSize:'1.2rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>🦁 Lion Micro Investigation</h2>
+                  <p style={{ fontSize:'0.85rem', color:'#666', margin:0 }}>A tiny multiple-choice question is hidden on the lion sign. Use the microscope zoom to read it clearly.</p>
+                </div>
+
+                {/* Info panel */}
+                <div style={{ background:'linear-gradient(135deg, #EFF6FF, #DBEAFE)', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 4px 16px rgba(59,130,246,0.1)', marginBottom:'1rem' }}>
+                  <p style={{ fontSize:'0.75rem', fontWeight:700, color:'#1D4ED8', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:'0.6rem' }}>🔍 Magnification Challenge</p>
+                  <div style={{ display:'flex', gap:'1.5rem' }}>
+                    <div><p style={{ fontSize:'0.78rem', color:'#555', margin:0 }}>Actual size</p><p style={{ fontSize:'1rem', fontWeight:700, color:'#1D4ED8', margin:0 }}>2 mm</p></div>
+                    <div><p style={{ fontSize:'0.78rem', color:'#555', margin:0 }}>Readable size</p><p style={{ fontSize:'1rem', fontWeight:700, color:'#1D4ED8', margin:0 }}>10 mm</p></div>
+                  </div>
+                </div>
+
+                {/* Thinking prompt */}
+                <div style={{ background:'white', borderRadius:'16px', padding:'1rem 1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.06)', marginBottom:'1rem', display:'flex', alignItems:'center', justifyContent:'space-between', gap:'1rem' }}>
+                  <p style={{ fontSize:'0.9rem', fontWeight:600, color:'var(--jungle-deep)', margin:0 }}>What magnification do you need?</p>
+                  <button onClick={() => setHintVisible(h => !h)} style={{ background:'var(--jungle-light)', color:'white', border:'none', padding:'0.4rem 0.9rem', borderRadius:'20px', fontSize:'0.78rem', fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}>
+                    {hintVisible ? 'Hide Hint' : 'Hint 💡'}
+                  </button>
+                </div>
+                {hintVisible && (
+                  <div style={{ background:'#FFFBEB', border:'1px solid #FDE68A', borderRadius:'12px', padding:'0.75rem 1rem', marginBottom:'1rem', textAlign:'center' }}>
+                    <p style={{ fontSize:'0.95rem', fontWeight:700, color:'#92400E', margin:0 }}>10 ÷ 2 = 5×</p>
+                  </div>
+                )}
+
+                {/* Zoom selector */}
+                <div style={{ background:'white', borderRadius:'16px', padding:'1rem 1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.06)', marginBottom:'1rem' }}>
+                  <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.7rem' }}>Select Zoom Level</p>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:'0.6rem' }}>
+                    {zoomOptions.map(z => (
+                      <button key={z} onClick={() => setLionZoom(z)}
+                        style={{ padding:'0.75rem 0', borderRadius:'12px', border: lionZoom === z ? '2px solid var(--jungle-mid)' : '2px solid transparent', background: lionZoom === z ? 'var(--jungle-deep)' : '#f4f8f6', color: lionZoom === z ? 'white' : 'var(--jungle-deep)', fontSize:'1rem', fontWeight:700, cursor:'pointer', transition:'all 0.2s' }}>
+                        {z}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Camera / text view */}
+                <div style={{ borderRadius:'16px', overflow:'hidden', marginBottom:'1rem', background:'#111', minHeight:'120px', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 8px 24px rgba(0,0,0,0.2)', position:'relative' }}>
+                  {!isReadable ? (
+                    <p style={{ color:'rgba(255,255,255,0.35)', fontSize:'clamp(0.6rem,1.5vw,0.75rem)', letterSpacing:'0.25em', textAlign:'center', padding:'2rem', filter:'blur(3px)', userSelect:'none', lineHeight:2 }}>
+                      Lions are apex predators. What does this mean?{'\n'}A: They eat plants{'\n'}B: They are at the top of the food chain{'\n'}C: They live underground{'\n'}D: They only eat insects
+                    </p>
+                  ) : (
+                    <div style={{ padding:'1.5rem', color:'white', textAlign:'left', width:'100%' }}>
+                      <p style={{ fontSize:'clamp(0.82rem,2vw,0.95rem)', fontWeight:600, marginBottom:'0.75rem', lineHeight:1.5 }}>Lions are apex predators. What does this mean?</p>
+                      {['A: They eat plants','B: They are at the top of the food chain','C: They live underground','D: They only eat insects'].map((opt, i) => (
+                        <p key={i} style={{ fontSize:'clamp(0.78rem,1.8vw,0.9rem)', marginBottom:'0.3rem', color: i === correctAnswerIndex ? '#4ade80' : 'rgba(255,255,255,0.85)' }}>{opt}</p>
+                      ))}
+                    </div>
+                  )}
+                  <div style={{ position:'absolute', top:'0.5rem', right:'0.6rem', background:'rgba(0,0,0,0.5)', color:'white', fontSize:'0.7rem', fontWeight:700, padding:'0.2rem 0.5rem', borderRadius:'8px' }}>
+                    {lionZoom ? `${lionZoom} zoom` : 'No zoom selected'}
+                  </div>
+                </div>
+
+                {/* Answer buttons */}
+                <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.08)' }}>
+                  <p style={{ fontSize:'0.85rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.75rem', textAlign:'center' }}>Select your answer:</p>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' }}>
+                    {lionAnswers.map((ans, i) => (
+                      <button key={i} onClick={() => handleQuizAnswer(0, i)}
+                        style={{ padding:'0.9rem 0.75rem', borderRadius:'12px', border:'2px solid transparent', background: quizAnswers[0] === i ? (i === correctAnswerIndex ? '#D1FAE5' : '#FEE2E2') : '#f4f8f6', color:'var(--jungle-deep)', fontSize:'0.88rem', fontWeight:600, cursor:'pointer', textAlign:'left', transition:'all 0.2s', lineHeight:1.3 }}>
+                        <span style={{ fontWeight:700, marginRight:'0.4rem' }}>{String.fromCharCode(65+i)}.</span>{ans}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            )}
+          </div>
+        );
+      }
+
       function renderTigerMission() {
         const options = [
           { value: '1.5m', label: '1.5 m' },
@@ -2245,6 +2370,7 @@
         setIsCorrect(false);
         setObservation('');
         setIsProcessingAnswer(false);
+        setLionZoom(null);
         setCurrentScreen('animal');
         if (animal.id === 'tiger') { startCamera(); }
         setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 0);
@@ -2298,9 +2424,21 @@
         const text = observation.trim();
         const lower = text.toLowerCase();
 
-        const behaviourBonus = calculateBehaviourScore(text);
-        const detailBonus = calculateDetailScore(text);
-        const literacyBonus = calculateWritingScore(text);
+        // Lion uses conservation-focused scoring; all other animals use shared helpers
+        let behaviourBonus, detailBonus, literacyBonus;
+        if (currentAnimal.id === 'lion') {
+          const conservationWords = ['important','protect','ecosystem','balance','food chain','foodchain','biodiversity','conservation','survive','survival','species','nature','wild','wildlife'];
+          const detailWords = ['prey','predator','extinction','humans','habitat','biodiversity','threat','poaching','population','climate','savanna','africa','apex','chain'];
+          const conservationHits = conservationWords.filter(w => lower.includes(w)).length;
+          const detailHits = detailWords.filter(w => lower.includes(w)).length;
+          behaviourBonus = Math.min(conservationHits + 1, 5);
+          detailBonus = Math.min(detailHits + 1, 5);
+          literacyBonus = calculateWritingScore(text);
+        } else {
+          behaviourBonus = calculateBehaviourScore(text);
+          detailBonus = calculateDetailScore(text);
+          literacyBonus = calculateWritingScore(text);
+        }
 
         // Build observationScore object — feeds analytics radar
         const observationScore = {
@@ -2756,6 +2894,7 @@
 
       if (currentScreen === 'animal' && currentAnimal) {
         if (currentAnimal.id === 'tiger') { return renderTigerMission(); }
+        if (currentAnimal.id === 'lion') { return renderLionMission(); }
         const currentQuestion = currentAnimal.questions[currentQuestionIndex];
         return (
           <div style={{ position:'fixed', inset:0, overflow:'hidden', background:showResult?(isCorrect?'linear-gradient(135deg, #10b981 0%, #059669 100%)':'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'):'var(--mist-light)', transition:'background 0.5s ease', display:'flex', flexDirection:'column' }}>
@@ -2884,6 +3023,50 @@
                   <button onClick={submitTigerReflection}
                     style={{ width:'100%', padding:'1.5rem', borderRadius:'50px', border:'none', background:'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))', color:'white', fontSize:'1.3rem', fontWeight:700, cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.1em', boxShadow:'0 8px 24px rgba(232,106,51,0.4)' }}>
                      Submit & Earn Badge
+                  </button>
+                </div>
+              ) : currentAnimal.id === 'lion' ? (
+                <div style={{ background:'white', borderRadius:'20px', padding:'2.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
+                  {/* Conservation scientist framing */}
+                  <div style={{ display:'flex', gap:'0.75rem', marginBottom:'1.5rem' }}>
+                    <div style={{ flex:1, background:'linear-gradient(135deg, #D1FAE5, #A7F3D0)', borderRadius:'12px', padding:'0.75rem 1rem' }}>
+                      <p style={{ fontSize:'0.78rem', fontWeight:700, color:'#065F46', margin:0 }}>🟩 You are now a conservation scientist</p>
+                    </div>
+                    <div style={{ flex:1, background:'linear-gradient(135deg, #FEF3C7, #FDE68A)', borderRadius:'12px', padding:'0.75rem 1rem' }}>
+                      <p style={{ fontSize:'0.78rem', fontWeight:700, color:'#92400E', margin:0 }}>🟨 Explain your thinking clearly</p>
+                    </div>
+                  </div>
+
+                  {/* Title */}
+                  <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'0.5rem', textAlign:'center' }}>🦁 Conservation Reflection</h2>
+                  <p style={{ fontSize:'1.1rem', fontWeight:600, color:'#333', marginBottom:'0.5rem', textAlign:'center', lineHeight:1.5 }}>
+                    Why is it important to conserve lion populations?
+                  </p>
+                  <p style={{ fontSize:'0.9rem', color:'#888', marginBottom:'1.5rem', textAlign:'center', fontStyle:'italic' }}>
+                    Think about ecosystems, food chains, and human impact.
+                  </p>
+
+                  {/* Hint chips */}
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:'0.6rem', justifyContent:'center', marginBottom:'1.5rem' }}>
+                    {[
+                      { label:'🌿 Ecosystem', color:'#059669' },
+                      { label:'🔗 Food chain', color:'#0284C7' },
+                      { label:'🧬 Biodiversity', color:'#7C3AED' },
+                      { label:'🚨 Threats', color:'#DC2626' }
+                    ].map((chip, i) => (
+                      <div key={i} style={{ background:`${chip.color}18`, border:`1.5px solid ${chip.color}40`, borderRadius:'20px', padding:'0.4rem 0.85rem', fontSize:'0.82rem', fontWeight:600, color:chip.color }}>{chip.label}</div>
+                    ))}
+                  </div>
+
+                  <textarea value={observation} onChange={(e) => setObservation(e.target.value)}
+                    placeholder="Write your conservation argument here. Use evidence and examples..."
+                    style={{ width:'100%', minHeight:'200px', padding:'1.5rem', borderRadius:'16px', border:'3px solid #E5E5E5', fontSize:'1.05rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', transition:'border-color 0.2s ease', lineHeight:1.6 }}
+                    onFocus={(e) => e.target.style.borderColor='#D4A574'}
+                    onBlur={(e) => e.target.style.borderColor='#E5E5E5'} />
+                  <div style={{ marginTop:'1rem', fontSize:'0.95rem', color: wordCount >= 10 ? '#059669' : '#E86A33', fontWeight:600 }}>{wordCount}/10 words minimum</div>
+                  <button onClick={submitObservation} disabled={wordCount < 10}
+                    style={{ width:'100%', padding:'1.5rem', borderRadius:'50px', border:'none', background: wordCount >= 10 ? 'linear-gradient(135deg, #D4A574, #A0714A)' : '#CCC', color:'white', fontSize:'1.3rem', fontWeight:700, cursor: wordCount >= 10 ? 'pointer' : 'not-allowed', transition:'all 0.3s ease', textTransform:'uppercase', letterSpacing:'0.1em', marginTop:'2rem', boxShadow: wordCount >= 10 ? '0 8px 24px rgba(212,165,116,0.4)' : 'none' }}>
+                    {wordCount < 10 ? 'Write More to Continue' : '🦁 Submit Conservation Reflection'}
                   </button>
                 </div>
               ) : (
