@@ -436,6 +436,7 @@
       const [tigerShowFact, setTigerShowFact] = useState(false);
       const [tigerFeedback, setTigerFeedback] = useState(null);
       const [lionZoom, setLionZoom] = useState(null);
+      const [lionHintVisible, setLionHintVisible] = useState(false);
       const [cameraActive, setCameraActive] = React.useState(false);
       const [cameraStream, setCameraStream] = React.useState(null);
       const videoRef = React.useRef(null);
@@ -2133,7 +2134,6 @@
         const zoomOptions = ['2×', '5×', '10×', '20×'];
         const correctZoom = '5×';
         const isReadable = lionZoom === correctZoom;
-        const [hintVisible, setHintVisible] = React.useState(false);
 
         const lionAnswers = ['They eat plants', 'They are at the top of the food chain', 'They live underground', 'They only eat insects'];
         const correctAnswerIndex = 1;
@@ -2192,11 +2192,11 @@
                 {/* Thinking prompt */}
                 <div style={{ background:'white', borderRadius:'16px', padding:'1rem 1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.06)', marginBottom:'1rem', display:'flex', alignItems:'center', justifyContent:'space-between', gap:'1rem' }}>
                   <p style={{ fontSize:'0.9rem', fontWeight:600, color:'var(--jungle-deep)', margin:0 }}>What magnification do you need?</p>
-                  <button onClick={() => setHintVisible(h => !h)} style={{ background:'var(--jungle-light)', color:'white', border:'none', padding:'0.4rem 0.9rem', borderRadius:'20px', fontSize:'0.78rem', fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}>
-                    {hintVisible ? 'Hide Hint' : 'Hint 💡'}
+                  <button onClick={() => setLionHintVisible(h => !h)} style={{ background:'var(--jungle-light)', color:'white', border:'none', padding:'0.4rem 0.9rem', borderRadius:'20px', fontSize:'0.78rem', fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}>
+                    {lionHintVisible ? 'Hide Hint' : 'Hint 💡'}
                   </button>
                 </div>
-                {hintVisible && (
+                {lionHintVisible && (
                   <div style={{ background:'#FFFBEB', border:'1px solid #FDE68A', borderRadius:'12px', padding:'0.75rem 1rem', marginBottom:'1rem', textAlign:'center' }}>
                     <p style={{ fontSize:'0.95rem', fontWeight:700, color:'#92400E', margin:0 }}>10 ÷ 2 = 5×</p>
                   </div>
@@ -2371,6 +2371,7 @@
         setObservation('');
         setIsProcessingAnswer(false);
         setLionZoom(null);
+        setLionHintVisible(false);
         setCurrentScreen('animal');
         if (animal.id === 'tiger') { startCamera(); }
         setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 0);
