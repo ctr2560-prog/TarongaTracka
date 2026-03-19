@@ -437,6 +437,7 @@
       const [tigerFeedback, setTigerFeedback] = useState(null);
       const [lionZoom, setLionZoom] = useState(null);
       const [lionHintVisible, setLionHintVisible] = useState(false);
+      const [chimpGraph, setChimpGraph] = useState({ resting: 30, feeding: 30, moving: 40 });
       const [cameraActive, setCameraActive] = React.useState(false);
       const [cameraStream, setCameraStream] = React.useState(null);
       const videoRef = React.useRef(null);
@@ -1799,7 +1800,7 @@
               options: ['A pack', 'A community', 'A herd', 'A school'],
               correct: 1, fact: 'A group of chimpanzees is called a community.' }
           ],
-          observationPrompt: 'Observe the chimpanzees for 2 minutes. What behaviors did you see?',
+          observationPrompt: 'Describe the group dynamics you can observe in the chimpanzees.',
           pointValue: 50
         },
         {
@@ -2125,6 +2126,115 @@
         recordMissionResult('tiger', 'Sumatran Tiger', [], observationScore, text);
         setCurrentScreen('badge');
       }
+      function renderChimpMission() {
+        const { resting, feeding, moving } = chimpGraph;
+        const total = resting + feeding + moving;
+        const isValid = total === 100;
+        const barMax = Math.max(resting, feeding, moving, 1);
+        const chimpAnswers = ['A. Resting', 'B. Feeding', 'C. Moving', 'D. All equal'];
+        const setBar = (key, val) => {
+          const v = Math.max(0, Math.min(100, Number(val)));
+          setChimpGraph(prev => ({ ...prev, [key]: v }));
+        };
+        const barColours = ['#2E7D55', '#D97706', '#0284C7'];
+        const barKeys = ['resting', 'feeding', 'moving'];
+        const barLabels = ['Resting', 'Feeding', 'Moving'];
+
+        return (
+          <div style={{ position:'fixed', inset:0, background: showResult ? (isCorrect ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)') : 'var(--mist-light)', transition:'background 0.5s ease', display:'flex', flexDirection:'column' }}>
+            {/* Header */}
+            <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'0.6rem 1rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', flex:'0 0 auto', zIndex:100 }}>
+              <div style={{ maxWidth:'900px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <button onClick={() => setCurrentScreen('map')} style={{ background:'rgba(255,255,255,0.2)', border:'none', color:'white', padding:'0.5rem 1rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.85rem', fontWeight:600 }}> Back</button>
+                <img src="images/logo.png" alt="Taronga Tracka" style={{ height:'45px', width:'auto' }} onError={(e) => { e.target.style.display='none'; }} />
+                <div style={{ width:'70px' }} />
+              </div>
+            </div>
+
+            {/* Result overlay */}
+            {showResult && (
+              <div className="animate-scale-in" style={{ textAlign:'center', padding:'clamp(1.5rem,3vh,2rem)', background:'rgba(255,255,255,0.95)', borderRadius:'20px', boxShadow:'0 8px 32px rgba(0,0,0,0.2)', margin:'clamp(1rem,2vh,1.5rem)', maxWidth:'90%', marginLeft:'auto', marginRight:'auto', marginTop:'clamp(1rem,3vh,2rem)' }}>
+                <div style={{ fontSize:'clamp(3rem,8vh,4.5rem)', marginBottom:'0.5rem' }}>{isCorrect ? '✔' : ''}</div>
+                <h2 className="heading-display" style={{ fontSize:'clamp(2rem,5vh,3rem)', color: isCorrect ? '#10b981' : '#ef4444', marginBottom:'0.4rem', lineHeight:1.1 }}>{isCorrect ? 'Correct!' : 'Try Again'}</h2>
+                {isCorrect && <p style={{ fontSize:'clamp(0.95rem,2.2vh,1.1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>Great data interpretation!</p>}
+                {isCorrect && currentAnimal.questions[0].fact && (
+                  <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'12px', padding:'clamp(1rem,2vh,1.5rem)', marginTop:'0.8rem', marginBottom:'1rem' }}>
+                    <p style={{ color:'#333', fontSize:'clamp(0.9rem,2vh,1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentAnimal.questions[0].fact}</p>
+                  </div>
+                )}
+                <button onClick={() => { if (isCorrect) { handleNextQuestion(); } else { setIsProcessingAnswer(false); setShowResult(false); } }}
+                  style={{ background: isCorrect ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)', color:'white', border:'none', padding:'clamp(0.8rem,2vh,1.2rem) clamp(2rem,5vw,3rem)', fontSize:'clamp(1rem,2.5vh,1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.05em', boxShadow:'0 4px 12px rgba(0,0,0,0.2)', marginTop:'0.5rem' }}>
+                  {isCorrect ? 'Continue to Observation ' : 'Try Again'}
+                </button>
+              </div>
+            )}
+
+            {/* Main content */}
+            {!showResult && (
+              <div style={{ flex:'1 1 auto', overflowY:'auto', padding:'1rem', maxWidth:'600px', margin:'0 auto', width:'100%' }}>
+
+                {/* Title */}
+                <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
+                  <h2 style={{ fontSize:'1.2rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>🐒 Chimpanzee Behaviour Graph</h2>
+                  <p style={{ fontSize:'0.85rem', color:'#555', marginBottom:'0.2rem' }}>Scientists collect and interpret data to understand animal behaviour.</p>
+                  <p style={{ fontSize:'0.85rem', color:'#666', margin:0 }}>Observe the chimpanzees and build a graph to represent how they are spending their time.</p>
+                </div>
+
+                {/* Sliders */}
+                <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
+                  <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.8rem' }}>Adjust Behaviour Percentages</p>
+                  {barKeys.map((key, i) => (
+                    <div key={key} style={{ marginBottom:'0.75rem' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'0.3rem' }}>
+                        <span style={{ fontSize:'0.88rem', fontWeight:600, color: barColours[i] }}>{barLabels[i]}</span>
+                        <span style={{ fontSize:'0.88rem', fontWeight:700, color: barColours[i] }}>{chimpGraph[key]}%</span>
+                      </div>
+                      <input type="range" min="0" max="100" value={chimpGraph[key]}
+                        onChange={e => setBar(key, e.target.value)}
+                        style={{ width:'100%', accentColor: barColours[i] }} />
+                    </div>
+                  ))}
+                  <div style={{ marginTop:'0.5rem', textAlign:'center', padding:'0.5rem', borderRadius:'10px', background: isValid ? '#D1FAE5' : '#FEE2E2' }}>
+                    <span style={{ fontSize:'0.88rem', fontWeight:700, color: isValid ? '#065F46' : '#991B1B' }}>
+                      Total: {total}% {isValid ? '✔' : '— must equal 100%'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Live bar graph */}
+                <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
+                  <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.8rem' }}>Your Graph</p>
+                  <div style={{ display:'flex', gap:'0.75rem', alignItems:'flex-end', height:'130px' }}>
+                    {barKeys.map((key, i) => (
+                      <div key={key} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', height:'100%', justifyContent:'flex-end' }}>
+                        <span style={{ fontSize:'0.75rem', fontWeight:700, color: barColours[i], marginBottom:'0.25rem' }}>{chimpGraph[key]}%</span>
+                        <div style={{ width:'100%', height:`${Math.round((chimpGraph[key] / barMax) * 100)}%`, background: barColours[i], borderRadius:'6px 6px 0 0', transition:'height 0.3s ease', minHeight:'4px' }} />
+                        <span style={{ fontSize:'0.72rem', color:'#555', marginTop:'0.3rem', textAlign:'center' }}>{barLabels[i]}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Answer buttons */}
+                <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.08)' }}>
+                  <p style={{ fontSize:'0.9rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.75rem', textAlign:'center' }}>Based on your graph, which behaviour did the chimpanzees spend the MOST time doing?</p>
+                  {!isValid && <p style={{ fontSize:'0.8rem', color:'#B45309', textAlign:'center', marginBottom:'0.75rem', fontStyle:'italic' }}>Adjust sliders until total equals 100% to answer.</p>}
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' }}>
+                    {chimpAnswers.map((ans, i) => (
+                      <button key={i} onClick={() => isValid && handleQuizAnswer(0, i)} disabled={!isValid}
+                        style={{ padding:'0.9rem 0.75rem', borderRadius:'12px', border:'2px solid transparent', background: !isValid ? '#f0f0f0' : '#f4f8f6', color: !isValid ? '#aaa' : 'var(--jungle-deep)', fontSize:'0.88rem', fontWeight:600, cursor: isValid ? 'pointer' : 'not-allowed', textAlign:'left', transition:'all 0.2s', lineHeight:1.3 }}>
+                        {ans}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            )}
+          </div>
+        );
+      }
+
       function renderLionMission() {
         const zoomOptions = ['2×', '5×', '10×', '20×'];
         const correctZoom = '5×';
@@ -2363,6 +2473,7 @@
         setIsProcessingAnswer(false);
         setLionZoom(null);
         setLionHintVisible(false);
+        setChimpGraph({ resting: 30, feeding: 30, moving: 40 });
         setCurrentScreen('animal');
         if (animal.id === 'tiger' || animal.id === 'lion') { startCamera(); }
         setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 0);
@@ -2373,7 +2484,18 @@
         if (isProcessingAnswer) return;
         setIsProcessingAnswer(true);
 
-        const correct = answerIndex === currentAnimal.questions[questionIndex].correct;
+        const correctIndex = (currentAnimal.id === 'chimpanzee')
+          ? (() => {
+              const { resting, feeding, moving } = chimpGraph;
+              const max = Math.max(resting, feeding, moving);
+              const tops = [resting, feeding, moving].filter(v => v === max);
+              if (tops.length > 1) return 3;
+              if (resting === max) return 0;
+              if (feeding === max) return 1;
+              return 2;
+            })()
+          : currentAnimal.questions[questionIndex].correct;
+        const correct = answerIndex === correctIndex;
         setIsCorrect(correct);
         setShowResult(true);
 
@@ -2395,6 +2517,10 @@
         setShowResult(false);
         if (currentAnimal.id === 'lion') {
           stopCamera();
+          setCurrentScreen('observation');
+          return;
+        }
+        if (currentAnimal.id === 'chimpanzee') {
           setCurrentScreen('observation');
           return;
         }
@@ -2892,6 +3018,7 @@
       if (currentScreen === 'animal' && currentAnimal) {
         if (currentAnimal.id === 'tiger') { return renderTigerMission(); }
         if (currentAnimal.id === 'lion') { return renderLionMission(); }
+        if (currentAnimal.id === 'chimpanzee') { return renderChimpMission(); }
         const currentQuestion = currentAnimal.questions[currentQuestionIndex];
         return (
           <div style={{ position:'fixed', inset:0, overflow:'hidden', background:showResult?(isCorrect?'linear-gradient(135deg, #10b981 0%, #059669 100%)':'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'):'var(--mist-light)', transition:'background 0.5s ease', display:'flex', flexDirection:'column' }}>
@@ -3068,20 +3195,49 @@
                 </div>
               ) : (
                 <div style={{ background:'white', borderRadius:'20px', padding:'2.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
-                <h2 className="heading-display" style={{ fontSize:'2.5rem', color:'var(--jungle-deep)', marginBottom:'1rem', textAlign:'center' }}>Your Observations</h2>
-                <p style={{ color:'#666', marginBottom:'1.2rem', lineHeight:1.6, fontSize:'1.1rem', textAlign:'center' }}>{currentAnimal.observationPrompt}</p>
-                <div style={{ display:'flex', flexWrap:'wrap', gap:'0.6rem', justifyContent:'center', marginBottom:'1.5rem' }}>
-                  {[
-                    { label:' What is it doing right now?', color:'var(--jungle-light)' },
-                    { label:' What does it look like?', color:'var(--discovery-blue)' },
-                    { label:' Use full sentences.', color:'var(--sunset-orange)' }
-                  ].map((hint, i) => (
-                    <div key={i} style={{ background:`${hint.color}18`, border:`1.5px solid ${hint.color}40`, borderRadius:'20px', padding:'0.45rem 0.9rem', fontSize:'0.85rem', fontWeight:600, color:hint.color }}>{hint.label}</div>
-                  ))}
-                </div>
-                <textarea value={observation} onChange={(e)=>setObservation(e.target.value)} placeholder="Describe what you observe in detail..."
+                {currentAnimal.id === 'chimpanzee' ? (
+                  <>
+                    <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'0.5rem', textAlign:'center' }}>🐒 Chimpanzee Group Dynamics</h2>
+                    <p style={{ color:'#555', marginBottom:'0.5rem', lineHeight:1.6, fontSize:'0.95rem', textAlign:'center' }}>
+                      Chimpanzees live in social groups where they interact, communicate, and form relationships with each other.
+                    </p>
+                    <p style={{ color:'var(--jungle-mid)', fontWeight:600, marginBottom:'1.5rem', fontSize:'0.9rem', textAlign:'center' }}>
+                      👀 Observe the chimpanzees for 30 seconds — focus on how they interact as a group.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="heading-display" style={{ fontSize:'2.5rem', color:'var(--jungle-deep)', marginBottom:'1rem', textAlign:'center' }}>Your Observations</h2>
+                    <p style={{ color:'#666', marginBottom:'1.2rem', lineHeight:1.6, fontSize:'1.1rem', textAlign:'center' }}>{currentAnimal.observationPrompt}</p>
+                    <div style={{ display:'flex', flexWrap:'wrap', gap:'0.6rem', justifyContent:'center', marginBottom:'1.5rem' }}>
+                      {[
+                        { label:' What is it doing right now?', color:'var(--jungle-light)' },
+                        { label:' What does it look like?', color:'var(--discovery-blue)' },
+                        { label:' Use full sentences.', color:'var(--sunset-orange)' }
+                      ].map((hint, i) => (
+                        <div key={i} style={{ background:`${hint.color}18`, border:`1.5px solid ${hint.color}40`, borderRadius:'20px', padding:'0.45rem 0.9rem', fontSize:'0.85rem', fontWeight:600, color:hint.color }}>{hint.label}</div>
+                      ))}
+                    </div>
+                  </>
+                )}
+                <p style={{ color:'#444', fontWeight:600, marginBottom:'1rem', fontSize:'1rem', textAlign:'center' }}>
+                  {currentAnimal.observationPrompt}
+                </p>
+                <textarea value={observation} onChange={(e)=>setObservation(e.target.value)}
+                  placeholder={currentAnimal.id === 'chimpanzee' ? 'I observed that...' : 'Describe what you observe in detail...'}
                   style={{ width:'100%', minHeight:'200px', padding:'1.5rem', borderRadius:'16px', border:'3px solid #E5E5E5', fontSize:'1.1rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', transition:'border-color 0.2s ease' }}
                   onFocus={(e)=>e.target.style.borderColor=currentAnimal.color} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'} />
+                {currentAnimal.id === 'chimpanzee' && (
+                  <div style={{ background:'#F7FAF8', border:'1px solid #E4EDE8', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
+                    <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>You may include:</p>
+                    <ul style={{ margin:0, paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                      <li>Social interactions (e.g. grooming, playing, aggression)</li>
+                      <li>Communication (e.g. gestures, sounds, facial expressions)</li>
+                      <li>Group roles (e.g. leader, dominant individuals, young)</li>
+                      <li>Relationships between individuals</li>
+                    </ul>
+                  </div>
+                )}
                 <div style={{ marginTop:'1rem', fontSize:'1rem', color:wordCount>=10?'var(--jungle-light)':'#E86A33', fontWeight:600 }}>{wordCount}/10 words {wordCount>=10?'':''}</div>
                 <button onClick={submitObservation} disabled={wordCount<10}
                   style={{ width:'100%', padding:'1.5rem', borderRadius:'50px', border:'none', background:wordCount>=10?'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))':'#CCC', color:'white', fontSize:'1.3rem', fontWeight:700, cursor:wordCount>=10?'pointer':'not-allowed', transition:'all 0.3s ease', textTransform:'uppercase', letterSpacing:'0.1em', marginTop:'2rem', boxShadow:wordCount>=10?'0 8px 24px rgba(232,106,51,0.4)':'none' }}>
