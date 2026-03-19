@@ -1790,15 +1790,10 @@
           image: 'images/chimpanzee.jpg', latitude: -33.8428, longitude: 151.2401,
           radius: 50, color: '#8B5A3C',
           questions: [
-            { q: 'What do chimpanzees use tools for?',
-              options: ['Cracking nuts and fishing for termites', 'Building houses', 'Playing music', 'Swimming'],
-              correct: 0, fact: 'Chimpanzees use sticks to fish for termites and stones to crack nuts.' },
-            { q: 'How similar is chimpanzee DNA to human DNA?',
-              options: ['50%', '75%', '98-99%', '100%'],
-              correct: 2, fact: 'Chimpanzees share around 98–99% of their DNA with humans.' },
-            { q: 'What is a group of chimpanzees called?',
-              options: ['A pack', 'A community', 'A herd', 'A school'],
-              correct: 1, fact: 'A group of chimpanzees is called a community.' }
+            { q: 'Chimpanzee Behaviour Graph',
+              options: ['A', 'B', 'C', 'D'],
+              correct: 0,
+              fact: 'Chimpanzees are highly social animals that spend their time resting, feeding, and moving through their environment.' }
           ],
           observationPrompt: 'Describe the group dynamics you can observe in the chimpanzees.',
           pointValue: 50
@@ -2547,7 +2542,7 @@
         const text = observation.trim();
         const lower = text.toLowerCase();
 
-        // Lion uses conservation-focused scoring; all other animals use shared helpers
+        // Lion uses conservation-focused scoring; chimp uses social dynamics scoring; others use shared helpers
         let behaviourBonus, detailBonus, literacyBonus;
         if (currentAnimal.id === 'lion') {
           const conservationWords = ['important','protect','ecosystem','balance','food chain','foodchain','biodiversity','conservation','survive','survival','species','nature','wild','wildlife'];
@@ -2556,6 +2551,27 @@
           const detailHits = detailWords.filter(w => lower.includes(w)).length;
           behaviourBonus = Math.min(conservationHits + 1, 5);
           detailBonus = Math.min(detailHits + 1, 5);
+          literacyBonus = calculateWritingScore(text);
+        } else if (currentAnimal.id === 'chimpanzee') {
+          // Behaviour: social interactions — lenient, accepts simple everyday language
+          const behaviourWords = [
+            'groom','play','interact','fight','chase','touch','hug','follow','watch','look',
+            'sit','move','climb','eat','feed','rest','sleep','call','scream','gesture',
+            'together','each other','one another','dominant','social','group','together'
+          ];
+          const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
+          // 0 hits → 1, 1 hit → 2, 2 hits → 3, 3 hits → 4, 4+ hits → 5
+          behaviourBonus = Math.min(behaviourHits + 1, 5);
+
+          // Detail: specific examples and social concepts — also lenient
+          const detailWords = [
+            'groom','dominan','leader','young','baby','infant','adult','male','female',
+            'hierarchy','bond','relation','communicat','gesture','express','sound','noise',
+            'fur','branch','tree','platform','enclosure','group','community','family'
+          ];
+          const detailHits = detailWords.filter(w => lower.includes(w)).length;
+          detailBonus = Math.min(detailHits + 1, 5);
+
           literacyBonus = calculateWritingScore(text);
         } else {
           behaviourBonus = calculateBehaviourScore(text);
@@ -3119,6 +3135,15 @@
                     <textarea value={reflectionText} onChange={e => setReflectionText(e.target.value)}
                       placeholder="Describe what you heard or smelled..."
                       style={{ width:'100%', minHeight:'140px', padding:'1rem', borderRadius:'12px', border:'none', fontSize:'1rem', fontFamily:'DM Sans, sans-serif', resize:'vertical' }} />
+                    <div style={{ background:'rgba(255,255,255,0.12)', border:'1px solid rgba(255,255,255,0.25)', borderRadius:'12px', padding:'0.9rem 1.1rem', marginTop:'0.75rem' }}>
+                      <p style={{ fontSize:'0.75rem', fontWeight:700, color:'rgba(255,255,255,0.9)', marginBottom:'0.4rem' }}>You may include:</p>
+                      <ul style={{ margin:0, paddingLeft:'1.1rem', fontSize:'0.8rem', color:'rgba(255,255,255,0.8)', lineHeight:1.8 }}>
+                        <li>Sounds you can hear (water, animals, people)</li>
+                        <li>Smells in the environment (fresh, earthy, strong)</li>
+                        <li>What you can see around the habitat</li>
+                        <li>How the environment supports the tiger</li>
+                      </ul>
+                    </div>
                     <div style={{ marginTop:'0.5rem', fontSize:'0.9rem', color: (reflectionText.trim().split(/\s+/).filter(Boolean).length >= 10) ? 'rgba(255,255,255,0.9)' : 'rgba(255,180,100,0.9)', fontWeight:600 }}>
                       {reflectionText.trim().split(/\s+/).filter(Boolean).length}/10 words
                     </div>
@@ -3187,6 +3212,15 @@
                     style={{ width:'100%', minHeight:'200px', padding:'1.5rem', borderRadius:'16px', border:'3px solid #E5E5E5', fontSize:'1.05rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', transition:'border-color 0.2s ease', lineHeight:1.6 }}
                     onFocus={(e) => e.target.style.borderColor='#D4A574'}
                     onBlur={(e) => e.target.style.borderColor='#E5E5E5'} />
+                  <div style={{ background:'#F7FAF8', border:'1px solid #E4EDE8', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
+                    <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>You may include:</p>
+                    <ul style={{ margin:0, paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                      <li>Why lions are important in the ecosystem</li>
+                      <li>What happens if lions disappear</li>
+                      <li>Human impacts (poaching, habitat loss)</li>
+                      <li>How conservation helps protect lions</li>
+                    </ul>
+                  </div>
                   <div style={{ marginTop:'1rem', fontSize:'0.95rem', color: wordCount >= 10 ? '#059669' : '#E86A33', fontWeight:600 }}>{wordCount}/10 words minimum</div>
                   <button onClick={submitObservation} disabled={wordCount < 10}
                     style={{ width:'100%', padding:'1.5rem', borderRadius:'50px', border:'none', background: wordCount >= 10 ? 'linear-gradient(135deg, #D4A574, #A0714A)' : '#CCC', color:'white', fontSize:'1.3rem', fontWeight:700, cursor: wordCount >= 10 ? 'pointer' : 'not-allowed', transition:'all 0.3s ease', textTransform:'uppercase', letterSpacing:'0.1em', marginTop:'2rem', boxShadow: wordCount >= 10 ? '0 8px 24px rgba(212,165,116,0.4)' : 'none' }}>
@@ -3235,6 +3269,17 @@
                       <li>Communication (e.g. gestures, sounds, facial expressions)</li>
                       <li>Group roles (e.g. leader, dominant individuals, young)</li>
                       <li>Relationships between individuals</li>
+                    </ul>
+                  </div>
+                )}
+                {currentAnimal.id === 'koala' && (
+                  <div style={{ background:'#F7FAF8', border:'1px solid #E4EDE8', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
+                    <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>You may include:</p>
+                    <ul style={{ margin:0, paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                      <li>What the koala is doing (eating, sleeping, climbing)</li>
+                      <li>Physical features (fur, claws, movement)</li>
+                      <li>How it is using the environment (trees, branches)</li>
+                      <li>Any behaviours you notice over time</li>
                     </ul>
                   </div>
                 )}
