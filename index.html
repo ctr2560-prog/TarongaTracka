@@ -2168,28 +2168,31 @@
                 {/* Map */}
                 <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
                   <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.8rem' }}>Where do Western Lowland Gorillas live?</p>
-                  <div style={{ position:'relative', width:'100%', height:'220px', background:'linear-gradient(160deg, #EAE7DC, #D8D3C9)', borderRadius:'12px', overflow:'hidden' }}>
-                    <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 80% 50%, #BDD5E8 0%, transparent 60%)', pointerEvents:'none' }} />
-                    <div onClick={() => setGorillaSelection(2)}
-                      style={{ position:'absolute', top:'5%', left:'25%', width:'50%', height:'22%', background: gorillaSelection === 2 ? '#1A5238' : '#C5BFB4', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.2s', boxShadow: gorillaSelection === 2 ? '0 4px 12px rgba(26,82,56,0.5)' : 'none' }}>
-                      <span style={{ fontWeight:800, fontSize:'1.1rem', color: gorillaSelection === 2 ? 'white' : '#555' }}>C</span>
+                  <div style={{ position:'relative', width:'100%', height:'240px', borderRadius:'12px', overflow:'hidden', background:'#EAE7DC', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    {/* Africa silhouette */}
+                    <div style={{ position:'absolute', width:'70%', height:'90%', background:'#D6D1C4', borderRadius:'40% 40% 50% 50%', clipPath:'polygon(40% 0%, 60% 0%, 80% 20%, 85% 40%, 70% 70%, 60% 100%, 40% 100%, 30% 70%, 15% 40%, 20% 20%)' }} />
+                    {/* Ocean hint */}
+                    <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 88% 50%, #C8DDE8 0%, transparent 45%)', pointerEvents:'none' }} />
+                    {/* C — North */}
+                    <div onClick={() => setGorillaSelection(2)} style={{ position:'absolute', top:'20%', left:'35%', width:'30%', height:'15%', background: gorillaSelection === 2 ? '#1A5238' : 'rgba(255,255,255,0.6)', backdropFilter:'blur(2px)', border:'2px solid #1A5238', borderRadius:'8px', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.2s' }}>
+                      <span style={{ fontWeight:800, fontSize:'1rem', color: gorillaSelection === 2 ? 'white' : '#1A5238' }}>C</span>
                     </div>
-                    <div onClick={() => setGorillaSelection(0)}
-                      style={{ position:'absolute', left:'8%', top:'32%', width:'28%', height:'38%', background: gorillaSelection === 0 ? '#1A5238' : '#C5BFB4', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.2s', boxShadow: gorillaSelection === 0 ? '0 4px 12px rgba(26,82,56,0.5)' : 'none' }}>
-                      <span style={{ fontWeight:800, fontSize:'1.1rem', color: gorillaSelection === 0 ? 'white' : '#555' }}>A</span>
+                    {/* A — West (correct) */}
+                    <div onClick={() => setGorillaSelection(0)} style={{ position:'absolute', left:'25%', top:'45%', width:'18%', height:'20%', background: gorillaSelection === 0 ? '#1A5238' : 'rgba(255,255,255,0.6)', backdropFilter:'blur(2px)', border:'2px solid #1A5238', borderRadius:'8px', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.2s' }}>
+                      <span style={{ fontWeight:800, fontSize:'1rem', color: gorillaSelection === 0 ? 'white' : '#1A5238' }}>A</span>
                     </div>
-                    <div onClick={() => setGorillaSelection(1)}
-                      style={{ position:'absolute', right:'8%', top:'32%', width:'28%', height:'38%', background: gorillaSelection === 1 ? '#1A5238' : '#C5BFB4', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.2s', boxShadow: gorillaSelection === 1 ? '0 4px 12px rgba(26,82,56,0.5)' : 'none' }}>
-                      <span style={{ fontWeight:800, fontSize:'1.1rem', color: gorillaSelection === 1 ? 'white' : '#555' }}>B</span>
+                    {/* B — East */}
+                    <div onClick={() => setGorillaSelection(1)} style={{ position:'absolute', right:'25%', top:'45%', width:'18%', height:'20%', background: gorillaSelection === 1 ? '#1A5238' : 'rgba(255,255,255,0.6)', backdropFilter:'blur(2px)', border:'2px solid #1A5238', borderRadius:'8px', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.2s' }}>
+                      <span style={{ fontWeight:800, fontSize:'1rem', color: gorillaSelection === 1 ? 'white' : '#1A5238' }}>B</span>
                     </div>
-                    <div onClick={() => setGorillaSelection(3)}
-                      style={{ position:'absolute', bottom:'5%', left:'30%', width:'40%', height:'22%', background: gorillaSelection === 3 ? '#1A5238' : '#C5BFB4', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.2s', boxShadow: gorillaSelection === 3 ? '0 4px 12px rgba(26,82,56,0.5)' : 'none' }}>
-                      <span style={{ fontWeight:800, fontSize:'1.1rem', color: gorillaSelection === 3 ? 'white' : '#555' }}>D</span>
+                    {/* D — South */}
+                    <div onClick={() => setGorillaSelection(3)} style={{ position:'absolute', bottom:'15%', left:'38%', width:'24%', height:'18%', background: gorillaSelection === 3 ? '#1A5238' : 'rgba(255,255,255,0.6)', backdropFilter:'blur(2px)', border:'2px solid #1A5238', borderRadius:'8px', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.2s' }}>
+                      <span style={{ fontWeight:800, fontSize:'1rem', color: gorillaSelection === 3 ? 'white' : '#1A5238' }}>D</span>
                     </div>
-                    <div style={{ position:'absolute', top:'5%', left:'5%', fontSize:'0.62rem', color:'#999', fontWeight:600, pointerEvents:'none' }}>AFRICA</div>
+                    <div style={{ position:'absolute', top:'4%', left:'4%', fontSize:'0.6rem', color:'#aaa', fontWeight:700, pointerEvents:'none', letterSpacing:'0.1em' }}>AFRICA</div>
                     {gorillaSelection !== null && (
-                      <div style={{ position:'absolute', bottom:'5%', right:'5%', background:'rgba(0,0,0,0.45)', color:'white', fontSize:'0.68rem', fontWeight:700, padding:'0.2rem 0.5rem', borderRadius:'6px', pointerEvents:'none' }}>
-                        {['West Africa','East Africa','North Africa','Southern Africa'][gorillaSelection]} selected
+                      <div style={{ position:'absolute', bottom:'4%', right:'4%', background:'rgba(26,82,56,0.85)', color:'white', fontSize:'0.68rem', fontWeight:700, padding:'0.2rem 0.6rem', borderRadius:'6px', pointerEvents:'none' }}>
+                        {['West Africa','East Africa','North Africa','Southern Africa'][gorillaSelection]}
                       </div>
                     )}
                   </div>
