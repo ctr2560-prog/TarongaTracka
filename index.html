@@ -2149,55 +2149,69 @@
               </div>
             )}
 
-            {/* Main content */}
+            {/* Main content — portrait camera fills screen */}
             {!showResult && (
-              <div style={{ flex:'1 1 auto', overflowY:'auto', padding:'1rem', maxWidth:'600px', margin:'0 auto', width:'100%' }}>
+              <div style={{ flex:'1 1 auto', display:'flex', flexDirection:'column', overflow:'hidden', position:'relative' }}>
 
-                {/* Title */}
-                <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
-                  <h2 style={{ fontSize:'1.2rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>🦒 Giraffe Height Investigation</h2>
-                  <p style={{ fontSize:'0.85rem', color:'#555', marginBottom:'0.2rem' }}>Giraffes are the tallest land animals on Earth.</p>
-                  <p style={{ fontSize:'0.85rem', color:'#666', margin:0 }}>📸 Point your camera at a giraffe and use the ruler to estimate its height.</p>
+                {/* Title strip */}
+                <div style={{ background:'rgba(0,0,0,0.72)', padding:'0.5rem 1rem', display:'flex', alignItems:'center', gap:'0.6rem', flexShrink:0, zIndex:10 }}>
+                  <span style={{ fontSize:'1.1rem' }}>🦒</span>
+                  <div>
+                    <p style={{ color:'white', fontWeight:700, fontSize:'0.85rem', margin:0 }}>Giraffe Height Investigation</p>
+                    <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.72rem', margin:0 }}>Drag the marker to the top of the giraffe</p>
+                  </div>
+                  {/* Live estimate badge */}
+                  <div style={{ marginLeft:'auto', background:'#FFEB3B', color:'#333', fontWeight:800, fontSize:'0.8rem', padding:'0.25rem 0.7rem', borderRadius:'20px', whiteSpace:'nowrap' }}>
+                    Estimated: {estimatedMetres} m
+                  </div>
                 </div>
 
-                {/* Camera + ruler */}
-                <div style={{ position:'relative', borderRadius:'16px', overflow:'hidden', marginBottom:'1rem', background:'#000', height:'280px', boxShadow:'0 8px 24px rgba(0,0,0,0.2)' }}>
-                  <video ref={videoRef} autoPlay playsInline muted style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                {/* Camera — portrait, fills remaining height */}
+                <div style={{ flex:'1 1 auto', position:'relative', background:'#000', overflow:'hidden', minHeight:0 }}>
+                  <video ref={videoRef} autoPlay playsInline muted
+                    style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center' }} />
 
-                  {/* Vertical ruler overlay on left */}
-                  <div style={{ position:'absolute', left:0, top:0, bottom:0, width:'52px', background:'rgba(0,0,0,0.55)', display:'flex', flexDirection:'column', justifyContent:'space-between', padding:'8px 0', pointerEvents:'none' }}>
-                    {rulerMarks.map(m => (
-                      <div key={m} style={{ display:'flex', alignItems:'center', paddingLeft:'6px', gap:'4px' }}>
-                        <div style={{ width:'12px', height:'1.5px', background:'white', opacity:0.9 }} />
-                        <span style={{ color:'white', fontSize:'0.65rem', fontWeight:700, opacity:0.95 }}>{m}m</span>
+                  {/* Vertical ruler — left edge, full height */}
+                  <div style={{ position:'absolute', left:0, top:0, bottom:0, width:'48px', background:'rgba(0,0,0,0.6)', display:'flex', flexDirection:'column', justifyContent:'space-between', padding:'0', pointerEvents:'none', zIndex:5 }}>
+                    {rulerMarks.map((m, idx) => (
+                      <div key={m} style={{ display:'flex', alignItems:'center', height:`${100 / rulerMarks.length}%`, paddingLeft:'6px', gap:'4px', boxSizing:'border-box' }}>
+                        <div style={{ width:'14px', height:'1.5px', background:'white', opacity:0.9, flexShrink:0 }} />
+                        <span style={{ color:'white', fontSize:'0.68rem', fontWeight:700 }}>{m}m</span>
                       </div>
                     ))}
                   </div>
 
-                  {/* Draggable marker */}
-                  <div style={{ position:'absolute', left:'52px', right:0, top:`${giraffeMarker}%`, transform:'translateY(-50%)', pointerEvents:'none' }}>
-                    <div style={{ height:'2px', background:'#FFEB3B', boxShadow:'0 0 6px rgba(255,235,59,0.8)', width:'100%' }} />
-                    <div style={{ position:'absolute', right:'8px', top:'-13px', background:'rgba(255,235,59,0.9)', color:'#333', fontSize:'0.7rem', fontWeight:700, padding:'2px 6px', borderRadius:'6px' }}>
-                      ▲ {estimatedMetres}m
+                  {/* Ground anchor line — fixed at bottom */}
+                  <div style={{ position:'absolute', left:'48px', right:0, bottom:'4%', pointerEvents:'none', zIndex:6 }}>
+                    <div style={{ height:'2px', background:'rgba(255,255,255,0.5)', width:'100%' }} />
+                    <span style={{ position:'absolute', right:'8px', bottom:'4px', color:'rgba(255,255,255,0.7)', fontSize:'0.62rem', fontWeight:600 }}>Ground</span>
+                  </div>
+
+                  {/* Draggable top marker */}
+                  <div style={{ position:'absolute', left:'48px', right:0, top:`${giraffeMarker}%`, transform:'translateY(-50%)', pointerEvents:'none', zIndex:7 }}>
+                    <div style={{ height:'3px', background:'#FFEB3B', boxShadow:'0 0 8px rgba(255,235,59,0.9)', width:'100%' }} />
+                    {/* Drag handle */}
+                    <div style={{ position:'absolute', left:'8px', top:'-10px', background:'#FFEB3B', width:'20px', height:'20px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      <span style={{ fontSize:'0.6rem', fontWeight:900, color:'#333' }}>↕</span>
                     </div>
                   </div>
 
-                  {/* Drag area */}
-                  <div style={{ position:'absolute', left:'52px', right:0, top:0, bottom:0, cursor:'ns-resize', touchAction:'none' }}
-                    onMouseMove={e => { if (e.buttons !== 1) return; const r = e.currentTarget.getBoundingClientRect(); setGiraffeMarker(Math.min(95, Math.max(5, ((e.clientY - r.top) / r.height) * 100))); }}
-                    onTouchMove={e => { e.preventDefault(); const t = e.touches[0]; const r = e.currentTarget.getBoundingClientRect(); setGiraffeMarker(Math.min(95, Math.max(5, ((t.clientY - r.top) / r.height) * 100))); }}
+                  {/* Drag interaction area — full camera */}
+                  <div style={{ position:'absolute', left:'48px', right:0, top:0, bottom:0, cursor:'ns-resize', touchAction:'none', zIndex:8 }}
+                    onMouseDown={e => { const r = e.currentTarget.getBoundingClientRect(); setGiraffeMarker(Math.min(92, Math.max(5, ((e.clientY - r.top) / r.height) * 100))); }}
+                    onMouseMove={e => { if (e.buttons !== 1) return; const r = e.currentTarget.getBoundingClientRect(); setGiraffeMarker(Math.min(92, Math.max(5, ((e.clientY - r.top) / r.height) * 100))); }}
+                    onTouchStart={e => { const t = e.touches[0]; const r = e.currentTarget.getBoundingClientRect(); setGiraffeMarker(Math.min(92, Math.max(5, ((t.clientY - r.top) / r.height) * 100))); }}
+                    onTouchMove={e => { e.preventDefault(); const t = e.touches[0]; const r = e.currentTarget.getBoundingClientRect(); setGiraffeMarker(Math.min(92, Math.max(5, ((t.clientY - r.top) / r.height) * 100))); }}
                   />
                 </div>
 
-                <p style={{ fontSize:'0.78rem', color:'#888', textAlign:'center', marginBottom:'1rem', fontStyle:'italic' }}>Drag on the camera to move the marker to the top of the giraffe</p>
-
-                {/* Answer buttons */}
-                <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.08)' }}>
-                  <p style={{ fontSize:'0.9rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.75rem', textAlign:'center' }}>{currentQuestion.q}</p>
-                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' }}>
+                {/* Answer panel — compact overlay at bottom */}
+                <div style={{ flexShrink:0, background:'white', borderTop:'1px solid #eee', padding:'0.85rem 1rem', zIndex:10 }}>
+                  <p style={{ fontSize:'0.82rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.6rem', textAlign:'center' }}>{currentQuestion.q}</p>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.5rem' }}>
                     {currentQuestion.options.map((opt, i) => (
                       <button key={i} onClick={() => handleQuizAnswer(0, i)}
-                        style={{ padding:'0.9rem 0.75rem', borderRadius:'12px', border:`2px solid ${quizAnswers[0] === i ? (i === currentQuestion.correct ? '#10b981' : '#ef4444') : 'transparent'}`, background: quizAnswers[0] === i ? (i === currentQuestion.correct ? '#D1FAE5' : '#FEE2E2') : '#f4f8f6', color:'var(--jungle-deep)', fontSize:'0.88rem', fontWeight:600, cursor:'pointer', textAlign:'left', transition:'all 0.2s', lineHeight:1.3 }}>
+                        style={{ padding:'0.7rem 0.5rem', borderRadius:'10px', border:`2px solid ${quizAnswers[0] === i ? (i === currentQuestion.correct ? '#10b981' : '#ef4444') : 'transparent'}`, background: quizAnswers[0] === i ? (i === currentQuestion.correct ? '#D1FAE5' : '#FEE2E2') : '#f4f8f6', color:'var(--jungle-deep)', fontSize:'0.8rem', fontWeight:600, cursor:'pointer', textAlign:'left', transition:'all 0.15s', lineHeight:1.3 }}>
                         {opt}
                       </button>
                     ))}
@@ -3486,22 +3500,36 @@
                 {currentAnimal.id === 'gorilla' && (
                   <div style={{ background:'#F7FAF8', border:'1px solid #E4EDE8', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
                     <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>You may include:</p>
-                    <ul style={{ margin:0, paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                    <ul style={{ margin:'0 0 0.75rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
                       <li>Social behaviour (family groups, caring for others)</li>
                       <li>Communication (sounds, gestures, body language)</li>
                       <li>Emotions (playfulness, protection, bonding)</li>
                       <li>Similar behaviours you notice in your own life</li>
+                    </ul>
+                    <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.4rem' }}>To strengthen your response:</p>
+                    <ul style={{ margin:0, paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                      <li>Start with what you can see right now — <em>"The gorillas are…"</em></li>
+                      <li>Explain why the behaviour is important for survival or social structure</li>
+                      <li>Use cause and effect — <em>"This helps because…"</em></li>
+                      <li>Refer to group behaviour, cooperation, or dominance</li>
                     </ul>
                   </div>
                 )}
                 {currentAnimal.id === 'giraffe' && (
                   <div style={{ background:'#F7FAF8', border:'1px solid #E4EDE8', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
                     <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>You may include:</p>
-                    <ul style={{ margin:0, paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                    <ul style={{ margin:'0 0 0.75rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
                       <li>The giraffe's long neck (reaching leaves, looking for predators)</li>
                       <li>Leg length (speed, drinking posture)</li>
                       <li>Colouring or skin patterns (camouflage)</li>
                       <li>Feeding behaviour (which trees, how high)</li>
+                    </ul>
+                    <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.4rem' }}>To strengthen your response:</p>
+                    <ul style={{ margin:0, paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                      <li>Start with what you can see right now — <em>"The giraffe is…"</em></li>
+                      <li>Name the adaptation and explain how it helps the giraffe survive</li>
+                      <li>Use cause and effect — <em>"This helps because…"</em></li>
+                      <li>Link to feeding strategy or survival advantage</li>
                     </ul>
                   </div>
                 )}
