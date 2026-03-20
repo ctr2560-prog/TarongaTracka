@@ -2172,21 +2172,13 @@
                     {/* Africa map image — fills container */}
                     <img src="images/africa-map.png" style={{ position:'absolute', width:'100%', height:'100%', objectFit:'contain', objectPosition:'center', pointerEvents:'none' }} onError={(e) => { e.target.style.display='none'; }} />
                     {/* C — North */}
-                    <div onClick={() => setGorillaSelection(2)} style={{ position:'absolute', left:'50%', top:'22%', transform:'translate(-50%,-50%)', width:'56px', height:'56px', background: gorillaSelection === 2 ? 'rgba(26,82,56,0.85)' : 'rgba(255,255,255,0.75)', border:'2px solid #1A5238', borderRadius:'50%', cursor:'pointer', transition:'all 0.2s', zIndex:2, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.2)' }}>
-                      <span style={{ fontWeight:800, fontSize:'1.1rem', color: gorillaSelection === 2 ? 'white' : '#1A5238' }}>C</span>
-                    </div>
+                    <div onClick={() => setGorillaSelection(2)} style={{ position:'absolute', left:'52%', top:'20%', transform:'translate(-50%,-50%)', width:'80px', height:'80px', borderRadius:'50%', background:'transparent', border:'none', cursor:'pointer', zIndex:2 }} />
                     {/* A — West (correct) */}
-                    <div onClick={() => setGorillaSelection(0)} style={{ position:'absolute', left:'38%', top:'48%', transform:'translate(-50%,-50%)', width:'56px', height:'56px', background: gorillaSelection === 0 ? 'rgba(26,82,56,0.85)' : 'rgba(255,255,255,0.75)', border:'2px solid #1A5238', borderRadius:'50%', cursor:'pointer', transition:'all 0.2s', zIndex:2, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.2)' }}>
-                      <span style={{ fontWeight:800, fontSize:'1.1rem', color: gorillaSelection === 0 ? 'white' : '#1A5238' }}>A</span>
-                    </div>
+                    <div onClick={() => setGorillaSelection(0)} style={{ position:'absolute', left:'38%', top:'52%', transform:'translate(-50%,-50%)', width:'80px', height:'80px', borderRadius:'50%', background:'transparent', border:'none', cursor:'pointer', zIndex:2 }} />
                     {/* B — East */}
-                    <div onClick={() => setGorillaSelection(1)} style={{ position:'absolute', left:'62%', top:'48%', transform:'translate(-50%,-50%)', width:'56px', height:'56px', background: gorillaSelection === 1 ? 'rgba(26,82,56,0.85)' : 'rgba(255,255,255,0.75)', border:'2px solid #1A5238', borderRadius:'50%', cursor:'pointer', transition:'all 0.2s', zIndex:2, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.2)' }}>
-                      <span style={{ fontWeight:800, fontSize:'1.1rem', color: gorillaSelection === 1 ? 'white' : '#1A5238' }}>B</span>
-                    </div>
+                    <div onClick={() => setGorillaSelection(1)} style={{ position:'absolute', left:'66%', top:'52%', transform:'translate(-50%,-50%)', width:'80px', height:'80px', borderRadius:'50%', background:'transparent', border:'none', cursor:'pointer', zIndex:2 }} />
                     {/* D — South */}
-                    <div onClick={() => setGorillaSelection(3)} style={{ position:'absolute', left:'50%', top:'78%', transform:'translate(-50%,-50%)', width:'56px', height:'56px', background: gorillaSelection === 3 ? 'rgba(26,82,56,0.85)' : 'rgba(255,255,255,0.75)', border:'2px solid #1A5238', borderRadius:'50%', cursor:'pointer', transition:'all 0.2s', zIndex:2, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.2)' }}>
-                      <span style={{ fontWeight:800, fontSize:'1.1rem', color: gorillaSelection === 3 ? 'white' : '#1A5238' }}>D</span>
-                    </div>
+                    <div onClick={() => setGorillaSelection(3)} style={{ position:'absolute', left:'50%', top:'85%', transform:'translate(-50%,-50%)', width:'80px', height:'80px', borderRadius:'50%', background:'transparent', border:'none', cursor:'pointer', zIndex:2 }} />
                     {/* Selected label */}
                     {gorillaSelection !== null && (
                       <div style={{ position:'absolute', bottom:'4%', right:'4%', background:'rgba(26,82,56,0.85)', color:'white', fontSize:'0.68rem', fontWeight:700, padding:'0.2rem 0.6rem', borderRadius:'6px', pointerEvents:'none', zIndex:3 }}>
