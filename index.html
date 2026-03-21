@@ -444,6 +444,11 @@
       const [concertLawnTimerSeconds, setConcertLawnTimerSeconds] = useState(60);
       const [concertLawnTimerActive, setConcertLawnTimerActive] = useState(false);
       const [concertLawnTimerDone, setConcertLawnTimerDone] = useState(false);
+      const [lemurCounts, setLemurCounts] = useState({ feeding: 0, resting: 0, moving: 0, social: 0 });
+      const [lemurTimerStarted, setLemurTimerStarted] = useState(false);
+      const [lemurTimerFinished, setLemurTimerFinished] = useState(false);
+      const [lemurTimeLeft, setLemurTimeLeft] = useState(30);
+      const [lemurTapCooldown, setLemurTapCooldown] = useState({});
       const [cameraActive, setCameraActive] = React.useState(false);
       const [cameraStream, setCameraStream] = React.useState(null);
       const videoRef = React.useRef(null);
@@ -1918,11 +1923,12 @@
           image: 'images/lemur.jpg', latitude: -33.8448, longitude: 151.2396,
           radius: 50, color: '#7A6E8A',
           questions: [
-            { q: 'Where are ring-tailed lemurs originally from?',
-              options: ['South America', 'Southeast Asia', 'Madagascar', 'Central Africa'],
-              correct: 2, fact: 'Ring-tailed lemurs are endemic to Madagascar — they are found nowhere else in the world in the wild.' }
+            { q: 'Which behaviour did you observe the MOST?',
+              options: ['A. Feeding', 'B. Resting', 'C. Moving', 'D. Social'],
+              correct: 0,
+              fact: 'Ring-tailed lemurs spend their time in a mix of feeding, resting, moving, and social interactions — your observation reflects real field research methods!' }
           ],
-          observationPrompt: 'Watch the lemurs. Describe their social behaviour or any interactions you notice.',
+          observationPrompt: 'Describe how the lemurs use different parts of their enclosure.',
           pointValue: 50
         },
         {
@@ -2304,6 +2310,143 @@
                   </div>
                 </div>
 
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      function renderLemurMission() {
+        const behaviours = [
+          { key: 'feeding', label: 'Feeding', emoji: '🍃', index: 0 },
+          { key: 'resting', label: 'Resting', emoji: '💤', index: 1 },
+          { key: 'moving',  label: 'Moving',  emoji: '🎯', index: 2 },
+          { key: 'social',  label: 'Social',  emoji: '🤝', index: 3 },
+        ];
+
+        // Compute the dominant behaviour → maps to correct answer index (0–3)
+        const maxCount = Math.max(...behaviours.map(b => lemurCounts[b.key]));
+        const dominantIndex = behaviours.findIndex(b => lemurCounts[b.key] === maxCount);
+        const computedCorrect = dominantIndex >= 0 ? dominantIndex : 0;
+
+        function tapBehaviour(key) {
+          if (!lemurTimerStarted || lemurTimerFinished) return;
+          if (lemurTapCooldown[key]) return;
+          setLemurCounts(c => ({ ...c, [key]: c[key] + 1 }));
+          setLemurTapCooldown(cd => ({ ...cd, [key]: true }));
+          setTimeout(() => setLemurTapCooldown(cd => ({ ...cd, [key]: false })), 300);
+        }
+
+        function submitLemurAnswer(selectedIndex) {
+          // Dynamically set correct on the question before passing to handler
+          currentAnimal.questions[0].correct = computedCorrect;
+          handleQuizAnswer(0, selectedIndex);
+        }
+
+        return (
+          <div style={{ position:'fixed', inset:0, background: showResult ? (isCorrect ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)') : 'var(--mist-light)', transition:'background 0.5s ease', display:'flex', flexDirection:'column' }}>
+            {/* Header */}
+            <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'0.6rem 1rem', flex:'0 0 auto', zIndex:100 }}>
+              <div style={{ maxWidth:'900px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <button onClick={() => setCurrentScreen('map')} style={{ background:'rgba(255,255,255,0.2)', border:'none', color:'white', padding:'0.5rem 1rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.85rem', fontWeight:600 }}> Back</button>
+                <img src="images/logo.png" alt="Taronga Tracka" style={{ height:'45px', width:'auto' }} onError={(e) => { e.target.style.display='none'; }} />
+                <div style={{ width:'70px' }} />
+              </div>
+            </div>
+
+            {/* Result overlay */}
+            {showResult && (
+              <div className="animate-scale-in" style={{ textAlign:'center', padding:'clamp(1.5rem,3vh,2rem)', background:'rgba(255,255,255,0.95)', borderRadius:'20px', boxShadow:'0 8px 32px rgba(0,0,0,0.2)', margin:'clamp(1rem,2vh,1.5rem)', maxWidth:'90%', marginLeft:'auto', marginRight:'auto', marginTop:'clamp(1rem,3vh,2rem)' }}>
+                <div style={{ fontSize:'clamp(3rem,8vh,4.5rem)', marginBottom:'0.5rem' }}>{isCorrect ? '✔' : ''}</div>
+                <h2 className="heading-display" style={{ fontSize:'clamp(2rem,5vh,3rem)', color: isCorrect ? '#10b981' : '#ef4444', marginBottom:'0.4rem', lineHeight:1.1 }}>{isCorrect ? 'Correct!' : 'Not Quite'}</h2>
+                {isCorrect && <p style={{ fontSize:'clamp(0.9rem,2vh,1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>Your observation matches your data!</p>}
+                {!isCorrect && <p style={{ fontSize:'clamp(0.9rem,2vh,1rem)', color:'#555', marginBottom:'0.8rem' }}>Check your tally — what did you record most?</p>}
+                {currentAnimal.questions[0].fact && (
+                  <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'12px', padding:'clamp(1rem,2vh,1.5rem)', marginTop:'0.8rem', marginBottom:'1rem' }}>
+                    <p style={{ color:'#333', fontSize:'clamp(0.9rem,2vh,1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentAnimal.questions[0].fact}</p>
+                  </div>
+                )}
+                <button onClick={() => { if (isCorrect) { handleNextQuestion(); } else { setIsProcessingAnswer(false); setShowResult(false); } }}
+                  style={{ background: isCorrect ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)', color:'white', border:'none', padding:'clamp(0.8rem,2vh,1.2rem) clamp(2rem,5vw,3rem)', fontSize:'clamp(1rem,2.5vh,1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.05em', boxShadow:'0 4px 12px rgba(0,0,0,0.2)', marginTop:'0.5rem' }}>
+                  {isCorrect ? 'Continue to Observation ' : 'Try Again'}
+                </button>
+              </div>
+            )}
+
+            {!showResult && (
+              <div style={{ flex:'1 1 auto', overflowY:'auto', padding:'1rem', maxWidth:'560px', margin:'0 auto', width:'100%' }}>
+
+                {/* Title */}
+                <div style={{ background:'white', borderRadius:'16px', padding:'1rem 1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem', textAlign:'center' }}>
+                  <h2 style={{ fontSize:'1.25rem', fontWeight:700, color:'var(--jungle-deep)', margin:'0 0 0.2rem' }}>🐒 Lemur Activity Tracker</h2>
+                  <p style={{ fontSize:'0.82rem', color:'#666', margin:0 }}>
+                    {!lemurTimerStarted ? 'Press Start to begin your 30-second observation.' : lemurTimerFinished ? 'Observation complete — review your tally below.' : 'Tap the behaviours you see in real time.'}
+                  </p>
+                </div>
+
+                {/* Timer + tap buttons */}
+                {!lemurTimerFinished && (
+                  <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
+                    {/* Countdown */}
+                    <div style={{ textAlign:'center', marginBottom:'1rem' }}>
+                      <div style={{ fontSize:'4rem', fontWeight:800, color: lemurTimeLeft <= 10 ? '#ef4444' : 'var(--jungle-deep)', lineHeight:1, fontVariantNumeric:'tabular-nums' }}>
+                        {lemurTimerStarted ? lemurTimeLeft : 30}
+                      </div>
+                      <p style={{ fontSize:'0.72rem', color:'#888', marginTop:'0.2rem' }}>seconds remaining</p>
+                    </div>
+
+                    {/* Start button OR tap buttons */}
+                    {!lemurTimerStarted ? (
+                      <button onClick={() => setLemurTimerStarted(true)}
+                        style={{ width:'100%', padding:'1rem', borderRadius:'50px', border:'none', background:'linear-gradient(135deg, #7A6E8A, #5a5070)', color:'white', fontWeight:700, fontSize:'1.1rem', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.08em', boxShadow:'0 4px 12px rgba(122,110,138,0.4)' }}>
+                        ▶ Start Observation
+                      </button>
+                    ) : (
+                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' }}>
+                        {behaviours.map(b => (
+                          <button key={b.key} onClick={() => tapBehaviour(b.key)}
+                            style={{ padding:'1.1rem 0.5rem', borderRadius:'14px', border:`2px solid ${lemurTapCooldown[b.key] ? '#7A6E8A' : '#E5E5E5'}`, background: lemurTapCooldown[b.key] ? '#EDE8F2' : '#F8F8F8', cursor:'pointer', transition:'all 0.15s', transform: lemurTapCooldown[b.key] ? 'scale(0.95)' : 'scale(1)', textAlign:'center' }}>
+                            <div style={{ fontSize:'1.6rem', marginBottom:'0.2rem' }}>{b.emoji}</div>
+                            <div style={{ fontSize:'0.88rem', fontWeight:700, color:'var(--jungle-deep)' }}>{b.label}</div>
+                            <div style={{ fontSize:'1.2rem', fontWeight:800, color:'#7A6E8A', marginTop:'0.2rem' }}>{lemurCounts[b.key]}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Post-timer: tally + MCQ */}
+                {lemurTimerFinished && (
+                  <>
+                    {/* Final tally */}
+                    <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
+                      <p style={{ fontSize:'0.8rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.75rem' }}>Your Observation Tally</p>
+                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.6rem' }}>
+                        {behaviours.map(b => (
+                          <div key={b.key} style={{ background: lemurCounts[b.key] === maxCount && maxCount > 0 ? '#EDE8F2' : '#F8F8F8', border: lemurCounts[b.key] === maxCount && maxCount > 0 ? '2px solid #7A6E8A' : '2px solid transparent', borderRadius:'10px', padding:'0.65rem 0.8rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
+                            <span style={{ fontSize:'1.2rem' }}>{b.emoji}</span>
+                            <span style={{ fontSize:'0.85rem', fontWeight:600, color:'var(--jungle-deep)', flex:1 }}>{b.label}</span>
+                            <span style={{ fontSize:'1.1rem', fontWeight:800, color:'#7A6E8A' }}>{lemurCounts[b.key]}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* MCQ */}
+                    <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)' }}>
+                      <p style={{ fontSize:'0.95rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.75rem', textAlign:'center' }}>Which behaviour did you observe the MOST?</p>
+                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.6rem' }}>
+                        {behaviours.map(b => (
+                          <button key={b.key} onClick={() => submitLemurAnswer(b.index)}
+                            style={{ padding:'0.85rem 0.6rem', borderRadius:'12px', border:'2px solid transparent', background:'#F4F0F8', color:'var(--jungle-deep)', fontSize:'0.88rem', fontWeight:600, cursor:'pointer', textAlign:'left', transition:'all 0.15s' }}>
+                            {String.fromCharCode(65 + b.index)}. {b.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -2726,6 +2869,13 @@
         return () => clearTimeout(t);
       }, [concertLawnTimerSeconds, concertLawnTimerActive]);
 
+      React.useEffect(() => {
+        if (!lemurTimerStarted || lemurTimerFinished) return;
+        if (lemurTimeLeft <= 0) { setLemurTimerFinished(true); return; }
+        const t = setTimeout(() => setLemurTimeLeft(s => s - 1), 1000);
+        return () => clearTimeout(t);
+      }, [lemurTimeLeft, lemurTimerStarted, lemurTimerFinished]);
+
       const discoverAnimal = (animal, event) => {
         if (event) event.stopPropagation();
         if (activityCompleted) return;
@@ -2748,6 +2898,11 @@
         setConcertLawnTimerSeconds(60);
         setConcertLawnTimerActive(false);
         setConcertLawnTimerDone(false);
+        setLemurCounts({ feeding: 0, resting: 0, moving: 0, social: 0 });
+        setLemurTimerStarted(false);
+        setLemurTimerFinished(false);
+        setLemurTimeLeft(30);
+        setLemurTapCooldown({});
         setCurrentScreen('animal');
         if (animal.id === 'tiger' || animal.id === 'lion' || animal.id === 'giraffe') { startCamera(); }
         setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 0);
@@ -2804,6 +2959,10 @@
         }
         if (currentAnimal.id === 'giraffe') {
           stopCamera();
+          setCurrentScreen('observation');
+          return;
+        }
+        if (currentAnimal.id === 'lemur') {
           setCurrentScreen('observation');
           return;
         }
@@ -2915,6 +3074,29 @@
           const hasExplanation = explanationPatterns.some(p => lower.includes(p));
 
           const elements = [hasSensory, hasEnvironment, hasComparison, hasExplanation].filter(Boolean).length;
+          if (elements === 0) detailBonus = 0;
+          else if (elements === 1) detailBonus = 1;
+          else detailBonus = Math.min(elements + 1, 5);
+
+          literacyBonus = calculateWritingScore(text);
+        } else if (currentAnimal.id === 'lemur') {
+          // Behaviour: observed actions and location-linked behaviours
+          const behaviourWords = ['feed','feeding','eat','eating','rest','resting','sleep','sleeping','move','moving','climb','climbing','jump','jumping','sit','sitting','groom','grooming','play','playing','social','interact','watch','observe'];
+          const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
+          behaviourBonus = Math.min(behaviourHits + 1, 5);
+
+          // Detail: location, behaviour, explanation, or space–behaviour connection
+          const locationWords = ['tree','branch','ground','platform','structure','enclosure','log','rock','grass','high','low','above','below','top','bottom','corner','shade','shelter'];
+          const behaviourDetailWords = ['feed','eat','rest','sleep','move','climb','groom','play','social','interact','jump','look'];
+          const explanationPatterns = ['because','so that','in order','allows','helps','use','purpose','shelter','food','safe','warm','cool','rest'];
+          const connectionWords = ['area','space','part','section','spot','place','there','here','where','using','found','located'];
+
+          const hasLocation = locationWords.some(w => lower.includes(w));
+          const hasBehaviourDetail = behaviourDetailWords.some(w => lower.includes(w));
+          const hasExplanation = explanationPatterns.some(p => lower.includes(p));
+          const hasConnection = connectionWords.some(w => lower.includes(w));
+
+          const elements = [hasLocation, hasBehaviourDetail, hasExplanation, hasConnection].filter(Boolean).length;
           if (elements === 0) detailBonus = 0;
           else if (elements === 1) detailBonus = 1;
           else detailBonus = Math.min(elements + 1, 5);
@@ -3384,6 +3566,7 @@
         if (currentAnimal.id === 'chimpanzee') { return renderChimpMission(); }
         if (currentAnimal.id === 'gorilla') { return renderGorillaMission(); }
         if (currentAnimal.id === 'giraffe') { return renderGiraffeMission(); }
+        if (currentAnimal.id === 'lemur') { return renderLemurMission(); }
         const currentQuestion = currentAnimal.questions[currentQuestionIndex];
         return (
           <div style={{ position:'fixed', inset:0, overflow:'hidden', background:showResult?(isCorrect?'linear-gradient(135deg, #10b981 0%, #059669 100%)':'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'):'var(--mist-light)', transition:'background 0.5s ease', display:'flex', flexDirection:'column' }}>
@@ -3647,6 +3830,22 @@
                       👀 Observe the giraffes for 30 seconds — focus on how their body features help them interact with their environment.
                     </p>
                   </>
+                ) : currentAnimal.id === 'lemur' ? (
+                  <>
+                    <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'0.5rem', textAlign:'center' }}>🐒 How Do Lemurs Use Their Enclosure?</h2>
+                    <p style={{ color:'#555', marginBottom:'0.6rem', lineHeight:1.6, fontSize:'0.95rem', textAlign:'center' }}>
+                      Animals use different parts of their environment for different purposes, such as resting, feeding, and moving.
+                    </p>
+                    <p style={{ color:'var(--jungle-mid)', fontWeight:600, marginBottom:'0.4rem', fontSize:'0.9rem', textAlign:'center' }}>
+                      👀 Observe how the lemurs are using their enclosure
+                    </p>
+                    <div style={{ background:'#F4F0F8', border:'1px solid #C8BCD8', borderRadius:'10px', padding:'0.6rem 0.9rem', marginBottom:'1.2rem', textAlign:'left' }}>
+                      <p style={{ fontSize:'0.8rem', color:'#555', margin:'0 0 0.25rem', fontWeight:600 }}>Look at:</p>
+                      {['where they are (ground, trees, platforms)', 'what they are doing in those areas'].map((pt, i) => (
+                        <p key={i} style={{ fontSize:'0.8rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.7rem' }}>– {pt}</p>
+                      ))}
+                    </div>
+                  </>
                 ) : (
                   <>
                     <h2 className="heading-display" style={{ fontSize:'2.5rem', color:'var(--jungle-deep)', marginBottom:'1rem', textAlign:'center' }}>Your Observations</h2>
@@ -3682,7 +3881,7 @@
                   </div>
                 )}
                 <textarea value={observation} onChange={(e)=>setObservation(e.target.value)}
-                  placeholder={currentAnimal.id === 'chimpanzee' ? 'I observed that...' : currentAnimal.id === 'gorilla' ? 'I noticed that the gorillas...' : currentAnimal.id === 'giraffe' ? "I noticed that the giraffe's ... helps it to..." : currentAnimal.id === 'concert-lawn' ? 'The grass felt...' : 'Describe what you observe in detail...'}
+                  placeholder={currentAnimal.id === 'chimpanzee' ? 'I observed that...' : currentAnimal.id === 'gorilla' ? 'I noticed that the gorillas...' : currentAnimal.id === 'giraffe' ? "I noticed that the giraffe's ... helps it to..." : currentAnimal.id === 'concert-lawn' ? 'The grass felt...' : currentAnimal.id === 'lemur' ? 'The lemurs are using...' : 'Describe what you observe in detail...'}
                   style={{ width:'100%', minHeight:'200px', padding:'1.5rem', borderRadius:'16px', border:'3px solid #E5E5E5', fontSize:'1.1rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', transition:'border-color 0.2s ease' }}
                   onFocus={(e)=>e.target.style.borderColor=currentAnimal.color} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'} />
                 {currentAnimal.id === 'chimpanzee' && (
@@ -3737,6 +3936,24 @@
                       <li>Link to feeding strategy or avoiding predators</li>
                       <li>Name it as an adaptation</li>
                     </ul>
+                  </div>
+                )}
+                {currentAnimal.id === 'lemur' && (
+                  <div style={{ background:'#F4F0F8', border:'1px solid #C8BCD8', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
+                    <p style={{ fontSize:'0.75rem', fontWeight:700, color:'#059669', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>✔ A good start — describe what you can see:</p>
+                    <ul style={{ margin:'0 0 0.75rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                      <li>Where the lemurs are (e.g. trees, ground, structures)</li>
+                      <li>What they are doing in those areas</li>
+                    </ul>
+                    <p style={{ fontSize:'0.75rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>⬆ To go further:</p>
+                    <ul style={{ margin:'0 0 0.6rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                      <li>Explain why they might use that area — <em>"They might use this area because…"</em></li>
+                      <li>Link the location to the behaviour (e.g. resting in shade, feeding on platform)</li>
+                    </ul>
+                    <p style={{ fontSize:'0.75rem', fontWeight:600, color:'#7A6E8A', marginBottom:'0.2rem' }}>Optional sentence starters:</p>
+                    {['The lemurs are using…', 'I noticed they were…', 'They might use this area because…'].map((s, i) => (
+                      <p key={i} style={{ fontSize:'0.78rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.5rem', fontStyle:'italic' }}>"{s}"</p>
+                    ))}
                   </div>
                 )}
                 <div style={{ marginTop:'1rem', fontSize:'1rem', color:wordCount>=10?'var(--jungle-light)':'#E86A33', fontWeight:600 }}>{wordCount}/10 words {wordCount>=10?'':''}</div>
