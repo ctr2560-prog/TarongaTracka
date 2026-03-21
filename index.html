@@ -441,6 +441,9 @@
       const [gorillaSelection, setGorillaSelection] = useState(null);
       const [giraffeMarker, setGiraffeMarker] = useState(50);
       const [markingCardOpen, setMarkingCardOpen] = useState(false);
+      const [concertLawnTimerSeconds, setConcertLawnTimerSeconds] = useState(60);
+      const [concertLawnTimerActive, setConcertLawnTimerActive] = useState(false);
+      const [concertLawnTimerDone, setConcertLawnTimerDone] = useState(false);
       const [cameraActive, setCameraActive] = React.useState(false);
       const [cameraStream, setCameraStream] = React.useState(null);
       const videoRef = React.useRef(null);
@@ -1880,10 +1883,20 @@
           id: 'concert-lawn', name: 'Concert Lawn', scientificName: 'Taronga Zoo Event Space',
           image: 'images/concert-lawn.jpg', latitude: -33.8435, longitude: 151.2400,
           radius: 80, color: '#5B8C5A',
+          missionTitle: '🕵️ Habitat Detective: Compare the Landscapes',
+          missionTask: '🚶 Walk around the Concert Lawn and observe the environment.\nThen turn and look at Sydney city across the water.',
+          correctFeedback: 'Great observation! You\'re thinking like a habitat detective.',
+          incorrectFeedback: 'Look again carefully and compare both environments.',
           questions: [
-            { q: 'What type of events are held at the Concert Lawn?',
-              options: ['Only classical music concerts', 'Live concerts, community events, and wildlife talks', 'Feeding demonstrations only', 'Private functions only'],
-              correct: 1, fact: 'The Concert Lawn hosts a range of events including live music, community gatherings, and wildlife education activities.' }
+            { q: 'What is something BOTH environments have?',
+              options: ['Open space and sunlight', 'Only natural features', 'Only buildings', 'Only animals'],
+              correct: 0, fact: 'Both environments have open space and receive sunlight, even though they are very different types of environments.' },
+            { q: 'What is the main difference between the two environments?',
+              options: ['One has more sunlight', 'One is natural and the other is human-built', 'One has more water', 'There is no difference'],
+              correct: 1, fact: 'The Concert Lawn includes natural features, while the city is mostly human-built.' },
+            { q: 'Why might the Concert Lawn support more living things than the city?',
+              options: ['It has more buildings', 'It has natural features like plants and soil', 'It is closer to the water', 'It is larger'],
+              correct: 1, fact: 'Plants, soil, and habitat features help support more living things in natural environments.' }
           ],
           observationPrompt: 'Describe the environment around you. What can you see, hear, or notice about this space?',
           pointValue: 50
@@ -2706,6 +2719,13 @@
         return () => clearTimeout(timer);
       }, [immersionTimer, immersionActive]);
 
+      React.useEffect(() => {
+        if (!concertLawnTimerActive) return;
+        if (concertLawnTimerSeconds <= 0) { setConcertLawnTimerActive(false); setConcertLawnTimerDone(true); return; }
+        const t = setTimeout(() => setConcertLawnTimerSeconds(s => s - 1), 1000);
+        return () => clearTimeout(t);
+      }, [concertLawnTimerSeconds, concertLawnTimerActive]);
+
       const discoverAnimal = (animal, event) => {
         if (event) event.stopPropagation();
         if (activityCompleted) return;
@@ -2725,6 +2745,9 @@
         setChimpGraph({ resting: 30, feeding: 30, moving: 40 });
         setGorillaSelection(null);
         setGiraffeMarker(50);
+        setConcertLawnTimerSeconds(60);
+        setConcertLawnTimerActive(false);
+        setConcertLawnTimerDone(false);
         setCurrentScreen('animal');
         if (animal.id === 'tiger' || animal.id === 'lion' || animal.id === 'giraffe') { startCamera(); }
         setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 0);
@@ -2874,6 +2897,29 @@
           if (elements === 0) detailBonus = 0;
           else if (elements === 1) detailBonus = 1;
           else detailBonus = Math.min(elements + 1, 5);
+        } else if (currentAnimal.id === 'concert-lawn') {
+          // Behaviour: sensory/physical interaction with the environment
+          const behaviourWords = ['walk','feel','felt','stand','touch','sit','notice','observe','sense','hear','smell','look','step','move','ground','grass','soil','surface'];
+          const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
+          behaviourBonus = Math.min(behaviourHits + 1, 5);
+
+          // Detail: sensory description, environment observation, comparison, or explanation
+          const sensoryWords = ['soft','hard','rough','smooth','cool','cold','warm','wet','dry','uneven','springy','spongy','firm','cushion','texture','temperature'];
+          const environmentWords = ['grass','soil','ground','nature','plant','tree','leaf','dirt','earth','natural','living','green','outdoor','air','breeze'];
+          const comparisonWords = ['concrete','pavement','city','building','road','floor','hard surface','asphalt','urban','man-made','built','artificial'];
+          const explanationPatterns = ['because','different','compare','unlike','whereas','than','more','less','better','support','alive','life'];
+
+          const hasSensory = sensoryWords.some(w => lower.includes(w));
+          const hasEnvironment = environmentWords.some(w => lower.includes(w));
+          const hasComparison = comparisonWords.some(w => lower.includes(w));
+          const hasExplanation = explanationPatterns.some(p => lower.includes(p));
+
+          const elements = [hasSensory, hasEnvironment, hasComparison, hasExplanation].filter(Boolean).length;
+          if (elements === 0) detailBonus = 0;
+          else if (elements === 1) detailBonus = 1;
+          else detailBonus = Math.min(elements + 1, 5);
+
+          literacyBonus = calculateWritingScore(text);
         } else {
           behaviourBonus = calculateBehaviourScore(text);
           detailBonus = calculateDetailScore(text);
@@ -3364,14 +3410,25 @@
             </div>
             <div style={{ flex:'1 1 auto', overflowY:'auto', overflowX:'hidden', display:'flex', flexDirection:'column', padding:'clamp(0.5rem, 2vw, 1rem)', maxWidth:'900px', margin:'0 auto', width:'100%', WebkitOverflowScrolling:'touch' }}>
               <div style={{ textAlign:'center', marginBottom:'clamp(0.5rem, 1.5vh, 0.8rem)' }}>
+                {currentAnimal.missionTitle && (
+                  <p style={{ fontSize:'clamp(0.9rem, 2vh, 1.1rem)', color:showResult?'white':'var(--jungle-deep)', fontWeight:700, marginBottom:'0.3rem' }}>{currentAnimal.missionTitle}</p>
+                )}
                 <p style={{ fontSize:'clamp(0.75rem, 1.8vh, 0.9rem)', color:showResult?'white':'var(--jungle-mid)', fontWeight:600 }}>Question {currentQuestionIndex+1} of {currentAnimal.questions.length}</p>
-                {!showResult&&(<p style={{ fontSize:'clamp(0.7rem, 1.6vh, 0.85rem)', color:'var(--sunset-orange)', fontWeight:600, marginTop:'0.3rem', fontStyle:'italic' }}> Read the signs for clues!</p>)}
+                {!showResult && currentAnimal.missionTask && (
+                  <div style={{ background:'rgba(91,140,90,0.1)', border:'1px solid rgba(91,140,90,0.3)', borderRadius:'10px', padding:'0.6rem 0.9rem', marginTop:'0.5rem', textAlign:'left' }}>
+                    {currentAnimal.missionTask.split('\n').map((line, i) => (
+                      <p key={i} style={{ fontSize:'clamp(0.75rem, 1.7vh, 0.85rem)', color:'var(--jungle-deep)', margin: i === 0 ? 0 : '0.3rem 0 0', lineHeight:1.5 }}>{line}</p>
+                    ))}
+                  </div>
+                )}
+                {!showResult && !currentAnimal.missionTask && (<p style={{ fontSize:'clamp(0.7rem, 1.6vh, 0.85rem)', color:'var(--sunset-orange)', fontWeight:600, marginTop:'0.3rem', fontStyle:'italic' }}> Read the signs for clues!</p>)}
               </div>
               {showResult&&(
                 <div className="animate-scale-in" style={{ textAlign:'center', padding:'clamp(1.5rem, 3vh, 2rem)', background:'rgba(255,255,255,0.95)', borderRadius:'20px', boxShadow:'0 8px 32px rgba(0,0,0,0.2)', margin:'clamp(1rem, 2vh, 1.5rem)', maxWidth:'90%', marginLeft:'auto', marginRight:'auto' }}>
                   <div style={{ fontSize:'clamp(3rem, 8vh, 4.5rem)', marginBottom:'0.5rem' }}>{isCorrect ? '✔' : ''}</div>
                   <h2 className="heading-display" style={{ fontSize:'clamp(2rem, 5vh, 3rem)', color:isCorrect?'#10b981':'#ef4444', marginBottom:'0.4rem', lineHeight:1.1 }}>{isCorrect?'Correct!':'Try Again'}</h2>
-                  {isCorrect&&(<p style={{ fontSize:'clamp(0.95rem, 2.2vh, 1.1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>Great observation.</p>)}
+                  {isCorrect&&(<p style={{ fontSize:'clamp(0.95rem, 2.2vh, 1.1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>{currentAnimal.correctFeedback || 'Great observation.'}</p>)}
+                  {!isCorrect&&currentAnimal.incorrectFeedback&&(<p style={{ fontSize:'clamp(0.9rem, 2vh, 1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>{currentAnimal.incorrectFeedback}</p>)}
                   {isCorrect&&currentQuestion.fact&&(
                     <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'12px', padding:'clamp(1rem, 2vh, 1.5rem)', marginTop:'0.8rem', marginBottom:'1rem' }}>
                       <p style={{ color:'#333', fontSize:'clamp(0.9rem, 2vh, 1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentQuestion.fact}</p>
@@ -3562,6 +3619,43 @@
                       👀 Observe the giraffes for 30 seconds — focus on how their body features help them interact with their environment.
                     </p>
                   </>
+                ) : currentAnimal.id === 'concert-lawn' ? (
+                  <>
+                    <h2 className="heading-display" style={{ fontSize:'1.9rem', color:'var(--jungle-deep)', marginBottom:'0.4rem', textAlign:'center' }}>🦶 Habitat Experience: Feel the Environment</h2>
+                    <p style={{ color:'#555', marginBottom:'0.8rem', lineHeight:1.6, fontSize:'0.9rem', textAlign:'center', fontStyle:'italic' }}>
+                      Scientists use their senses to understand environments, not just their eyes.
+                    </p>
+                    <div style={{ background:'#F0F7F4', border:'1.5px solid #B8D9C8', borderRadius:'12px', padding:'0.85rem 1rem', marginBottom:'0.8rem', textAlign:'left' }}>
+                      <p style={{ fontSize:'0.88rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.4rem' }}>🦶 Take your shoes off (if safe to do so)</p>
+                      <p style={{ fontSize:'0.88rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.6rem' }}>⏱ Walk on the grass for 60 seconds</p>
+                      <p style={{ fontSize:'0.8rem', color:'#555', marginBottom:'0.3rem', fontWeight:600 }}>As you walk, think about:</p>
+                      {['how the ground feels','the temperature','the texture','how this environment is different to hard surfaces'].map((pt, i) => (
+                        <p key={i} style={{ fontSize:'0.8rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.8rem' }}>– {pt}</p>
+                      ))}
+                    </div>
+                    {/* 60-second timer */}
+                    {!concertLawnTimerDone && (
+                      <div style={{ textAlign:'center', marginBottom:'0.8rem' }}>
+                        <div style={{ fontSize:'2.8rem', fontWeight:800, color: concertLawnTimerSeconds > 10 ? 'var(--jungle-deep)' : '#ef4444', lineHeight:1 }}>
+                          {concertLawnTimerSeconds}s
+                        </div>
+                        {!concertLawnTimerActive && (
+                          <button onClick={() => setConcertLawnTimerActive(true)}
+                            style={{ marginTop:'0.5rem', padding:'0.6rem 1.8rem', borderRadius:'30px', border:'none', background:'linear-gradient(135deg, var(--jungle-deep), var(--jungle-mid))', color:'white', fontWeight:700, fontSize:'0.9rem', cursor:'pointer' }}>
+                            ▶ Start Timer
+                          </button>
+                        )}
+                        {concertLawnTimerActive && (
+                          <p style={{ fontSize:'0.78rem', color:'var(--jungle-mid)', fontWeight:600, marginTop:'0.3rem' }}>Walk on the grass now…</p>
+                        )}
+                      </div>
+                    )}
+                    {concertLawnTimerDone && (
+                      <div style={{ textAlign:'center', background:'#D1FAE5', borderRadius:'10px', padding:'0.5rem 1rem', marginBottom:'0.6rem' }}>
+                        <p style={{ fontSize:'0.85rem', fontWeight:700, color:'#065F46', margin:0 }}>✔ Time's up — write your response below</p>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <>
                     <h2 className="heading-display" style={{ fontSize:'2.5rem', color:'var(--jungle-deep)', marginBottom:'1rem', textAlign:'center' }}>Your Observations</h2>
@@ -3577,13 +3671,31 @@
                     </div>
                   </>
                 )}
-                <p style={{ color:'#444', fontWeight:600, marginBottom:'1rem', fontSize:'1rem', textAlign:'center' }}>
-                  {currentAnimal.observationPrompt}
+                )}\n                <p style={{ color:'#444', fontWeight:600, marginBottom:'1rem', fontSize:'1rem', textAlign:'center' }}>
+                  {currentAnimal.id === 'concert-lawn'
+                    ? 'Describe your experience walking on the grass and explain how this environment is different to a built environment like the city.'
+                    : currentAnimal.observationPrompt}
                 </p>
+                {/* Concert Lawn writing scaffold */}
+                {currentAnimal.id === 'concert-lawn' && (
+                  <div style={{ background:'#F0F7F4', border:'1px solid #B8D9C8', borderRadius:'12px', padding:'0.9rem 1.1rem', marginBottom:'0.75rem' }}>
+                    <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.35rem' }}>Write 2–3 sentences. Include:</p>
+                    <ul style={{ margin:'0 0 0.5rem', paddingLeft:'1.1rem', fontSize:'0.8rem', color:'#555', lineHeight:1.8 }}>
+                      <li>what it felt like (e.g. soft, cool, uneven)</li>
+                      <li>what you noticed about the environment</li>
+                      <li>how this compares to hard surfaces like concrete</li>
+                    </ul>
+                    <p style={{ fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-mid)', marginBottom:'0.2rem' }}>Optional sentence starters:</p>
+                    {['The grass felt…','I noticed that…','This is different to the city because…'].map((s, i) => (
+                      <p key={i} style={{ fontSize:'0.78rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.5rem', fontStyle:'italic' }}>"{s}"</p>
+                    ))}
+                  </div>
+                )}
                 <textarea value={observation} onChange={(e)=>setObservation(e.target.value)}
-                  placeholder={currentAnimal.id === 'chimpanzee' ? 'I observed that...' : currentAnimal.id === 'gorilla' ? 'I noticed that the gorillas...' : currentAnimal.id === 'giraffe' ? 'I noticed that the giraffe\'s ... helps it to...' : 'Describe what you observe in detail...'}
-                  style={{ width:'100%', minHeight:'200px', padding:'1.5rem', borderRadius:'16px', border:'3px solid #E5E5E5', fontSize:'1.1rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', transition:'border-color 0.2s ease' }}
-                  onFocus={(e)=>e.target.style.borderColor=currentAnimal.color} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'} />
+                  placeholder={currentAnimal.id === 'chimpanzee' ? 'I observed that...' : currentAnimal.id === 'gorilla' ? 'I noticed that the gorillas...' : currentAnimal.id === 'giraffe' ? 'I noticed that the giraffe\'s ... helps it to...' : currentAnimal.id === 'concert-lawn' ? 'The grass felt...' : 'Describe what you observe in detail...'}
+                  disabled={currentAnimal.id === 'concert-lawn' && !concertLawnTimerDone}
+                  style={{ width:'100%', minHeight:'200px', padding:'1.5rem', borderRadius:'16px', border:'3px solid #E5E5E5', fontSize:'1.1rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', transition:'border-color 0.2s ease', opacity: currentAnimal.id === 'concert-lawn' && !concertLawnTimerDone ? 0.4 : 1, cursor: currentAnimal.id === 'concert-lawn' && !concertLawnTimerDone ? 'not-allowed' : 'text' }}
+                  onFocus={(e)=>{ if(currentAnimal.id==='concert-lawn'&&!concertLawnTimerDone)return; e.target.style.borderColor=currentAnimal.color; }} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'} />
                 {currentAnimal.id === 'chimpanzee' && (
                   <div style={{ background:'#F7FAF8', border:'1px solid #E4EDE8', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
                     <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>You may include:</p>
