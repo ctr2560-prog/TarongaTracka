@@ -451,6 +451,11 @@
       const [lemurTapCooldown, setLemurTapCooldown] = useState({});
       const [dingoChainItems, setDingoChainItems] = useState([]);
       const [dingoWrongTap, setDingoWrongTap] = useState(null);
+      const [dingoShuffledOptions, setDingoShuffledOptions] = useState([]);
+      const [buffaloIsPressing, setBuffaloIsPressing] = useState(false);
+      const [buffaloHoldTime, setBuffaloHoldTime] = useState(0);
+      const [buffaloInteractionComplete, setBuffaloInteractionComplete] = useState(false);
+      const [buffaloShowObservation, setBuffaloShowObservation] = useState(false);
       const [cameraActive, setCameraActive] = React.useState(false);
       const [cameraStream, setCameraStream] = React.useState(null);
       const videoRef = React.useRef(null);
@@ -1962,11 +1967,11 @@
           image: 'images/asian-water-buffalo.jpg', latitude: -33.8450, longitude: 151.2410,
           radius: 50, color: '#6B5E4E',
           questions: [
-            { q: 'What is the primary role of Asian Water Buffalo in many Asian communities?',
-              options: ['Wool production', 'Working animal for farming and transport', 'Purely decorative', 'A wild predator'],
-              correct: 1, fact: 'Asian Water Buffalo have been domesticated for thousands of years and are vital working animals used for farming, transport, and as a source of milk and meat.' }
+            { q: 'Looking at the buffalo, what can you notice that helps it not sink into soft ground?',
+              options: ['A. It has small, narrow feet', 'B. It has wide hooves that spread its weight', 'C. It is very fast', 'D. It avoids muddy areas'],
+              correct: 1, fact: 'Wide hooves spread weight and reduce pressure on soft ground — an adaptation that helps buffalo move through wet, muddy environments.' }
           ],
-          observationPrompt: 'Observe the water buffalo. Describe its physical features or any behaviour you notice.',
+          observationPrompt: 'Describe a relationship you can observe between the buffalo (or rhino) and another animal, and explain how it may help them.',
           pointValue: 50
         }
       ];
@@ -2318,6 +2323,161 @@
         );
       }
 
+      function renderBuffaloMission() {
+        const holdPct = Math.min(buffaloHoldTime / 2000, 1);
+        const pressureLabel = holdPct < 0.33 ? 'LOW' : holdPct < 0.66 ? 'MEDIUM' : 'HIGH';
+        const pressureColor = holdPct < 0.33 ? '#4A90D9' : holdPct < 0.66 ? '#E86A33' : '#C4303A';
+        const currentQuestion = currentAnimal.questions[0];
+
+        const startPress = () => { if (!buffaloInteractionComplete) setBuffaloIsPressing(true); };
+        const endPress = () => {
+          if (!buffaloInteractionComplete) {
+            setBuffaloIsPressing(false);
+            setBuffaloHoldTime(0);
+          }
+        };
+
+        return (
+          <div style={{ position:'fixed', inset:0, background: showResult ? (isCorrect ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)') : 'var(--mist-light)', transition:'background 0.5s ease', display:'flex', flexDirection:'column' }}>
+            {/* Header */}
+            <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'0.6rem 1rem', flex:'0 0 auto', zIndex:100 }}>
+              <div style={{ maxWidth:'900px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <button onClick={() => setCurrentScreen('map')} style={{ background:'rgba(255,255,255,0.2)', border:'none', color:'white', padding:'0.5rem 1rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.85rem', fontWeight:600 }}> Back</button>
+                <img src="images/logo.png" alt="Taronga Tracka" style={{ height:'45px', width:'auto' }} onError={(e) => { e.target.style.display='none'; }} />
+                <div style={{ width:'70px' }} />
+              </div>
+            </div>
+
+            {/* Result overlay */}
+            {showResult && (
+              <div className="animate-scale-in" style={{ textAlign:'center', padding:'clamp(1.5rem,3vh,2rem)', background:'rgba(255,255,255,0.95)', borderRadius:'20px', boxShadow:'0 8px 32px rgba(0,0,0,0.2)', margin:'clamp(1rem,2vh,1.5rem)', maxWidth:'90%', marginLeft:'auto', marginRight:'auto', marginTop:'clamp(1rem,3vh,2rem)' }}>
+                <div style={{ fontSize:'clamp(3rem,8vh,4.5rem)', marginBottom:'0.5rem' }}>{isCorrect ? '✔' : '❌'}</div>
+                <h2 className="heading-display" style={{ fontSize:'clamp(2rem,5vh,3rem)', color: isCorrect ? '#10b981' : '#ef4444', marginBottom:'0.4rem', lineHeight:1.1 }}>{isCorrect ? 'Correct!' : 'Not Quite'}</h2>
+                {isCorrect && <p style={{ fontSize:'clamp(0.9rem,2vh,1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>Wide hooves spread weight and reduce pressure on soft ground.</p>}
+                {!isCorrect && <p style={{ fontSize:'clamp(0.9rem,2vh,1rem)', color:'#555', marginBottom:'0.8rem' }}>Think about how pressure works on soft surfaces.</p>}
+                {currentQuestion.fact && (
+                  <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'12px', padding:'clamp(1rem,2vh,1.5rem)', marginTop:'0.8rem', marginBottom:'1rem' }}>
+                    <p style={{ color:'#333', fontSize:'clamp(0.9rem,2vh,1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentQuestion.fact}</p>
+                  </div>
+                )}
+                <button onClick={() => { if (isCorrect) { handleNextQuestion(); } else { setIsProcessingAnswer(false); setShowResult(false); } }}
+                  style={{ background: isCorrect ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)', color:'white', border:'none', padding:'clamp(0.8rem,2vh,1.2rem) clamp(2rem,5vw,3rem)', fontSize:'clamp(1rem,2.5vh,1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.05em', boxShadow:'0 4px 12px rgba(0,0,0,0.2)', marginTop:'0.5rem' }}>
+                  {isCorrect ? 'Continue to Observation ' : 'Try Again'}
+                </button>
+              </div>
+            )}
+
+            {!showResult && (
+              <div style={{ flex:'1 1 auto', overflowY:'auto', padding:'1rem', maxWidth:'560px', margin:'0 auto', width:'100%' }}>
+
+                {/* Title */}
+                <div style={{ background:'white', borderRadius:'16px', padding:'1rem 1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem', textAlign:'center' }}>
+                  <h2 style={{ fontSize:'1.2rem', fontWeight:700, color:'var(--jungle-deep)', margin:'0 0 0.2rem' }}>🐃 Footprint Pressure Test</h2>
+                  <p style={{ fontSize:'0.82rem', color:'#666', margin:0 }}>
+                    {!buffaloInteractionComplete ? 'Press and hold the mud to test pressure, then observe the buffalo.' : buffaloShowObservation ? 'Now answer the question below.' : 'Interaction complete — read the result.'}
+                  </p>
+                </div>
+
+                {/* STEP 1 — Press interaction */}
+                {!buffaloInteractionComplete && (
+                  <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
+                    <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.75rem', textAlign:'center' }}>
+                      Press and hold the mud surface below
+                    </p>
+
+                    {/* Mud surface */}
+                    <div
+                      onMouseDown={startPress} onMouseUp={endPress} onMouseLeave={endPress}
+                      onTouchStart={startPress} onTouchEnd={endPress} onTouchCancel={endPress}
+                      style={{ width:'100%', height:'160px', background:`linear-gradient(180deg, #8B6914 0%, #6B4F0F ${40 + holdPct * 30}%, #4A3508 100%)`, borderRadius:'12px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden', userSelect:'none', WebkitUserSelect:'none', touchAction:'none', transition:'background 0.2s' }}>
+
+                      {/* Footprint impression */}
+                      {buffaloIsPressing && (
+                        <div style={{ position:'absolute', display:'flex', flexDirection:'column', alignItems:'center', gap:'4px', opacity: 0.3 + holdPct * 0.7, transform:`scale(${0.6 + holdPct * 0.6})`, transition:'transform 0.1s, opacity 0.1s' }}>
+                          <div style={{ display:'flex', gap:'8px' }}>
+                            <div style={{ width:'22px', height:'28px', background:'#3A2A08', borderRadius:'50% 50% 40% 40%', transform:'rotate(-8deg)' }} />
+                            <div style={{ width:'22px', height:'28px', background:'#3A2A08', borderRadius:'50% 50% 40% 40%', transform:'rotate(8deg)' }} />
+                          </div>
+                          <div style={{ width:'48px', height:'36px', background:'#3A2A08', borderRadius:'40%', marginTop:'-6px' }} />
+                        </div>
+                      )}
+
+                      {!buffaloIsPressing && (
+                        <p style={{ color:'rgba(255,255,255,0.6)', fontSize:'0.85rem', fontWeight:600, textAlign:'center', pointerEvents:'none' }}>
+                          👆 Press and hold here
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Pressure meter */}
+                    {buffaloIsPressing && (
+                      <div style={{ marginTop:'0.75rem' }}>
+                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'0.3rem' }}>
+                          <span style={{ fontSize:'0.75rem', color:'#888', fontWeight:600 }}>Pressure</span>
+                          <span style={{ fontSize:'0.82rem', fontWeight:800, color: pressureColor }}>{pressureLabel}</span>
+                        </div>
+                        <div style={{ height:'8px', background:'#E5E5E5', borderRadius:'4px', overflow:'hidden' }}>
+                          <div style={{ height:'100%', width:`${holdPct * 100}%`, background:`linear-gradient(90deg, #4A90D9, ${pressureColor})`, borderRadius:'4px', transition:'width 0.1s' }} />
+                        </div>
+                      </div>
+                    )}
+
+                    {!buffaloIsPressing && buffaloHoldTime === 0 && (
+                      <p style={{ fontSize:'0.78rem', color:'#aaa', textAlign:'center', marginTop:'0.5rem', margin:'0.5rem 0 0', fontStyle:'italic' }}>Hold for 2 seconds to complete</p>
+                    )}
+                    {!buffaloIsPressing && buffaloHoldTime > 0 && (
+                      <p style={{ fontSize:'0.78rem', color:'#E86A33', textAlign:'center', marginTop:'0.5rem', margin:'0.5rem 0 0', fontWeight:600 }}>Released too early — press and hold again</p>
+                    )}
+                  </div>
+                )}
+
+                {/* STEP 2 — Transition */}
+                {buffaloInteractionComplete && !buffaloShowObservation && (
+                  <div style={{ background:'white', borderRadius:'16px', padding:'1.4rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem', textAlign:'center' }}>
+                    <div style={{ fontSize:'2.5rem', marginBottom:'0.75rem' }}>🐾</div>
+                    <p style={{ fontSize:'1rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.5rem', lineHeight:1.5 }}>
+                      More pressure causes deeper sinking in soft ground.
+                    </p>
+                    <p style={{ fontSize:'0.9rem', color:'#666', marginBottom:'1.2rem' }}>Now look at the buffalo.</p>
+                    <button onClick={() => setBuffaloShowObservation(true)}
+                      style={{ padding:'0.85rem 2.5rem', borderRadius:'50px', border:'none', background:'linear-gradient(135deg, #6B5E4E, #4A3D30)', color:'white', fontWeight:700, fontSize:'1rem', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.08em', boxShadow:'0 4px 12px rgba(107,94,78,0.4)' }}>
+                      Continue →
+                    </button>
+                  </div>
+                )}
+
+                {/* STEP 3 — Observation prompt + STEP 4 MCQ */}
+                {buffaloShowObservation && (
+                  <>
+                    <div style={{ background:'#F7FAF8', border:'1px solid #D4E4DC', borderRadius:'14px', padding:'1rem 1.2rem', marginBottom:'1rem' }}>
+                      <p style={{ fontSize:'0.88rem', fontWeight:700, color:'var(--jungle-mid)', marginBottom:'0.5rem' }}>👀 Observe the buffalo</p>
+                      <p style={{ fontSize:'0.8rem', color:'#555', marginBottom:'0.4rem', fontWeight:600 }}>Look at:</p>
+                      {['hoof size', 'shape of feet', 'how weight might be spread'].map((pt, i) => (
+                        <p key={i} style={{ fontSize:'0.8rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.7rem' }}>– {pt}</p>
+                      ))}
+                      <p style={{ fontSize:'0.78rem', color:'#888', marginTop:'0.5rem', fontStyle:'italic' }}>Do the buffalo's feet look narrow or wide?</p>
+                    </div>
+
+                    <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)' }}>
+                      <p style={{ fontSize:'0.95rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.75rem', textAlign:'center' }}>{currentQuestion.q}</p>
+                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.6rem' }}>
+                        {currentQuestion.options.map((opt, i) => (
+                          <button key={i} onClick={() => handleQuizAnswer(0, i)}
+                            style={{ padding:'0.85rem 0.6rem', borderRadius:'12px', border:'2px solid transparent', background:'#F5F2EE', color:'var(--jungle-deep)', fontSize:'0.88rem', fontWeight:600, cursor:'pointer', textAlign:'left', transition:'all 0.15s', lineHeight:1.3 }}>
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+              </div>
+            )}
+          </div>
+        );
+      }
+
       function renderDingoMission() {
         const CORRECT_SEQUENCE = [
           { id: 'sun',        label: '☀️ Sun',        desc: 'Energy source' },
@@ -2387,7 +2547,7 @@
                   </div>
 
                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.6rem', marginBottom:'1rem' }}>
-                    {CORRECT_SEQUENCE.map((opt) => {
+                    {(dingoShuffledOptions.length ? dingoShuffledOptions : CORRECT_SEQUENCE).map((opt) => {
                       const placed = dingoChainItems.includes(opt.id);
                       const isNext = !placed && opt.id === nextExpected?.id;
                       const isWrong = dingoWrongTap === opt.id;
@@ -3015,6 +3175,13 @@
         return () => clearTimeout(t);
       }, [lemurTimeLeft, lemurTimerStarted, lemurTimerFinished]);
 
+      React.useEffect(() => {
+        if (!buffaloIsPressing || buffaloInteractionComplete) return;
+        if (buffaloHoldTime >= 2000) { setBuffaloInteractionComplete(true); setBuffaloIsPressing(false); return; }
+        const t = setTimeout(() => setBuffaloHoldTime(h => h + 100), 100);
+        return () => clearTimeout(t);
+      }, [buffaloIsPressing, buffaloHoldTime, buffaloInteractionComplete]);
+
       const discoverAnimal = (animal, event) => {
         if (event) event.stopPropagation();
         if (activityCompleted) return;
@@ -3044,6 +3211,21 @@
         setLemurTapCooldown({});
         setDingoChainItems([]);
         setDingoWrongTap(null);
+        setBuffaloIsPressing(false);
+        setBuffaloHoldTime(0);
+        setBuffaloInteractionComplete(false);
+        setBuffaloShowObservation(false);
+        if (animal.id === 'dingo') {
+          const seq = [
+            { id: 'sun',        label: '☀️ Sun',        desc: 'Energy source' },
+            { id: 'grass',      label: '🌿 Grass',       desc: 'Producer' },
+            { id: 'kangaroo',   label: '🦘 Kangaroo',    desc: 'Herbivore' },
+            { id: 'dingo',      label: '🐕 Dingo',        desc: 'Apex predator' },
+            { id: 'decomposer', label: '🍄 Decomposer',  desc: 'Breaks down matter' },
+          ];
+          const shuffled = [...seq].sort(() => Math.random() - 0.5);
+          setDingoShuffledOptions(shuffled);
+        }
         setCurrentScreen('animal');
         if (animal.id === 'tiger' || animal.id === 'lion' || animal.id === 'giraffe') { startCamera(); }
         setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 0);
@@ -3108,6 +3290,10 @@
           return;
         }
         if (currentAnimal.id === 'dingo') {
+          setCurrentScreen('observation');
+          return;
+        }
+        if (currentAnimal.id === 'asian-water-buffalo') {
           setCurrentScreen('observation');
           return;
         }
@@ -3265,6 +3451,29 @@
           const hasLink = linkWords.some(p => lower.includes(p));
 
           const elements = [hasDingoAppearance, hasEnvironment, hasExplanation, hasLink].filter(Boolean).length;
+          if (elements === 0) detailBonus = 0;
+          else if (elements === 1) detailBonus = 1;
+          else detailBonus = Math.min(elements + 1, 5);
+
+          literacyBonus = calculateWritingScore(text);
+        } else if (currentAnimal.id === 'asian-water-buffalo') {
+          // Behaviour: observable animal interactions and positioning
+          const behaviourWords = ['bird','birds','buffalo','rhino','tick','tickbird','oxpecker','cattle','egret','sit','perch','stand','walk','follow','eat','feed','groom','clean','pick','peck','fly','land','nearby','together','interact','observe','see','notice','watch'];
+          const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
+          behaviourBonus = Math.min(behaviourHits + 1, 5);
+
+          // Detail: animals identified, interaction described, explanation given, or positioning noted
+          const animalWords = ['bird','birds','buffalo','rhino','oxpecker','tickbird','egret','cattle','insect','tick','fly','flies','parasite'];
+          const interactionWords = ['sit','perch','groom','clean','eat','feed','pick','peck','follow','together','interact','relationship','mutualism','symbiosis','help','benefit'];
+          const explanationPatterns = ['because','helps','benefit','advantage','survive','remove','clean','protect','safe','food','mutual','both','each other','so that'];
+          const positionWords = ['back','on top','nearby','beside','next to','close','following','above','around','on the'];
+
+          const hasAnimals = animalWords.some(w => lower.includes(w));
+          const hasInteraction = interactionWords.some(w => lower.includes(w));
+          const hasExplanation = explanationPatterns.some(p => lower.includes(p));
+          const hasPositioning = positionWords.some(p => lower.includes(p));
+
+          const elements = [hasAnimals, hasInteraction, hasExplanation, hasPositioning].filter(Boolean).length;
           if (elements === 0) detailBonus = 0;
           else if (elements === 1) detailBonus = 1;
           else detailBonus = Math.min(elements + 1, 5);
@@ -3736,6 +3945,7 @@
         if (currentAnimal.id === 'giraffe') { return renderGiraffeMission(); }
         if (currentAnimal.id === 'lemur') { return renderLemurMission(); }
         if (currentAnimal.id === 'dingo') { return renderDingoMission(); }
+        if (currentAnimal.id === 'asian-water-buffalo') { return renderBuffaloMission(); }
         const currentQuestion = currentAnimal.questions[currentQuestionIndex];
         return (
           <div style={{ position:'fixed', inset:0, overflow:'hidden', background:showResult?(isCorrect?'linear-gradient(135deg, #10b981 0%, #059669 100%)':'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'):'var(--mist-light)', transition:'background 0.5s ease', display:'flex', flexDirection:'column' }}>
@@ -4031,6 +4241,22 @@
                       ))}
                     </div>
                   </>
+                ) : currentAnimal.id === 'asian-water-buffalo' ? (
+                  <>
+                    <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'0.5rem', textAlign:'center' }}>🐃 Helpful Relationships</h2>
+                    <p style={{ color:'#555', marginBottom:'0.5rem', lineHeight:1.6, fontSize:'0.95rem', textAlign:'center' }}>
+                      Some animals live and interact together in ways that help one or both survive.
+                    </p>
+                    <p style={{ color:'var(--jungle-mid)', fontWeight:600, marginBottom:'0.4rem', fontSize:'0.9rem', textAlign:'center' }}>
+                      👀 Observe the buffalo and nearby animals
+                    </p>
+                    <div style={{ background:'#EDF4F0', border:'1px solid #B8D4C4', borderRadius:'10px', padding:'0.6rem 0.9rem', marginBottom:'1.2rem', textAlign:'left' }}>
+                      <p style={{ fontSize:'0.8rem', color:'#555', margin:'0 0 0.25rem', fontWeight:600 }}>Look for:</p>
+                      {['other animals nearby (e.g. birds, rhino)', 'how they interact', 'where they are positioned'].map((pt, i) => (
+                        <p key={i} style={{ fontSize:'0.8rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.7rem' }}>– {pt}</p>
+                      ))}
+                    </div>
+                  </>
                 ) : (
                   <>
                     <h2 className="heading-display" style={{ fontSize:'2.5rem', color:'var(--jungle-deep)', marginBottom:'1rem', textAlign:'center' }}>Your Observations</h2>
@@ -4066,7 +4292,7 @@
                   </div>
                 )}
                 <textarea value={observation} onChange={(e)=>setObservation(e.target.value)}
-                  placeholder={currentAnimal.id === 'chimpanzee' ? 'I observed that...' : currentAnimal.id === 'gorilla' ? 'I noticed that the gorillas...' : currentAnimal.id === 'giraffe' ? "I noticed that the giraffe's ... helps it to..." : currentAnimal.id === 'concert-lawn' ? 'The grass felt...' : currentAnimal.id === 'lemur' ? 'The lemurs are using...' : currentAnimal.id === 'dingo' ? "The dingo's fur is..." : 'Describe what you observe in detail...'}
+                  placeholder={currentAnimal.id === 'chimpanzee' ? 'I observed that...' : currentAnimal.id === 'gorilla' ? 'I noticed that the gorillas...' : currentAnimal.id === 'giraffe' ? "I noticed that the giraffe's ... helps it to..." : currentAnimal.id === 'concert-lawn' ? 'The grass felt...' : currentAnimal.id === 'lemur' ? 'The lemurs are using...' : currentAnimal.id === 'dingo' ? "The dingo's fur is..." : currentAnimal.id === 'asian-water-buffalo' ? 'I can see...' : 'Describe what you observe in detail...'}
                   style={{ width:'100%', minHeight:'200px', padding:'1.5rem', borderRadius:'16px', border:'3px solid #E5E5E5', fontSize:'1.1rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', transition:'border-color 0.2s ease' }}
                   onFocus={(e)=>e.target.style.borderColor=currentAnimal.color} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'} />
                 {currentAnimal.id === 'chimpanzee' && (
@@ -4155,6 +4381,24 @@
                     </ul>
                     <p style={{ fontSize:'0.75rem', fontWeight:600, color:'#C4873A', marginBottom:'0.2rem' }}>Optional sentence starters:</p>
                     {["The dingo's fur is…", 'The environment around it is…', 'This helps the dingo because…'].map((s, i) => (
+                      <p key={i} style={{ fontSize:'0.78rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.5rem', fontStyle:'italic' }}>"{s}"</p>
+                    ))}
+                  </div>
+                )}
+                {currentAnimal.id === 'asian-water-buffalo' && (
+                  <div style={{ background:'#EDF4F0', border:'1px solid #B8D4C4', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
+                    <p style={{ fontSize:'0.75rem', fontWeight:700, color:'#059669', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>✔ A good start — describe what you can see:</p>
+                    <ul style={{ margin:'0 0 0.75rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                      <li>What animals you can see</li>
+                      <li>What they are doing</li>
+                    </ul>
+                    <p style={{ fontSize:'0.75rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>⬆ To go further:</p>
+                    <ul style={{ margin:'0 0 0.6rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                      <li>Explain how this interaction might help one or both animals — <em>"This may help because…"</em></li>
+                      <li>Mention where the animals are positioned (e.g. on back, nearby, following)</li>
+                    </ul>
+                    <p style={{ fontSize:'0.75rem', fontWeight:600, color:'#4A7A5C', marginBottom:'0.2rem' }}>Optional sentence starters:</p>
+                    {['I can see…', 'The animals are…', 'This may help because…'].map((s, i) => (
                       <p key={i} style={{ fontSize:'0.78rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.5rem', fontStyle:'italic' }}>"{s}"</p>
                     ))}
                   </div>
