@@ -440,6 +440,7 @@
       const [chimpGraph, setChimpGraph] = useState({ resting: 30, feeding: 30, moving: 40 });
       const [gorillaSelection, setGorillaSelection] = useState(null);
       const [giraffeMarker, setGiraffeMarker] = useState(50);
+      const [markingCardOpen, setMarkingCardOpen] = useState(false);
       const [cameraActive, setCameraActive] = React.useState(false);
       const [cameraStream, setCameraStream] = React.useState(null);
       const videoRef = React.useRef(null);
@@ -1874,6 +1875,54 @@
           ],
           observationPrompt: "Watch the tiger's behavior. Describe how it moves.",
           pointValue: 50
+        },
+        {
+          id: 'concert-lawn', name: 'Concert Lawn', scientificName: 'Taronga Zoo Event Space',
+          image: 'images/concert-lawn.jpg', latitude: -33.8435, longitude: 151.2400,
+          radius: 80, color: '#5B8C5A',
+          questions: [
+            { q: 'What type of events are held at the Concert Lawn?',
+              options: ['Only classical music concerts', 'Live concerts, community events, and wildlife talks', 'Feeding demonstrations only', 'Private functions only'],
+              correct: 1, fact: 'The Concert Lawn hosts a range of events including live music, community gatherings, and wildlife education activities.' }
+          ],
+          observationPrompt: 'Describe the environment around you. What can you see, hear, or notice about this space?',
+          pointValue: 50
+        },
+        {
+          id: 'dingo', name: 'Dingo', scientificName: 'Canis lupus dingo',
+          image: 'images/dingo.jpg', latitude: -33.8440, longitude: 151.2408,
+          radius: 50, color: '#C4873A',
+          questions: [
+            { q: 'What is the dingo\'s role in the Australian ecosystem?',
+              options: ['They are herbivores that eat only plants', 'They are apex predators that help regulate prey populations', 'They have no ecological role', 'They are introduced pests'],
+              correct: 1, fact: 'Dingoes are apex predators in Australia and help regulate populations of kangaroos and other animals, supporting ecosystem balance.' }
+          ],
+          observationPrompt: 'Observe the dingo carefully. Describe its appearance, movement, or behaviour.',
+          pointValue: 50
+        },
+        {
+          id: 'lemur', name: 'Ring-tailed Lemur', scientificName: 'Lemur catta',
+          image: 'images/lemur.jpg', latitude: -33.8448, longitude: 151.2396,
+          radius: 50, color: '#7A6E8A',
+          questions: [
+            { q: 'Where are ring-tailed lemurs originally from?',
+              options: ['South America', 'Southeast Asia', 'Madagascar', 'Central Africa'],
+              correct: 2, fact: 'Ring-tailed lemurs are endemic to Madagascar — they are found nowhere else in the world in the wild.' }
+          ],
+          observationPrompt: 'Watch the lemurs. Describe their social behaviour or any interactions you notice.',
+          pointValue: 50
+        },
+        {
+          id: 'sea-lion', name: 'Sea Lion', scientificName: 'Neophoca cinerea',
+          image: 'images/sea-lion.jpg', latitude: -33.8425, longitude: 151.2415,
+          radius: 50, color: '#4A7FA0',
+          questions: [
+            { q: 'How do sea lions stay warm in cold water?',
+              options: ['They shiver constantly', 'A thick layer of blubber insulates them', 'They wear thick fur coats only', 'They avoid cold water entirely'],
+              correct: 1, fact: 'Sea lions have a thick layer of blubber beneath their skin that acts as insulation, keeping them warm in cold ocean waters.' }
+          ],
+          observationPrompt: 'Observe the sea lions. Describe how they move in and out of the water.',
+          pointValue: 50
         }
       ];
 
@@ -2765,6 +2814,42 @@
           detailBonus = Math.min(detailHits + 1, 5);
 
           literacyBonus = calculateWritingScore(text);
+        } else if (currentAnimal.id === 'gorilla') {
+          behaviourBonus = calculateBehaviourScore(text);
+          literacyBonus = calculateWritingScore(text);
+
+          // Detail: ANY one valid element → +1, two or more → +2 to max
+          // Entry points: clear observation, relevant concept, simple explanation/survival link
+          const observationWords = ['sit','stand','move','eat','groom','play','look','climb','walk','rest','interact','together','group'];
+          const conceptWords = ['social','group','behaviour','bond','family','dominan','hierarch','communicat','cooperat','relation','protect','young','leader','silverback'];
+          const explanationPatterns = ['because','helps','so that','in order','allows','enables','this means','for survival','stay safe','each other'];
+
+          const hasObservation = observationWords.some(w => lower.includes(w));
+          const hasConcept = conceptWords.some(w => lower.includes(w));
+          const hasExplanation = explanationPatterns.some(p => lower.includes(p));
+
+          const elements = [hasObservation, hasConcept, hasExplanation].filter(Boolean).length;
+          if (elements === 0) detailBonus = 0;
+          else if (elements === 1) detailBonus = 1;
+          else detailBonus = Math.min(elements + 1, 5);
+        } else if (currentAnimal.id === 'giraffe') {
+          behaviourBonus = calculateBehaviourScore(text);
+          literacyBonus = calculateWritingScore(text);
+
+          // Detail: ANY one valid element → +1, two or more → +2 to max
+          // Entry points: clear observation, named adaptation, simple explanation, survival link
+          const observationWords = ['neck','leg','tall','height','eat','leaf','leaves','reach','tree','branch','ground','drink','spot','pattern','colour','color','coat','tongue'];
+          const conceptWords = ['adapt','survival','feature','advantage','predator','food','habitat','evolution','camouflage','protect','savanna'];
+          const explanationPatterns = ['because','helps','so that','in order','allows','enables','this means','for survival','to reach','to see','stay safe'];
+
+          const hasObservation = observationWords.some(w => lower.includes(w));
+          const hasConcept = conceptWords.some(w => lower.includes(w));
+          const hasExplanation = explanationPatterns.some(p => lower.includes(p));
+
+          const elements = [hasObservation, hasConcept, hasExplanation].filter(Boolean).length;
+          if (elements === 0) detailBonus = 0;
+          else if (elements === 1) detailBonus = 1;
+          else detailBonus = Math.min(elements + 1, 5);
         } else {
           behaviourBonus = calculateBehaviourScore(text);
           detailBonus = calculateDetailScore(text);
@@ -2797,7 +2882,7 @@
       const completeActivity = async () => {
         if (!studentName || !classCode) return;
         if (activityCompleted) return;
-        if (!window.confirm('Submit your activity results to your teacher?\\\\n\\\\nYou will not be able to earn more badges after this.')) return;
+        if (!window.confirm('Submit your activity results to your teacher?\n\nYou will not be able to earn more badges after this.')) return;
 
         setIsSubmittingActivity(true);
         const code = normaliseCode(classCode);
@@ -2859,7 +2944,7 @@
         } catch (err) {
           console.error(" Firestore submission error:", err);
           setIsSubmittingActivity(false);
-          alert(`Submission failed: ${err.message}\\\\n\\\\nPlease check your connection and try again.`);
+          alert(`Submission failed: ${err.message}\n\nPlease check your connection and try again.`);
         }
       };
 
@@ -4137,7 +4222,7 @@
                           </select>
                         
                           <button onClick={async () => {
-                            if (!window.confirm(' DANGER: This will permanently delete ALL classes and student data from the database.\\\\n\\\\nThis action CANNOT be undone.\\\\n\\\\nType "DELETE" in the next prompt to confirm.')) return;
+                            if (!window.confirm(' DANGER: This will permanently delete ALL classes and student data from the database.\n\nThis action CANNOT be undone.\n\nType "DELETE" in the next prompt to confirm.')) return;
                             const confirmation = prompt('Type DELETE to confirm:');
                             if (confirmation !== 'DELETE') {
                               alert('Deletion cancelled.');
@@ -4345,6 +4430,78 @@
                           >
                              Export Analytics CSV
                           </button>
+                        </div>
+
+                        {/* Marking Explanation Card */}
+                        <div style={{ marginBottom:'2rem', borderRadius:'16px', border:'1.5px solid #D4E8DC', background:'white', boxShadow:'0 4px 16px rgba(26,82,56,0.07)', overflow:'hidden' }}>
+                          <button onClick={() => setMarkingCardOpen(o => !o)}
+                            style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'1rem 1.4rem', background:'linear-gradient(135deg, #F0F7F4 0%, #E8F4EE 100%)', border:'none', cursor:'pointer', textAlign:'left' }}>
+                            <span style={{ fontWeight:700, fontSize:'1rem', color:'var(--jungle-deep)' }}>📊 How Student Responses Are Marked</span>
+                            <span style={{ fontSize:'1.2rem', color:'var(--jungle-mid)', transition:'transform 0.2s', display:'inline-block', transform: markingCardOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
+                          </button>
+                          {markingCardOpen && (
+                            <div style={{ padding:'1.4rem', display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(240px, 1fr))', gap:'1rem' }}>
+
+                              {/* Behaviour */}
+                              <div style={{ background:'#F4FBF7', borderRadius:'12px', padding:'1rem 1.1rem', borderLeft:'4px solid #34A85A' }}>
+                                <p style={{ fontWeight:700, fontSize:'0.95rem', color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>👀 Behaviour</p>
+                                <p style={{ fontSize:'0.82rem', color:'#555', marginBottom:'0.5rem', lineHeight:1.6 }}>Assesses what students observe at the exhibit.</p>
+                                <p style={{ fontSize:'0.78rem', fontWeight:600, color:'#444', marginBottom:'0.25rem' }}>Students earn marks by:</p>
+                                <ul style={{ margin:'0 0 0.5rem', paddingLeft:'1.1rem', fontSize:'0.8rem', color:'#555', lineHeight:1.8 }}>
+                                  <li>Identifying what the animal is doing</li>
+                                  <li>Recognising behaviours (feeding, resting, interacting)</li>
+                                </ul>
+                                <p style={{ fontSize:'0.78rem', fontWeight:600, color:'#34A85A', marginBottom:'0.2rem' }}>Higher marks:</p>
+                                <ul style={{ margin:0, paddingLeft:'1.1rem', fontSize:'0.8rem', color:'#555', lineHeight:1.8 }}>
+                                  <li>Clear and accurate observations</li>
+                                  <li>Recognition of meaningful behaviours</li>
+                                </ul>
+                              </div>
+
+                              {/* Detail */}
+                              <div style={{ background:'#F4F7FB', borderRadius:'12px', padding:'1rem 1.1rem', borderLeft:'4px solid #4A90D9' }}>
+                                <p style={{ fontWeight:700, fontSize:'0.95rem', color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>🔍 Detail</p>
+                                <p style={{ fontSize:'0.82rem', color:'#555', marginBottom:'0.5rem', lineHeight:1.6 }}>Assesses the level of understanding shown in the response.</p>
+                                <p style={{ fontSize:'0.78rem', fontWeight:600, color:'#444', marginBottom:'0.25rem' }}>Students earn marks by including:</p>
+                                <ul style={{ margin:'0 0 0.5rem', paddingLeft:'1.1rem', fontSize:'0.8rem', color:'#555', lineHeight:1.8 }}>
+                                  <li>A clear observation</li>
+                                  <li>A relevant concept (e.g. adaptation, group behaviour)</li>
+                                  <li>A simple explanation</li>
+                                  <li>A link to survival or behaviour</li>
+                                </ul>
+                                <p style={{ fontSize:'0.78rem', color:'#4A90D9', fontWeight:600, marginBottom:'0.2rem' }}>Important: Students do NOT need all of these.</p>
+                                <p style={{ fontSize:'0.78rem', fontWeight:600, color:'#34A85A', marginBottom:'0.2rem' }}>Higher marks:</p>
+                                <ul style={{ margin:0, paddingLeft:'1.1rem', fontSize:'0.8rem', color:'#555', lineHeight:1.8 }}>
+                                  <li>Multiple elements included (e.g. observation + explanation)</li>
+                                </ul>
+                              </div>
+
+                              {/* Writing */}
+                              <div style={{ background:'#FDF8F4', borderRadius:'12px', padding:'1rem 1.1rem', borderLeft:'4px solid #E8894A' }}>
+                                <p style={{ fontWeight:700, fontSize:'0.95rem', color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>✍️ Writing</p>
+                                <p style={{ fontSize:'0.82rem', color:'#555', marginBottom:'0.5rem', lineHeight:1.6 }}>Assesses how clearly the student communicates their ideas.</p>
+                                <p style={{ fontSize:'0.78rem', fontWeight:600, color:'#444', marginBottom:'0.25rem' }}>Students earn marks for:</p>
+                                <ul style={{ margin:'0 0 0.5rem', paddingLeft:'1.1rem', fontSize:'0.8rem', color:'#555', lineHeight:1.8 }}>
+                                  <li>Writing in full sentences</li>
+                                  <li>Using appropriate terminology</li>
+                                  <li>Clearly expressing their ideas</li>
+                                </ul>
+                                <p style={{ fontSize:'0.78rem', fontWeight:600, color:'#34A85A', marginBottom:'0.2rem' }}>Higher marks:</p>
+                                <ul style={{ margin:0, paddingLeft:'1.1rem', fontSize:'0.8rem', color:'#555', lineHeight:1.8 }}>
+                                  <li>Well-structured responses</li>
+                                  <li>Correct use of scientific language</li>
+                                </ul>
+                              </div>
+
+                              {/* Footer note — full width */}
+                              <div style={{ gridColumn:'1 / -1', background:'#F7FAF8', borderRadius:'10px', padding:'0.75rem 1rem', borderLeft:'3px solid var(--jungle-mid)' }}>
+                                <p style={{ fontSize:'0.8rem', color:'#555', margin:0, lineHeight:1.7 }}>
+                                  <strong style={{ color:'var(--jungle-deep)' }}>Note:</strong> Students are rewarded for demonstrating understanding in different ways. A complete response may include observation, explanation, and use of key concepts — but students can still earn meaningful marks with a clear observation or a relevant concept alone.
+                                </p>
+                              </div>
+
+                            </div>
+                          )}
                         </div>
 
                         {/* Chart 1: Most Visited Animals */}
