@@ -449,6 +449,7 @@
       const [lemurTimerFinished, setLemurTimerFinished] = useState(false);
       const [lemurTimeLeft, setLemurTimeLeft] = useState(30);
       const [lemurTapCooldown, setLemurTapCooldown] = useState({});
+      const [dingoChainItems, setDingoChainItems] = useState([]);
       const [cameraActive, setCameraActive] = React.useState(false);
       const [cameraStream, setCameraStream] = React.useState(null);
       const videoRef = React.useRef(null);
@@ -1915,7 +1916,7 @@
               options: ['They are herbivores that eat only plants', 'They are apex predators that help regulate prey populations', 'They have no ecological role', 'They are introduced pests'],
               correct: 1, fact: 'Dingoes are apex predators in Australia and help regulate populations of kangaroos and other animals, supporting ecosystem balance.' }
           ],
-          observationPrompt: 'Observe the dingo carefully. Describe its appearance, movement, or behaviour.',
+          observationPrompt: 'Explain how the dingo\'s appearance helps it survive in its environment.',
           pointValue: 50
         },
         {
@@ -2309,6 +2310,127 @@
                     ))}
                   </div>
                 </div>
+
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      function renderDingoMission() {
+        const chainOptions = [
+          { id: 'sun',       label: '☀️ Sun',          desc: 'Energy source' },
+          { id: 'grass',     label: '🌿 Grass',         desc: 'Producer' },
+          { id: 'kangaroo',  label: '🦘 Kangaroo',      desc: 'Herbivore' },
+          { id: 'rabbit',    label: '🐰 Rabbit',         desc: 'Herbivore' },
+          { id: 'lizard',    label: '🦎 Lizard',         desc: 'Omnivore' },
+          { id: 'dingo',     label: '🐕 Dingo',          desc: 'Apex predator' },
+          { id: 'eagle',     label: '🦅 Eagle',          desc: 'Top predator' },
+        ];
+        const isChainBuilt = dingoChainItems.length >= 3;
+        const currentQuestion = currentAnimal.questions[0];
+
+        function toggleItem(id) {
+          setDingoChainItems(prev =>
+            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+          );
+        }
+
+        return (
+          <div style={{ position:'fixed', inset:0, background: showResult ? (isCorrect ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)') : 'var(--mist-light)', transition:'background 0.5s ease', display:'flex', flexDirection:'column' }}>
+            {/* Header */}
+            <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'0.6rem 1rem', flex:'0 0 auto', zIndex:100 }}>
+              <div style={{ maxWidth:'900px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <button onClick={() => setCurrentScreen('map')} style={{ background:'rgba(255,255,255,0.2)', border:'none', color:'white', padding:'0.5rem 1rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.85rem', fontWeight:600 }}> Back</button>
+                <img src="images/logo.png" alt="Taronga Tracka" style={{ height:'45px', width:'auto' }} onError={(e) => { e.target.style.display='none'; }} />
+                <div style={{ width:'70px' }} />
+              </div>
+            </div>
+
+            {/* Result overlay */}
+            {showResult && (
+              <div className="animate-scale-in" style={{ textAlign:'center', padding:'clamp(1.5rem,3vh,2rem)', background:'rgba(255,255,255,0.95)', borderRadius:'20px', boxShadow:'0 8px 32px rgba(0,0,0,0.2)', margin:'clamp(1rem,2vh,1.5rem)', maxWidth:'90%', marginLeft:'auto', marginRight:'auto', marginTop:'clamp(1rem,3vh,2rem)' }}>
+                <div style={{ fontSize:'clamp(3rem,8vh,4.5rem)', marginBottom:'0.5rem' }}>{isCorrect ? '✔' : ''}</div>
+                <h2 className="heading-display" style={{ fontSize:'clamp(2rem,5vh,3rem)', color: isCorrect ? '#10b981' : '#ef4444', marginBottom:'0.4rem', lineHeight:1.1 }}>{isCorrect ? 'Correct!' : 'Not Quite'}</h2>
+                {isCorrect && <p style={{ fontSize:'clamp(0.9rem,2vh,1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>You understand the dingo's place in the ecosystem!</p>}
+                {!isCorrect && <p style={{ fontSize:'clamp(0.9rem,2vh,1rem)', color:'#555', marginBottom:'0.8rem' }}>Think about how dingoes affect other animal populations.</p>}
+                {currentQuestion.fact && (
+                  <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'12px', padding:'clamp(1rem,2vh,1.5rem)', marginTop:'0.8rem', marginBottom:'1rem' }}>
+                    <p style={{ color:'#333', fontSize:'clamp(0.9rem,2vh,1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentQuestion.fact}</p>
+                  </div>
+                )}
+                <button onClick={() => { if (isCorrect) { handleNextQuestion(); } else { setIsProcessingAnswer(false); setShowResult(false); } }}
+                  style={{ background: isCorrect ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)', color:'white', border:'none', padding:'clamp(0.8rem,2vh,1.2rem) clamp(2rem,5vw,3rem)', fontSize:'clamp(1rem,2.5vh,1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.05em', boxShadow:'0 4px 12px rgba(0,0,0,0.2)', marginTop:'0.5rem' }}>
+                  {isCorrect ? 'Continue to Observation ' : 'Try Again'}
+                </button>
+              </div>
+            )}
+
+            {!showResult && (
+              <div style={{ flex:'1 1 auto', overflowY:'auto', padding:'1rem', maxWidth:'560px', margin:'0 auto', width:'100%' }}>
+
+                {/* Title */}
+                <div style={{ background:'white', borderRadius:'16px', padding:'1rem 1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
+                  <h2 style={{ fontSize:'1.2rem', fontWeight:700, color:'var(--jungle-deep)', margin:'0 0 0.2rem' }}>🐕 Dingo Food Chain Builder</h2>
+                  <p style={{ fontSize:'0.82rem', color:'#666', margin:0 }}>Select at least 3 organisms to build an Australian food chain, then answer the question.</p>
+                </div>
+
+                {/* Chain builder */}
+                <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
+                  <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.75rem' }}>
+                    Tap to add to your food chain ({dingoChainItems.length} selected)
+                  </p>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.6rem', marginBottom:'1rem' }}>
+                    {chainOptions.map(opt => {
+                      const selected = dingoChainItems.includes(opt.id);
+                      return (
+                        <button key={opt.id} onClick={() => toggleItem(opt.id)}
+                          style={{ padding:'0.75rem 0.6rem', borderRadius:'12px', border:`2px solid ${selected ? '#C4873A' : '#E5E5E5'}`, background: selected ? '#FDF3E8' : '#F8F8F8', cursor:'pointer', textAlign:'left', transition:'all 0.15s', display:'flex', alignItems:'center', gap:'0.5rem' }}>
+                          <span style={{ fontSize:'1.3rem', flexShrink:0 }}>{opt.label.split(' ')[0]}</span>
+                          <div>
+                            <div style={{ fontSize:'0.82rem', fontWeight:700, color:'var(--jungle-deep)' }}>{opt.label.split(' ').slice(1).join(' ')}</div>
+                            <div style={{ fontSize:'0.7rem', color:'#888' }}>{opt.desc}</div>
+                          </div>
+                          {selected && <span style={{ marginLeft:'auto', fontSize:'0.8rem', color:'#C4873A', fontWeight:700, flexShrink:0 }}>✔</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Chain preview */}
+                  {dingoChainItems.length > 0 && (
+                    <div style={{ background:'#FDF3E8', borderRadius:'10px', padding:'0.6rem 0.8rem', border:'1px solid #E8C897' }}>
+                      <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#C4873A', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>Your chain:</p>
+                      <p style={{ fontSize:'0.85rem', color:'var(--jungle-deep)', margin:0, lineHeight:1.6 }}>
+                        {dingoChainItems.map(id => chainOptions.find(o => o.id === id)?.label).join(' → ')}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* MCQ — gated behind chain */}
+                {!isChainBuilt ? (
+                  <div style={{ background:'#FFF8F0', border:'1.5px dashed #E8C897', borderRadius:'14px', padding:'1.1rem', textAlign:'center' }}>
+                    <p style={{ fontSize:'0.9rem', color:'#C4873A', fontWeight:600, margin:0 }}>
+                      🔒 Build a food chain first to unlock the question
+                    </p>
+                    <p style={{ fontSize:'0.78rem', color:'#888', marginTop:'0.3rem', marginBottom:0 }}>
+                      Select {3 - dingoChainItems.length} more organism{3 - dingoChainItems.length !== 1 ? 's' : ''} to continue
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)' }}>
+                    <p style={{ fontSize:'0.95rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.75rem', textAlign:'center' }}>{currentQuestion.q}</p>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.6rem' }}>
+                      {currentQuestion.options.map((opt, i) => (
+                        <button key={i} onClick={() => handleQuizAnswer(0, i)}
+                          style={{ padding:'0.85rem 0.6rem', borderRadius:'12px', border:'2px solid transparent', background:'#F8F4EE', color:'var(--jungle-deep)', fontSize:'0.88rem', fontWeight:600, cursor:'pointer', textAlign:'left', transition:'all 0.15s', lineHeight:1.3 }}>
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
               </div>
             )}
@@ -2903,6 +3025,7 @@
         setLemurTimerFinished(false);
         setLemurTimeLeft(30);
         setLemurTapCooldown({});
+        setDingoChainItems([]);
         setCurrentScreen('animal');
         if (animal.id === 'tiger' || animal.id === 'lion' || animal.id === 'giraffe') { startCamera(); }
         setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 0);
@@ -2963,6 +3086,10 @@
           return;
         }
         if (currentAnimal.id === 'lemur') {
+          setCurrentScreen('observation');
+          return;
+        }
+        if (currentAnimal.id === 'dingo') {
           setCurrentScreen('observation');
           return;
         }
@@ -3097,6 +3224,29 @@
           const hasConnection = connectionWords.some(w => lower.includes(w));
 
           const elements = [hasLocation, hasBehaviourDetail, hasExplanation, hasConnection].filter(Boolean).length;
+          if (elements === 0) detailBonus = 0;
+          else if (elements === 1) detailBonus = 1;
+          else detailBonus = Math.min(elements + 1, 5);
+
+          literacyBonus = calculateWritingScore(text);
+        } else if (currentAnimal.id === 'dingo') {
+          // Behaviour: observable appearance features and environment references
+          const behaviourWords = ['fur','coat','colour','color','tan','sandy','brown','golden','yellow','pale','dark','blend','camouflage','hide','look','appear','observe','notice','see','watch','spot','match','similar'];
+          const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
+          behaviourBonus = Math.min(behaviourHits + 1, 5);
+
+          // Detail: dingo appearance, environment description, camouflage explanation, or appearance–environment link
+          const dingoAppearanceWords = ['fur','coat','colour','color','tan','sandy','brown','golden','yellow','pale','skin','pattern','marking','stripe'];
+          const envWords = ['grass','dirt','rock','ground','sand','bush','scrub','desert','earth','soil','landscape','surroundings','environment','habitat'];
+          const explanationPatterns = ['because','helps','so that','allows','enables','survive','predator','prey','hunt','hide','camouflage','blend','unseen','invisible','protection','advantage'];
+          const linkWords = ['similar','same','match','like','matches','blends','looks like','colour of','colour as'];
+
+          const hasDingoAppearance = dingoAppearanceWords.some(w => lower.includes(w));
+          const hasEnvironment = envWords.some(w => lower.includes(w));
+          const hasExplanation = explanationPatterns.some(p => lower.includes(p));
+          const hasLink = linkWords.some(p => lower.includes(p));
+
+          const elements = [hasDingoAppearance, hasEnvironment, hasExplanation, hasLink].filter(Boolean).length;
           if (elements === 0) detailBonus = 0;
           else if (elements === 1) detailBonus = 1;
           else detailBonus = Math.min(elements + 1, 5);
@@ -3567,6 +3717,7 @@
         if (currentAnimal.id === 'gorilla') { return renderGorillaMission(); }
         if (currentAnimal.id === 'giraffe') { return renderGiraffeMission(); }
         if (currentAnimal.id === 'lemur') { return renderLemurMission(); }
+        if (currentAnimal.id === 'dingo') { return renderDingoMission(); }
         const currentQuestion = currentAnimal.questions[currentQuestionIndex];
         return (
           <div style={{ position:'fixed', inset:0, overflow:'hidden', background:showResult?(isCorrect?'linear-gradient(135deg, #10b981 0%, #059669 100%)':'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'):'var(--mist-light)', transition:'background 0.5s ease', display:'flex', flexDirection:'column' }}>
@@ -3846,6 +3997,22 @@
                       ))}
                     </div>
                   </>
+                ) : currentAnimal.id === 'dingo' ? (
+                  <>
+                    <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'0.5rem', textAlign:'center' }}>🐕 Dingo Adaptations: Camouflage</h2>
+                    <p style={{ color:'#555', marginBottom:'0.5rem', lineHeight:1.6, fontSize:'0.95rem', textAlign:'center' }}>
+                      Animals have adaptations that help them survive in their environment. Dingoes use camouflage to blend into their surroundings.
+                    </p>
+                    <p style={{ color:'var(--jungle-mid)', fontWeight:600, marginBottom:'0.4rem', fontSize:'0.9rem', textAlign:'center' }}>
+                      👀 Observe the dingo and its environment
+                    </p>
+                    <div style={{ background:'#FDF3E8', border:'1px solid #E8C897', borderRadius:'10px', padding:'0.6rem 0.9rem', marginBottom:'1.2rem', textAlign:'left' }}>
+                      <p style={{ fontSize:'0.8rem', color:'#555', margin:'0 0 0.25rem', fontWeight:600 }}>Look at:</p>
+                      {['its fur colour', 'the surrounding environment (grass, dirt, rocks)'].map((pt, i) => (
+                        <p key={i} style={{ fontSize:'0.8rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.7rem' }}>– {pt}</p>
+                      ))}
+                    </div>
+                  </>
                 ) : (
                   <>
                     <h2 className="heading-display" style={{ fontSize:'2.5rem', color:'var(--jungle-deep)', marginBottom:'1rem', textAlign:'center' }}>Your Observations</h2>
@@ -3881,7 +4048,7 @@
                   </div>
                 )}
                 <textarea value={observation} onChange={(e)=>setObservation(e.target.value)}
-                  placeholder={currentAnimal.id === 'chimpanzee' ? 'I observed that...' : currentAnimal.id === 'gorilla' ? 'I noticed that the gorillas...' : currentAnimal.id === 'giraffe' ? "I noticed that the giraffe's ... helps it to..." : currentAnimal.id === 'concert-lawn' ? 'The grass felt...' : currentAnimal.id === 'lemur' ? 'The lemurs are using...' : 'Describe what you observe in detail...'}
+                  placeholder={currentAnimal.id === 'chimpanzee' ? 'I observed that...' : currentAnimal.id === 'gorilla' ? 'I noticed that the gorillas...' : currentAnimal.id === 'giraffe' ? "I noticed that the giraffe's ... helps it to..." : currentAnimal.id === 'concert-lawn' ? 'The grass felt...' : currentAnimal.id === 'lemur' ? 'The lemurs are using...' : currentAnimal.id === 'dingo' ? "The dingo's fur is..." : 'Describe what you observe in detail...'}
                   style={{ width:'100%', minHeight:'200px', padding:'1.5rem', borderRadius:'16px', border:'3px solid #E5E5E5', fontSize:'1.1rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', transition:'border-color 0.2s ease' }}
                   onFocus={(e)=>e.target.style.borderColor=currentAnimal.color} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'} />
                 {currentAnimal.id === 'chimpanzee' && (
@@ -3952,6 +4119,24 @@
                     </ul>
                     <p style={{ fontSize:'0.75rem', fontWeight:600, color:'#7A6E8A', marginBottom:'0.2rem' }}>Optional sentence starters:</p>
                     {['The lemurs are using…', 'I noticed they were…', 'They might use this area because…'].map((s, i) => (
+                      <p key={i} style={{ fontSize:'0.78rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.5rem', fontStyle:'italic' }}>"{s}"</p>
+                    ))}
+                  </div>
+                )}
+                {currentAnimal.id === 'dingo' && (
+                  <div style={{ background:'#FDF3E8', border:'1px solid #E8C897', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
+                    <p style={{ fontSize:'0.75rem', fontWeight:700, color:'#059669', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>✔ A good start — describe what you can see:</p>
+                    <ul style={{ margin:'0 0 0.75rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                      <li>What the dingo looks like (colour, fur)</li>
+                      <li>What the environment looks like (grass, dirt, rocks)</li>
+                    </ul>
+                    <p style={{ fontSize:'0.75rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>⬆ To go further:</p>
+                    <ul style={{ margin:'0 0 0.6rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                      <li>Explain how the dingo's colour helps it survive — <em>"This helps the dingo because…"</em></li>
+                      <li>Link its appearance to the environment (e.g. similar colours, blending in)</li>
+                    </ul>
+                    <p style={{ fontSize:'0.75rem', fontWeight:600, color:'#C4873A', marginBottom:'0.2rem' }}>Optional sentence starters:</p>
+                    {["The dingo's fur is…", 'The environment around it is…', 'This helps the dingo because…'].map((s, i) => (
                       <p key={i} style={{ fontSize:'0.78rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.5rem', fontStyle:'italic' }}>"{s}"</p>
                     ))}
                   </div>
