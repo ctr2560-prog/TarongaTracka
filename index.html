@@ -7115,8 +7115,8 @@
                 <div style={{ flex:1, overflowY:'auto', padding:'1rem 1.5rem 1.5rem' }}>
                   <div style={{ maxWidth:'720px', margin:'0 auto' }}>
                     <div style={{ background:'white', borderRadius:'16px', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', overflow:'hidden' }}>
-                      <div style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 0.85fr 0.85fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
-                        {['Student','Points','Badges','Quiz %','Last Active','Observations','Conservation','Status'].map(h => (
+                      <div style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 1.4fr 0.85fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
+                        {['Student','Points','Badges','Quiz %','Observations','Conservation Statement','Status'].map(h => (
                           <div key={h} style={{ color:'rgba(255,255,255,0.8)', fontSize:'0.72rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>{h}</div>
                         ))}
                       </div>
@@ -7134,7 +7134,7 @@
                           const hasObservations = (s.badges || []).some(b => b.observation);
                           const badgeCount = Array.isArray(s.badges) ? new Set(s.badges.map(b => b.animalId).filter(Boolean)).size : 0;
                           return (
-                            <div key={s.name} style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 0.85fr 1.2fr 0.85fr', padding:'0.7rem 1rem', borderTop:'1px solid #F0EDE8', alignItems:'center', background: i % 2 === 0 ? 'white' : '#FAFAF8' }}>
+                            <div key={s.name} style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 1.4fr 0.85fr', padding:'0.7rem 1rem', borderTop:'1px solid #F0EDE8', alignItems:'center', background: i % 2 === 0 ? 'white' : '#FAFAF8' }}>
                               <div style={{ display:'flex', alignItems:'center', gap:'0.55rem' }}>
                                 <div style={{ width:'28px', height:'28px', borderRadius:'50%', background: s.completed ? 'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))' : 'linear-gradient(135deg, #aaa, #ccc)', display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontSize:'0.72rem', fontWeight:700, flexShrink:0 }}>
                                   {s.name.charAt(0).toUpperCase()}
@@ -7146,10 +7146,6 @@
                               <div style={{ fontWeight:600, color:'var(--jungle-mid)', fontSize:'0.85rem' }}>
                                 {s.quizPercentage !== undefined ? `${s.quizPercentage}%` : '—'}
                               </div>
-
-                              <div style={{ color: lastActiveDate ? 'var(--jungle-mid)' : '#bbb', fontSize:'0.75rem', fontWeight: lastActiveDate ? 600 : 400 }}>
-                                {lastActiveDate ? lastActiveDate.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '—'}
-                              </div>
                               <div>
                                 {hasObservations
                                   ? <button onClick={() => setObservationsModal(s)} style={{ background:'var(--jungle-deep)', color:'white', border:'none', padding:'0.25rem 0.6rem', borderRadius:'6px', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' }}>View</button>
@@ -7158,8 +7154,8 @@
                               </div>
                               <div style={{ display:'flex', alignItems:'center', gap:'0.35rem' }}>
                                 {s.conservationStatement
-                                  ? <span style={{ fontSize:'0.75rem', color:'var(--jungle-deep)', lineHeight:1.4 }} title={s.conservationStatement}>
-                                      {s.conservationStatement.length > 50 ? s.conservationStatement.slice(0, 50) + '…' : s.conservationStatement}
+                                  ? <span style={{ fontSize:'0.73rem', color:'var(--jungle-deep)', lineHeight:1.4 }} title={s.conservationStatement}>
+                                      {s.conservationStatement.length > 45 ? s.conservationStatement.slice(0, 45) + '…' : s.conservationStatement}
                                     </span>
                                   : <span style={{ color:'#bbb', fontSize:'0.75rem' }}>—</span>
                                 }
