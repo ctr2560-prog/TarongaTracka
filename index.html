@@ -3910,6 +3910,7 @@
         if (!window.confirm('Submit your activity results to your teacher?\n\nYou will not be able to earn more badges after this.')) return;
 
         const finalStatement = statementOverride || conservationStatement;
+        const safeStatement = typeof finalStatement === 'string' ? finalStatement.trim() : '';
 
         setIsSubmittingActivity(true);
         const code = normaliseCode(classCode);
@@ -3960,7 +3961,7 @@
               quizTotal: quizTotal,
               quizPercentage: quizPercent,
               quizPercent: quizPercent,
-              conservationStatement: finalStatement || '',
+              conservationStatement: safeStatement,
               completed: true,
               completedAt: firebase.firestore.FieldValue.serverTimestamp(),
               status: "complete"
