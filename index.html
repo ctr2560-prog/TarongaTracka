@@ -3901,15 +3901,18 @@
         if (!studentName || !classCode) return;
         if (activityCompleted) return;
 
-        // If no conservation statement yet, show that screen first
-        if (!statementOverride && !conservationStatement.trim()) {
+        // Guard: treat non-string statementOverride (e.g. click events) as undefined
+        const validOverride = typeof statementOverride === 'string' ? statementOverride : null;
+
+        // Always show conservation screen first unless submitting from it
+        if (!validOverride) {
           setShowConservationScreen(true);
           return;
         }
 
         if (!window.confirm('Submit your activity results to your teacher?\n\nYou will not be able to earn more badges after this.')) return;
 
-        const finalStatement = statementOverride || conservationStatement;
+        const finalStatement = validOverride;
         const safeStatement = typeof finalStatement === 'string' ? finalStatement.trim() : '';
 
         setIsSubmittingActivity(true);
@@ -4990,42 +4993,44 @@
         );
       }
 
-      if (showConservationScreen) {
-        const csLen = conservationStatement.trim().length;
-        const csReady = csLen >= 5;
-        return (
-          <div className="fade-in" style={{ position:'fixed', inset:0, background:'linear-gradient(160deg, #1a3a2a 0%, #2e5c3e 100%)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'2rem', color:'white' }}>
-            <div style={{ maxWidth:'520px', width:'100%', textAlign:'center' }}>
-              <div style={{ fontSize:'3.5rem', marginBottom:'0.8rem' }}>🌱</div>
-              <h2 className="heading-display" style={{ fontSize:'2.2rem', marginBottom:'0.6rem', color:'white' }}>Make a Difference</h2>
-              <p style={{ fontSize:'1rem', opacity:0.85, lineHeight:1.7, marginBottom:'0.5rem' }}>
-                Before you finish, think about how you can help protect animals and the environment.
-              </p>
-              <p style={{ fontSize:'1.05rem', fontWeight:600, marginBottom:'1.2rem', opacity:0.95 }}>
-                Based on today's experience, what is ONE thing you can do to support conservation?
-              </p>
-              <textarea
-                value={conservationStatement}
-                onChange={e => setConservationStatement(e.target.value)}
-                placeholder="I can help by..."
-                style={{ width:'100%', minHeight:'130px', padding:'1rem 1.2rem', borderRadius:'14px', border:'none', fontSize:'1rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', color:'#1a3a2a', lineHeight:1.6, boxSizing:'border-box' }}
-              />
-              <div style={{ fontSize:'0.8rem', opacity:0.65, marginTop:'0.4rem', marginBottom:'1.2rem', textAlign:'right' }}>
-                {csLen} / 5 minimum characters
-              </div>
-              <button
-                disabled={!csReady}
-                onClick={() => { setShowConservationScreen(false); completeActivity(conservationStatement); }}
-                style={{ width:'100%', padding:'1.1rem', borderRadius:'50px', border:'none', background: csReady ? 'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))' : 'rgba(255,255,255,0.2)', color:'white', fontSize:'1.1rem', fontWeight:700, cursor: csReady ? 'pointer' : 'not-allowed', textTransform:'uppercase', letterSpacing:'0.08em', boxShadow: csReady ? '0 4px 16px rgba(232,106,51,0.5)' : 'none', transition:'all 0.2s' }}>
-                Finish Session 🌿
-              </button>
-              <button onClick={() => setShowConservationScreen(false)} style={{ marginTop:'0.75rem', background:'none', border:'none', color:'rgba(255,255,255,0.5)', fontSize:'0.8rem', cursor:'pointer' }}>
-                ← Back
-              </button>
-            </div>
-          </div>
-        );
-      }
+       if (showConservationScreen) {
+         const csLen = conservationStatement.trim().length;
+         const csReady = csLen >= 5;
+         return (
+           <div style={{ position:'fixed', inset:0, zIndex:2000, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.55)', padding:'1rem' }}>
+             <div className="fade-in" style={{ background:'white', borderRadius:'20px', padding:'2rem', maxWidth:'500px', width:'100%', boxShadow:'0 24px 64px rgba(0,0,0,0.35)', textAlign:'center' }}>
+               <div style={{ fontSize:'3rem', marginBottom:'0.6rem' }}>🌱</div>
+               <h2 className="heading-display" style={{ fontSize:'1.9rem', color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>Make a Difference</h2>
+               <p style={{ fontSize:'0.92rem', color:'#555', lineHeight:1.7, marginBottom:'0.4rem' }}>
+                 Before you finish, think about how you can help protect animals and the environment.
+               </p>
+               <p style={{ fontSize:'0.95rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
+                 Based on today's experience, what is ONE thing you can do to support conservation?
+               </p>
+               <textarea
+                 value={conservationStatement}
+                 onChange={e => setConservationStatement(e.target.value)}
+                 placeholder="I can help by..."
+                 style={{ width:'100%', minHeight:'120px', padding:'1rem 1.1rem', borderRadius:'12px', border:'2px solid #E5E5E5', fontSize:'1rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', color:'#222', lineHeight:1.6, boxSizing:'border-box', outline:'none', transition:'border-color 0.2s' }}
+                 onFocus={e => e.target.style.borderColor = 'var(--jungle-mid)'}
+                 onBlur={e => e.target.style.borderColor = '#E5E5E5'}
+               />
+               <div style={{ fontSize:'0.78rem', color: csReady ? '#16A34A' : '#aaa', marginTop:'0.3rem', marginBottom:'1.1rem', textAlign:'right', fontWeight:600 }}>
+                 {csLen} / 5 minimum characters
+               </div>
+               <button
+                 disabled={!csReady}
+                 onClick={() => { setShowConservationScreen(false); completeActivity(conservationStatement); }}
+                 style={{ width:'100%', padding:'1rem', borderRadius:'50px', border:'none', background: csReady ? 'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))' : '#CCC', color:'white', fontSize:'1rem', fontWeight:700, cursor: csReady ? 'pointer' : 'not-allowed', textTransform:'uppercase', letterSpacing:'0.08em', boxShadow: csReady ? '0 4px 16px rgba(232,106,51,0.4)' : 'none', transition:'all 0.2s', marginBottom:'0.6rem' }}>
+                 Submit & Finish 🌿
+               </button>
+               <button onClick={() => setShowConservationScreen(false)} style={{ background:'none', border:'none', color:'#aaa', fontSize:'0.8rem', cursor:'pointer' }}>
+                 ← Back
+               </button>
+             </div>
+           </div>
+         );
+       }
 
       if (currentScreen === 'submissionComplete') {
         return (
