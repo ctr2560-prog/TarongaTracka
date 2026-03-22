@@ -898,7 +898,8 @@
                 completed: d.completed || false,
                 completedAt: d.completedAt ? d.completedAt.toDate() : null,
                 quizPercentage: d.quizPercentage,
-                status: d.status || (d.completed ? 'complete' : 'incomplete')
+                status: d.status || (d.completed ? 'complete' : 'incomplete'),
+                conservationStatement: d.conservationStatement || ''
               };
             });
 
@@ -934,7 +935,8 @@
                 completed: d.completed || false,
                 completedAt: d.completedAt ? d.completedAt.toDate() : null,
                 quizPercentage: d.quizPercentage,
-                status: d.status || (d.completed ? 'complete' : 'incomplete')
+                status: d.status || (d.completed ? 'complete' : 'incomplete'),
+                conservationStatement: d.conservationStatement || ''
               };
             });
             setFirestoreStudents(students);
