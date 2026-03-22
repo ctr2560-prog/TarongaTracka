@@ -441,6 +441,7 @@
       const [gorillaSelection, setGorillaSelection] = useState(null);
       const [giraffeMarker, setGiraffeMarker] = useState(50);
       const [markingCardOpen, setMarkingCardOpen] = useState(false);
+      const [adminConservationStatements, setAdminConservationStatements] = useState([]);
       const [concertLawnTimerSeconds, setConcertLawnTimerSeconds] = useState(60);
       const [concertLawnTimerActive, setConcertLawnTimerActive] = useState(false);
       const [concertLawnTimerDone, setConcertLawnTimerDone] = useState(false);
@@ -1379,7 +1380,36 @@
         return () => { if (quizChartInstanceRef.current) quizChartInstanceRef.current.destroy(); };
       }, [currentScreen, adminTab, adminClasses, adminDateRange]);
 
-      // Chart 3: Observation Skill Breakdown (Radar)
+      // Fetch conservation statements across all classes for analytics feed
+      React.useEffect(() => {
+        if (currentScreen !== 'adminDashboard' || adminTab !== 'analytics') return;
+        if (!adminClasses.length) { setAdminConservationStatements([]); return; }
+        let cancelled = false;
+        (async () => {
+          const results = [];
+          for (const cls of adminClasses) {
+            try {
+              const snap = await window.db.collection('classes').doc(cls.classCode).collection('students').get();
+              snap.docs.forEach(doc => {
+                const d = doc.data();
+                if (d.conservationStatement && d.conservationStatement.trim()) {
+                  results.push({
+                    name: d.name || doc.id,
+                    statement: d.conservationStatement.trim(),
+                    className: cls.className || cls.classCode || '',
+                    completedAt: d.completedAt ? d.completedAt.toDate() : null
+                  });
+                }
+              });
+            } catch (err) { /* skip class on error */ }
+          }
+          if (!cancelled) {
+            results.sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0));
+            setAdminConservationStatements(results);
+          }
+        })();
+        return () => { cancelled = true; };
+      }, [currentScreen, adminTab, adminClasses]);
       useEffect(() => {
         if (currentScreen !== 'adminDashboard' || adminTab !== 'analytics') return;
         if (!window.Chart || !writingChartRef.current) return;
@@ -5763,78 +5793,6 @@
                           </button>
                         </div>
 
-                        {/* Marking Explanation Card */}
-                        <div style={{ marginBottom:'2rem', borderRadius:'16px', border:'1.5px solid #D4E8DC', background:'white', boxShadow:'0 4px 16px rgba(26,82,56,0.07)', overflow:'hidden' }}>
-                          <button onClick={() => setMarkingCardOpen(o => !o)}
-                            style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'1rem 1.4rem', background:'linear-gradient(135deg, #F0F7F4 0%, #E8F4EE 100%)', border:'none', cursor:'pointer', textAlign:'left' }}>
-                            <span style={{ fontWeight:700, fontSize:'1rem', color:'var(--jungle-deep)' }}>📊 How Student Responses Are Marked</span>
-                            <span style={{ fontSize:'1.2rem', color:'var(--jungle-mid)', transition:'transform 0.2s', display:'inline-block', transform: markingCardOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
-                          </button>
-                          {markingCardOpen && (
-                            <div style={{ padding:'1.4rem', display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(240px, 1fr))', gap:'1rem' }}>
-
-                              {/* Behaviour */}
-                              <div style={{ background:'#F4FBF7', borderRadius:'12px', padding:'1rem 1.1rem', borderLeft:'4px solid #34A85A' }}>
-                                <p style={{ fontWeight:700, fontSize:'0.95rem', color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>👀 Behaviour</p>
-                                <p style={{ fontSize:'0.82rem', color:'#555', marginBottom:'0.5rem', lineHeight:1.6 }}>Assesses what students observe at the exhibit.</p>
-                                <p style={{ fontSize:'0.78rem', fontWeight:600, color:'#444', marginBottom:'0.25rem' }}>Students earn marks by:</p>
-                                <ul style={{ margin:'0 0 0.5rem', paddingLeft:'1.1rem', fontSize:'0.8rem', color:'#555', lineHeight:1.8 }}>
-                                  <li>Identifying what the animal is doing</li>
-                                  <li>Recognising behaviours (feeding, resting, interacting)</li>
-                                </ul>
-                                <p style={{ fontSize:'0.78rem', fontWeight:600, color:'#34A85A', marginBottom:'0.2rem' }}>Higher marks:</p>
-                                <ul style={{ margin:0, paddingLeft:'1.1rem', fontSize:'0.8rem', color:'#555', lineHeight:1.8 }}>
-                                  <li>Clear and accurate observations</li>
-                                  <li>Recognition of meaningful behaviours</li>
-                                </ul>
-                              </div>
-
-                              {/* Detail */}
-                              <div style={{ background:'#F4F7FB', borderRadius:'12px', padding:'1rem 1.1rem', borderLeft:'4px solid #4A90D9' }}>
-                                <p style={{ fontWeight:700, fontSize:'0.95rem', color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>🔍 Detail</p>
-                                <p style={{ fontSize:'0.82rem', color:'#555', marginBottom:'0.5rem', lineHeight:1.6 }}>Assesses the level of understanding shown in the response.</p>
-                                <p style={{ fontSize:'0.78rem', fontWeight:600, color:'#444', marginBottom:'0.25rem' }}>Students earn marks by including:</p>
-                                <ul style={{ margin:'0 0 0.5rem', paddingLeft:'1.1rem', fontSize:'0.8rem', color:'#555', lineHeight:1.8 }}>
-                                  <li>A clear observation</li>
-                                  <li>A relevant concept (e.g. adaptation, group behaviour)</li>
-                                  <li>A simple explanation</li>
-                                  <li>A link to survival or behaviour</li>
-                                </ul>
-                                <p style={{ fontSize:'0.78rem', color:'#4A90D9', fontWeight:600, marginBottom:'0.2rem' }}>Important: Students do NOT need all of these.</p>
-                                <p style={{ fontSize:'0.78rem', fontWeight:600, color:'#34A85A', marginBottom:'0.2rem' }}>Higher marks:</p>
-                                <ul style={{ margin:0, paddingLeft:'1.1rem', fontSize:'0.8rem', color:'#555', lineHeight:1.8 }}>
-                                  <li>Multiple elements included (e.g. observation + explanation)</li>
-                                </ul>
-                              </div>
-
-                              {/* Writing */}
-                              <div style={{ background:'#FDF8F4', borderRadius:'12px', padding:'1rem 1.1rem', borderLeft:'4px solid #E8894A' }}>
-                                <p style={{ fontWeight:700, fontSize:'0.95rem', color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>✍️ Writing</p>
-                                <p style={{ fontSize:'0.82rem', color:'#555', marginBottom:'0.5rem', lineHeight:1.6 }}>Assesses how clearly the student communicates their ideas.</p>
-                                <p style={{ fontSize:'0.78rem', fontWeight:600, color:'#444', marginBottom:'0.25rem' }}>Students earn marks for:</p>
-                                <ul style={{ margin:'0 0 0.5rem', paddingLeft:'1.1rem', fontSize:'0.8rem', color:'#555', lineHeight:1.8 }}>
-                                  <li>Writing in full sentences</li>
-                                  <li>Using appropriate terminology</li>
-                                  <li>Clearly expressing their ideas</li>
-                                </ul>
-                                <p style={{ fontSize:'0.78rem', fontWeight:600, color:'#34A85A', marginBottom:'0.2rem' }}>Higher marks:</p>
-                                <ul style={{ margin:0, paddingLeft:'1.1rem', fontSize:'0.8rem', color:'#555', lineHeight:1.8 }}>
-                                  <li>Well-structured responses</li>
-                                  <li>Correct use of scientific language</li>
-                                </ul>
-                              </div>
-
-                              {/* Footer note — full width */}
-                              <div style={{ gridColumn:'1 / -1', background:'#F7FAF8', borderRadius:'10px', padding:'0.75rem 1rem', borderLeft:'3px solid var(--jungle-mid)' }}>
-                                <p style={{ fontSize:'0.8rem', color:'#555', margin:0, lineHeight:1.7 }}>
-                                  <strong style={{ color:'var(--jungle-deep)' }}>Note:</strong> Students are rewarded for demonstrating understanding in different ways. A complete response may include observation, explanation, and use of key concepts — but students can still earn meaningful marks with a clear observation or a relevant concept alone.
-                                </p>
-                              </div>
-
-                            </div>
-                          )}
-                        </div>
-
                         {/* Chart 1: Most Visited Animals */}
                         <div style={{ marginBottom:'2rem' }}>
                           <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
@@ -5943,14 +5901,56 @@
 
                         {/* Conservation Statements Section */}
                         {(() => {
-                          if (!selectedClass) return null;
+                          // Build statements by reading conservationStatement from studentBadges metadata
+                          // adminClasses has studentBadges but not full student docs — use a React-rendered async pattern
+                          // Instead, gather from any loaded firestoreStudents (current class) + note other classes need separate fetch
+                          // For now: iterate adminClasses and surface statements from any students data already in memory
                           const statements = [];
-                          (selectedClass.students || []).forEach(s => {
-                            if (s && s.conservationStatement && s.conservationStatement.trim()) {
-                              statements.push({ name: s.name, statement: s.conservationStatement.trim() });
-                            }
+                          adminClasses.forEach(cls => {
+                            // studentBadges is per-badge, not per-student — check for conservationStatement in the class's Firestore snapshot if available
+                            // We'll use a fallback: render a "Fetch Statements" button per class if not yet loaded
+                            (cls.conservationStatements || []).forEach(entry => {
+                              if (entry.statement && entry.statement.trim()) {
+                                statements.push({
+                                  statement: entry.statement.trim(),
+                                  className: cls.className || cls.classCode || '—',
+                                  schoolName: cls.schoolName || 'School',
+                                });
+                              }
+                            });
                           });
-                          if (statements.length === 0) return null;
+
+                          if (statements.length === 0) {
+                            return (
+                              <div style={{ marginBottom:'2rem' }}>
+                                <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
+                                  🌱 Student Conservation Actions
+                                </h2>
+                                <div style={{ background:'white', borderRadius:'20px', padding:'1.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
+                                  <button
+                                    onClick={async () => {
+                                      try {
+                                        const updated = await Promise.all(adminClasses.map(async cls => {
+                                          const snap = await window.db.collection('classes').doc(cls.classCode).collection('students').get();
+                                          const conservationStatements = snap.docs
+                                            .map(d => ({ statement: d.data().conservationStatement || '' }))
+                                            .filter(e => e.statement.trim());
+                                          return { ...cls, conservationStatements };
+                                        }));
+                                        setAdminClasses(updated);
+                                      } catch(e) { console.error('Failed to load conservation statements', e); }
+                                    }}
+                                    style={{ background:'linear-gradient(135deg, #1b5e3c, var(--jungle-mid))', color:'white', border:'none', padding:'0.6rem 1.4rem', borderRadius:'10px', fontWeight:600, fontSize:'0.85rem', cursor:'pointer' }}>
+                                    Load Conservation Statements
+                                  </button>
+                                  <p style={{ fontSize:'0.8rem', color:'#aaa', marginTop:'0.6rem', fontStyle:'italic' }}>
+                                    Click to load anonymous conservation statements from all classes.
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          }
+
                           return (
                             <div style={{ marginBottom:'2rem' }}>
                               <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
@@ -5958,18 +5958,15 @@
                               </h2>
                               <div style={{ background:'white', borderRadius:'20px', padding:'1.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
                                 <p style={{ fontSize:'0.82rem', color:'#888', marginBottom:'1rem', fontStyle:'italic' }}>
-                                  {statements.length} student{statements.length !== 1 ? 's' : ''} shared a conservation action.
+                                  {statements.length} conservation statement{statements.length !== 1 ? 's' : ''} submitted across all classes.
                                 </p>
-                                <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem', maxHeight:'420px', overflowY:'auto' }}>
+                                <div style={{ display:'flex', flexDirection:'column', gap:'0.6rem', maxHeight:'480px', overflowY:'auto' }}>
                                   {statements.map((item, i) => (
-                                    <div key={i} style={{ background:'#F4FAF6', border:'1px solid #C8E6D4', borderRadius:'12px', padding:'0.85rem 1.1rem', display:'flex', gap:'0.85rem', alignItems:'flex-start' }}>
-                                      <div style={{ width:'32px', height:'32px', borderRadius:'50%', background:'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))', display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontSize:'0.75rem', fontWeight:700, flexShrink:0 }}>
-                                        {item.name.charAt(0).toUpperCase()}
-                                      </div>
-                                      <div style={{ flex:1 }}>
-                                        <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.2rem' }}>{item.name}</p>
-                                        <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.5, margin:0 }}>{item.statement}</p>
-                                      </div>
+                                    <div key={i} style={{ background:'white', borderRadius:'8px', padding:'0.75rem 1rem', borderLeft:'4px solid #1b5e3c', boxShadow:'0 1px 4px rgba(0,0,0,0.06)' }}>
+                                      <p style={{ fontSize:'0.75rem', fontWeight:600, color:'#555', marginBottom:'0.3rem', opacity:0.85 }}>
+                                        {item.className} — {item.schoolName}
+                                      </p>
+                                      <p style={{ fontSize:'0.88rem', color:'#333', lineHeight:1.5, margin:0 }}>"{item.statement}"</p>
                                     </div>
                                   ))}
                                 </div>
@@ -6104,6 +6101,35 @@
                             </div>
                           );
                         })()}
+
+                        {/* Global Conservation Statements Feed */}
+                        <div style={{ marginBottom:'2rem' }}>
+                          <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
+                            🌱 Conservation Statements
+                          </h2>
+                          <div style={{ background:'white', borderRadius:'20px', padding:'1.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
+                            {adminConservationStatements.length === 0 ? (
+                              <p style={{ color:'#aaa', fontSize:'0.88rem', textAlign:'center', fontStyle:'italic', padding:'1rem 0' }}>No conservation statements submitted yet.</p>
+                            ) : (
+                              <>
+                                <p style={{ fontSize:'0.82rem', color:'#888', marginBottom:'1rem', fontStyle:'italic' }}>
+                                  {adminConservationStatements.length} statement{adminConservationStatements.length !== 1 ? 's' : ''} across all classes.
+                                </p>
+                                <div style={{ maxHeight:'320px', overflowY:'auto', display:'flex', flexDirection:'column', gap:'0.65rem' }}>
+                                  {adminConservationStatements.map((s, i) => (
+                                    <div key={i} style={{ background:'#F4FAF6', borderRadius:'10px', padding:'0.85rem 1rem', borderLeft:'4px solid #1b5e3c' }}>
+                                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'0.3rem' }}>
+                                        <span style={{ fontWeight:700, fontSize:'0.82rem', color:'var(--jungle-deep)' }}>{s.name}</span>
+                                        {s.className && <span style={{ fontSize:'0.72rem', color:'#aaa', fontWeight:500 }}>{s.className}</span>}
+                                      </div>
+                                      <p style={{ fontSize:'0.85rem', color:'#333', lineHeight:1.55, margin:0 }}>"{s.statement}"</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
                       </>
                     )}
                   </>
@@ -7118,6 +7144,52 @@
 
                 <div style={{ flex:1, overflowY:'auto', padding:'1rem 1.5rem 1.5rem' }}>
                   <div style={{ maxWidth:'720px', margin:'0 auto' }}>
+
+                    {/* Marking Explanation Card */}
+                    <div style={{ marginBottom:'1rem', borderRadius:'14px', border:'1.5px solid #D4E8DC', background:'white', boxShadow:'0 2px 10px rgba(26,82,56,0.06)', overflow:'hidden' }}>
+                      <button onClick={() => setMarkingCardOpen(o => !o)}
+                        style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.85rem 1.2rem', background:'linear-gradient(135deg, #F0F7F4 0%, #E8F4EE 100%)', border:'none', cursor:'pointer', textAlign:'left' }}>
+                        <span style={{ fontWeight:700, fontSize:'0.9rem', color:'var(--jungle-deep)' }}>📊 How Student Responses Are Marked</span>
+                        <span style={{ fontSize:'1.1rem', color:'var(--jungle-mid)', transition:'transform 0.2s', display:'inline-block', transform: markingCardOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
+                      </button>
+                      {markingCardOpen && (
+                        <div style={{ padding:'1rem', display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:'0.75rem' }}>
+                          <div style={{ background:'#F4FBF7', borderRadius:'10px', padding:'0.85rem 1rem', borderLeft:'4px solid #34A85A' }}>
+                            <p style={{ fontWeight:700, fontSize:'0.88rem', color:'var(--jungle-deep)', marginBottom:'0.4rem' }}>👀 Behaviour</p>
+                            <p style={{ fontSize:'0.78rem', color:'#555', marginBottom:'0.4rem', lineHeight:1.6 }}>Assesses what students observe at the exhibit.</p>
+                            <ul style={{ margin:'0 0 0.4rem', paddingLeft:'1rem', fontSize:'0.76rem', color:'#555', lineHeight:1.8 }}>
+                              <li>Identifying what the animal is doing</li>
+                              <li>Recognising behaviours (feeding, resting, interacting)</li>
+                            </ul>
+                            <p style={{ fontSize:'0.74rem', fontWeight:600, color:'#34A85A', margin:0 }}>Higher: clear, accurate observations</p>
+                          </div>
+                          <div style={{ background:'#F4F7FB', borderRadius:'10px', padding:'0.85rem 1rem', borderLeft:'4px solid #4A90D9' }}>
+                            <p style={{ fontWeight:700, fontSize:'0.88rem', color:'var(--jungle-deep)', marginBottom:'0.4rem' }}>🔍 Detail</p>
+                            <p style={{ fontSize:'0.78rem', color:'#555', marginBottom:'0.4rem', lineHeight:1.6 }}>Assesses level of understanding shown.</p>
+                            <ul style={{ margin:'0 0 0.4rem', paddingLeft:'1rem', fontSize:'0.76rem', color:'#555', lineHeight:1.8 }}>
+                              <li>A clear observation or relevant concept</li>
+                              <li>A simple explanation or link to behaviour</li>
+                            </ul>
+                            <p style={{ fontSize:'0.74rem', fontWeight:600, color:'#4A90D9', margin:0 }}>Students do NOT need all elements for marks</p>
+                          </div>
+                          <div style={{ background:'#FDF8F4', borderRadius:'10px', padding:'0.85rem 1rem', borderLeft:'4px solid #E8894A' }}>
+                            <p style={{ fontWeight:700, fontSize:'0.88rem', color:'var(--jungle-deep)', marginBottom:'0.4rem' }}>✍️ Writing</p>
+                            <p style={{ fontSize:'0.78rem', color:'#555', marginBottom:'0.4rem', lineHeight:1.6 }}>Assesses clarity of communication.</p>
+                            <ul style={{ margin:'0 0 0.4rem', paddingLeft:'1rem', fontSize:'0.76rem', color:'#555', lineHeight:1.8 }}>
+                              <li>Full sentences, appropriate terminology</li>
+                              <li>Clear expression of ideas</li>
+                            </ul>
+                            <p style={{ fontSize:'0.74rem', fontWeight:600, color:'#34A85A', margin:0 }}>Higher: well-structured, scientific language</p>
+                          </div>
+                          <div style={{ gridColumn:'1 / -1', background:'#F7FAF8', borderRadius:'8px', padding:'0.6rem 0.85rem', borderLeft:'3px solid var(--jungle-mid)' }}>
+                            <p style={{ fontSize:'0.76rem', color:'#555', margin:0, lineHeight:1.6 }}>
+                              <strong style={{ color:'var(--jungle-deep)' }}>Note:</strong> Students can earn marks with a clear observation or a single relevant concept — a complete response with observation, explanation and key concepts will score highest.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     <div style={{ background:'white', borderRadius:'16px', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', overflow:'hidden' }}>
                       <div style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 1.4fr 0.85fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
                         {['Student','Points','Badges','Quiz %','Observations','Conservation Statement','Status'].map(h => (
