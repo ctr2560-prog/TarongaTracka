@@ -3661,8 +3661,17 @@
 
         setFoundAnimals(prev => new Set([...prev, currentAnimal.id]));
         setBadges(prev => {
-          const alreadyExists = prev.some(b => b.animalId === currentAnimal.id);
-          if (alreadyExists) return prev;
+          const existingIndex = prev.findIndex(b => b.animalId === currentAnimal.id);
+          if (existingIndex !== -1) {
+            // Badge exists (e.g. from fill-the-passage) — merge observation in
+            const updated = [...prev];
+            updated[existingIndex] = {
+              ...updated[existingIndex],
+              observation: text,
+              observationScore,
+            };
+            return updated;
+          }
           return [...prev, {
             animalId: currentAnimal.id, animal: currentAnimal.name,
             quizResults: quizResults,
