@@ -501,6 +501,8 @@
 
       // Step 4 – Activity completion
       const [activityCompleted, setActivityCompleted] = useState(savedProgress?.activityCompleted || false);
+      const [conservationStatement, setConservationStatement] = useState('');
+      const [showConservationScreen, setShowConservationScreen] = useState(false);
       const [sessionLocked, setSessionLocked] = useState(false);
       const [isSubmittingActivity, setIsSubmittingActivity] = useState(false);
       const [submittingAll, setSubmittingAll] = useState(false);
@@ -2504,7 +2506,7 @@
           },
           {
             label: 'Clue 2 — Visual Code',
-            clue: 'Number? / 🏋️',
+            clue: 'Where people sit, don\'t stay above…\nThe answer hides just underneath.',
             qId: 'blue-mountains-bushwalk-2',
           },
           {
@@ -2529,7 +2531,17 @@
         function handleSubmitClue() {
           if (bushwalkSelected === null) return;
           const correct = bushwalkSelected === q.correct;
-          setBushwalkResults(prev => [...prev, correct]);
+          if (!correct) {
+            // Wrong — show feedback but keep question active for retry
+            setBushwalkShowFeedback(true);
+            setTimeout(() => {
+              setBushwalkShowFeedback(false);
+              setBushwalkSelected(null);
+            }, 1200);
+            return;
+          }
+          // Correct — record and advance
+          setBushwalkResults(prev => [...prev, true]);
           setBushwalkShowFeedback(true);
         }
 
@@ -3885,10 +3897,19 @@
       };
 
       // Step 4 – Submit activity to Firestore
-      const completeActivity = async () => {
+      const completeActivity = async (statementOverride) => {
         if (!studentName || !classCode) return;
         if (activityCompleted) return;
+
+        // If no conservation statement yet, show that screen first
+        if (!statementOverride && !conservationStatement.trim()) {
+          setShowConservationScreen(true);
+          return;
+        }
+
         if (!window.confirm('Submit your activity results to your teacher?\n\nYou will not be able to earn more badges after this.')) return;
+
+        const finalStatement = statementOverride || conservationStatement;
 
         setIsSubmittingActivity(true);
         const code = normaliseCode(classCode);
@@ -3939,6 +3960,7 @@
               quizTotal: quizTotal,
               quizPercentage: quizPercent,
               quizPercent: quizPercent,
+              conservationStatement: finalStatement || '',
               completed: true,
               completedAt: firebase.firestore.FieldValue.serverTimestamp(),
               status: "complete"
@@ -4709,6 +4731,8 @@
                 <p style={{ color:'#444', fontWeight:600, marginBottom:'1rem', fontSize:'1rem', textAlign:'center' }}>
                   {currentAnimal.id === 'concert-lawn'
                     ? 'Describe your experience walking on the grass and explain how this environment is different to a built environment like the city.'
+                    : currentAnimal.id === 'blue-mountains-bushwalk'
+                    ? null
                     : currentAnimal.observationPrompt}
                 </p>
                 {currentAnimal.id === 'concert-lawn' && (
@@ -4960,6 +4984,43 @@
                 <div style={{ fontSize:'clamp(1.2rem, 2.5vh, 1.5rem)', fontWeight:700, color:'var(--sunset-orange)' }}> {totalPoints} Points</div>
               </div>
               <button onClick={()=>setCurrentScreen('map')} style={{ background:'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))', color:'white', border:'none', padding:'clamp(0.8rem, 1.5vh, 1rem) 2rem', fontSize:'clamp(1rem, 2vh, 1.2rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase' }}>Continue Exploring</button>
+            </div>
+          </div>
+        );
+      }
+
+      if (showConservationScreen) {
+        const csLen = conservationStatement.trim().length;
+        const csReady = csLen >= 5;
+        return (
+          <div className="fade-in" style={{ position:'fixed', inset:0, background:'linear-gradient(160deg, #1a3a2a 0%, #2e5c3e 100%)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'2rem', color:'white' }}>
+            <div style={{ maxWidth:'520px', width:'100%', textAlign:'center' }}>
+              <div style={{ fontSize:'3.5rem', marginBottom:'0.8rem' }}>🌱</div>
+              <h2 className="heading-display" style={{ fontSize:'2.2rem', marginBottom:'0.6rem', color:'white' }}>Make a Difference</h2>
+              <p style={{ fontSize:'1rem', opacity:0.85, lineHeight:1.7, marginBottom:'0.5rem' }}>
+                Before you finish, think about how you can help protect animals and the environment.
+              </p>
+              <p style={{ fontSize:'1.05rem', fontWeight:600, marginBottom:'1.2rem', opacity:0.95 }}>
+                Based on today's experience, what is ONE thing you can do to support conservation?
+              </p>
+              <textarea
+                value={conservationStatement}
+                onChange={e => setConservationStatement(e.target.value)}
+                placeholder="I can help by..."
+                style={{ width:'100%', minHeight:'130px', padding:'1rem 1.2rem', borderRadius:'14px', border:'none', fontSize:'1rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', color:'#1a3a2a', lineHeight:1.6, boxSizing:'border-box' }}
+              />
+              <div style={{ fontSize:'0.8rem', opacity:0.65, marginTop:'0.4rem', marginBottom:'1.2rem', textAlign:'right' }}>
+                {csLen} / 5 minimum characters
+              </div>
+              <button
+                disabled={!csReady}
+                onClick={() => { setShowConservationScreen(false); completeActivity(conservationStatement); }}
+                style={{ width:'100%', padding:'1.1rem', borderRadius:'50px', border:'none', background: csReady ? 'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))' : 'rgba(255,255,255,0.2)', color:'white', fontSize:'1.1rem', fontWeight:700, cursor: csReady ? 'pointer' : 'not-allowed', textTransform:'uppercase', letterSpacing:'0.08em', boxShadow: csReady ? '0 4px 16px rgba(232,106,51,0.5)' : 'none', transition:'all 0.2s' }}>
+                Finish Session 🌿
+              </button>
+              <button onClick={() => setShowConservationScreen(false)} style={{ marginTop:'0.75rem', background:'none', border:'none', color:'rgba(255,255,255,0.5)', fontSize:'0.8rem', cursor:'pointer' }}>
+                ← Back
+              </button>
             </div>
           </div>
         );
@@ -5866,6 +5927,42 @@
                               <p style={{ color:'#888', fontSize:'0.85rem', marginTop:'1rem', textAlign:'center', fontStyle:'italic' }}>
                                 Questions with lowest first-attempt success rate. Helps identify confusing signage or difficult concepts.
                               </p>
+                            </div>
+                          );
+                        })()}
+
+                        {/* Conservation Statements Section */}
+                        {(() => {
+                          const statements = [];
+                          selectedClass.students.forEach(s => {
+                            if (s.conservationStatement && s.conservationStatement.trim()) {
+                              statements.push({ name: s.name, statement: s.conservationStatement.trim() });
+                            }
+                          });
+                          if (statements.length === 0) return null;
+                          return (
+                            <div style={{ marginBottom:'2rem' }}>
+                              <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
+                                🌱 Student Conservation Actions
+                              </h2>
+                              <div style={{ background:'white', borderRadius:'20px', padding:'1.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
+                                <p style={{ fontSize:'0.82rem', color:'#888', marginBottom:'1rem', fontStyle:'italic' }}>
+                                  {statements.length} student{statements.length !== 1 ? 's' : ''} shared a conservation action.
+                                </p>
+                                <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem', maxHeight:'420px', overflowY:'auto' }}>
+                                  {statements.map((item, i) => (
+                                    <div key={i} style={{ background:'#F4FAF6', border:'1px solid #C8E6D4', borderRadius:'12px', padding:'0.85rem 1.1rem', display:'flex', gap:'0.85rem', alignItems:'flex-start' }}>
+                                      <div style={{ width:'32px', height:'32px', borderRadius:'50%', background:'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))', display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontSize:'0.75rem', fontWeight:700, flexShrink:0 }}>
+                                        {item.name.charAt(0).toUpperCase()}
+                                      </div>
+                                      <div style={{ flex:1 }}>
+                                        <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.2rem' }}>{item.name}</p>
+                                        <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.5, margin:0 }}>{item.statement}</p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
                             </div>
                           );
                         })()}
@@ -7012,7 +7109,7 @@
                   <div style={{ maxWidth:'720px', margin:'0 auto' }}>
                     <div style={{ background:'white', borderRadius:'16px', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', overflow:'hidden' }}>
                       <div style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 0.85fr 0.85fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
-                        {['Student','Points','Badges','Quiz %','Last Active','Observations','Status'].map(h => (
+                        {['Student','Points','Badges','Quiz %','Last Active','Observations','Conservation','Status'].map(h => (
                           <div key={h} style={{ color:'rgba(255,255,255,0.8)', fontSize:'0.72rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>{h}</div>
                         ))}
                       </div>
@@ -7030,7 +7127,7 @@
                           const hasObservations = (s.badges || []).some(b => b.observation);
                           const badgeCount = Array.isArray(s.badges) ? new Set(s.badges.map(b => b.animalId).filter(Boolean)).size : 0;
                           return (
-                            <div key={s.name} style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 0.85fr 0.85fr', padding:'0.7rem 1rem', borderTop:'1px solid #F0EDE8', alignItems:'center', background: i % 2 === 0 ? 'white' : '#FAFAF8' }}>
+                            <div key={s.name} style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 0.85fr 1.2fr 0.85fr', padding:'0.7rem 1rem', borderTop:'1px solid #F0EDE8', alignItems:'center', background: i % 2 === 0 ? 'white' : '#FAFAF8' }}>
                               <div style={{ display:'flex', alignItems:'center', gap:'0.55rem' }}>
                                 <div style={{ width:'28px', height:'28px', borderRadius:'50%', background: s.completed ? 'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))' : 'linear-gradient(135deg, #aaa, #ccc)', display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontSize:'0.72rem', fontWeight:700, flexShrink:0 }}>
                                   {s.name.charAt(0).toUpperCase()}
@@ -7049,6 +7146,14 @@
                               <div>
                                 {hasObservations
                                   ? <button onClick={() => setObservationsModal(s)} style={{ background:'var(--jungle-deep)', color:'white', border:'none', padding:'0.25rem 0.6rem', borderRadius:'6px', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' }}>View</button>
+                                  : <span style={{ color:'#bbb', fontSize:'0.75rem' }}>—</span>
+                                }
+                              </div>
+                              <div style={{ display:'flex', alignItems:'center', gap:'0.35rem' }}>
+                                {s.conservationStatement
+                                  ? <span style={{ fontSize:'0.75rem', color:'var(--jungle-deep)', lineHeight:1.4 }} title={s.conservationStatement}>
+                                      {s.conservationStatement.length > 50 ? s.conservationStatement.slice(0, 50) + '…' : s.conservationStatement}
+                                    </span>
                                   : <span style={{ color:'#bbb', fontSize:'0.75rem' }}>—</span>
                                 }
                               </div>
