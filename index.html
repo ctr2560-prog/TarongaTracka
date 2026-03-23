@@ -440,6 +440,32 @@
       const [chimpGraph, setChimpGraph] = useState({ resting: 30, feeding: 30, moving: 40 });
       const [gorillaSelection, setGorillaSelection] = useState(null);
       const [giraffeMarker, setGiraffeMarker] = useState(50);
+      const [markingCardOpen, setMarkingCardOpen] = useState(false);
+      const [adminConservationStatements, setAdminConservationStatements] = useState([]);
+      const [concertLawnTimerSeconds, setConcertLawnTimerSeconds] = useState(60);
+      const [concertLawnTimerActive, setConcertLawnTimerActive] = useState(false);
+      const [concertLawnTimerDone, setConcertLawnTimerDone] = useState(false);
+      const [bushwalkTimerSeconds, setBushwalkTimerSeconds] = useState(30);
+      const [bushwalkTimerActive, setBushwalkTimerActive] = useState(false);
+      const [bushwalkTimerDone, setBushwalkTimerDone] = useState(false);
+      const [lemurCounts, setLemurCounts] = useState({ feeding: 0, resting: 0, moving: 0, social: 0 });
+      const [lemurTimerStarted, setLemurTimerStarted] = useState(false);
+      const [lemurTimerFinished, setLemurTimerFinished] = useState(false);
+      const [lemurTimeLeft, setLemurTimeLeft] = useState(30);
+      const [lemurTapCooldown, setLemurTapCooldown] = useState({});
+      const [dingoChainItems, setDingoChainItems] = useState([]);
+      const [dingoWrongTap, setDingoWrongTap] = useState(null);
+      const [dingoShuffledOptions, setDingoShuffledOptions] = useState([]);
+      const [seaLionAnswers, setSeaLionAnswers] = useState({});
+      const [seaLionActiveBlank, setSeaLionActiveBlank] = useState(null);
+      const [bushwalkClue, setBushwalkClue] = useState(0);
+      const [bushwalkSelected, setBushwalkSelected] = useState(null);
+      const [bushwalkShowFeedback, setBushwalkShowFeedback] = useState(false);
+      const [bushwalkResults, setBushwalkResults] = useState([]);
+      const [buffaloIsPressing, setBuffaloIsPressing] = useState(false);
+      const [buffaloHoldTime, setBuffaloHoldTime] = useState(0);
+      const [buffaloInteractionComplete, setBuffaloInteractionComplete] = useState(false);
+      const [buffaloShowObservation, setBuffaloShowObservation] = useState(false);
       const [cameraActive, setCameraActive] = React.useState(false);
       const [cameraStream, setCameraStream] = React.useState(null);
       const videoRef = React.useRef(null);
@@ -476,6 +502,8 @@
 
       // Step 4 – Activity completion
       const [activityCompleted, setActivityCompleted] = useState(savedProgress?.activityCompleted || false);
+      const [conservationStatement, setConservationStatement] = useState('');
+      const [showConservationScreen, setShowConservationScreen] = useState(false);
       const [sessionLocked, setSessionLocked] = useState(false);
       const [isSubmittingActivity, setIsSubmittingActivity] = useState(false);
       const [submittingAll, setSubmittingAll] = useState(false);
@@ -516,6 +544,7 @@
       const [firestoreStudents, setFirestoreStudents] = useState([]);
       const [firestoreLoading, setFirestoreLoading] = useState(true);
       const [observationsModal, setObservationsModal] = useState(null);
+      const [selectedConservation, setSelectedConservation] = useState(null);
       const [classCodeModal, setClassCodeModal] = useState(null);
       const [classCodeFullscreen, setClassCodeFullscreen] = useState(false);
       const [studentStatus, setStudentStatus] = React.useState('incomplete');
@@ -871,7 +900,8 @@
                 completed: d.completed || false,
                 completedAt: d.completedAt ? d.completedAt.toDate() : null,
                 quizPercentage: d.quizPercentage,
-                status: d.status || (d.completed ? 'complete' : 'incomplete')
+                status: d.status || (d.completed ? 'complete' : 'incomplete'),
+                conservationStatement: d.conservationStatement || ''
               };
             });
 
@@ -907,7 +937,8 @@
                 completed: d.completed || false,
                 completedAt: d.completedAt ? d.completedAt.toDate() : null,
                 quizPercentage: d.quizPercentage,
-                status: d.status || (d.completed ? 'complete' : 'incomplete')
+                status: d.status || (d.completed ? 'complete' : 'incomplete'),
+                conservationStatement: d.conservationStatement || ''
               };
             });
             setFirestoreStudents(students);
@@ -1349,7 +1380,36 @@
         return () => { if (quizChartInstanceRef.current) quizChartInstanceRef.current.destroy(); };
       }, [currentScreen, adminTab, adminClasses, adminDateRange]);
 
-      // Chart 3: Observation Skill Breakdown (Radar)
+      // Fetch conservation statements across all classes for analytics feed
+      React.useEffect(() => {
+        if (currentScreen !== 'adminDashboard' || adminTab !== 'analytics') return;
+        if (!adminClasses.length) { setAdminConservationStatements([]); return; }
+        let cancelled = false;
+        (async () => {
+          const results = [];
+          for (const cls of adminClasses) {
+            try {
+              const snap = await window.db.collection('classes').doc(cls.classCode).collection('students').get();
+              snap.docs.forEach(doc => {
+                const d = doc.data();
+                if (d.conservationStatement && d.conservationStatement.trim()) {
+                  results.push({
+                    name: d.name || doc.id,
+                    statement: d.conservationStatement.trim(),
+                    className: cls.className || cls.classCode || '',
+                    completedAt: d.completedAt ? d.completedAt.toDate() : null
+                  });
+                }
+              });
+            } catch (err) { /* skip class on error */ }
+          }
+          if (!cancelled) {
+            results.sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0));
+            setAdminConservationStatements(results);
+          }
+        })();
+        return () => { cancelled = true; };
+      }, [currentScreen, adminTab, adminClasses]);
       useEffect(() => {
         if (currentScreen !== 'adminDashboard' || adminTab !== 'analytics') return;
         if (!window.Chart || !writingChartRef.current) return;
@@ -1874,6 +1934,97 @@
           ],
           observationPrompt: "Watch the tiger's behavior. Describe how it moves.",
           pointValue: 50
+        },
+        {
+          id: 'concert-lawn', name: 'Concert Lawn', scientificName: 'Taronga Zoo Event Space',
+          image: 'images/concert-lawn.jpg', latitude: -33.8435, longitude: 151.2400,
+          radius: 80, color: '#5B8C5A',
+          missionTitle: '🕵️ Habitat Detective: Compare the Landscapes',
+          missionTask: '🚶 Walk around the Concert Lawn and observe the environment.\nThen turn and look at Sydney city across the water.',
+          correctFeedback: 'Great observation! You\'re thinking like a habitat detective.',
+          incorrectFeedback: 'Look again carefully and compare both environments.',
+          questions: [
+            { q: 'What is something BOTH environments have?',
+              options: ['Open space and sunlight', 'Only natural features', 'Only buildings', 'Only animals'],
+              correct: 0, fact: 'Both environments have open space and receive sunlight, even though they are very different types of environments.' },
+            { q: 'What is the main difference between the two environments?',
+              options: ['One has more sunlight', 'One is natural and the other is human-built', 'One has more water', 'There is no difference'],
+              correct: 1, fact: 'The Concert Lawn includes natural features, while the city is mostly human-built.' },
+            { q: 'Why might the Concert Lawn support more living things than the city?',
+              options: ['It has more buildings', 'It has natural features like plants and soil', 'It is closer to the water', 'It is larger'],
+              correct: 1, fact: 'Plants, soil, and habitat features help support more living things in natural environments.' }
+          ],
+          observationPrompt: 'Describe the environment around you. What can you see, hear, or notice about this space?',
+          pointValue: 50
+        },
+        {
+          id: 'dingo', name: 'Dingo', scientificName: 'Canis lupus dingo',
+          image: 'images/dingo.jpg', latitude: -33.8440, longitude: 151.2408,
+          radius: 50, color: '#C4873A',
+          questions: [
+            { q: 'What is the dingo\'s role in the Australian ecosystem?',
+              options: ['They are herbivores that eat only plants', 'They are apex predators that help regulate prey populations', 'They have no ecological role', 'They are introduced pests'],
+              correct: 1, fact: 'Dingoes are apex predators in Australia and help regulate populations of kangaroos and other animals, supporting ecosystem balance.' }
+          ],
+          observationPrompt: 'Explain how the dingo\'s appearance helps it survive in its environment.',
+          pointValue: 50
+        },
+        {
+          id: 'lemur', name: 'Ring-tailed Lemur', scientificName: 'Lemur catta',
+          image: 'images/lemur.jpg', latitude: -33.8448, longitude: 151.2396,
+          radius: 50, color: '#7A6E8A',
+          questions: [
+            { q: 'Which behaviour did you observe the MOST?',
+              options: ['A. Feeding', 'B. Resting', 'C. Moving', 'D. Social'],
+              correct: 0,
+              fact: 'Ring-tailed lemurs spend their time in a mix of feeding, resting, moving, and social interactions — your observation reflects real field research methods!' }
+          ],
+          observationPrompt: 'Describe how the lemurs use different parts of their enclosure.',
+          pointValue: 50
+        },
+        {
+          id: 'sea-lion', name: 'Sea Lion', scientificName: 'Neophoca cinerea',
+          image: 'images/sea-lion.jpg', latitude: -33.8425, longitude: 151.2415,
+          radius: 50, color: '#4A7FA0',
+          questions: [
+            { q: 'Blank 1', options: ['desert','forest','water','sky'],        correct: 2 },
+            { q: 'Blank 2', options: ['land','ocean','air','underground'],      correct: 0 },
+            { q: 'Blank 3', options: ['wings','hooves','claws','flippers'],    correct: 3 },
+            { q: 'Blank 4', options: ['sleep','breathe','hide','eat plants'],  correct: 1 },
+            { q: 'Blank 5', options: ['fish','grass','insects','leaves'],       correct: 0 },
+          ],
+          observationPrompt: 'Explain how humans can impact sea lions and their environment.',
+          pointValue: 50
+        },
+        {
+          id: 'blue-mountains-bushwalk', name: 'Blue Mountains Bushwalk', scientificName: 'Blue Mountains National Park',
+          image: 'images/blue-mountains-bushwalk.jpg', latitude: -33.7350, longitude: 150.3119,
+          radius: 100, color: '#4A7FA0',
+          questions: [
+            { q: 'What is at the top of the waterfall?',
+              options: ['A rock', 'A sign', 'A bell', 'A rope'],
+              correct: 2 },
+            { q: 'What number does the clue represent?',
+              options: ['1', '3', '5', '10'],
+              correct: 1 },
+            { q: 'Who am I?',
+              options: ['Kookaburra', 'Parrot', 'Eagle', 'Lyrebird'],
+              correct: 3 },
+          ],
+          observationPrompt: 'Describe what you could hear and explain how it made you feel.',
+          pointValue: 50
+        },
+        {
+          id: 'asian-water-buffalo', name: 'Asian Water Buffalo', scientificName: 'Bubalus bubalis',
+          image: 'images/asian-water-buffalo.jpg', latitude: -33.8450, longitude: 151.2410,
+          radius: 50, color: '#6B5E4E',
+          questions: [
+            { q: 'Looking at the buffalo, what can you notice that helps it not sink into soft ground?',
+              options: ['A. It has small, narrow feet', 'B. It has wide hooves that spread its weight', 'C. It is very fast', 'D. It avoids muddy areas'],
+              correct: 1, fact: 'Wide hooves spread weight and reduce pressure on soft ground — an adaptation that helps buffalo move through wet, muddy environments.' }
+          ],
+          observationPrompt: 'Describe a relationship you can observe between the buffalo (or rhino) and another animal, and explain how it may help them.',
+          pointValue: 50
         }
       ];
 
@@ -2218,6 +2369,726 @@
                   </div>
                 </div>
 
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      function renderBuffaloMission() {
+        const holdPct = Math.min(buffaloHoldTime / 2000, 1);
+        const pressureLabel = holdPct < 0.33 ? 'LOW' : holdPct < 0.66 ? 'MEDIUM' : 'HIGH';
+        const pressureColor = holdPct < 0.33 ? '#4A90D9' : holdPct < 0.66 ? '#E86A33' : '#C4303A';
+        const currentQuestion = currentAnimal.questions[0];
+
+        const startPress = () => { if (!buffaloInteractionComplete) setBuffaloIsPressing(true); };
+        const endPress = () => {
+          if (!buffaloInteractionComplete) {
+            setBuffaloIsPressing(false);
+            setBuffaloHoldTime(0);
+          }
+        };
+
+        return (
+          <div style={{ position:'fixed', inset:0, background: showResult ? (isCorrect ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)') : 'var(--mist-light)', transition:'background 0.5s ease', display:'flex', flexDirection:'column' }}>
+            {/* Header */}
+            <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'0.6rem 1rem', flex:'0 0 auto', zIndex:100 }}>
+              <div style={{ maxWidth:'900px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <button onClick={() => setCurrentScreen('map')} style={{ background:'rgba(255,255,255,0.2)', border:'none', color:'white', padding:'0.5rem 1rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.85rem', fontWeight:600 }}> Back</button>
+                <img src="images/logo.png" alt="Taronga Tracka" style={{ height:'45px', width:'auto' }} onError={(e) => { e.target.style.display='none'; }} />
+                <div style={{ width:'70px' }} />
+              </div>
+            </div>
+
+            {/* Result overlay */}
+            {showResult && (
+              <div className="animate-scale-in" style={{ textAlign:'center', padding:'clamp(1.5rem,3vh,2rem)', background:'rgba(255,255,255,0.95)', borderRadius:'20px', boxShadow:'0 8px 32px rgba(0,0,0,0.2)', margin:'clamp(1rem,2vh,1.5rem)', maxWidth:'90%', marginLeft:'auto', marginRight:'auto', marginTop:'clamp(1rem,3vh,2rem)' }}>
+                <div style={{ fontSize:'clamp(3rem,8vh,4.5rem)', marginBottom:'0.5rem' }}>{isCorrect ? '✔' : '❌'}</div>
+                <h2 className="heading-display" style={{ fontSize:'clamp(2rem,5vh,3rem)', color: isCorrect ? '#10b981' : '#ef4444', marginBottom:'0.4rem', lineHeight:1.1 }}>{isCorrect ? 'Correct!' : 'Not Quite'}</h2>
+                {isCorrect && <p style={{ fontSize:'clamp(0.9rem,2vh,1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>Wide hooves spread weight and reduce pressure on soft ground.</p>}
+                {!isCorrect && <p style={{ fontSize:'clamp(0.9rem,2vh,1rem)', color:'#555', marginBottom:'0.8rem' }}>Think about how pressure works on soft surfaces.</p>}
+                {currentQuestion.fact && (
+                  <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'12px', padding:'clamp(1rem,2vh,1.5rem)', marginTop:'0.8rem', marginBottom:'1rem' }}>
+                    <p style={{ color:'#333', fontSize:'clamp(0.9rem,2vh,1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentQuestion.fact}</p>
+                  </div>
+                )}
+                <button onClick={() => { if (isCorrect) { handleNextQuestion(); } else { setIsProcessingAnswer(false); setShowResult(false); } }}
+                  style={{ background: isCorrect ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)', color:'white', border:'none', padding:'clamp(0.8rem,2vh,1.2rem) clamp(2rem,5vw,3rem)', fontSize:'clamp(1rem,2.5vh,1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.05em', boxShadow:'0 4px 12px rgba(0,0,0,0.2)', marginTop:'0.5rem' }}>
+                  {isCorrect ? 'Continue to Observation ' : 'Try Again'}
+                </button>
+              </div>
+            )}
+
+            {!showResult && (
+              <div style={{ flex:'1 1 auto', overflowY:'auto', padding:'1rem', maxWidth:'560px', margin:'0 auto', width:'100%' }}>
+
+                {/* Title */}
+                <div style={{ background:'white', borderRadius:'16px', padding:'1rem 1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem', textAlign:'center' }}>
+                  <h2 style={{ fontSize:'1.2rem', fontWeight:700, color:'var(--jungle-deep)', margin:'0 0 0.2rem' }}>🐃 Footprint Pressure Test</h2>
+                  <p style={{ fontSize:'0.82rem', color:'#666', margin:0 }}>
+                    {!buffaloInteractionComplete ? 'Press and hold the mud to test pressure, then observe the buffalo.' : buffaloShowObservation ? 'Now answer the question below.' : 'Interaction complete — read the result.'}
+                  </p>
+                </div>
+
+                {/* STEP 1 — Press interaction */}
+                {!buffaloInteractionComplete && (
+                  <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
+                    <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.75rem', textAlign:'center' }}>
+                      Press and hold the mud surface below
+                    </p>
+
+                    {/* Mud surface */}
+                    <div
+                      onMouseDown={startPress} onMouseUp={endPress} onMouseLeave={endPress}
+                      onTouchStart={startPress} onTouchEnd={endPress} onTouchCancel={endPress}
+                      style={{ width:'100%', height:'160px', background:`linear-gradient(180deg, #8B6914 0%, #6B4F0F ${40 + holdPct * 30}%, #4A3508 100%)`, borderRadius:'12px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden', userSelect:'none', WebkitUserSelect:'none', touchAction:'none', transition:'background 0.2s' }}>
+
+                      {/* Footprint impression */}
+                      {buffaloIsPressing && (
+                        <div style={{ position:'absolute', display:'flex', flexDirection:'column', alignItems:'center', gap:'4px', opacity: 0.3 + holdPct * 0.7, transform:`scale(${0.6 + holdPct * 0.6})`, transition:'transform 0.1s, opacity 0.1s' }}>
+                          <div style={{ display:'flex', gap:'8px' }}>
+                            <div style={{ width:'22px', height:'28px', background:'#3A2A08', borderRadius:'50% 50% 40% 40%', transform:'rotate(-8deg)' }} />
+                            <div style={{ width:'22px', height:'28px', background:'#3A2A08', borderRadius:'50% 50% 40% 40%', transform:'rotate(8deg)' }} />
+                          </div>
+                          <div style={{ width:'48px', height:'36px', background:'#3A2A08', borderRadius:'40%', marginTop:'-6px' }} />
+                        </div>
+                      )}
+
+                      {!buffaloIsPressing && (
+                        <p style={{ color:'rgba(255,255,255,0.6)', fontSize:'0.85rem', fontWeight:600, textAlign:'center', pointerEvents:'none' }}>
+                          👆 Press and hold here
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Pressure meter */}
+                    {buffaloIsPressing && (
+                      <div style={{ marginTop:'0.75rem' }}>
+                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'0.3rem' }}>
+                          <span style={{ fontSize:'0.75rem', color:'#888', fontWeight:600 }}>Pressure</span>
+                          <span style={{ fontSize:'0.82rem', fontWeight:800, color: pressureColor }}>{pressureLabel}</span>
+                        </div>
+                        <div style={{ height:'8px', background:'#E5E5E5', borderRadius:'4px', overflow:'hidden' }}>
+                          <div style={{ height:'100%', width:`${holdPct * 100}%`, background:`linear-gradient(90deg, #4A90D9, ${pressureColor})`, borderRadius:'4px', transition:'width 0.1s' }} />
+                        </div>
+                      </div>
+                    )}
+
+                    {!buffaloIsPressing && buffaloHoldTime === 0 && (
+                      <p style={{ fontSize:'0.78rem', color:'#aaa', textAlign:'center', marginTop:'0.5rem', margin:'0.5rem 0 0', fontStyle:'italic' }}>Hold for 2 seconds to complete</p>
+                    )}
+                    {!buffaloIsPressing && buffaloHoldTime > 0 && (
+                      <p style={{ fontSize:'0.78rem', color:'#E86A33', textAlign:'center', marginTop:'0.5rem', margin:'0.5rem 0 0', fontWeight:600 }}>Released too early — press and hold again</p>
+                    )}
+                  </div>
+                )}
+
+                {/* STEP 2 — Transition */}
+                {buffaloInteractionComplete && !buffaloShowObservation && (
+                  <div style={{ background:'white', borderRadius:'16px', padding:'1.4rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem', textAlign:'center' }}>
+                    <div style={{ fontSize:'2.5rem', marginBottom:'0.75rem' }}>🐾</div>
+                    <p style={{ fontSize:'1rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.5rem', lineHeight:1.5 }}>
+                      More pressure causes deeper sinking in soft ground.
+                    </p>
+                    <p style={{ fontSize:'0.9rem', color:'#666', marginBottom:'1.2rem' }}>Now look at the buffalo.</p>
+                    <button onClick={() => setBuffaloShowObservation(true)}
+                      style={{ padding:'0.85rem 2.5rem', borderRadius:'50px', border:'none', background:'linear-gradient(135deg, #6B5E4E, #4A3D30)', color:'white', fontWeight:700, fontSize:'1rem', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.08em', boxShadow:'0 4px 12px rgba(107,94,78,0.4)' }}>
+                      Continue →
+                    </button>
+                  </div>
+                )}
+
+                {/* STEP 3 — Observation prompt + STEP 4 MCQ */}
+                {buffaloShowObservation && (
+                  <>
+                    <div style={{ background:'#F7FAF8', border:'1px solid #D4E4DC', borderRadius:'14px', padding:'1rem 1.2rem', marginBottom:'1rem' }}>
+                      <p style={{ fontSize:'0.88rem', fontWeight:700, color:'var(--jungle-mid)', marginBottom:'0.5rem' }}>👀 Observe the buffalo</p>
+                      <p style={{ fontSize:'0.8rem', color:'#555', marginBottom:'0.4rem', fontWeight:600 }}>Look at:</p>
+                      {['hoof size', 'shape of feet', 'how weight might be spread'].map((pt, i) => (
+                        <p key={i} style={{ fontSize:'0.8rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.7rem' }}>– {pt}</p>
+                      ))}
+                      <p style={{ fontSize:'0.78rem', color:'#888', marginTop:'0.5rem', fontStyle:'italic' }}>Do the buffalo's feet look narrow or wide?</p>
+                    </div>
+
+                    <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)' }}>
+                      <p style={{ fontSize:'0.95rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.75rem', textAlign:'center' }}>{currentQuestion.q}</p>
+                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.6rem' }}>
+                        {currentQuestion.options.map((opt, i) => (
+                          <button key={i} onClick={() => handleQuizAnswer(0, i)}
+                            style={{ padding:'0.85rem 0.6rem', borderRadius:'12px', border:'2px solid transparent', background:'#F5F2EE', color:'var(--jungle-deep)', fontSize:'0.88rem', fontWeight:600, cursor:'pointer', textAlign:'left', transition:'all 0.15s', lineHeight:1.3 }}>
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      function renderBushwalkMission() {
+        const clues = [
+          {
+            label: 'Clue 1 — Riddle',
+            clue: 'I hang where water rushes down,\nNot making noise, yet shaped like sound.\nYou won\'t hear me ring at all,\nBut you might spot me by the falls…',
+            qId: 'blue-mountains-bushwalk-1',
+          },
+          {
+            label: 'Clue 2 — Visual Code',
+            clue: 'Where people sit, don\'t stay above…\nThe answer hides just underneath.',
+            qId: 'blue-mountains-bushwalk-2',
+          },
+          {
+            label: 'Clue 3 — Riddle',
+            clue: 'I live in the forest, hidden from sight,\nMy voice can copy sounds day and night.\nChainsaws, cameras, even a call,\nI can mimic almost them all…',
+            qId: 'blue-mountains-bushwalk-3',
+          },
+        ];
+
+        const questions = currentAnimal.questions;
+        const allDone = bushwalkClue >= clues.length;
+        const clue = clues[bushwalkClue];
+        const q = questions[bushwalkClue];
+        const isClueCorrect = bushwalkSelected !== null && bushwalkSelected === q?.correct;
+        const correctCount = bushwalkResults.filter(Boolean).length;
+
+        function handleSelect(idx) {
+          if (bushwalkShowFeedback) return;
+          setBushwalkSelected(idx);
+        }
+
+        function handleSubmitClue() {
+          if (bushwalkSelected === null) return;
+          const correct = bushwalkSelected === q.correct;
+          if (!correct) {
+            // Wrong — show feedback but keep question active for retry
+            setBushwalkShowFeedback(true);
+            setTimeout(() => {
+              setBushwalkShowFeedback(false);
+              setBushwalkSelected(null);
+            }, 1200);
+            return;
+          }
+          // Correct — record and advance
+          setBushwalkResults(prev => [...prev, true]);
+          setBushwalkShowFeedback(true);
+        }
+
+        function handleContinue() {
+          const nextClue = bushwalkClue + 1;
+          if (nextClue >= clues.length) {
+            // All clues done — save and show result
+            const quizResults = clues.map((c, i) => ({
+              question: c.qId,
+              correctOnFirstAttempt: [...bushwalkResults, isClueCorrect][i] ?? false
+            }));
+            recordMissionResult('blue-mountains-bushwalk', 'Blue Mountains Bushwalk', quizResults);
+            setIsCorrect(correctCount + (isClueCorrect ? 1 : 0) === 3);
+            setShowResult(true);
+          } else {
+            setBushwalkClue(nextClue);
+            setBushwalkSelected(null);
+            setBushwalkShowFeedback(false);
+          }
+        }
+
+        return (
+          <div style={{ position:'fixed', inset:0, background: showResult ? (isCorrect ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)') : 'var(--mist-light)', transition:'background 0.5s ease', display:'flex', flexDirection:'column' }}>
+            {/* Header */}
+            <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'0.6rem 1rem', flex:'0 0 auto', zIndex:100 }}>
+              <div style={{ maxWidth:'900px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <button onClick={() => setCurrentScreen('map')} style={{ background:'rgba(255,255,255,0.2)', border:'none', color:'white', padding:'0.5rem 1rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.85rem', fontWeight:600 }}> Back</button>
+                <img src="images/logo.png" alt="Taronga Tracka" style={{ height:'45px', width:'auto' }} onError={(e) => { e.target.style.display='none'; }} />
+                <div style={{ width:'70px' }} />
+              </div>
+            </div>
+
+            {/* Result overlay */}
+            {showResult && (
+              <div className="animate-scale-in" style={{ textAlign:'center', padding:'clamp(1.5rem,3vh,2rem)', background:'rgba(255,255,255,0.95)', borderRadius:'20px', boxShadow:'0 8px 32px rgba(0,0,0,0.2)', margin:'clamp(1rem,2vh,1.5rem)', maxWidth:'90%', marginLeft:'auto', marginRight:'auto', marginTop:'clamp(1rem,3vh,2rem)' }}>
+                <div style={{ fontSize:'clamp(3rem,8vh,4rem)', marginBottom:'0.5rem' }}>{isCorrect ? '🌄' : '🔍'}</div>
+                <h2 className="heading-display" style={{ fontSize:'clamp(1.8rem,4.5vh,2.8rem)', color: isCorrect ? '#10b981' : '#ef4444', marginBottom:'0.4rem', lineHeight:1.1 }}>
+                  {isCorrect ? 'Hunt Complete!' : 'Good Effort!'}
+                </h2>
+                <p style={{ fontSize:'clamp(0.85rem,2vh,1rem)', color:'#555', marginBottom:'1rem', lineHeight:1.6 }}>
+                  You solved {correctCount + (isClueCorrect ? 1 : 0)} of 3 clues.
+                </p>
+                <button onClick={() => handleNextQuestion()}
+                  style={{ background:'linear-gradient(135deg, #5B8C5A, #3d6b3c)', color:'white', border:'none', padding:'1rem 2.5rem', fontSize:'1.1rem', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.05em', boxShadow:'0 4px 12px rgba(0,0,0,0.2)' }}>
+                  Continue to Observation 
+                </button>
+              </div>
+            )}
+
+            {!showResult && (
+              <div style={{ flex:'1 1 auto', overflowY:'auto', padding:'1rem', maxWidth:'560px', margin:'0 auto', width:'100%' }}>
+
+                {/* Title + progress */}
+                <div style={{ background:'white', borderRadius:'16px', padding:'1rem 1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
+                  <h2 style={{ fontSize:'1.2rem', fontWeight:700, color:'var(--jungle-deep)', margin:'0 0 0.15rem' }}>🌄 Bushwalk Scavenger Hunt</h2>
+                  <p style={{ fontSize:'0.82rem', color:'#666', margin:'0 0 0.6rem' }}>Solve each clue as you explore</p>
+                  <div style={{ display:'flex', gap:'0.4rem' }}>
+                    {clues.map((_, i) => (
+                      <div key={i} style={{ flex:1, height:'6px', borderRadius:'3px', background: i < bushwalkClue ? '#5B8C5A' : i === bushwalkClue ? (bushwalkShowFeedback ? (isClueCorrect ? '#10b981' : '#ef4444') : '#C4873A') : '#E5E5E5', transition:'background 0.3s' }} />
+                    ))}
+                  </div>
+                  <p style={{ fontSize:'0.72rem', color:'#888', margin:'0.4rem 0 0', textAlign:'right' }}>Clue {bushwalkClue + 1} of {clues.length}</p>
+                </div>
+
+                {/* Clue card */}
+                <div style={{ background:'white', borderRadius:'16px', padding:'1.4rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
+                  <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#5B8C5A', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:'0.6rem' }}>{clue.label}</p>
+                  <div style={{ background:'#F4F8F4', borderRadius:'10px', padding:'1rem', marginBottom:'1rem', borderLeft:'3px solid #5B8C5A' }}>
+                    {clue.clue.split('\n').map((line, i) => (
+                      <p key={i} style={{ fontSize:'1rem', color:'#333', margin: i === 0 ? 0 : '0.3rem 0 0', lineHeight:1.7, fontStyle: clue.label.includes('Riddle') ? 'italic' : 'normal', fontWeight: clue.label.includes('Visual') ? 700 : 400, fontSize: clue.label.includes('Visual') ? '1.4rem' : '1rem', textAlign: clue.label.includes('Visual') ? 'center' : 'left' }}>{line}</p>
+                    ))}
+                  </div>
+                  <p style={{ fontSize:'0.9rem', fontWeight:600, color:'var(--jungle-deep)', margin:'0 0 0.75rem', textAlign:'center' }}>{q.q}</p>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.6rem' }}>
+                    {q.options.map((opt, oi) => (
+                      <button key={oi} onClick={() => handleSelect(oi)}
+                        disabled={bushwalkShowFeedback}
+                        style={{ padding:'0.85rem 0.6rem', borderRadius:'12px', border:`2px solid ${bushwalkSelected === oi ? '#5B8C5A' : '#E5E5E5'}`, background: bushwalkSelected === oi ? '#F0F7F0' : '#F8F8F8', color:'var(--jungle-deep)', fontSize:'0.88rem', fontWeight:600, cursor: bushwalkShowFeedback ? 'default' : 'pointer', textAlign:'left', transition:'all 0.15s', opacity: bushwalkShowFeedback && bushwalkSelected !== oi ? 0.5 : 1 }}>
+                        {String.fromCharCode(65 + oi)}. {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Feedback */}
+                {bushwalkShowFeedback && (
+                  <div style={{ background: isClueCorrect ? '#D1FAE5' : '#FEE2E2', border:`1px solid ${isClueCorrect ? '#6EE7B7' : '#FCA5A5'}`, borderRadius:'12px', padding:'0.85rem 1rem', marginBottom:'1rem', textAlign:'center' }}>
+                    <p style={{ fontSize:'0.9rem', fontWeight:700, color: isClueCorrect ? '#065F46' : '#991B1B', margin:0 }}>
+                      {isClueCorrect ? '✔ Great observation! Keep going.' : '❌ Look carefully and try the next clue.'}
+                    </p>
+                  </div>
+                )}
+
+                {/* Submit / Continue */}
+                {!bushwalkShowFeedback ? (
+                  <button onClick={handleSubmitClue} disabled={bushwalkSelected === null}
+                    style={{ width:'100%', padding:'1rem', borderRadius:'50px', border:'none', background: bushwalkSelected !== null ? 'linear-gradient(135deg, #5B8C5A, #3d6b3c)' : '#CCC', color:'white', fontSize:'1rem', fontWeight:700, cursor: bushwalkSelected !== null ? 'pointer' : 'not-allowed', textTransform:'uppercase', letterSpacing:'0.08em', transition:'all 0.2s', boxShadow: bushwalkSelected !== null ? '0 4px 12px rgba(91,140,90,0.4)' : 'none' }}>
+                    Submit Answer
+                  </button>
+                ) : (
+                  <button onClick={handleContinue}
+                    style={{ width:'100%', padding:'1rem', borderRadius:'50px', border:'none', background:'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))', color:'white', fontSize:'1rem', fontWeight:700, cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.08em', boxShadow:'0 4px 12px rgba(232,106,51,0.4)' }}>
+                    {bushwalkClue < clues.length - 1 ? 'Next Clue →' : 'Complete Mission ✔'}
+                  </button>
+                )}
+
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      function renderSeaLionMission() {
+        const questions = currentAnimal.questions;
+        const allAnswered = questions.every((_, i) => seaLionAnswers[i] !== undefined);
+
+        const passageParts = [
+          { text: 'Sea lions are adapted to live in both ' },
+          { blank: 0 },
+          { text: ' and ' },
+          { blank: 1 },
+          { text: ' environments.\nThey use their ' },
+          { blank: 2 },
+          { text: ' to swim through the water.\nSea lions must come to the surface to ' },
+          { blank: 3 },
+          { text: '.\nTheir streamlined bodies help them move quickly to catch ' },
+          { blank: 4 },
+          { text: '.' },
+        ];
+
+        function submitPassage() {
+          const quizResults = questions.map((q, i) => ({
+            question: `Sea Lion Adaptation - Blank ${i + 1}`,
+            correctOnFirstAttempt: seaLionAnswers[i] === q.correct
+          }));
+          recordMissionResult('sea-lion', 'Sea Lion', quizResults);
+          const correctCount = quizResults.filter(r => r.correctOnFirstAttempt).length;
+          setIsCorrect(correctCount === 5);
+          setShowResult(true);
+        }
+
+        const correctCount = Object.entries(seaLionAnswers).filter(([i, v]) => v === questions[i]?.correct).length;
+
+        return (
+          <div style={{ position:'fixed', inset:0, background: showResult ? (isCorrect ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)') : 'var(--mist-light)', transition:'background 0.5s ease', display:'flex', flexDirection:'column' }}>
+            {/* Header */}
+            <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'0.6rem 1rem', flex:'0 0 auto', zIndex:100 }}>
+              <div style={{ maxWidth:'900px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <button onClick={() => setCurrentScreen('map')} style={{ background:'rgba(255,255,255,0.2)', border:'none', color:'white', padding:'0.5rem 1rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.85rem', fontWeight:600 }}> Back</button>
+                <img src="images/logo.png" alt="Taronga Tracka" style={{ height:'45px', width:'auto' }} onError={(e) => { e.target.style.display='none'; }} />
+                <div style={{ width:'70px' }} />
+              </div>
+            </div>
+
+            {/* Result overlay */}
+            {showResult && (
+              <div className="animate-scale-in" style={{ textAlign:'center', padding:'clamp(1.5rem,3vh,2rem)', background:'rgba(255,255,255,0.95)', borderRadius:'20px', boxShadow:'0 8px 32px rgba(0,0,0,0.2)', margin:'clamp(1rem,2vh,1.5rem)', maxWidth:'90%', marginLeft:'auto', marginRight:'auto', marginTop:'clamp(1rem,3vh,2rem)' }}>
+                <div style={{ fontSize:'clamp(3rem,8vh,4rem)', marginBottom:'0.5rem' }}>{correctCount === 5 ? '✔' : correctCount >= 3 ? '✔' : '❌'}</div>
+                <h2 className="heading-display" style={{ fontSize:'clamp(1.8rem,4.5vh,2.8rem)', color: correctCount >= 3 ? '#10b981' : '#ef4444', marginBottom:'0.4rem', lineHeight:1.1 }}>
+                  {correctCount === 5 ? 'Excellent!' : correctCount >= 3 ? 'Good Effort!' : 'Look Again'}
+                </h2>
+                <p style={{ fontSize:'clamp(0.85rem,2vh,1rem)', color:'#555', marginBottom:'1rem', lineHeight:1.6 }}>
+                  {correctCount === 5
+                    ? 'You understand how sea lions are adapted to their environment.'
+                    : correctCount >= 3
+                    ? 'Good effort! Check the parts you missed.'
+                    : 'Look again carefully at how sea lions live and move.'}
+                </p>
+                <div style={{ background:'#F4F8FF', borderRadius:'12px', padding:'0.75rem 1rem', marginBottom:'1rem', display:'inline-flex', gap:'0.5rem', alignItems:'center' }}>
+                  <span style={{ fontSize:'1rem', fontWeight:700, color:'#1D4ED8' }}>{correctCount}/5</span>
+                  <span style={{ fontSize:'0.85rem', color:'#555' }}>correct</span>
+                </div>
+                <button onClick={() => { handleNextQuestion(); }}
+                  style={{ display:'block', width:'100%', maxWidth:'320px', margin:'0 auto', background:'linear-gradient(135deg, #4A7FA0, #2d6a8f)', color:'white', border:'none', padding:'1rem 2rem', fontSize:'1.1rem', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.05em', boxShadow:'0 4px 12px rgba(0,0,0,0.2)' }}>
+                  Continue to Observation 
+                </button>
+              </div>
+            )}
+
+            {/* Main content */}
+            {!showResult && (
+              <div style={{ flex:'1 1 auto', overflowY:'auto', padding:'1rem', maxWidth:'600px', margin:'0 auto', width:'100%' }}>
+
+                {/* Title */}
+                <div style={{ background:'white', borderRadius:'16px', padding:'1rem 1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
+                  <h2 style={{ fontSize:'1.2rem', fontWeight:700, color:'var(--jungle-deep)', margin:'0 0 0.2rem' }}>🦭 Sea Lion Adaptations</h2>
+                  <p style={{ fontSize:'0.82rem', color:'#666', margin:0 }}>Tap each blank to choose the correct word and complete the passage.</p>
+                </div>
+
+                {/* Passage card */}
+                <div style={{ background:'white', borderRadius:'16px', padding:'1.4rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem', lineHeight:2 }}>
+                  {passageParts.map((part, pi) => {
+                    if (part.text !== undefined) {
+                      return part.text.split('\n').map((line, li, arr) => (
+                        <span key={`t-${pi}-${li}`}>{line}{li < arr.length - 1 && <br />}</span>
+                      ));
+                    }
+                    const bi = part.blank;
+                    const answered = seaLionAnswers[bi] !== undefined;
+                    const word = answered ? questions[bi].options[seaLionAnswers[bi]] : null;
+                    return (
+                      <button key={`b-${bi}`} onClick={() => setSeaLionActiveBlank(bi)}
+                        style={{ display:'inline-block', minWidth:'80px', padding:'0.1rem 0.5rem', margin:'0 0.15rem', borderRadius:'6px', border:`2px solid ${answered ? '#4A7FA0' : '#AAAAAA'}`, background: answered ? '#EDF4F8' : 'transparent', color: answered ? '#4A7FA0' : '#999', fontWeight: answered ? 700 : 400, fontSize:'1rem', cursor:'pointer', fontFamily:'DM Sans, sans-serif', borderBottom: answered ? undefined : '2px solid #AAAAAA', transition:'all 0.15s' }}>
+                        {answered ? word : '_____'}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Selection overlay for active blank */}
+                {seaLionActiveBlank !== null && (
+                  <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 8px 24px rgba(0,0,0,0.15)', marginBottom:'1rem', border:'2px solid #4A7FA0' }}>
+                    <p style={{ fontSize:'0.82rem', fontWeight:700, color:'#4A7FA0', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.75rem' }}>
+                      Blank {seaLionActiveBlank + 1} — choose a word:
+                    </p>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.6rem' }}>
+                      {questions[seaLionActiveBlank].options.map((opt, oi) => (
+                        <button key={oi} onClick={() => { setSeaLionAnswers(a => ({ ...a, [seaLionActiveBlank]: oi })); setSeaLionActiveBlank(null); }}
+                          style={{ padding:'0.75rem 0.6rem', borderRadius:'10px', border:`2px solid ${seaLionAnswers[seaLionActiveBlank] === oi ? '#4A7FA0' : '#E5E5E5'}`, background: seaLionAnswers[seaLionActiveBlank] === oi ? '#EDF4F8' : '#F8F8F8', color:'var(--jungle-deep)', fontSize:'0.9rem', fontWeight:600, cursor:'pointer', transition:'all 0.15s', textAlign:'left' }}>
+                          {String.fromCharCode(65 + oi)}. {opt}
+                        </button>
+                      ))}
+                    </div>
+                    <button onClick={() => setSeaLionActiveBlank(null)} style={{ marginTop:'0.6rem', width:'100%', padding:'0.5rem', borderRadius:'8px', border:'none', background:'#F0F0F0', color:'#666', fontSize:'0.8rem', cursor:'pointer' }}>Cancel</button>
+                  </div>
+                )}
+
+                {/* Progress + submit */}
+                <div style={{ background:'white', borderRadius:'16px', padding:'1rem 1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)' }}>
+                  <div style={{ display:'flex', gap:'0.4rem', marginBottom:'0.75rem' }}>
+                    {questions.map((_, i) => (
+                      <div key={i} style={{ flex:1, height:'6px', borderRadius:'3px', background: seaLionAnswers[i] !== undefined ? '#4A7FA0' : '#E5E5E5', transition:'background 0.3s' }} />
+                    ))}
+                  </div>
+                  <button onClick={submitPassage} disabled={!allAnswered}
+                    style={{ width:'100%', padding:'1rem', borderRadius:'50px', border:'none', background: allAnswered ? 'linear-gradient(135deg, #4A7FA0, #2d6a8f)' : '#CCC', color:'white', fontSize:'1rem', fontWeight:700, cursor: allAnswered ? 'pointer' : 'not-allowed', textTransform:'uppercase', letterSpacing:'0.08em', transition:'all 0.2s', boxShadow: allAnswered ? '0 4px 12px rgba(74,127,160,0.4)' : 'none' }}>
+                    {allAnswered ? 'Submit Passage' : `${Object.keys(seaLionAnswers).length}/5 blanks filled`}
+                  </button>
+                </div>
+
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      function renderDingoMission() {
+        const CORRECT_SEQUENCE = [
+          { id: 'sun',        label: '☀️ Sun',        desc: 'Energy source' },
+          { id: 'grass',      label: '🌿 Grass',       desc: 'Producer' },
+          { id: 'kangaroo',   label: '🦘 Kangaroo',    desc: 'Herbivore' },
+          { id: 'dingo',      label: '🐕 Dingo',        desc: 'Apex predator' },
+          { id: 'decomposer', label: '🍄 Decomposer',  desc: 'Breaks down matter' },
+        ];
+
+        const nextExpected = CORRECT_SEQUENCE[dingoChainItems.length];
+        const isCorrectChain = dingoChainItems.length === CORRECT_SEQUENCE.length;
+        const currentQuestion = currentAnimal.questions[0];
+
+        function tapItem(id) {
+          if (isCorrectChain) return;
+          if (!nextExpected || id !== nextExpected.id) {
+            setDingoWrongTap(id);
+            setTimeout(() => setDingoWrongTap(null), 700);
+            return;
+          }
+          setDingoChainItems(prev => [...prev, id]);
+          setDingoWrongTap(null);
+        }
+
+        return (
+          <div style={{ position:'fixed', inset:0, background: showResult ? (isCorrect ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)') : 'var(--mist-light)', transition:'background 0.5s ease', display:'flex', flexDirection:'column' }}>
+            <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'0.6rem 1rem', flex:'0 0 auto', zIndex:100 }}>
+              <div style={{ maxWidth:'900px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <button onClick={() => setCurrentScreen('map')} style={{ background:'rgba(255,255,255,0.2)', border:'none', color:'white', padding:'0.5rem 1rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.85rem', fontWeight:600 }}> Back</button>
+                <img src="images/logo.png" alt="Taronga Tracka" style={{ height:'45px', width:'auto' }} onError={(e) => { e.target.style.display='none'; }} />
+                <div style={{ width:'70px' }} />
+              </div>
+            </div>
+
+            {showResult && (
+              <div className="animate-scale-in" style={{ textAlign:'center', padding:'clamp(1.5rem,3vh,2rem)', background:'rgba(255,255,255,0.95)', borderRadius:'20px', boxShadow:'0 8px 32px rgba(0,0,0,0.2)', margin:'clamp(1rem,2vh,1.5rem)', maxWidth:'90%', marginLeft:'auto', marginRight:'auto', marginTop:'clamp(1rem,3vh,2rem)' }}>
+                <div style={{ fontSize:'clamp(3rem,8vh,4.5rem)', marginBottom:'0.5rem' }}>{isCorrect ? '✔' : ''}</div>
+                <h2 className="heading-display" style={{ fontSize:'clamp(2rem,5vh,3rem)', color: isCorrect ? '#10b981' : '#ef4444', marginBottom:'0.4rem', lineHeight:1.1 }}>{isCorrect ? 'Correct!' : 'Not Quite'}</h2>
+                {isCorrect && <p style={{ fontSize:'clamp(0.9rem,2vh,1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>You understand the dingo's place in the ecosystem!</p>}
+                {!isCorrect && <p style={{ fontSize:'clamp(0.9rem,2vh,1rem)', color:'#555', marginBottom:'0.8rem' }}>Think about how dingoes affect other animal populations.</p>}
+                {currentQuestion.fact && (
+                  <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'12px', padding:'clamp(1rem,2vh,1.5rem)', marginTop:'0.8rem', marginBottom:'1rem' }}>
+                    <p style={{ color:'#333', fontSize:'clamp(0.9rem,2vh,1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentQuestion.fact}</p>
+                  </div>
+                )}
+                <button onClick={() => { if (isCorrect) { handleNextQuestion(); } else { setIsProcessingAnswer(false); setShowResult(false); } }}
+                  style={{ background: isCorrect ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)', color:'white', border:'none', padding:'clamp(0.8rem,2vh,1.2rem) clamp(2rem,5vw,3rem)', fontSize:'clamp(1rem,2.5vh,1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.05em', boxShadow:'0 4px 12px rgba(0,0,0,0.2)', marginTop:'0.5rem' }}>
+                  {isCorrect ? 'Continue to Observation ' : 'Try Again'}
+                </button>
+              </div>
+            )}
+
+            {!showResult && (
+              <div style={{ flex:'1 1 auto', overflowY:'auto', padding:'1rem', maxWidth:'560px', margin:'0 auto', width:'100%' }}>
+
+                <div style={{ background:'white', borderRadius:'16px', padding:'1rem 1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
+                  <h2 style={{ fontSize:'1.2rem', fontWeight:700, color:'var(--jungle-deep)', margin:'0 0 0.2rem' }}>🐕 Dingo Food Chain Builder</h2>
+                  <p style={{ fontSize:'0.82rem', color:'#666', margin:0 }}>Tap the organisms in the correct order to build the food chain, then answer the question.</p>
+                </div>
+
+                <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
+
+                  <div style={{ display:'flex', gap:'0.3rem', marginBottom:'1rem' }}>
+                    {CORRECT_SEQUENCE.map((item, i) => (
+                      <div key={item.id} style={{ flex:1, height:'6px', borderRadius:'3px', background: i < dingoChainItems.length ? '#C4873A' : '#E5E5E5', transition:'background 0.3s' }} />
+                    ))}
+                  </div>
+
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.6rem', marginBottom:'1rem' }}>
+                    {(dingoShuffledOptions.length ? dingoShuffledOptions : CORRECT_SEQUENCE).map((opt) => {
+                      const placed = dingoChainItems.includes(opt.id);
+                      const isNext = !placed && opt.id === nextExpected?.id;
+                      const isWrong = dingoWrongTap === opt.id;
+                      return (
+                        <button key={opt.id} onClick={() => tapItem(opt.id)} disabled={placed}
+                          style={{ padding:'0.75rem 0.6rem', borderRadius:'12px', border:`2px solid ${isWrong ? '#ef4444' : placed ? '#C4873A' : isNext ? '#C4873AB0' : '#E5E5E5'}`, background: isWrong ? '#FEE2E2' : placed ? '#FDF3E8' : isNext ? '#FFF8F2' : '#F8F8F8', cursor: placed ? 'default' : 'pointer', textAlign:'left', transition:'all 0.15s', display:'flex', alignItems:'center', gap:'0.5rem', opacity: placed ? 0.7 : 1 }}>
+                          <span style={{ fontSize:'1.3rem', flexShrink:0 }}>{opt.label.split(' ')[0]}</span>
+                          <div style={{ flex:1 }}>
+                            <div style={{ fontSize:'0.82rem', fontWeight:700, color: isWrong ? '#ef4444' : 'var(--jungle-deep)' }}>{opt.label.split(' ').slice(1).join(' ')}</div>
+                            <div style={{ fontSize:'0.68rem', color:'#888' }}>{opt.desc}</div>
+                          </div>
+                          {placed && <span style={{ fontSize:'0.8rem', color:'#C4873A', fontWeight:700, flexShrink:0 }}>✔</span>}
+                          {isWrong && <span style={{ fontSize:'0.8rem', color:'#ef4444', fontWeight:700, flexShrink:0 }}>✗</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {dingoWrongTap && (
+                    <div style={{ background:'#FEE2E2', border:'1px solid #FCA5A5', borderRadius:'8px', padding:'0.5rem 0.75rem', marginBottom:'0.75rem', textAlign:'center' }}>
+                      <p style={{ fontSize:'0.82rem', color:'#ef4444', fontWeight:600, margin:0 }}>Try again — tap the next correct organism</p>
+                    </div>
+                  )}
+
+                  {dingoChainItems.length > 0 && (
+                    <div style={{ background:'#FDF3E8', borderRadius:'10px', padding:'0.6rem 0.8rem', border:'1px solid #E8C897' }}>
+                      <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#C4873A', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>Your chain so far:</p>
+                      <p style={{ fontSize:'0.85rem', color:'var(--jungle-deep)', margin:0, lineHeight:1.6 }}>
+                        {dingoChainItems.map(id => CORRECT_SEQUENCE.find(o => o.id === id)?.label).join(' → ')}
+                        {!isCorrectChain && nextExpected && <span style={{ color:'#aaa' }}> → ?</span>}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {!isCorrectChain ? (
+                  <div style={{ background:'#FFF8F0', border:'1.5px dashed #E8C897', borderRadius:'14px', padding:'1.1rem', textAlign:'center' }}>
+                    <p style={{ fontSize:'0.9rem', color:'#C4873A', fontWeight:600, margin:0 }}>
+                      🔒 Complete the food chain to unlock the question
+                    </p>
+                    <p style={{ fontSize:'0.78rem', color:'#888', marginTop:'0.3rem', marginBottom:0 }}>
+                      {dingoChainItems.length === 0 ? 'Start with the energy source' : `${CORRECT_SEQUENCE.length - dingoChainItems.length} more step${CORRECT_SEQUENCE.length - dingoChainItems.length !== 1 ? 's' : ''} to go`}
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)' }}>
+                    <div style={{ background:'#D1FAE5', borderRadius:'8px', padding:'0.4rem 0.75rem', marginBottom:'0.8rem', textAlign:'center' }}>
+                      <p style={{ fontSize:'0.78rem', fontWeight:700, color:'#065F46', margin:0 }}>✔ Food chain complete!</p>
+                    </div>
+                    <p style={{ fontSize:'0.95rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.75rem', textAlign:'center' }}>{currentQuestion.q}</p>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.6rem' }}>
+                      {currentQuestion.options.map((opt, i) => (
+                        <button key={i} onClick={() => handleQuizAnswer(0, i)}
+                          style={{ padding:'0.85rem 0.6rem', borderRadius:'12px', border:'2px solid transparent', background:'#F8F4EE', color:'var(--jungle-deep)', fontSize:'0.88rem', fontWeight:600, cursor:'pointer', textAlign:'left', transition:'all 0.15s', lineHeight:1.3 }}>
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      function renderLemurMission() {
+        const behaviours = [
+          { key: 'feeding', label: 'Feeding', emoji: '🍃', index: 0 },
+          { key: 'resting', label: 'Resting', emoji: '💤', index: 1 },
+          { key: 'moving',  label: 'Moving',  emoji: '🎯', index: 2 },
+          { key: 'social',  label: 'Social',  emoji: '🤝', index: 3 },
+        ];
+
+        // Compute the dominant behaviour → maps to correct answer index (0–3)
+        const maxCount = Math.max(...behaviours.map(b => lemurCounts[b.key]));
+        const dominantIndex = behaviours.findIndex(b => lemurCounts[b.key] === maxCount);
+        const computedCorrect = dominantIndex >= 0 ? dominantIndex : 0;
+
+        function tapBehaviour(key) {
+          if (!lemurTimerStarted || lemurTimerFinished) return;
+          if (lemurTapCooldown[key]) return;
+          setLemurCounts(c => ({ ...c, [key]: c[key] + 1 }));
+          setLemurTapCooldown(cd => ({ ...cd, [key]: true }));
+          setTimeout(() => setLemurTapCooldown(cd => ({ ...cd, [key]: false })), 300);
+        }
+
+        function submitLemurAnswer(selectedIndex) {
+          // Dynamically set correct on the question before passing to handler
+          currentAnimal.questions[0].correct = computedCorrect;
+          handleQuizAnswer(0, selectedIndex);
+        }
+
+        return (
+          <div style={{ position:'fixed', inset:0, background: showResult ? (isCorrect ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)') : 'var(--mist-light)', transition:'background 0.5s ease', display:'flex', flexDirection:'column' }}>
+            {/* Header */}
+            <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'0.6rem 1rem', flex:'0 0 auto', zIndex:100 }}>
+              <div style={{ maxWidth:'900px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <button onClick={() => setCurrentScreen('map')} style={{ background:'rgba(255,255,255,0.2)', border:'none', color:'white', padding:'0.5rem 1rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.85rem', fontWeight:600 }}> Back</button>
+                <img src="images/logo.png" alt="Taronga Tracka" style={{ height:'45px', width:'auto' }} onError={(e) => { e.target.style.display='none'; }} />
+                <div style={{ width:'70px' }} />
+              </div>
+            </div>
+
+            {/* Result overlay */}
+            {showResult && (
+              <div className="animate-scale-in" style={{ textAlign:'center', padding:'clamp(1.5rem,3vh,2rem)', background:'rgba(255,255,255,0.95)', borderRadius:'20px', boxShadow:'0 8px 32px rgba(0,0,0,0.2)', margin:'clamp(1rem,2vh,1.5rem)', maxWidth:'90%', marginLeft:'auto', marginRight:'auto', marginTop:'clamp(1rem,3vh,2rem)' }}>
+                <div style={{ fontSize:'clamp(3rem,8vh,4.5rem)', marginBottom:'0.5rem' }}>{isCorrect ? '✔' : ''}</div>
+                <h2 className="heading-display" style={{ fontSize:'clamp(2rem,5vh,3rem)', color: isCorrect ? '#10b981' : '#ef4444', marginBottom:'0.4rem', lineHeight:1.1 }}>{isCorrect ? 'Correct!' : 'Not Quite'}</h2>
+                {isCorrect && <p style={{ fontSize:'clamp(0.9rem,2vh,1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>Your observation matches your data!</p>}
+                {!isCorrect && <p style={{ fontSize:'clamp(0.9rem,2vh,1rem)', color:'#555', marginBottom:'0.8rem' }}>Check your tally — what did you record most?</p>}
+                {currentAnimal.questions[0].fact && (
+                  <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'12px', padding:'clamp(1rem,2vh,1.5rem)', marginTop:'0.8rem', marginBottom:'1rem' }}>
+                    <p style={{ color:'#333', fontSize:'clamp(0.9rem,2vh,1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentAnimal.questions[0].fact}</p>
+                  </div>
+                )}
+                <button onClick={() => { if (isCorrect) { handleNextQuestion(); } else { setIsProcessingAnswer(false); setShowResult(false); } }}
+                  style={{ background: isCorrect ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)', color:'white', border:'none', padding:'clamp(0.8rem,2vh,1.2rem) clamp(2rem,5vw,3rem)', fontSize:'clamp(1rem,2.5vh,1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.05em', boxShadow:'0 4px 12px rgba(0,0,0,0.2)', marginTop:'0.5rem' }}>
+                  {isCorrect ? 'Continue to Observation ' : 'Try Again'}
+                </button>
+              </div>
+            )}
+
+            {!showResult && (
+              <div style={{ flex:'1 1 auto', overflowY:'auto', padding:'1rem', maxWidth:'560px', margin:'0 auto', width:'100%' }}>
+
+                {/* Title */}
+                <div style={{ background:'white', borderRadius:'16px', padding:'1rem 1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem', textAlign:'center' }}>
+                  <h2 style={{ fontSize:'1.25rem', fontWeight:700, color:'var(--jungle-deep)', margin:'0 0 0.2rem' }}>🐒 Lemur Activity Tracker</h2>
+                  <p style={{ fontSize:'0.82rem', color:'#666', margin:0 }}>
+                    {!lemurTimerStarted ? 'Press Start to begin your 30-second observation.' : lemurTimerFinished ? 'Observation complete — review your tally below.' : 'Tap the behaviours you see in real time.'}
+                  </p>
+                </div>
+
+                {/* Timer + tap buttons */}
+                {!lemurTimerFinished && (
+                  <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
+                    {/* Countdown */}
+                    <div style={{ textAlign:'center', marginBottom:'1rem' }}>
+                      <div style={{ fontSize:'4rem', fontWeight:800, color: lemurTimeLeft <= 10 ? '#ef4444' : 'var(--jungle-deep)', lineHeight:1, fontVariantNumeric:'tabular-nums' }}>
+                        {lemurTimerStarted ? lemurTimeLeft : 30}
+                      </div>
+                      <p style={{ fontSize:'0.72rem', color:'#888', marginTop:'0.2rem' }}>seconds remaining</p>
+                    </div>
+
+                    {/* Start button OR tap buttons */}
+                    {!lemurTimerStarted ? (
+                      <button onClick={() => setLemurTimerStarted(true)}
+                        style={{ width:'100%', padding:'1rem', borderRadius:'50px', border:'none', background:'linear-gradient(135deg, #7A6E8A, #5a5070)', color:'white', fontWeight:700, fontSize:'1.1rem', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.08em', boxShadow:'0 4px 12px rgba(122,110,138,0.4)' }}>
+                        ▶ Start Observation
+                      </button>
+                    ) : (
+                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' }}>
+                        {behaviours.map(b => (
+                          <button key={b.key} onClick={() => tapBehaviour(b.key)}
+                            style={{ padding:'1.1rem 0.5rem', borderRadius:'14px', border:`2px solid ${lemurTapCooldown[b.key] ? '#7A6E8A' : '#E5E5E5'}`, background: lemurTapCooldown[b.key] ? '#EDE8F2' : '#F8F8F8', cursor:'pointer', transition:'all 0.15s', transform: lemurTapCooldown[b.key] ? 'scale(0.95)' : 'scale(1)', textAlign:'center' }}>
+                            <div style={{ fontSize:'1.6rem', marginBottom:'0.2rem' }}>{b.emoji}</div>
+                            <div style={{ fontSize:'0.88rem', fontWeight:700, color:'var(--jungle-deep)' }}>{b.label}</div>
+                            <div style={{ fontSize:'1.2rem', fontWeight:800, color:'#7A6E8A', marginTop:'0.2rem' }}>{lemurCounts[b.key]}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Post-timer: tally + MCQ */}
+                {lemurTimerFinished && (
+                  <>
+                    {/* Final tally */}
+                    <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
+                      <p style={{ fontSize:'0.8rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.75rem' }}>Your Observation Tally</p>
+                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.6rem' }}>
+                        {behaviours.map(b => (
+                          <div key={b.key} style={{ background: lemurCounts[b.key] === maxCount && maxCount > 0 ? '#EDE8F2' : '#F8F8F8', border: lemurCounts[b.key] === maxCount && maxCount > 0 ? '2px solid #7A6E8A' : '2px solid transparent', borderRadius:'10px', padding:'0.65rem 0.8rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
+                            <span style={{ fontSize:'1.2rem' }}>{b.emoji}</span>
+                            <span style={{ fontSize:'0.85rem', fontWeight:600, color:'var(--jungle-deep)', flex:1 }}>{b.label}</span>
+                            <span style={{ fontSize:'1.1rem', fontWeight:800, color:'#7A6E8A' }}>{lemurCounts[b.key]}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* MCQ */}
+                    <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)' }}>
+                      <p style={{ fontSize:'0.95rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.75rem', textAlign:'center' }}>Which behaviour did you observe the MOST?</p>
+                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.6rem' }}>
+                        {behaviours.map(b => (
+                          <button key={b.key} onClick={() => submitLemurAnswer(b.index)}
+                            style={{ padding:'0.85rem 0.6rem', borderRadius:'12px', border:'2px solid transparent', background:'#F4F0F8', color:'var(--jungle-deep)', fontSize:'0.88rem', fontWeight:600, cursor:'pointer', textAlign:'left', transition:'all 0.15s' }}>
+                            {String.fromCharCode(65 + b.index)}. {b.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -2633,6 +3504,34 @@
         return () => clearTimeout(timer);
       }, [immersionTimer, immersionActive]);
 
+      React.useEffect(() => {
+        if (!concertLawnTimerActive) return;
+        if (concertLawnTimerSeconds <= 0) { setConcertLawnTimerActive(false); setConcertLawnTimerDone(true); return; }
+        const t = setTimeout(() => setConcertLawnTimerSeconds(s => s - 1), 1000);
+        return () => clearTimeout(t);
+      }, [concertLawnTimerSeconds, concertLawnTimerActive]);
+
+      React.useEffect(() => {
+        if (!bushwalkTimerActive) return;
+        if (bushwalkTimerSeconds <= 0) { setBushwalkTimerActive(false); setBushwalkTimerDone(true); return; }
+        const t = setTimeout(() => setBushwalkTimerSeconds(s => s - 1), 1000);
+        return () => clearTimeout(t);
+      }, [bushwalkTimerSeconds, bushwalkTimerActive]);
+
+      React.useEffect(() => {
+        if (!lemurTimerStarted || lemurTimerFinished) return;
+        if (lemurTimeLeft <= 0) { setLemurTimerFinished(true); return; }
+        const t = setTimeout(() => setLemurTimeLeft(s => s - 1), 1000);
+        return () => clearTimeout(t);
+      }, [lemurTimeLeft, lemurTimerStarted, lemurTimerFinished]);
+
+      React.useEffect(() => {
+        if (!buffaloIsPressing || buffaloInteractionComplete) return;
+        if (buffaloHoldTime >= 2000) { setBuffaloInteractionComplete(true); setBuffaloIsPressing(false); return; }
+        const t = setTimeout(() => setBuffaloHoldTime(h => h + 100), 100);
+        return () => clearTimeout(t);
+      }, [buffaloIsPressing, buffaloHoldTime, buffaloInteractionComplete]);
+
       const discoverAnimal = (animal, event) => {
         if (event) event.stopPropagation();
         if (activityCompleted) return;
@@ -2652,6 +3551,40 @@
         setChimpGraph({ resting: 30, feeding: 30, moving: 40 });
         setGorillaSelection(null);
         setGiraffeMarker(50);
+        setConcertLawnTimerSeconds(60);
+        setConcertLawnTimerActive(false);
+        setConcertLawnTimerDone(false);
+        setBushwalkTimerSeconds(30);
+        setBushwalkTimerActive(false);
+        setBushwalkTimerDone(false);
+        setLemurCounts({ feeding: 0, resting: 0, moving: 0, social: 0 });
+        setLemurTimerStarted(false);
+        setLemurTimerFinished(false);
+        setLemurTimeLeft(30);
+        setLemurTapCooldown({});
+        setDingoChainItems([]);
+        setDingoWrongTap(null);
+        setSeaLionAnswers({});
+        setSeaLionActiveBlank(null);
+        setBushwalkClue(0);
+        setBushwalkSelected(null);
+        setBushwalkShowFeedback(false);
+        setBushwalkResults([]);
+        setBuffaloIsPressing(false);
+        setBuffaloHoldTime(0);
+        setBuffaloInteractionComplete(false);
+        setBuffaloShowObservation(false);
+        if (animal.id === 'dingo') {
+          const seq = [
+            { id: 'sun',        label: '☀️ Sun',        desc: 'Energy source' },
+            { id: 'grass',      label: '🌿 Grass',       desc: 'Producer' },
+            { id: 'kangaroo',   label: '🦘 Kangaroo',    desc: 'Herbivore' },
+            { id: 'dingo',      label: '🐕 Dingo',        desc: 'Apex predator' },
+            { id: 'decomposer', label: '🍄 Decomposer',  desc: 'Breaks down matter' },
+          ];
+          const shuffled = [...seq].sort(() => Math.random() - 0.5);
+          setDingoShuffledOptions(shuffled);
+        }
         setCurrentScreen('animal');
         if (animal.id === 'tiger' || animal.id === 'lion' || animal.id === 'giraffe') { startCamera(); }
         setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 0);
@@ -2711,6 +3644,26 @@
           setCurrentScreen('observation');
           return;
         }
+        if (currentAnimal.id === 'lemur') {
+          setCurrentScreen('observation');
+          return;
+        }
+        if (currentAnimal.id === 'dingo') {
+          setCurrentScreen('observation');
+          return;
+        }
+        if (currentAnimal.id === 'sea-lion') {
+          setCurrentScreen('observation');
+          return;
+        }
+        if (currentAnimal.id === 'blue-mountains-bushwalk') {
+          setCurrentScreen('observation');
+          return;
+        }
+        if (currentAnimal.id === 'asian-water-buffalo') {
+          setCurrentScreen('observation');
+          return;
+        }
         if (currentQuestionIndex < currentAnimal.questions.length - 1) {
           setCurrentQuestionIndex(i => i + 1);
         } else {
@@ -2765,6 +3718,180 @@
           detailBonus = Math.min(detailHits + 1, 5);
 
           literacyBonus = calculateWritingScore(text);
+        } else if (currentAnimal.id === 'gorilla') {
+          behaviourBonus = calculateBehaviourScore(text);
+          literacyBonus = calculateWritingScore(text);
+
+          // Detail: ANY one valid element → +1, two or more → +2 to max
+          // Entry points: clear observation, relevant concept, simple explanation/survival link
+          const observationWords = ['sit','stand','move','eat','groom','play','look','climb','walk','rest','interact','together','group'];
+          const conceptWords = ['social','group','behaviour','bond','family','dominan','hierarch','communicat','cooperat','relation','protect','young','leader','silverback'];
+          const explanationPatterns = ['because','helps','so that','in order','allows','enables','this means','for survival','stay safe','each other'];
+
+          const hasObservation = observationWords.some(w => lower.includes(w));
+          const hasConcept = conceptWords.some(w => lower.includes(w));
+          const hasExplanation = explanationPatterns.some(p => lower.includes(p));
+
+          const elements = [hasObservation, hasConcept, hasExplanation].filter(Boolean).length;
+          if (elements === 0) detailBonus = 0;
+          else if (elements === 1) detailBonus = 1;
+          else detailBonus = Math.min(elements + 1, 5);
+        } else if (currentAnimal.id === 'giraffe') {
+          behaviourBonus = calculateBehaviourScore(text);
+          literacyBonus = calculateWritingScore(text);
+
+          // Detail: ANY one valid element → +1, two or more → +2 to max
+          // Entry points: clear observation, named adaptation, simple explanation, survival link
+          const observationWords = ['neck','leg','tall','height','eat','leaf','leaves','reach','tree','branch','ground','drink','spot','pattern','colour','color','coat','tongue'];
+          const conceptWords = ['adapt','survival','feature','advantage','predator','food','habitat','evolution','camouflage','protect','savanna'];
+          const explanationPatterns = ['because','helps','so that','in order','allows','enables','this means','for survival','to reach','to see','stay safe'];
+
+          const hasObservation = observationWords.some(w => lower.includes(w));
+          const hasConcept = conceptWords.some(w => lower.includes(w));
+          const hasExplanation = explanationPatterns.some(p => lower.includes(p));
+
+          const elements = [hasObservation, hasConcept, hasExplanation].filter(Boolean).length;
+          if (elements === 0) detailBonus = 0;
+          else if (elements === 1) detailBonus = 1;
+          else detailBonus = Math.min(elements + 1, 5);
+        } else if (currentAnimal.id === 'concert-lawn') {
+          // Behaviour: sensory/physical interaction with the environment
+          const behaviourWords = ['walk','feel','felt','stand','touch','sit','notice','observe','sense','hear','smell','look','step','move','ground','grass','soil','surface'];
+          const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
+          behaviourBonus = Math.min(behaviourHits + 1, 5);
+
+          // Detail: sensory description, environment observation, comparison, or explanation
+          const sensoryWords = ['soft','hard','rough','smooth','cool','cold','warm','wet','dry','uneven','springy','spongy','firm','cushion','texture','temperature'];
+          const environmentWords = ['grass','soil','ground','nature','plant','tree','leaf','dirt','earth','natural','living','green','outdoor','air','breeze'];
+          const comparisonWords = ['concrete','pavement','city','building','road','floor','hard surface','asphalt','urban','man-made','built','artificial'];
+          const explanationPatterns = ['because','different','compare','unlike','whereas','than','more','less','better','support','alive','life'];
+
+          const hasSensory = sensoryWords.some(w => lower.includes(w));
+          const hasEnvironment = environmentWords.some(w => lower.includes(w));
+          const hasComparison = comparisonWords.some(w => lower.includes(w));
+          const hasExplanation = explanationPatterns.some(p => lower.includes(p));
+
+          const elements = [hasSensory, hasEnvironment, hasComparison, hasExplanation].filter(Boolean).length;
+          if (elements === 0) detailBonus = 0;
+          else if (elements === 1) detailBonus = 1;
+          else detailBonus = Math.min(elements + 1, 5);
+
+          literacyBonus = calculateWritingScore(text);
+        } else if (currentAnimal.id === 'lemur') {
+          // Behaviour: observed actions and location-linked behaviours
+          const behaviourWords = ['feed','feeding','eat','eating','rest','resting','sleep','sleeping','move','moving','climb','climbing','jump','jumping','sit','sitting','groom','grooming','play','playing','social','interact','watch','observe'];
+          const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
+          behaviourBonus = Math.min(behaviourHits + 1, 5);
+
+          // Detail: location, behaviour, explanation, or space–behaviour connection
+          const locationWords = ['tree','branch','ground','platform','structure','enclosure','log','rock','grass','high','low','above','below','top','bottom','corner','shade','shelter'];
+          const behaviourDetailWords = ['feed','eat','rest','sleep','move','climb','groom','play','social','interact','jump','look'];
+          const explanationPatterns = ['because','so that','in order','allows','helps','use','purpose','shelter','food','safe','warm','cool','rest'];
+          const connectionWords = ['area','space','part','section','spot','place','there','here','where','using','found','located'];
+
+          const hasLocation = locationWords.some(w => lower.includes(w));
+          const hasBehaviourDetail = behaviourDetailWords.some(w => lower.includes(w));
+          const hasExplanation = explanationPatterns.some(p => lower.includes(p));
+          const hasConnection = connectionWords.some(w => lower.includes(w));
+
+          const elements = [hasLocation, hasBehaviourDetail, hasExplanation, hasConnection].filter(Boolean).length;
+          if (elements === 0) detailBonus = 0;
+          else if (elements === 1) detailBonus = 1;
+          else detailBonus = Math.min(elements + 1, 5);
+
+          literacyBonus = calculateWritingScore(text);
+        } else if (currentAnimal.id === 'dingo') {
+          // Behaviour: observable appearance features and environment references
+          const behaviourWords = ['fur','coat','colour','color','tan','sandy','brown','golden','yellow','pale','dark','blend','camouflage','hide','look','appear','observe','notice','see','watch','spot','match','similar'];
+          const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
+          behaviourBonus = Math.min(behaviourHits + 1, 5);
+
+          // Detail: dingo appearance, environment description, camouflage explanation, or appearance–environment link
+          const dingoAppearanceWords = ['fur','coat','colour','color','tan','sandy','brown','golden','yellow','pale','skin','pattern','marking','stripe'];
+          const envWords = ['grass','dirt','rock','ground','sand','bush','scrub','desert','earth','soil','landscape','surroundings','environment','habitat'];
+          const explanationPatterns = ['because','helps','so that','allows','enables','survive','predator','prey','hunt','hide','camouflage','blend','unseen','invisible','protection','advantage'];
+          const linkWords = ['similar','same','match','like','matches','blends','looks like','colour of','colour as'];
+
+          const hasDingoAppearance = dingoAppearanceWords.some(w => lower.includes(w));
+          const hasEnvironment = envWords.some(w => lower.includes(w));
+          const hasExplanation = explanationPatterns.some(p => lower.includes(p));
+          const hasLink = linkWords.some(p => lower.includes(p));
+
+          const elements = [hasDingoAppearance, hasEnvironment, hasExplanation, hasLink].filter(Boolean).length;
+          if (elements === 0) detailBonus = 0;
+          else if (elements === 1) detailBonus = 1;
+          else detailBonus = Math.min(elements + 1, 5);
+
+          literacyBonus = calculateWritingScore(text);
+        } else if (currentAnimal.id === 'asian-water-buffalo') {
+          // Behaviour: observable animal interactions and positioning
+          const behaviourWords = ['bird','birds','buffalo','rhino','tick','tickbird','oxpecker','cattle','egret','sit','perch','stand','walk','follow','eat','feed','groom','clean','pick','peck','fly','land','nearby','together','interact','observe','see','notice','watch'];
+          const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
+          behaviourBonus = Math.min(behaviourHits + 1, 5);
+
+          // Detail: animals identified, interaction described, explanation given, or positioning noted
+          const animalWords = ['bird','birds','buffalo','rhino','oxpecker','tickbird','egret','cattle','insect','tick','fly','flies','parasite'];
+          const interactionWords = ['sit','perch','groom','clean','eat','feed','pick','peck','follow','together','interact','relationship','mutualism','symbiosis','help','benefit'];
+          const explanationPatterns = ['because','helps','benefit','advantage','survive','remove','clean','protect','safe','food','mutual','both','each other','so that'];
+          const positionWords = ['back','on top','nearby','beside','next to','close','following','above','around','on the'];
+
+          const hasAnimals = animalWords.some(w => lower.includes(w));
+          const hasInteraction = interactionWords.some(w => lower.includes(w));
+          const hasExplanation = explanationPatterns.some(p => lower.includes(p));
+          const hasPositioning = positionWords.some(p => lower.includes(p));
+
+          const elements = [hasAnimals, hasInteraction, hasExplanation, hasPositioning].filter(Boolean).length;
+          if (elements === 0) detailBonus = 0;
+          else if (elements === 1) detailBonus = 1;
+          else detailBonus = Math.min(elements + 1, 5);
+
+          literacyBonus = calculateWritingScore(text);
+        } else if (currentAnimal.id === 'sea-lion') {
+          // Behaviour: human activities and links to environment/sea lions
+          const behaviourWords = ['human','people','person','pollution','plastic','waste','rubbish','litter','fishing','boat','ship','noise','oil','chemical','tourist','visitor','enclosure','structure','fence','water','ocean','sea'];
+          const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
+          behaviourBonus = Math.min(behaviourHits + 1, 5);
+
+          // Detail: human impact identified, environment observed, explanation given, or cause-effect link
+          const humanImpactWords = ['pollution','plastic','waste','fishing','overfishing','oil','noise','habitat','destroy','damage','hunting','climate','warming','chemical','runoff','rubbish','litter','net','trap'];
+          const environmentWords = ['ocean','sea','water','coast','enclosure','environment','habitat','beach','rock','pool','tank'];
+          const explanationPatterns = ['because','impact','affect','effect','cause','lead','result','harm','hurt','threat','danger','reduce','deplete','disrupt','changes'];
+          const causeEffectWords = ['if','when','this means','therefore','so','as a result','due to','leads to','can cause','may cause'];
+
+          const hasHumanImpact = humanImpactWords.some(w => lower.includes(w));
+          const hasEnvironment = environmentWords.some(w => lower.includes(w));
+          const hasExplanation = explanationPatterns.some(p => lower.includes(p));
+          const hasCauseEffect = causeEffectWords.some(p => lower.includes(p));
+
+          const elements = [hasHumanImpact, hasEnvironment, hasExplanation, hasCauseEffect].filter(Boolean).length;
+          if (elements === 0) detailBonus = 0;
+          else if (elements === 1) detailBonus = 1;
+          else detailBonus = Math.min(elements + 1, 5);
+
+          literacyBonus = calculateWritingScore(text);
+        } else if (currentAnimal.id === 'blue-mountains-bushwalk') {
+          // Behaviour: sounds identified, listening engagement, environment reference
+          const behaviourWords = ['hear','heard','listen','sound','sounds','bird','birds','wind','leaf','leaves','water','rain','insect','cricket','frog','silence','quiet','rustl','distant','echo','noise','voice','step','footstep','crunch'];
+          const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
+          behaviourBonus = Math.min(behaviourHits + 1, 5);
+
+          // Detail: specific sounds, natural vs human-made, environment description, feeling
+          const soundWords = ['bird','birds','wind','leaves','water','rain','insect','cricket','frog','silence','rustl','twig','branch','creek','stream','distant','echo','buzz','hum','chirp','tweet','call'];
+          const sourceWords = ['natural','human','human-made','man-made','traffic','car','people','voice','talking','machine','artificial','mechanical'];
+          const environmentWords = ['quiet','calm','peaceful','still','busy','loud','noisy','serene','tranquil','alive','environment','nature','forest','bush','mountain','outdoor'];
+          const feelingWords = ['feel','felt','made me','relaxed','peaceful','calm','happy','amazed','aware','connected','surprised','strange','comfortable','uncomfortable','wonder','awe'];
+
+          const hasSounds = soundWords.some(w => lower.includes(w));
+          const hasSource = sourceWords.some(w => lower.includes(w));
+          const hasEnvironment = environmentWords.some(w => lower.includes(w));
+          const hasFeeling = feelingWords.some(w => lower.includes(w));
+
+          const elements = [hasSounds, hasSource, hasEnvironment, hasFeeling].filter(Boolean).length;
+          if (elements === 0) detailBonus = 0;
+          else if (elements === 1) detailBonus = 1;
+          else detailBonus = Math.min(elements + 1, 5);
+
+          literacyBonus = calculateWritingScore(text);
         } else {
           behaviourBonus = calculateBehaviourScore(text);
           detailBonus = calculateDetailScore(text);
@@ -2780,8 +3907,17 @@
 
         setFoundAnimals(prev => new Set([...prev, currentAnimal.id]));
         setBadges(prev => {
-          const alreadyExists = prev.some(b => b.animalId === currentAnimal.id);
-          if (alreadyExists) return prev;
+          const existingIndex = prev.findIndex(b => b.animalId === currentAnimal.id);
+          if (existingIndex !== -1) {
+            // Badge exists (e.g. from fill-the-passage) — merge observation in
+            const updated = [...prev];
+            updated[existingIndex] = {
+              ...updated[existingIndex],
+              observation: text,
+              observationScore,
+            };
+            return updated;
+          }
           return [...prev, {
             animalId: currentAnimal.id, animal: currentAnimal.name,
             quizResults: quizResults,
@@ -2794,10 +3930,23 @@
       };
 
       // Step 4 – Submit activity to Firestore
-      const completeActivity = async () => {
+      const completeActivity = async (statementOverride) => {
         if (!studentName || !classCode) return;
         if (activityCompleted) return;
-        if (!window.confirm('Submit your activity results to your teacher?\\\\n\\\\nYou will not be able to earn more badges after this.')) return;
+
+        // Guard: treat non-string statementOverride (e.g. click events) as undefined
+        const validOverride = typeof statementOverride === 'string' ? statementOverride : null;
+
+        // Always show conservation screen first unless submitting from it
+        if (!validOverride) {
+          setShowConservationScreen(true);
+          return;
+        }
+
+        if (!window.confirm('Submit your activity results to your teacher?\n\nYou will not be able to earn more badges after this.')) return;
+
+        const finalStatement = validOverride;
+        const safeStatement = typeof finalStatement === 'string' ? finalStatement.trim() : '';
 
         setIsSubmittingActivity(true);
         const code = normaliseCode(classCode);
@@ -2848,6 +3997,7 @@
               quizTotal: quizTotal,
               quizPercentage: quizPercent,
               quizPercent: quizPercent,
+              conservationStatement: safeStatement,
               completed: true,
               completedAt: firebase.firestore.FieldValue.serverTimestamp(),
               status: "complete"
@@ -2859,7 +4009,7 @@
         } catch (err) {
           console.error(" Firestore submission error:", err);
           setIsSubmittingActivity(false);
-          alert(`Submission failed: ${err.message}\\\\n\\\\nPlease check your connection and try again.`);
+          alert(`Submission failed: ${err.message}\n\nPlease check your connection and try again.`);
         }
       };
 
@@ -2923,6 +4073,45 @@
           </div>
         );
       }
+
+       if (showConservationScreen) {
+         const csLen = conservationStatement.trim().length;
+         const csReady = csLen >= 5;
+         return (
+           <div style={{ position:'fixed', inset:0, zIndex:2000, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.55)', padding:'1rem' }}>
+             <div className="fade-in" style={{ background:'white', borderRadius:'20px', padding:'2rem', maxWidth:'500px', width:'100%', boxShadow:'0 24px 64px rgba(0,0,0,0.35)', textAlign:'center' }}>
+               <div style={{ fontSize:'3rem', marginBottom:'0.6rem' }}>🌱</div>
+               <h2 className="heading-display" style={{ fontSize:'1.9rem', color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>Make a Difference</h2>
+               <p style={{ fontSize:'0.92rem', color:'#555', lineHeight:1.7, marginBottom:'0.4rem' }}>
+                 Before you finish, think about how you can help protect animals and the environment.
+               </p>
+               <p style={{ fontSize:'0.95rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
+                 Based on today's experience, what is ONE thing you can do to support conservation?
+               </p>
+               <textarea
+                 value={conservationStatement}
+                 onChange={e => setConservationStatement(e.target.value)}
+                 placeholder="I can help by..."
+                 style={{ width:'100%', minHeight:'120px', padding:'1rem 1.1rem', borderRadius:'12px', border:'2px solid #E5E5E5', fontSize:'1rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', color:'#222', lineHeight:1.6, boxSizing:'border-box', outline:'none', transition:'border-color 0.2s' }}
+                 onFocus={e => e.target.style.borderColor = 'var(--jungle-mid)'}
+                 onBlur={e => e.target.style.borderColor = '#E5E5E5'}
+               />
+               <div style={{ fontSize:'0.78rem', color: csReady ? '#16A34A' : '#aaa', marginTop:'0.3rem', marginBottom:'1.1rem', textAlign:'right', fontWeight:600 }}>
+                 {csLen} / 5 minimum characters
+               </div>
+               <button
+                 disabled={!csReady}
+                 onClick={() => { setShowConservationScreen(false); completeActivity(conservationStatement); }}
+                 style={{ width:'100%', padding:'1rem', borderRadius:'50px', border:'none', background: csReady ? 'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))' : '#CCC', color:'white', fontSize:'1rem', fontWeight:700, cursor: csReady ? 'pointer' : 'not-allowed', textTransform:'uppercase', letterSpacing:'0.08em', boxShadow: csReady ? '0 4px 16px rgba(232,106,51,0.4)' : 'none', transition:'all 0.2s', marginBottom:'0.6rem' }}>
+                 Submit & Finish 🌿
+               </button>
+               <button onClick={() => setShowConservationScreen(false)} style={{ background:'none', border:'none', color:'#aaa', fontSize:'0.8rem', cursor:'pointer' }}>
+                 ← Back
+               </button>
+             </div>
+           </div>
+         );
+       }
 
       if (currentScreen === 'home') {
         return (
@@ -3229,6 +4418,11 @@
         if (currentAnimal.id === 'chimpanzee') { return renderChimpMission(); }
         if (currentAnimal.id === 'gorilla') { return renderGorillaMission(); }
         if (currentAnimal.id === 'giraffe') { return renderGiraffeMission(); }
+        if (currentAnimal.id === 'lemur') { return renderLemurMission(); }
+        if (currentAnimal.id === 'dingo') { return renderDingoMission(); }
+        if (currentAnimal.id === 'sea-lion') { return renderSeaLionMission(); }
+        if (currentAnimal.id === 'blue-mountains-bushwalk') { return renderBushwalkMission(); }
+        if (currentAnimal.id === 'asian-water-buffalo') { return renderBuffaloMission(); }
         const currentQuestion = currentAnimal.questions[currentQuestionIndex];
         return (
           <div style={{ position:'fixed', inset:0, overflow:'hidden', background:showResult?(isCorrect?'linear-gradient(135deg, #10b981 0%, #059669 100%)':'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'):'var(--mist-light)', transition:'background 0.5s ease', display:'flex', flexDirection:'column' }}>
@@ -3255,14 +4449,25 @@
             </div>
             <div style={{ flex:'1 1 auto', overflowY:'auto', overflowX:'hidden', display:'flex', flexDirection:'column', padding:'clamp(0.5rem, 2vw, 1rem)', maxWidth:'900px', margin:'0 auto', width:'100%', WebkitOverflowScrolling:'touch' }}>
               <div style={{ textAlign:'center', marginBottom:'clamp(0.5rem, 1.5vh, 0.8rem)' }}>
+                {currentAnimal.missionTitle && (
+                  <p style={{ fontSize:'clamp(0.9rem, 2vh, 1.1rem)', color:showResult?'white':'var(--jungle-deep)', fontWeight:700, marginBottom:'0.3rem' }}>{currentAnimal.missionTitle}</p>
+                )}
                 <p style={{ fontSize:'clamp(0.75rem, 1.8vh, 0.9rem)', color:showResult?'white':'var(--jungle-mid)', fontWeight:600 }}>Question {currentQuestionIndex+1} of {currentAnimal.questions.length}</p>
-                {!showResult&&(<p style={{ fontSize:'clamp(0.7rem, 1.6vh, 0.85rem)', color:'var(--sunset-orange)', fontWeight:600, marginTop:'0.3rem', fontStyle:'italic' }}> Read the signs for clues!</p>)}
+                {!showResult && currentAnimal.missionTask && (
+                  <div style={{ background:'rgba(91,140,90,0.1)', border:'1px solid rgba(91,140,90,0.3)', borderRadius:'10px', padding:'0.6rem 0.9rem', marginTop:'0.5rem', textAlign:'left' }}>
+                    {currentAnimal.missionTask.split('\n').map((line, i) => (
+                      <p key={i} style={{ fontSize:'clamp(0.75rem, 1.7vh, 0.85rem)', color:'var(--jungle-deep)', margin: i === 0 ? 0 : '0.3rem 0 0', lineHeight:1.5 }}>{line}</p>
+                    ))}
+                  </div>
+                )}
+                {!showResult && !currentAnimal.missionTask && (<p style={{ fontSize:'clamp(0.7rem, 1.6vh, 0.85rem)', color:'var(--sunset-orange)', fontWeight:600, marginTop:'0.3rem', fontStyle:'italic' }}> Read the signs for clues!</p>)}
               </div>
               {showResult&&(
                 <div className="animate-scale-in" style={{ textAlign:'center', padding:'clamp(1.5rem, 3vh, 2rem)', background:'rgba(255,255,255,0.95)', borderRadius:'20px', boxShadow:'0 8px 32px rgba(0,0,0,0.2)', margin:'clamp(1rem, 2vh, 1.5rem)', maxWidth:'90%', marginLeft:'auto', marginRight:'auto' }}>
                   <div style={{ fontSize:'clamp(3rem, 8vh, 4.5rem)', marginBottom:'0.5rem' }}>{isCorrect ? '✔' : ''}</div>
                   <h2 className="heading-display" style={{ fontSize:'clamp(2rem, 5vh, 3rem)', color:isCorrect?'#10b981':'#ef4444', marginBottom:'0.4rem', lineHeight:1.1 }}>{isCorrect?'Correct!':'Try Again'}</h2>
-                  {isCorrect&&(<p style={{ fontSize:'clamp(0.95rem, 2.2vh, 1.1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>Great observation.</p>)}
+                  {isCorrect&&(<p style={{ fontSize:'clamp(0.95rem, 2.2vh, 1.1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>{currentAnimal.correctFeedback || 'Great observation.'}</p>)}
+                  {!isCorrect&&currentAnimal.incorrectFeedback&&(<p style={{ fontSize:'clamp(0.9rem, 2vh, 1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>{currentAnimal.incorrectFeedback}</p>)}
                   {isCorrect&&currentQuestion.fact&&(
                     <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'12px', padding:'clamp(1rem, 2vh, 1.5rem)', marginTop:'0.8rem', marginBottom:'1rem' }}>
                       <p style={{ color:'#333', fontSize:'clamp(0.9rem, 2vh, 1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentQuestion.fact}</p>
@@ -3314,6 +4519,61 @@
                 <button onClick={stopCamera} style={{ marginTop:'1rem', padding:'0.75rem 2rem', background:'var(--sunset-orange)', color:'white', border:'none', borderRadius:'30px', fontWeight:700, fontSize:'1rem', cursor:'pointer' }}>
                   Close Camera
                 </button>
+              </div>
+            )}
+            {currentScreen === 'observation' && currentAnimal?.id === 'blue-mountains-bushwalk' && !bushwalkTimerDone && (
+              <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, #1a3a2a 0%, #2e5c3e 100%)', zIndex:1900, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'2rem', color:'white', textAlign:'center' }}>
+                <h2 className="heading-display" style={{ fontSize:'2.5rem', marginBottom:'0.8rem' }}>👂 Listen to the Environment</h2>
+                <p style={{ fontSize:'1.1rem', opacity:0.9, maxWidth:'500px', lineHeight:1.7, marginBottom:'0.5rem' }}>
+                  Close your eyes and listen carefully.
+                </p>
+                <div style={{ background:'rgba(255,255,255,0.12)', borderRadius:'14px', padding:'1rem 1.4rem', maxWidth:'460px', marginBottom:'2rem', textAlign:'left' }}>
+                  <p style={{ fontWeight:700, fontSize:'0.9rem', marginBottom:'0.5rem' }}>Focus on:</p>
+                  {['natural sounds (wind, birds, leaves)', 'distant sounds', 'how the environment feels'].map((pt, i) => (
+                    <p key={i} style={{ fontSize:'0.82rem', opacity:0.8, margin:'0.1rem 0', paddingLeft:'0.8rem' }}>– {pt}</p>
+                  ))}
+                  <p style={{ fontSize:'0.8rem', opacity:0.65, fontStyle:'italic', marginTop:'0.6rem', marginBottom:0 }}>Stay still and let the environment come to you.</p>
+                </div>
+                <h3 style={{ fontSize:'5rem', fontWeight:800, marginBottom:'1.5rem', fontVariantNumeric:'tabular-nums', color: bushwalkTimerSeconds <= 10 ? '#FFEB3B' : 'white' }}>
+                  {bushwalkTimerSeconds}
+                </h3>
+                {!bushwalkTimerActive && (
+                  <button onClick={() => setBushwalkTimerActive(true)}
+                    style={{ padding:'0.9rem 2.5rem', borderRadius:'50px', border:'none', background:'var(--sunset-orange)', color:'white', fontWeight:700, fontSize:'1.1rem', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.08em', boxShadow:'0 4px 12px rgba(0,0,0,0.3)' }}>
+                    Start Listening
+                  </button>
+                )}
+                {bushwalkTimerActive && (
+                  <p style={{ fontSize:'0.9rem', opacity:0.85, fontWeight:600 }}>Listening now… stay still.</p>
+                )}
+              </div>
+            )}
+            {currentScreen === 'observation' && currentAnimal?.id === 'concert-lawn' && !concertLawnTimerDone && (
+              <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, #1a3a2a 0%, #2e5c3e 100%)', zIndex:1900, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'2rem', color:'white', textAlign:'center' }}>
+                <h2 className="heading-display" style={{ fontSize:'2.5rem', marginBottom:'1rem' }}>🦶 Habitat Experience</h2>
+                <p style={{ fontSize:'1.1rem', opacity:0.9, maxWidth:'500px', lineHeight:1.7, marginBottom:'0.5rem' }}>
+                  Scientists use their senses to understand environments, not just their eyes.
+                </p>
+                <div style={{ background:'rgba(255,255,255,0.12)', borderRadius:'14px', padding:'1rem 1.4rem', maxWidth:'460px', marginBottom:'2rem', textAlign:'left' }}>
+                  <p style={{ fontWeight:700, fontSize:'0.95rem', marginBottom:'0.4rem' }}>🦶 Take your shoes off (if safe to do so)</p>
+                  <p style={{ fontWeight:700, fontSize:'0.95rem', marginBottom:'0.6rem' }}>⏱ Walk on the grass for 60 seconds</p>
+                  <p style={{ fontSize:'0.82rem', opacity:0.85, marginBottom:'0.3rem', fontWeight:600 }}>As you walk, think about:</p>
+                  {['how the ground feels','the temperature','the texture','how this environment differs from hard surfaces'].map((pt, i) => (
+                    <p key={i} style={{ fontSize:'0.82rem', opacity:0.8, margin:'0.1rem 0', paddingLeft:'0.8rem' }}>– {pt}</p>
+                  ))}
+                </div>
+                <h3 style={{ fontSize:'5rem', fontWeight:800, marginBottom:'1.5rem', fontVariantNumeric:'tabular-nums', color: concertLawnTimerSeconds <= 10 ? '#FFEB3B' : 'white' }}>
+                  {concertLawnTimerSeconds}
+                </h3>
+                {!concertLawnTimerActive && (
+                  <button onClick={() => setConcertLawnTimerActive(true)}
+                    style={{ padding:'0.9rem 2.5rem', borderRadius:'50px', border:'none', background:'var(--sunset-orange)', color:'white', fontWeight:700, fontSize:'1.1rem', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.08em', boxShadow:'0 4px 12px rgba(0,0,0,0.3)' }}>
+                    ▶ Start Timer
+                  </button>
+                )}
+                {concertLawnTimerActive && (
+                  <p style={{ fontSize:'0.9rem', opacity:0.85, fontWeight:600 }}>Walk on the grass now…</p>
+                )}
               </div>
             )}
             {immersionActive && currentAnimal?.id === 'tiger' && (
@@ -3453,6 +4713,82 @@
                       👀 Observe the giraffes for 30 seconds — focus on how their body features help them interact with their environment.
                     </p>
                   </>
+                ) : currentAnimal.id === 'lemur' ? (
+                  <>
+                    <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'0.5rem', textAlign:'center' }}>🐒 How Do Lemurs Use Their Enclosure?</h2>
+                    <p style={{ color:'#555', marginBottom:'0.6rem', lineHeight:1.6, fontSize:'0.95rem', textAlign:'center' }}>
+                      Animals use different parts of their environment for different purposes, such as resting, feeding, and moving.
+                    </p>
+                    <p style={{ color:'var(--jungle-mid)', fontWeight:600, marginBottom:'0.4rem', fontSize:'0.9rem', textAlign:'center' }}>
+                      👀 Observe how the lemurs are using their enclosure
+                    </p>
+                    <div style={{ background:'#F4F0F8', border:'1px solid #C8BCD8', borderRadius:'10px', padding:'0.6rem 0.9rem', marginBottom:'1.2rem', textAlign:'left' }}>
+                      <p style={{ fontSize:'0.8rem', color:'#555', margin:'0 0 0.25rem', fontWeight:600 }}>Look at:</p>
+                      {['where they are (ground, trees, platforms)', 'what they are doing in those areas'].map((pt, i) => (
+                        <p key={i} style={{ fontSize:'0.8rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.7rem' }}>– {pt}</p>
+                      ))}
+                    </div>
+                  </>
+                ) : currentAnimal.id === 'dingo' ? (
+                  <>
+                    <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'0.5rem', textAlign:'center' }}>🐕 Dingo Adaptations: Camouflage</h2>
+                    <p style={{ color:'#555', marginBottom:'0.5rem', lineHeight:1.6, fontSize:'0.95rem', textAlign:'center' }}>
+                      Animals have adaptations that help them survive in their environment. Dingoes use camouflage to blend into their surroundings.
+                    </p>
+                    <p style={{ color:'var(--jungle-mid)', fontWeight:600, marginBottom:'0.4rem', fontSize:'0.9rem', textAlign:'center' }}>
+                      👀 Observe the dingo and its environment
+                    </p>
+                    <div style={{ background:'#FDF3E8', border:'1px solid #E8C897', borderRadius:'10px', padding:'0.6rem 0.9rem', marginBottom:'1.2rem', textAlign:'left' }}>
+                      <p style={{ fontSize:'0.8rem', color:'#555', margin:'0 0 0.25rem', fontWeight:600 }}>Look at:</p>
+                      {['its fur colour', 'the surrounding environment (grass, dirt, rocks)'].map((pt, i) => (
+                        <p key={i} style={{ fontSize:'0.8rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.7rem' }}>– {pt}</p>
+                      ))}
+                    </div>
+                  </>
+                ) : currentAnimal.id === 'asian-water-buffalo' ? (
+                  <>
+                    <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'0.5rem', textAlign:'center' }}>🐃 Helpful Relationships</h2>
+                    <p style={{ color:'#555', marginBottom:'0.5rem', lineHeight:1.6, fontSize:'0.95rem', textAlign:'center' }}>
+                      Some animals live and interact together in ways that help one or both survive.
+                    </p>
+                    <p style={{ color:'var(--jungle-mid)', fontWeight:600, marginBottom:'0.4rem', fontSize:'0.9rem', textAlign:'center' }}>
+                      👀 Observe the buffalo and nearby animals
+                    </p>
+                    <div style={{ background:'#EDF4F0', border:'1px solid #B8D4C4', borderRadius:'10px', padding:'0.6rem 0.9rem', marginBottom:'1.2rem', textAlign:'left' }}>
+                      <p style={{ fontSize:'0.8rem', color:'#555', margin:'0 0 0.25rem', fontWeight:600 }}>Look for:</p>
+                      {['other animals nearby (e.g. birds, rhino)', 'how they interact', 'where they are positioned'].map((pt, i) => (
+                        <p key={i} style={{ fontSize:'0.8rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.7rem' }}>– {pt}</p>
+                      ))}
+                    </div>
+                  </>
+                ) : currentAnimal.id === 'sea-lion' ? (
+                  <>
+                    <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'0.5rem', textAlign:'center' }}>🌊 Humans and the Ocean</h2>
+                    <p style={{ color:'#555', marginBottom:'0.5rem', lineHeight:1.6, fontSize:'0.95rem', textAlign:'center' }}>
+                      Human activities can affect ocean environments and the animals that live in them.
+                    </p>
+                    <p style={{ color:'var(--jungle-mid)', fontWeight:600, marginBottom:'0.4rem', fontSize:'0.9rem', textAlign:'center' }}>
+                      👀 Observe the sea lion enclosure and surrounding environment
+                    </p>
+                    <div style={{ background:'#EAF3F8', border:'1px solid #AACFE0', borderRadius:'10px', padding:'0.6rem 0.9rem', marginBottom:'1.2rem', textAlign:'left' }}>
+                      <p style={{ fontSize:'0.8rem', color:'#555', margin:'0 0 0.25rem', fontWeight:600 }}>Think about:</p>
+                      {['the water', 'the enclosure', 'human presence (people, structures)'].map((pt, i) => (
+                        <p key={i} style={{ fontSize:'0.8rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.7rem' }}>– {pt}</p>
+                      ))}
+                    </div>
+                  </>
+                ) : currentAnimal.id === 'blue-mountains-bushwalk' ? (
+                  <>
+                    <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'0.5rem', textAlign:'center' }}>👂 Listen to the Environment</h2>
+                    {bushwalkTimerDone && (
+                      <div style={{ background:'#D1FAE5', borderRadius:'10px', padding:'0.4rem 0.9rem', marginBottom:'0.6rem', textAlign:'center' }}>
+                        <p style={{ fontSize:'0.82rem', fontWeight:700, color:'#065F46', margin:0 }}>✔ Listening complete — write your response below</p>
+                      </div>
+                    )}
+                    <p style={{ color:'var(--jungle-mid)', fontWeight:600, marginBottom:'1.2rem', fontSize:'0.9rem', textAlign:'center' }}>
+                      Describe what you could hear and explain how it made you feel.
+                    </p>
+                  </>
                 ) : (
                   <>
                     <h2 className="heading-display" style={{ fontSize:'2.5rem', color:'var(--jungle-deep)', marginBottom:'1rem', textAlign:'center' }}>Your Observations</h2>
@@ -3469,10 +4805,28 @@
                   </>
                 )}
                 <p style={{ color:'#444', fontWeight:600, marginBottom:'1rem', fontSize:'1rem', textAlign:'center' }}>
-                  {currentAnimal.observationPrompt}
+                  {currentAnimal.id === 'concert-lawn'
+                    ? 'Describe your experience walking on the grass and explain how this environment is different to a built environment like the city.'
+                    : currentAnimal.id === 'blue-mountains-bushwalk'
+                    ? null
+                    : currentAnimal.observationPrompt}
                 </p>
+                {currentAnimal.id === 'concert-lawn' && (
+                  <div style={{ background:'#F0F7F4', border:'1px solid #B8D9C8', borderRadius:'12px', padding:'0.9rem 1.1rem', marginBottom:'0.75rem' }}>
+                    <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.35rem' }}>Write 2–3 sentences. Include:</p>
+                    <ul style={{ margin:'0 0 0.5rem', paddingLeft:'1.1rem', fontSize:'0.8rem', color:'#555', lineHeight:1.8 }}>
+                      <li>what it felt like (e.g. soft, cool, uneven)</li>
+                      <li>what you noticed about the environment</li>
+                      <li>how this compares to hard surfaces like concrete</li>
+                    </ul>
+                    <p style={{ fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-mid)', marginBottom:'0.2rem' }}>Optional sentence starters:</p>
+                    {['The grass felt…','I noticed that…','This is different to the city because…'].map((s, i) => (
+                      <p key={i} style={{ fontSize:'0.78rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.5rem', fontStyle:'italic' }}>"{s}"</p>
+                    ))}
+                  </div>
+                )}
                 <textarea value={observation} onChange={(e)=>setObservation(e.target.value)}
-                  placeholder={currentAnimal.id === 'chimpanzee' ? 'I observed that...' : currentAnimal.id === 'gorilla' ? 'I noticed that the gorillas...' : currentAnimal.id === 'giraffe' ? 'I noticed that the giraffe\'s ... helps it to...' : 'Describe what you observe in detail...'}
+                  placeholder={currentAnimal.id === 'chimpanzee' ? 'I observed that...' : currentAnimal.id === 'gorilla' ? 'I noticed that the gorillas...' : currentAnimal.id === 'giraffe' ? "I noticed that the giraffe's ... helps it to..." : currentAnimal.id === 'concert-lawn' ? 'The grass felt...' : currentAnimal.id === 'lemur' ? 'The lemurs are using...' : currentAnimal.id === 'dingo' ? "The dingo's fur is..." : currentAnimal.id === 'asian-water-buffalo' ? 'I can see...' : currentAnimal.id === 'sea-lion' ? 'Humans can...' : currentAnimal.id === 'blue-mountains-bushwalk' ? 'I could hear...' : 'Describe what you observe in detail...'}
                   style={{ width:'100%', minHeight:'200px', padding:'1.5rem', borderRadius:'16px', border:'3px solid #E5E5E5', fontSize:'1.1rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', transition:'border-color 0.2s ease' }}
                   onFocus={(e)=>e.target.style.borderColor=currentAnimal.color} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'} />
                 {currentAnimal.id === 'chimpanzee' && (
@@ -3527,6 +4881,97 @@
                       <li>Link to feeding strategy or avoiding predators</li>
                       <li>Name it as an adaptation</li>
                     </ul>
+                  </div>
+                )}
+                {currentAnimal.id === 'lemur' && (
+                  <div style={{ background:'#F4F0F8', border:'1px solid #C8BCD8', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
+                    <p style={{ fontSize:'0.75rem', fontWeight:700, color:'#059669', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>✔ A good start — describe what you can see:</p>
+                    <ul style={{ margin:'0 0 0.75rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                      <li>Where the lemurs are (e.g. trees, ground, structures)</li>
+                      <li>What they are doing in those areas</li>
+                    </ul>
+                    <p style={{ fontSize:'0.75rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>⬆ To go further:</p>
+                    <ul style={{ margin:'0 0 0.6rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                      <li>Explain why they might use that area — <em>"They might use this area because…"</em></li>
+                      <li>Link the location to the behaviour (e.g. resting in shade, feeding on platform)</li>
+                    </ul>
+                    <p style={{ fontSize:'0.75rem', fontWeight:600, color:'#7A6E8A', marginBottom:'0.2rem' }}>Optional sentence starters:</p>
+                    {['The lemurs are using…', 'I noticed they were…', 'They might use this area because…'].map((s, i) => (
+                      <p key={i} style={{ fontSize:'0.78rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.5rem', fontStyle:'italic' }}>"{s}"</p>
+                    ))}
+                  </div>
+                )}
+                {currentAnimal.id === 'dingo' && (
+                  <div style={{ background:'#FDF3E8', border:'1px solid #E8C897', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
+                    <p style={{ fontSize:'0.75rem', fontWeight:700, color:'#059669', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>✔ A good start — describe what you can see:</p>
+                    <ul style={{ margin:'0 0 0.75rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                      <li>What the dingo looks like (colour, fur)</li>
+                      <li>What the environment looks like (grass, dirt, rocks)</li>
+                    </ul>
+                    <p style={{ fontSize:'0.75rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>⬆ To go further:</p>
+                    <ul style={{ margin:'0 0 0.6rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                      <li>Explain how the dingo's colour helps it survive — <em>"This helps the dingo because…"</em></li>
+                      <li>Link its appearance to the environment (e.g. similar colours, blending in)</li>
+                    </ul>
+                    <p style={{ fontSize:'0.75rem', fontWeight:600, color:'#C4873A', marginBottom:'0.2rem' }}>Optional sentence starters:</p>
+                    {["The dingo's fur is…", 'The environment around it is…', 'This helps the dingo because…'].map((s, i) => (
+                      <p key={i} style={{ fontSize:'0.78rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.5rem', fontStyle:'italic' }}>"{s}"</p>
+                    ))}
+                  </div>
+                )}
+                {currentAnimal.id === 'asian-water-buffalo' && (
+                  <div style={{ background:'#EDF4F0', border:'1px solid #B8D4C4', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
+                    <p style={{ fontSize:'0.75rem', fontWeight:700, color:'#059669', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>✔ A good start — describe what you can see:</p>
+                    <ul style={{ margin:'0 0 0.75rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                      <li>What animals you can see</li>
+                      <li>What they are doing</li>
+                    </ul>
+                    <p style={{ fontSize:'0.75rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>⬆ To go further:</p>
+                    <ul style={{ margin:'0 0 0.6rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                      <li>Explain how this interaction might help one or both animals — <em>"This may help because…"</em></li>
+                      <li>Mention where the animals are positioned (e.g. on back, nearby, following)</li>
+                    </ul>
+                    <p style={{ fontSize:'0.75rem', fontWeight:600, color:'#4A7A5C', marginBottom:'0.2rem' }}>Optional sentence starters:</p>
+                    {['I can see…', 'The animals are…', 'This may help because…'].map((s, i) => (
+                      <p key={i} style={{ fontSize:'0.78rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.5rem', fontStyle:'italic' }}>"{s}"</p>
+                    ))}
+                  </div>
+                )}
+                {currentAnimal.id === 'sea-lion' && (
+                  <div style={{ background:'#EAF3F8', border:'1px solid #AACFE0', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
+                    <p style={{ fontSize:'0.75rem', fontWeight:700, color:'#059669', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>✔ A good start — include:</p>
+                    <ul style={{ margin:'0 0 0.75rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                      <li>One way humans affect the environment</li>
+                      <li>How this could impact sea lions</li>
+                    </ul>
+                    <p style={{ fontSize:'0.75rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>⬆ To go further:</p>
+                    <ul style={{ margin:'0 0 0.6rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                      <li>Give a specific example (e.g. plastic pollution, noise, fishing)</li>
+                      <li>Explain the cause and effect — <em>"This can impact sea lions because…"</em></li>
+                    </ul>
+                    <p style={{ fontSize:'0.75rem', fontWeight:600, color:'#4A7FA0', marginBottom:'0.2rem' }}>Optional sentence starters:</p>
+                    {['Humans can…', 'This affects the environment by…', 'This can impact sea lions because…'].map((s, i) => (
+                      <p key={i} style={{ fontSize:'0.78rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.5rem', fontStyle:'italic' }}>"{s}"</p>
+                    ))}
+                  </div>
+                )}
+                {currentAnimal.id === 'blue-mountains-bushwalk' && (
+                  <div style={{ background:'#F0F7F4', border:'1px solid #B8D9C8', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
+                    <p style={{ fontSize:'0.75rem', fontWeight:700, color:'#059669', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>✔ A good start — include:</p>
+                    <ul style={{ margin:'0 0 0.75rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                      <li>What you heard</li>
+                      <li>Whether the sounds were natural or human-made</li>
+                      <li>How the experience made you feel</li>
+                    </ul>
+                    <p style={{ fontSize:'0.75rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>⬆ To go further:</p>
+                    <ul style={{ margin:'0 0 0.6rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                      <li>Describe the environment — was it quiet, busy, calm?</li>
+                      <li>Explain why the sounds were natural or human-made</li>
+                    </ul>
+                    <p style={{ fontSize:'0.75rem', fontWeight:600, color:'var(--jungle-mid)', marginBottom:'0.2rem' }}>Optional sentence starters:</p>
+                    {['I could hear…', 'The sounds were…', 'This made me feel…'].map((s, i) => (
+                      <p key={i} style={{ fontSize:'0.78rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.5rem', fontStyle:'italic' }}>"{s}"</p>
+                    ))}
                   </div>
                 )}
                 <div style={{ marginTop:'1rem', fontSize:'1rem', color:wordCount>=10?'var(--jungle-light)':'#E86A33', fontWeight:600 }}>{wordCount}/10 words {wordCount>=10?'':''}</div>
@@ -3619,6 +5064,7 @@
           </div>
         );
       }
+
 
       if (currentScreen === 'submissionComplete') {
         return (
@@ -4137,7 +5583,7 @@
                           </select>
                         
                           <button onClick={async () => {
-                            if (!window.confirm(' DANGER: This will permanently delete ALL classes and student data from the database.\\\\n\\\\nThis action CANNOT be undone.\\\\n\\\\nType "DELETE" in the next prompt to confirm.')) return;
+                            if (!window.confirm(' DANGER: This will permanently delete ALL classes and student data from the database.\n\nThis action CANNOT be undone.\n\nType "DELETE" in the next prompt to confirm.')) return;
                             const confirmation = prompt('Type DELETE to confirm:');
                             if (confirmation !== 'DELETE') {
                               alert('Deletion cancelled.');
@@ -4579,6 +6025,35 @@
                             </div>
                           );
                         })()}
+
+                        {/* Global Conservation Statements Feed */}
+                        <div style={{ marginBottom:'2rem' }}>
+                          <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
+                            🌱 Conservation Statements
+                          </h2>
+                          <div style={{ background:'white', borderRadius:'20px', padding:'1.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
+                            {adminConservationStatements.length === 0 ? (
+                              <p style={{ color:'#aaa', fontSize:'0.88rem', textAlign:'center', fontStyle:'italic', padding:'1rem 0' }}>No conservation statements submitted yet.</p>
+                            ) : (
+                              <>
+                                <p style={{ fontSize:'0.82rem', color:'#888', marginBottom:'1rem', fontStyle:'italic' }}>
+                                  {adminConservationStatements.length} statement{adminConservationStatements.length !== 1 ? 's' : ''} across all classes.
+                                </p>
+                                <div style={{ maxHeight:'320px', overflowY:'auto', display:'flex', flexDirection:'column', gap:'0.65rem' }}>
+                                  {adminConservationStatements.map((s, i) => (
+                                    <div key={i} style={{ background:'#F4FAF6', borderRadius:'10px', padding:'0.85rem 1rem', borderLeft:'4px solid #1b5e3c' }}>
+                                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'0.3rem' }}>
+                                        <span style={{ fontWeight:700, fontSize:'0.82rem', color:'var(--jungle-deep)' }}>{s.name}</span>
+                                        {s.className && <span style={{ fontSize:'0.72rem', color:'#aaa', fontWeight:500 }}>{s.className}</span>}
+                                      </div>
+                                      <p style={{ fontSize:'0.85rem', color:'#333', lineHeight:1.55, margin:0 }}>"{s.statement}"</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
                       </>
                     )}
                   </>
@@ -5593,9 +7068,55 @@
 
                 <div style={{ flex:1, overflowY:'auto', padding:'1rem 1.5rem 1.5rem' }}>
                   <div style={{ maxWidth:'720px', margin:'0 auto' }}>
+
+                    {/* Marking Explanation Card */}
+                    <div style={{ marginBottom:'1rem', borderRadius:'14px', border:'1.5px solid #D4E8DC', background:'white', boxShadow:'0 2px 10px rgba(26,82,56,0.06)', overflow:'hidden' }}>
+                      <button onClick={() => setMarkingCardOpen(o => !o)}
+                        style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.85rem 1.2rem', background:'linear-gradient(135deg, #F0F7F4 0%, #E8F4EE 100%)', border:'none', cursor:'pointer', textAlign:'left' }}>
+                        <span style={{ fontWeight:700, fontSize:'0.9rem', color:'var(--jungle-deep)' }}>📊 How Student Responses Are Marked</span>
+                        <span style={{ fontSize:'1.1rem', color:'var(--jungle-mid)', transition:'transform 0.2s', display:'inline-block', transform: markingCardOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
+                      </button>
+                      {markingCardOpen && (
+                        <div style={{ padding:'1rem', display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:'0.75rem' }}>
+                          <div style={{ background:'#F4FBF7', borderRadius:'10px', padding:'0.85rem 1rem', borderLeft:'4px solid #34A85A' }}>
+                            <p style={{ fontWeight:700, fontSize:'0.88rem', color:'var(--jungle-deep)', marginBottom:'0.4rem' }}>👀 Behaviour</p>
+                            <p style={{ fontSize:'0.78rem', color:'#555', marginBottom:'0.4rem', lineHeight:1.6 }}>Assesses what students observe at the exhibit.</p>
+                            <ul style={{ margin:'0 0 0.4rem', paddingLeft:'1rem', fontSize:'0.76rem', color:'#555', lineHeight:1.8 }}>
+                              <li>Identifying what the animal is doing</li>
+                              <li>Recognising behaviours (feeding, resting, interacting)</li>
+                            </ul>
+                            <p style={{ fontSize:'0.74rem', fontWeight:600, color:'#34A85A', margin:0 }}>Higher: clear, accurate observations</p>
+                          </div>
+                          <div style={{ background:'#F4F7FB', borderRadius:'10px', padding:'0.85rem 1rem', borderLeft:'4px solid #4A90D9' }}>
+                            <p style={{ fontWeight:700, fontSize:'0.88rem', color:'var(--jungle-deep)', marginBottom:'0.4rem' }}>🔍 Detail</p>
+                            <p style={{ fontSize:'0.78rem', color:'#555', marginBottom:'0.4rem', lineHeight:1.6 }}>Assesses level of understanding shown.</p>
+                            <ul style={{ margin:'0 0 0.4rem', paddingLeft:'1rem', fontSize:'0.76rem', color:'#555', lineHeight:1.8 }}>
+                              <li>A clear observation or relevant concept</li>
+                              <li>A simple explanation or link to behaviour</li>
+                            </ul>
+                            <p style={{ fontSize:'0.74rem', fontWeight:600, color:'#4A90D9', margin:0 }}>Students do NOT need all elements for marks</p>
+                          </div>
+                          <div style={{ background:'#FDF8F4', borderRadius:'10px', padding:'0.85rem 1rem', borderLeft:'4px solid #E8894A' }}>
+                            <p style={{ fontWeight:700, fontSize:'0.88rem', color:'var(--jungle-deep)', marginBottom:'0.4rem' }}>✍️ Writing</p>
+                            <p style={{ fontSize:'0.78rem', color:'#555', marginBottom:'0.4rem', lineHeight:1.6 }}>Assesses clarity of communication.</p>
+                            <ul style={{ margin:'0 0 0.4rem', paddingLeft:'1rem', fontSize:'0.76rem', color:'#555', lineHeight:1.8 }}>
+                              <li>Full sentences, appropriate terminology</li>
+                              <li>Clear expression of ideas</li>
+                            </ul>
+                            <p style={{ fontSize:'0.74rem', fontWeight:600, color:'#34A85A', margin:0 }}>Higher: well-structured, scientific language</p>
+                          </div>
+                          <div style={{ gridColumn:'1 / -1', background:'#F7FAF8', borderRadius:'8px', padding:'0.6rem 0.85rem', borderLeft:'3px solid var(--jungle-mid)' }}>
+                            <p style={{ fontSize:'0.76rem', color:'#555', margin:0, lineHeight:1.6 }}>
+                              <strong style={{ color:'var(--jungle-deep)' }}>Note:</strong> Students can earn marks with a clear observation or a single relevant concept — a complete response with observation, explanation and key concepts will score highest.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     <div style={{ background:'white', borderRadius:'16px', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', overflow:'hidden' }}>
-                      <div style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 0.85fr 0.85fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
-                        {['Student','Points','Badges','Quiz %','Last Active','Observations','Status'].map(h => (
+                      <div style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 1.4fr 0.85fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
+                        {['Student','Points','Badges','Quiz %','Observations','Conservation Statement','Status'].map(h => (
                           <div key={h} style={{ color:'rgba(255,255,255,0.8)', fontSize:'0.72rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>{h}</div>
                         ))}
                       </div>
@@ -5613,7 +7134,7 @@
                           const hasObservations = (s.badges || []).some(b => b.observation);
                           const badgeCount = Array.isArray(s.badges) ? new Set(s.badges.map(b => b.animalId).filter(Boolean)).size : 0;
                           return (
-                            <div key={s.name} style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 0.85fr 0.85fr', padding:'0.7rem 1rem', borderTop:'1px solid #F0EDE8', alignItems:'center', background: i % 2 === 0 ? 'white' : '#FAFAF8' }}>
+                            <div key={s.name} style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 1.4fr 0.85fr', padding:'0.7rem 1rem', borderTop:'1px solid #F0EDE8', alignItems:'center', background: i % 2 === 0 ? 'white' : '#FAFAF8' }}>
                               <div style={{ display:'flex', alignItems:'center', gap:'0.55rem' }}>
                                 <div style={{ width:'28px', height:'28px', borderRadius:'50%', background: s.completed ? 'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))' : 'linear-gradient(135deg, #aaa, #ccc)', display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontSize:'0.72rem', fontWeight:700, flexShrink:0 }}>
                                   {s.name.charAt(0).toUpperCase()}
@@ -5625,13 +7146,15 @@
                               <div style={{ fontWeight:600, color:'var(--jungle-mid)', fontSize:'0.85rem' }}>
                                 {s.quizPercentage !== undefined ? `${s.quizPercentage}%` : '—'}
                               </div>
-
-                              <div style={{ color: lastActiveDate ? 'var(--jungle-mid)' : '#bbb', fontSize:'0.75rem', fontWeight: lastActiveDate ? 600 : 400 }}>
-                                {lastActiveDate ? lastActiveDate.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '—'}
-                              </div>
                               <div>
                                 {hasObservations
                                   ? <button onClick={() => setObservationsModal(s)} style={{ background:'var(--jungle-deep)', color:'white', border:'none', padding:'0.25rem 0.6rem', borderRadius:'6px', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' }}>View</button>
+                                  : <span style={{ color:'#bbb', fontSize:'0.75rem' }}>—</span>
+                                }
+                              </div>
+                              <div style={{ display:'flex', alignItems:'center', gap:'0.35rem' }}>
+                                {s.conservationStatement
+                                  ? <button onClick={() => setSelectedConservation({ name: s.name, text: s.conservationStatement })} style={{ background:'var(--jungle-deep)', color:'white', border:'none', padding:'0.25rem 0.6rem', borderRadius:'6px', fontSize:'0.72rem', fontWeight:600, cursor:'pointer' }}>View</button>
                                   : <span style={{ color:'#bbb', fontSize:'0.75rem' }}>—</span>
                                 }
                               </div>
@@ -5703,6 +7226,24 @@
                     {(observationsModal.badges || []).filter(b => b.observationScore || (b.observation && b.observation.trim())).length === 0 && (
                       <p style={{ fontSize:'0.85rem', color:'#aaa', textAlign:'center', padding:'1rem 0' }}>No observations recorded yet.</p>
                     )}
+                  </div>
+                </div>
+              </div>
+            )}
+            {selectedConservation && (
+              <div onClick={() => setSelectedConservation(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'1.5rem' }}>
+                <div onClick={(e) => e.stopPropagation()} style={{ background:'white', borderRadius:'18px', width:'100%', maxWidth:'480px', boxShadow:'0 24px 60px rgba(0,0,0,0.25)' }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'1.2rem 1.4rem 0.8rem', borderBottom:'1px solid #F0EDE8' }}>
+                    <div>
+                      <h3 style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)', margin:0 }}>🌱 Conservation Statement</h3>
+                      <p style={{ fontSize:'0.78rem', color:'#888', margin:'0.15rem 0 0' }}>{selectedConservation.name}</p>
+                    </div>
+                    <button onClick={() => setSelectedConservation(null)} style={{ background:'none', border:'none', fontSize:'1.4rem', color:'#aaa', cursor:'pointer', lineHeight:1, padding:'0.2rem 0.4rem' }}>x</button>
+                  </div>
+                  <div style={{ padding:'1rem 1.4rem 1.4rem' }}>
+                    <div style={{ borderLeft:'3px solid #34A85A', background:'#F4FAF6', borderRadius:'0 10px 10px 0', padding:'0.85rem 1rem' }}>
+                      <p style={{ fontSize:'0.88rem', color:'#333', lineHeight:1.65, margin:0 }}>{selectedConservation.text}</p>
+                    </div>
                   </div>
                 </div>
               </div>
