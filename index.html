@@ -7011,7 +7011,143 @@
                 <div style={{ flex:1, overflowY:'auto', padding:'1rem 1.5rem 1.5rem' }}>
                   <div style={{ maxWidth:'720px', margin:'0 auto' }}>
 
-                    {/* Marking Explanation Card */}
+                    {/* Class Insights */}
+                    {(() => {
+                      const students = firestoreStudents;
+                      if (students.length === 0) return null;
+
+                      // Most visited animals
+                      const animalCounts = {};
+                      students.forEach(s => {
+                        (s.badges || []).forEach(b => {
+                          if (b.animal) animalCounts[b.animal] = (animalCounts[b.animal] || 0) + 1;
+                        });
+                      });
+                      const topAnimals = Object.entries(animalCounts).sort((a,b) => b[1]-a[1]).slice(0,6);
+                      const maxAnimalCount = topAnimals.length > 0 ? topAnimals[0][1] : 1;
+
+                      // Quiz distribution
+                      const quizBuckets = {'0–25':0,'26–50':0,'51–75':0,'76–100':0};
+                      students.forEach(s => {
+                        const q = s.quizPercentage || 0;
+                        if (q <= 25) quizBuckets['0–25']++;
+                        else if (q <= 50) quizBuckets['26–50']++;
+                        else if (q <= 75) quizBuckets['51–75']++;
+                        else quizBuckets['76–100']++;
+                      });
+                      const maxQuizBucket = Math.max(...Object.values(quizBuckets), 1);
+
+                      // Writing radar averages (from badges)
+                      let totB = 0, totD = 0, totW = 0, cnt = 0;
+                      students.forEach(s => {
+                        (s.badges || []).forEach(b => {
+                          if (b.observationScore && typeof b.observationScore === 'object') {
+                            totB += b.observationScore.behaviour || 0;
+                            totD += b.observationScore.detail || 0;
+                            totW += b.observationScore.writing || 0;
+                            cnt++;
+                          }
+                        });
+                      });
+                      const avgB = cnt ? +(totB/cnt).toFixed(1) : 0;
+                      const avgD = cnt ? +(totD/cnt).toFixed(1) : 0;
+                      const avgW = cnt ? +(totW/cnt).toFixed(1) : 0;
+
+                      // SVG radar helpers
+                      const cx = 80, cy = 80, r = 58;
+                      const axes = [
+                        { label:'Behaviour', val: avgB/5, angle: -90 },
+                        { label:'Detail',    val: avgD/5, angle: 30  },
+                        { label:'Writing',   val: avgW/5, angle: 150 },
+                      ];
+                      const pt = (ratio, angle) => {
+                        const a = (angle * Math.PI) / 180;
+                        return [cx + ratio * r * Math.cos(a), cy + ratio * r * Math.sin(a)];
+                      };
+                      const gridLevels = [0.25, 0.5, 0.75, 1];
+                      const dataPoints = axes.map(ax => pt(ax.val, ax.angle));
+                      const dataPath = dataPoints.map((p,i) => `${i===0?'M':'L'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ') + 'Z';
+
+                      return (
+                        <div style={{ marginBottom:'1rem' }}>
+                          <h3 style={{ fontSize:'1rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.75rem' }}>📊 Class Insights</h3>
+                          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 160px', gap:'0.75rem', alignItems:'start' }}>
+
+                            {/* Most Visited Animals */}
+                            <div style={{ background:'white', borderRadius:'12px', padding:'0.9rem 1rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
+                              <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.6rem' }}>Most Visited</p>
+                              {topAnimals.length === 0
+                                ? <p style={{ fontSize:'0.78rem', color:'#bbb' }}>No data yet</p>
+                                : topAnimals.map(([name, count]) => (
+                                  <div key={name} style={{ marginBottom:'0.35rem' }}>
+                                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.72rem', color:'#555', marginBottom:'0.1rem' }}>
+                                      <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:'75%' }}>{name}</span>
+                                      <span style={{ fontWeight:700, color:'var(--jungle-mid)', flexShrink:0 }}>{count}</span>
+                                    </div>
+                                    <div style={{ height:'5px', borderRadius:'3px', background:'#EEE', overflow:'hidden' }}>
+                                      <div style={{ height:'100%', width:`${(count/maxAnimalCount)*100}%`, background:'linear-gradient(90deg, var(--jungle-mid), var(--jungle-light))', borderRadius:'3px', transition:'width 0.4s' }} />
+                                    </div>
+                                  </div>
+                                ))
+                              }
+                            </div>
+
+                            {/* Quiz Distribution */}
+                            <div style={{ background:'white', borderRadius:'12px', padding:'0.9rem 1rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
+                              <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.6rem' }}>Quiz Distribution</p>
+                              <div style={{ display:'flex', alignItems:'flex-end', gap:'0.4rem', height:'70px' }}>
+                                {Object.entries(quizBuckets).map(([label, val]) => (
+                                  <div key={label} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'0.2rem' }}>
+                                    <span style={{ fontSize:'0.65rem', fontWeight:700, color:'var(--jungle-mid)' }}>{val}</span>
+                                    <div style={{ width:'100%', height:`${Math.max((val/maxQuizBucket)*52, val > 0 ? 4 : 0)}px`, background:'linear-gradient(180deg, var(--jungle-light), var(--jungle-mid))', borderRadius:'3px 3px 0 0', transition:'height 0.4s' }} />
+                                    <span style={{ fontSize:'0.58rem', color:'#999', textAlign:'center', lineHeight:1.1 }}>{label}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Writing Radar */}
+                            <div style={{ background:'white', borderRadius:'12px', padding:'0.75rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', display:'flex', flexDirection:'column', alignItems:'center' }}>
+                              <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.25rem' }}>Writing Scores</p>
+                              {cnt === 0
+                                ? <p style={{ fontSize:'0.78rem', color:'#bbb', textAlign:'center', marginTop:'0.5rem' }}>No data yet</p>
+                                : <svg viewBox="0 0 160 160" style={{ width:'100%', maxWidth:'160px' }}>
+                                    {/* Grid */}
+                                    {gridLevels.map(lvl => {
+                                      const pts = axes.map(ax => pt(lvl, ax.angle));
+                                      return <polygon key={lvl} points={pts.map(p=>p.join(',')).join(' ')} fill="none" stroke="#E5E5E5" strokeWidth="0.8" />;
+                                    })}
+                                    {/* Axis lines */}
+                                    {axes.map(ax => {
+                                      const [x,y] = pt(1, ax.angle);
+                                      return <line key={ax.label} x1={cx} y1={cy} x2={x} y2={y} stroke="#E5E5E5" strokeWidth="0.8" />;
+                                    })}
+                                    {/* Data */}
+                                    <path d={dataPath} fill="rgba(46,125,85,0.2)" stroke="var(--jungle-mid)" strokeWidth="1.5" />
+                                    {dataPoints.map((p,i) => <circle key={i} cx={p[0]} cy={p[1]} r="3" fill="var(--jungle-mid)" />)}
+                                    {/* Labels */}
+                                    {axes.map(ax => {
+                                      const [lx, ly] = pt(1.28, ax.angle);
+                                      return (
+                                        <text key={ax.label} x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fontSize="8.5" fill="#555" fontFamily="DM Sans, sans-serif">
+                                          {ax.label}
+                                        </text>
+                                      );
+                                    })}
+                                    {/* Score labels */}
+                                    {axes.map((ax, i) => (
+                                      <text key={`v${i}`} x={dataPoints[i][0]} y={dataPoints[i][1]-5} textAnchor="middle" fontSize="7.5" fill="var(--jungle-deep)" fontWeight="bold" fontFamily="DM Sans, sans-serif">
+                                        {[avgB,avgD,avgW][i]}
+                                      </text>
+                                    ))}
+                                  </svg>
+                              }
+                            </div>
+
+                          </div>
+                        </div>
+                      );
+                    })()}
                     <div style={{ marginBottom:'1rem', borderRadius:'14px', border:'1.5px solid #D4E8DC', background:'white', boxShadow:'0 2px 10px rgba(26,82,56,0.06)', overflow:'hidden' }}>
                       <button onClick={() => setMarkingCardOpen(o => !o)}
                         style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.85rem 1.2rem', background:'linear-gradient(135deg, #F0F7F4 0%, #E8F4EE 100%)', border:'none', cursor:'pointer', textAlign:'left' }}>
