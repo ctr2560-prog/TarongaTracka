@@ -2050,44 +2050,64 @@
 
 
       function calculateBehaviourScore(text) {
-        const lower = text.toLowerCase();
-        const behaviourRoots = [
-          'walk','run','jump','climb','pace','rest','sleep',
-          'eat','drink','move','look','watch','sit','stand',
-          'stretch','play','hunt','feed'
-        ];
-        const matches = behaviourRoots.filter(root => lower.includes(root));
-        return Math.min(matches.length + 1, 5);
+        const t = text.trim();
+        if (!t) return 0;
+        const lower = t.toLowerCase();
+        const words = t.split(/\s+/).filter(Boolean);
+        const wordCount = words.length;
+        // Presence of observation language — what, where, doing
+        const observationWords = ['see','saw','notice','noticed','observe','observed','look','looked','watching','sitting','standing','walking','moving','eating','resting','playing','lying','climbing','swimming','sleeping','perching','flying','feeding','grooming','interacting','near','beside','on','in','under','above','around','behind','front'];
+        const observationHits = observationWords.filter(w => lower.includes(w)).length;
+        // Multiple distinct observations: sentences containing observation words
+        const sentences = t.split(/[.!?]+/).filter(s => s.trim().length > 3);
+        const observedSentences = sentences.filter(s => observationWords.some(w => s.toLowerCase().includes(w))).length;
+        if (wordCount < 3 || observationHits === 0) return 0;
+        if (observationHits === 1 && wordCount < 15) return 1;
+        if (observationHits <= 2 && wordCount < 25) return 2;
+        if (observedSentences >= 1 && wordCount >= 15) return 3;
+        if (observedSentences >= 2 || (observationHits >= 3 && wordCount >= 20)) return 4;
+        return Math.min(observationHits >= 4 ? 5 : 4, 5);
       }
 
       function calculateDetailScore(text) {
-        const lower = text.toLowerCase();
-        const detailRoots = [
-          'tree','rock','water','grass','shade','log','branch',
-          'leaf','fence','platform','ground','enclosure',
-          'bird','wind','sound','noise','smell',
-          'stripe','fur','tail','claw'
-        ];
-        const matches = detailRoots.filter(root => lower.includes(root));
-        return Math.min(matches.length + 1, 5);
+        const t = text.trim();
+        if (!t) return 0;
+        const lower = t.toLowerCase();
+        const words = t.split(/\s+/).filter(Boolean);
+        const wordCount = words.length;
+        // Explanation / reasoning language — any valid reasoning accepted
+        const explanationWords = ['because','so','since','therefore','this means','as a result','which means','that is why','due to','leads to','causes','allows','helps','enables','makes','gives','shows','suggests','means','result','reason','purpose','helps it','so that'];
+        const conceptWords = ['adapt','adaptation','survive','survival','camouflage','predator','prey','habitat','environment','behaviour','feature','characteristic','advantage','protect','protection','food','energy','hunt','escape','blend','warm','cool','strong','fast','fur','feather','claw','beak','colour','pattern','relationship','mutualism','impact','affect','change','natural','human','conservation'];
+        const hasExplanation = explanationWords.some(p => lower.includes(p));
+        const conceptHits = conceptWords.filter(w => lower.includes(w)).length;
+        if (wordCount < 3) return 0;
+        if (!hasExplanation && conceptHits === 0) return 1;
+        if (!hasExplanation && conceptHits >= 1) return 2;
+        if (hasExplanation && conceptHits === 0) return 2;
+        if (hasExplanation && conceptHits === 1) return 3;
+        if (hasExplanation && conceptHits === 2) return 4;
+        return 5;
       }
 
       function calculateWritingScore(studentResponse) {
         const text = studentResponse.trim();
         if (!text) return 0;
-        const wordCount = text.split(/\s+/).length;
+        const wordCount = text.split(/\s+/).filter(Boolean).length;
+        const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 2);
         const hasCapital = /^[A-Z]/.test(text);
-        const hasPunctuation = /[.!?]$/.test(text);
-        const hasSentenceStructure = wordCount >= 5 && text.includes(' ');
-        const sentences = text.split(/[.!?]/).filter(s => s.trim().length > 0);
-        const hasMultipleSentences = sentences.length >= 2;
-        const isAllCaps = text === text.toUpperCase();
-        let score = 1;
-        if (hasSentenceStructure) score = 2;
-        if (hasCapital && hasPunctuation) score = 3;
-        if (hasMultipleSentences) score = 4;
-        if (isAllCaps) score = Math.max(score - 1, 1);
-        return Math.min(score, 5);
+        const hasPunctuation = /[.!?]/.test(text);
+        const isAllCaps = text === text.toUpperCase() && wordCount > 2;
+        if (wordCount < 3) return 0;
+        if (wordCount < 8 || sentences.length < 1) return 1;
+        if (wordCount < 15) return 2;
+        if (sentences.length >= 2 && wordCount >= 15) {
+          let score = 3;
+          if (hasCapital && hasPunctuation) score = 4;
+          if (sentences.length >= 3 && wordCount >= 30 && hasCapital && hasPunctuation) score = 5;
+          if (isAllCaps) score = Math.max(score - 1, 1);
+          return score;
+        }
+        return 2;
       }
       function recordMissionResult(animalId, animalName, quizResults = [], observationScore = null, observation = '') {
         const badge = {
@@ -3687,216 +3707,10 @@
         const text = observation.trim();
         const lower = text.toLowerCase();
 
-        // Lion uses conservation-focused scoring; chimp uses social dynamics scoring; others use shared helpers
-        let behaviourBonus, detailBonus, literacyBonus;
-        if (currentAnimal.id === 'lion') {
-          const conservationWords = ['important','protect','ecosystem','balance','food chain','foodchain','biodiversity','conservation','survive','survival','species','nature','wild','wildlife'];
-          const detailWords = ['prey','predator','extinction','humans','habitat','biodiversity','threat','poaching','population','climate','savanna','africa','apex','chain'];
-          const conservationHits = conservationWords.filter(w => lower.includes(w)).length;
-          const detailHits = detailWords.filter(w => lower.includes(w)).length;
-          behaviourBonus = Math.min(conservationHits + 1, 5);
-          detailBonus = Math.min(detailHits + 1, 5);
-          literacyBonus = calculateWritingScore(text);
-        } else if (currentAnimal.id === 'chimpanzee') {
-          // Behaviour: social interactions — lenient, accepts simple everyday language
-          const behaviourWords = [
-            'groom','play','interact','fight','chase','touch','hug','follow','watch','look',
-            'sit','move','climb','eat','feed','rest','sleep','call','scream','gesture',
-            'together','each other','one another','dominant','social','group','together'
-          ];
-          const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
-          // 0 hits → 1, 1 hit → 2, 2 hits → 3, 3 hits → 4, 4+ hits → 5
-          behaviourBonus = Math.min(behaviourHits + 1, 5);
-
-          // Detail: specific examples and social concepts — also lenient
-          const detailWords = [
-            'groom','dominan','leader','young','baby','infant','adult','male','female',
-            'hierarchy','bond','relation','communicat','gesture','express','sound','noise',
-            'fur','branch','tree','platform','enclosure','group','community','family'
-          ];
-          const detailHits = detailWords.filter(w => lower.includes(w)).length;
-          detailBonus = Math.min(detailHits + 1, 5);
-
-          literacyBonus = calculateWritingScore(text);
-        } else if (currentAnimal.id === 'gorilla') {
-          behaviourBonus = calculateBehaviourScore(text);
-          literacyBonus = calculateWritingScore(text);
-
-          // Detail: ANY one valid element → +1, two or more → +2 to max
-          // Entry points: clear observation, relevant concept, simple explanation/survival link
-          const observationWords = ['sit','stand','move','eat','groom','play','look','climb','walk','rest','interact','together','group'];
-          const conceptWords = ['social','group','behaviour','bond','family','dominan','hierarch','communicat','cooperat','relation','protect','young','leader','silverback'];
-          const explanationPatterns = ['because','helps','so that','in order','allows','enables','this means','for survival','stay safe','each other'];
-
-          const hasObservation = observationWords.some(w => lower.includes(w));
-          const hasConcept = conceptWords.some(w => lower.includes(w));
-          const hasExplanation = explanationPatterns.some(p => lower.includes(p));
-
-          const elements = [hasObservation, hasConcept, hasExplanation].filter(Boolean).length;
-          if (elements === 0) detailBonus = 0;
-          else if (elements === 1) detailBonus = 1;
-          else detailBonus = Math.min(elements + 1, 5);
-        } else if (currentAnimal.id === 'giraffe') {
-          behaviourBonus = calculateBehaviourScore(text);
-          literacyBonus = calculateWritingScore(text);
-
-          // Detail: ANY one valid element → +1, two or more → +2 to max
-          // Entry points: clear observation, named adaptation, simple explanation, survival link
-          const observationWords = ['neck','leg','tall','height','eat','leaf','leaves','reach','tree','branch','ground','drink','spot','pattern','colour','color','coat','tongue'];
-          const conceptWords = ['adapt','survival','feature','advantage','predator','food','habitat','evolution','camouflage','protect','savanna'];
-          const explanationPatterns = ['because','helps','so that','in order','allows','enables','this means','for survival','to reach','to see','stay safe'];
-
-          const hasObservation = observationWords.some(w => lower.includes(w));
-          const hasConcept = conceptWords.some(w => lower.includes(w));
-          const hasExplanation = explanationPatterns.some(p => lower.includes(p));
-
-          const elements = [hasObservation, hasConcept, hasExplanation].filter(Boolean).length;
-          if (elements === 0) detailBonus = 0;
-          else if (elements === 1) detailBonus = 1;
-          else detailBonus = Math.min(elements + 1, 5);
-        } else if (currentAnimal.id === 'concert-lawn') {
-          // Behaviour: sensory/physical interaction with the environment
-          const behaviourWords = ['walk','feel','felt','stand','touch','sit','notice','observe','sense','hear','smell','look','step','move','ground','grass','soil','surface'];
-          const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
-          behaviourBonus = Math.min(behaviourHits + 1, 5);
-
-          // Detail: sensory description, environment observation, comparison, or explanation
-          const sensoryWords = ['soft','hard','rough','smooth','cool','cold','warm','wet','dry','uneven','springy','spongy','firm','cushion','texture','temperature'];
-          const environmentWords = ['grass','soil','ground','nature','plant','tree','leaf','dirt','earth','natural','living','green','outdoor','air','breeze'];
-          const comparisonWords = ['concrete','pavement','city','building','road','floor','hard surface','asphalt','urban','man-made','built','artificial'];
-          const explanationPatterns = ['because','different','compare','unlike','whereas','than','more','less','better','support','alive','life'];
-
-          const hasSensory = sensoryWords.some(w => lower.includes(w));
-          const hasEnvironment = environmentWords.some(w => lower.includes(w));
-          const hasComparison = comparisonWords.some(w => lower.includes(w));
-          const hasExplanation = explanationPatterns.some(p => lower.includes(p));
-
-          const elements = [hasSensory, hasEnvironment, hasComparison, hasExplanation].filter(Boolean).length;
-          if (elements === 0) detailBonus = 0;
-          else if (elements === 1) detailBonus = 1;
-          else detailBonus = Math.min(elements + 1, 5);
-
-          literacyBonus = calculateWritingScore(text);
-        } else if (currentAnimal.id === 'lemur') {
-          // Behaviour: observed actions and location-linked behaviours
-          const behaviourWords = ['feed','feeding','eat','eating','rest','resting','sleep','sleeping','move','moving','climb','climbing','jump','jumping','sit','sitting','groom','grooming','play','playing','social','interact','watch','observe'];
-          const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
-          behaviourBonus = Math.min(behaviourHits + 1, 5);
-
-          // Detail: location, behaviour, explanation, or space–behaviour connection
-          const locationWords = ['tree','branch','ground','platform','structure','enclosure','log','rock','grass','high','low','above','below','top','bottom','corner','shade','shelter'];
-          const behaviourDetailWords = ['feed','eat','rest','sleep','move','climb','groom','play','social','interact','jump','look'];
-          const explanationPatterns = ['because','so that','in order','allows','helps','use','purpose','shelter','food','safe','warm','cool','rest'];
-          const connectionWords = ['area','space','part','section','spot','place','there','here','where','using','found','located'];
-
-          const hasLocation = locationWords.some(w => lower.includes(w));
-          const hasBehaviourDetail = behaviourDetailWords.some(w => lower.includes(w));
-          const hasExplanation = explanationPatterns.some(p => lower.includes(p));
-          const hasConnection = connectionWords.some(w => lower.includes(w));
-
-          const elements = [hasLocation, hasBehaviourDetail, hasExplanation, hasConnection].filter(Boolean).length;
-          if (elements === 0) detailBonus = 0;
-          else if (elements === 1) detailBonus = 1;
-          else detailBonus = Math.min(elements + 1, 5);
-
-          literacyBonus = calculateWritingScore(text);
-        } else if (currentAnimal.id === 'dingo') {
-          // Behaviour: observable appearance features and environment references
-          const behaviourWords = ['fur','coat','colour','color','tan','sandy','brown','golden','yellow','pale','dark','blend','camouflage','hide','look','appear','observe','notice','see','watch','spot','match','similar'];
-          const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
-          behaviourBonus = Math.min(behaviourHits + 1, 5);
-
-          // Detail: dingo appearance, environment description, camouflage explanation, or appearance–environment link
-          const dingoAppearanceWords = ['fur','coat','colour','color','tan','sandy','brown','golden','yellow','pale','skin','pattern','marking','stripe'];
-          const envWords = ['grass','dirt','rock','ground','sand','bush','scrub','desert','earth','soil','landscape','surroundings','environment','habitat'];
-          const explanationPatterns = ['because','helps','so that','allows','enables','survive','predator','prey','hunt','hide','camouflage','blend','unseen','invisible','protection','advantage'];
-          const linkWords = ['similar','same','match','like','matches','blends','looks like','colour of','colour as'];
-
-          const hasDingoAppearance = dingoAppearanceWords.some(w => lower.includes(w));
-          const hasEnvironment = envWords.some(w => lower.includes(w));
-          const hasExplanation = explanationPatterns.some(p => lower.includes(p));
-          const hasLink = linkWords.some(p => lower.includes(p));
-
-          const elements = [hasDingoAppearance, hasEnvironment, hasExplanation, hasLink].filter(Boolean).length;
-          if (elements === 0) detailBonus = 0;
-          else if (elements === 1) detailBonus = 1;
-          else detailBonus = Math.min(elements + 1, 5);
-
-          literacyBonus = calculateWritingScore(text);
-        } else if (currentAnimal.id === 'asian-water-buffalo') {
-          // Behaviour: observable animal interactions and positioning
-          const behaviourWords = ['bird','birds','buffalo','rhino','tick','tickbird','oxpecker','cattle','egret','sit','perch','stand','walk','follow','eat','feed','groom','clean','pick','peck','fly','land','nearby','together','interact','observe','see','notice','watch'];
-          const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
-          behaviourBonus = Math.min(behaviourHits + 1, 5);
-
-          // Detail: animals identified, interaction described, explanation given, or positioning noted
-          const animalWords = ['bird','birds','buffalo','rhino','oxpecker','tickbird','egret','cattle','insect','tick','fly','flies','parasite'];
-          const interactionWords = ['sit','perch','groom','clean','eat','feed','pick','peck','follow','together','interact','relationship','mutualism','symbiosis','help','benefit'];
-          const explanationPatterns = ['because','helps','benefit','advantage','survive','remove','clean','protect','safe','food','mutual','both','each other','so that'];
-          const positionWords = ['back','on top','nearby','beside','next to','close','following','above','around','on the'];
-
-          const hasAnimals = animalWords.some(w => lower.includes(w));
-          const hasInteraction = interactionWords.some(w => lower.includes(w));
-          const hasExplanation = explanationPatterns.some(p => lower.includes(p));
-          const hasPositioning = positionWords.some(p => lower.includes(p));
-
-          const elements = [hasAnimals, hasInteraction, hasExplanation, hasPositioning].filter(Boolean).length;
-          if (elements === 0) detailBonus = 0;
-          else if (elements === 1) detailBonus = 1;
-          else detailBonus = Math.min(elements + 1, 5);
-
-          literacyBonus = calculateWritingScore(text);
-        } else if (currentAnimal.id === 'sea-lion') {
-          // Behaviour: human activities and links to environment/sea lions
-          const behaviourWords = ['human','people','person','pollution','plastic','waste','rubbish','litter','fishing','boat','ship','noise','oil','chemical','tourist','visitor','enclosure','structure','fence','water','ocean','sea'];
-          const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
-          behaviourBonus = Math.min(behaviourHits + 1, 5);
-
-          // Detail: human impact identified, environment observed, explanation given, or cause-effect link
-          const humanImpactWords = ['pollution','plastic','waste','fishing','overfishing','oil','noise','habitat','destroy','damage','hunting','climate','warming','chemical','runoff','rubbish','litter','net','trap'];
-          const environmentWords = ['ocean','sea','water','coast','enclosure','environment','habitat','beach','rock','pool','tank'];
-          const explanationPatterns = ['because','impact','affect','effect','cause','lead','result','harm','hurt','threat','danger','reduce','deplete','disrupt','changes'];
-          const causeEffectWords = ['if','when','this means','therefore','so','as a result','due to','leads to','can cause','may cause'];
-
-          const hasHumanImpact = humanImpactWords.some(w => lower.includes(w));
-          const hasEnvironment = environmentWords.some(w => lower.includes(w));
-          const hasExplanation = explanationPatterns.some(p => lower.includes(p));
-          const hasCauseEffect = causeEffectWords.some(p => lower.includes(p));
-
-          const elements = [hasHumanImpact, hasEnvironment, hasExplanation, hasCauseEffect].filter(Boolean).length;
-          if (elements === 0) detailBonus = 0;
-          else if (elements === 1) detailBonus = 1;
-          else detailBonus = Math.min(elements + 1, 5);
-
-          literacyBonus = calculateWritingScore(text);
-        } else if (currentAnimal.id === 'blue-mountains-bushwalk') {
-          // Behaviour: sounds identified, listening engagement, environment reference
-          const behaviourWords = ['hear','heard','listen','sound','sounds','bird','birds','wind','leaf','leaves','water','rain','insect','cricket','frog','silence','quiet','rustl','distant','echo','noise','voice','step','footstep','crunch'];
-          const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
-          behaviourBonus = Math.min(behaviourHits + 1, 5);
-
-          // Detail: specific sounds, natural vs human-made, environment description, feeling
-          const soundWords = ['bird','birds','wind','leaves','water','rain','insect','cricket','frog','silence','rustl','twig','branch','creek','stream','distant','echo','buzz','hum','chirp','tweet','call'];
-          const sourceWords = ['natural','human','human-made','man-made','traffic','car','people','voice','talking','machine','artificial','mechanical'];
-          const environmentWords = ['quiet','calm','peaceful','still','busy','loud','noisy','serene','tranquil','alive','environment','nature','forest','bush','mountain','outdoor'];
-          const feelingWords = ['feel','felt','made me','relaxed','peaceful','calm','happy','amazed','aware','connected','surprised','strange','comfortable','uncomfortable','wonder','awe'];
-
-          const hasSounds = soundWords.some(w => lower.includes(w));
-          const hasSource = sourceWords.some(w => lower.includes(w));
-          const hasEnvironment = environmentWords.some(w => lower.includes(w));
-          const hasFeeling = feelingWords.some(w => lower.includes(w));
-
-          const elements = [hasSounds, hasSource, hasEnvironment, hasFeeling].filter(Boolean).length;
-          if (elements === 0) detailBonus = 0;
-          else if (elements === 1) detailBonus = 1;
-          else detailBonus = Math.min(elements + 1, 5);
-
-          literacyBonus = calculateWritingScore(text);
-        } else {
-          behaviourBonus = calculateBehaviourScore(text);
-          detailBonus = calculateDetailScore(text);
-          literacyBonus = calculateWritingScore(text);
-        }
+        // Universal banded rubric — consistent across all animals
+        const behaviourBonus = calculateBehaviourScore(text);
+        const detailBonus    = calculateDetailScore(text);
+        const literacyBonus  = calculateWritingScore(text);
 
         // Build observationScore object — feeds analytics radar
         const observationScore = {
