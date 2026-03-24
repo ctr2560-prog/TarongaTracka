@@ -1852,8 +1852,6 @@
           id: 'chimpanzee', name: 'Chimpanzee', scientificName: 'Pan troglodytes',
           image: 'images/chimpanzee.jpg', latitude: -33.8428, longitude: 151.2401,
           radius: 50, color: '#8B5A3C',
-          questionsByStage: {
-            1: { q: 'Are the chimpanzees alone or together?', options: ['A. Alone', 'B. In a group', 'C. Hiding', 'D. Sleeping'], correct: 1, fact: 'Chimpanzees are highly social and live in groups called communities.' },
             2: { q: 'Are chimpanzees more like humans or fish?', options: ['A. Fish', 'B. Birds', 'C. Humans', 'D. Reptiles'], correct: 2, fact: 'Chimpanzees are our closest living relatives and share many behaviours with humans.' },
             3: { q: 'What do chimpanzees use their hands for?', options: ['A. Flying', 'B. Swimming', 'C. Grabbing food and climbing', 'D. Digging only'], correct: 2, fact: 'Chimpanzees have dexterous hands they use for climbing, feeding, grooming, and using tools.' },
             4: { q: 'Chimpanzee Behaviour Graph', options: ['A', 'B', 'C', 'D'], correct: 0, fact: 'Chimpanzees are highly social animals that spend their time resting, feeding, and moving through their environment.' },
@@ -1868,6 +1866,13 @@
           },
           questions: [
             { q: 'Chimpanzee Behaviour Graph',
+              stageVariants: {
+                1: 'Are the chimpanzees together or alone?',
+                2: 'Do chimpanzees spend more time resting or moving?',
+                3: 'What did chimpanzees do most often?',
+                4: 'Chimpanzee Behaviour Graph',
+                5: 'What does the behaviour data tell us about how chimpanzees spend their time and why?',
+              },
               options: ['A', 'B', 'C', 'D'],
               correct: 0,
               fact: 'Chimpanzees are highly social animals that spend their time resting, feeding, and moving through their environment.' }
@@ -1879,8 +1884,6 @@
           id: 'gorilla', name: 'Western Lowland Gorilla', scientificName: 'Gorilla gorilla gorilla',
           image: 'images/gorilla.jpg', latitude: -33.8443, longitude: 151.2413,
           radius: 50, color: '#2E2E2E',
-          questionsByStage: {
-            1: { q: 'Are gorillas big or small animals?', options: ['A. Very small', 'B. About cat-sized', 'C. Big and strong', 'D. Tiny'], correct: 2, fact: 'Gorillas are the largest primates — a male can weigh over 180 kg!' },
             2: { q: 'Where do gorillas live in the wild?', options: ['A. Australia', 'B. Africa', 'C. Antarctica', 'D. Asia'], correct: 1, fact: 'Western Lowland Gorillas live in the forests of Central-West Africa.' },
             3: { q: 'What do gorillas eat?', options: ['A. Meat only', 'B. Fish', 'C. Plants, fruit, and leaves', 'D. Only insects'], correct: 2, fact: 'Gorillas are mainly herbivores, eating plants, leaves, stems, and fruit.' },
             4: { q: 'Gorilla Habitat', options: ['A', 'B', 'C', 'D'], correct: 0, fact: 'Western Lowland Gorillas live in Central-West Africa, in dense tropical rainforests.' },
@@ -1895,6 +1898,13 @@
           },
           questions: [
             { q: 'Gorilla Habitat',
+              stageVariants: {
+                1: 'Do gorillas live in Australia?',
+                2: 'Where do gorillas come from?',
+                3: 'Which part of Africa do western lowland gorillas live in?',
+                4: 'Gorilla Habitat',
+                5: 'Why is the gorilla\'s rainforest habitat important for its survival?',
+              },
               options: ['A', 'B', 'C', 'D'],
               correct: 0,
               fact: 'Western Lowland Gorillas live in Central-West Africa, in dense tropical rainforests.' }
@@ -1906,8 +1916,6 @@
           id: 'lion', name: 'African Lion', scientificName: 'Panthera leo',
           image: 'images/lion.jpg', latitude: -33.8427, longitude: 151.2393,
           radius: 50, color: '#D4A574',
-          questionsByStage: {
-            1: { q: 'Did you see a lion?', options: ['A. Yes', 'B. No', 'C. Maybe', 'D. Not sure'], correct: 0, fact: 'African lions are one of the most recognisable animals in the world!' },
             2: { q: 'Are lions more likely to hunt alone or in groups?', options: ['A. Always alone', 'B. In groups called prides', 'C. In pairs only', 'D. They do not hunt'], correct: 1, fact: 'Lions live and often hunt in family groups called prides.' },
             3: { q: 'What do lions eat?', options: ['A. Only plants', 'B. Fish and insects', 'C. Large animals like zebras and wildebeest', 'D. Fruit and seeds'], correct: 2, fact: 'Lions are carnivores that hunt large prey such as zebras, wildebeest, and buffalo.' },
             4: { q: 'Lion Micro Investigation', options: ['A', 'B', 'C', 'D'], correct: 1, fact: 'Lions are apex predators.' },
@@ -1922,6 +1930,13 @@
           },
           questions: [
             { q: 'Lion Micro Investigation',
+              stageVariants: {
+                1: 'Did you see a lion?',
+                2: 'Are lions big or small compared to a dog?',
+                3: 'What makes lions different from other big cats?',
+                4: 'Lion Micro Investigation',
+                5: 'Why are lions important to the savanna ecosystem?',
+              },
               options: ['A', 'B', 'C', 'D'],
               correct: 1,
               fact: 'Lions are apex predators.' }
@@ -1933,8 +1948,6 @@
           id: 'giraffe', name: 'Giraffe', scientificName: 'Giraffa camelopardalis',
           image: 'images/giraffe.jpg', latitude: -33.8431, longitude: 151.2404,
           radius: 50, color: '#E86A33',
-          questionsByStage: {
-            1: { q: 'Is the giraffe tall or short?', options: ['A. Short', 'B. The same as a person', 'C. Very tall', 'D. Tiny'], correct: 2, fact: 'Giraffes are the tallest land animals — they can grow over 5 metres tall!' },
             2: { q: 'Is a giraffe taller than a person?', options: ['A. No, about the same', 'B. A little taller', 'C. Yes, much taller', 'D. Shorter'], correct: 2, fact: 'A giraffe is much taller than a person — they can grow up to 5–6 metres tall!' },
             3: { q: 'About how tall is a giraffe?', options: ['A. 1–2 metres', 'B. 3–4 metres', 'C. 5–6 metres', 'D. 10 metres'], correct: 2, fact: 'Giraffes can grow up to 5–6 metres tall — making them the tallest land animals on Earth.' },
             4: { q: 'How tall is the tallest giraffe?', options: ['A. 2 metres', 'B. 4 metres', 'C. 5–6 metres', 'D. 8 metres'], correct: 2, fact: 'Adult giraffes can grow up to around 5–6 metres tall — the tallest land animals on Earth.' },
@@ -1942,6 +1955,13 @@
           },
           questions: [
             { q: 'How tall is the tallest giraffe?',
+              stageVariants: {
+                1: 'Is the giraffe tall or short?',
+                2: 'Is a giraffe taller than a person?',
+                3: 'About how tall is the tallest giraffe?',
+                4: 'How tall is the tallest giraffe?',
+                5: 'Why does being tall help giraffes survive?',
+              },
               options: ['A. 2 metres', 'B. 4 metres', 'C. 5–6 metres', 'D. 8 metres'],
               correct: 2,
               fact: 'Adult giraffes can grow up to around 5–6 metres tall — the tallest land animals on Earth.' }
@@ -1960,8 +1980,6 @@
           id: 'koala', name: 'Koala', scientificName: 'Phascolarctos cinereus',
           image: 'images/koala.jpg', latitude: -34.206927872669155, longitude: 150.57988056189498,
           radius: 50, color: '#7A8B6F',
-          questionsByStage: {
-            1: { q: 'What was the koala doing?', options: ['A. Swimming', 'B. Running fast', 'C. Sleeping or resting in a tree', 'D. Eating meat'], correct: 2, fact: 'Koalas sleep up to 20 hours a day to conserve energy from their leafy diet.' },
             2: { q: 'What do koalas eat?', options: ['A. Meat', 'B. Eucalyptus leaves', 'C. Fish', 'D. Seeds and berries'], correct: 1, fact: 'Koalas eat eucalyptus leaves, which are toxic to most animals but not to koalas.' },
             3: { q: 'Why do koalas sleep so much?', options: ['A. They are nocturnal hunters', 'B. Their fur makes them hot', 'C. Their leafy diet provides very little energy', 'D. They are lazy animals'], correct: 2, fact: 'Eucalyptus leaves are low in energy, so koalas must conserve energy by resting.' },
             4: { q: 'Without intervention, by what year could koalas become extinct in NSW?', options: ['2030', '2040', '2050', '2060'], correct: 2, fact: 'Some projections warn koalas could disappear from parts of NSW by around 2050 without action.' },
@@ -1976,12 +1994,33 @@
           },
           questions: [
             { q: 'Without intervention, by what year could koalas become extinct in NSW?',
+              stageVariants: {
+                1: 'Are koalas in danger?',
+                2: 'Are koalas doing well or are they at risk?',
+                3: 'Are koalas in danger of dying out in NSW?',
+                4: 'Without intervention, by what year could koalas become extinct in NSW?',
+                5: 'Why could koalas disappear from NSW without human intervention?',
+              },
               options: ['2030', '2040', '2050', '2060'],
               correct: 2, fact: 'Some projections warn koalas could disappear from parts of NSW by around 2050 without action.' },
             { q: 'Which adaptation helps koalas climb and grip tree trunks effectively?',
+              stageVariants: {
+                1: 'How do koalas hold on to trees?',
+                2: 'What body part helps koalas grip trees?',
+                3: 'What feature helps koalas climb trees?',
+                4: 'Which adaptation helps koalas climb and grip tree trunks effectively?',
+                5: 'How does the koala\'s climbing adaptation increase its survival chances?',
+              },
               options: ['Sharp claws and opposable toes', 'Long tails for balance', 'Webbed feet for swimming', 'Flexible spines for jumping'],
               correct: 0, fact: 'Koalas have sharp claws and opposable toes for gripping.' },
             { q: 'Why do koalas spend up to 18–20 hours a day sleeping?',
+              stageVariants: {
+                1: 'Do koalas sleep a lot or a little?',
+                2: 'How many hours a day do koalas sleep?',
+                3: 'Why do koalas sleep so many hours each day?',
+                4: 'Why do koalas spend up to 18–20 hours a day sleeping?',
+                5: 'How does the koala\'s sleeping behaviour relate to its diet and energy needs?',
+              },
               options: ['They are nocturnal predators', 'Their fur causes them to overheat', 'They are avoiding competition', 'Their diet is low in energy, requiring energy conservation'],
               correct: 3, fact: 'Eucalyptus leaves are low in energy, so koalas conserve energy by resting.' }
           ],
@@ -1992,8 +2031,6 @@
           id: 'tiger', name: 'Sumatran Tiger', scientificName: 'Panthera tigris sumatrae',
           image: 'images/tiger.jpg', latitude: -33.8433, longitude: 151.2394,
           radius: 50, color: '#E86A33',
-          questionsByStage: {
-            1: { q: 'What colour are a tiger\'s stripes?', options: ['A. Blue and white', 'B. Green and yellow', 'C. Orange and black', 'D. Red and brown'], correct: 2, fact: 'Tigers have distinctive orange fur with black stripes — each tiger has a unique stripe pattern!' },
             2: { q: 'Are tigers in danger of dying out?', options: ['A. No, there are millions', 'B. Yes, they are endangered', 'C. They are already extinct', 'D. Only in Australia'], correct: 1, fact: 'Sumatran tigers are critically endangered with fewer than 400 thought to remain in the wild.' },
             3: { q: 'About how many Sumatran tigers are left in the wild?', options: ['A. Over 10,000', 'B. Around 5,000', 'C. Around 1,000', 'D. Fewer than 400'], correct: 3, fact: 'Sumatran tiger numbers are critically low — fewer than 400 are estimated to remain in the wild.' },
             4: { q: 'How many Sumatran tigers are left in the wild?', options: ['Over 10,000', '5,000-7,000', 'Fewer than 400', 'They are extinct'], correct: 2, fact: 'Estimates often place the wild population at fewer than 400.' },
@@ -2008,12 +2045,33 @@
           },
           questions: [
             { q: 'How many Sumatran tigers are left in the wild?',
+              stageVariants: {
+                1: 'Are tigers in danger?',
+                2: 'Are there lots of tigers left in the wild?',
+                3: 'About how many Sumatran tigers are left in the wild?',
+                4: 'How many Sumatran tigers are left in the wild?',
+                5: 'Why is the Sumatran tiger population so critically low?',
+              },
               options: ['Over 10,000', '5,000-7,000', 'Fewer than 400', 'They are extinct'],
               correct: 2, fact: 'Estimates often place the wild population at fewer than 400.' },
             { q: 'What makes Sumatran tigers different from other tigers?',
+              stageVariants: {
+                1: 'Are tigers big animals?',
+                2: 'Are Sumatran tigers big or small compared to other tigers?',
+                3: 'How are Sumatran tigers different from other tigers?',
+                4: 'What makes Sumatran tigers different from other tigers?',
+                5: 'How might the Sumatran tiger\'s smaller size be an advantage in its rainforest habitat?',
+              },
               options: ['They are the smallest tiger subspecies', 'They are the largest', 'They can fly', 'They are herbivores'],
               correct: 0, fact: 'Sumatran tigers are the smallest tiger subspecies.' },
             { q: 'Why are Sumatran tigers endangered?',
+              stageVariants: {
+                1: 'Are tigers safe or in danger?',
+                2: 'What is one reason tigers are in danger?',
+                3: 'What are the main threats to Sumatran tigers?',
+                4: 'Why are Sumatran tigers endangered?',
+                5: 'How do habitat loss and poaching combine to threaten Sumatran tiger survival?',
+              },
               options: ['Climate change only', 'Habitat loss and poaching', 'Disease', 'Natural predators'],
               correct: 1, fact: 'Major threats include habitat loss and poaching.' }
           ],
@@ -2037,12 +2095,33 @@
           incorrectFeedback: 'Look again carefully and compare both environments.',
           questions: [
             { q: 'What is something BOTH environments have?',
+              stageVariants: {
+                1: 'Does sunlight reach both places?',
+                2: 'What do the zoo lawn and the city both have?',
+                3: 'What is one thing both environments share?',
+                4: 'What is something BOTH environments have?',
+                5: 'How can two very different environments share similar resources?',
+              },
               options: ['Open space and sunlight', 'Only natural features', 'Only buildings', 'Only animals'],
               correct: 0, fact: 'Both environments have open space and receive sunlight, even though they are very different types of environments.' },
             { q: 'What is the main difference between the two environments?',
+              stageVariants: {
+                1: 'Which place has more buildings?',
+                2: 'Is the zoo lawn more natural or more like a city?',
+                3: 'What is the biggest difference between the lawn and the city?',
+                4: 'What is the main difference between the two environments?',
+                5: 'How does being natural versus human-built affect what can live in each environment?',
+              },
               options: ['One has more sunlight', 'One is natural and the other is human-built', 'One has more water', 'There is no difference'],
               correct: 1, fact: 'The Concert Lawn includes natural features, while the city is mostly human-built.' },
             { q: 'Why might the Concert Lawn support more living things than the city?',
+              stageVariants: {
+                1: 'Does the grass have more animals than a road?',
+                2: 'Can more animals live on grass or on concrete?',
+                3: 'Why do more living things exist on the lawn than in the city?',
+                4: 'Why might the Concert Lawn support more living things than the city?',
+                5: 'How do natural features like soil and plants enable greater biodiversity than built environments?',
+              },
               options: ['It has more buildings', 'It has natural features like plants and soil', 'It is closer to the water', 'It is larger'],
               correct: 1, fact: 'Plants, soil, and habitat features help support more living things in natural environments.' }
           ],
@@ -2053,8 +2132,6 @@
           id: 'dingo', name: 'Dingo', scientificName: 'Canis lupus dingo',
           image: 'images/dingo.jpg', latitude: -33.8440, longitude: 151.2408,
           radius: 50, color: '#C4873A',
-          questionsByStage: {
-            1: { q: 'What did the dingo look like?', options: ['A. Black and white spots', 'B. Sandy or golden brown fur', 'C. Bright orange', 'D. Striped like a tiger'], correct: 1, fact: 'Dingoes typically have sandy-golden fur that blends into the Australian landscape.' },
             2: { q: 'Is the dingo\'s colour similar to or different from its habitat?', options: ['A. Very different — it stands out', 'B. Similar — it blends in', 'C. It has no colour', 'D. It changes colour'], correct: 1, fact: 'The dingo\'s sandy fur helps it blend into dry Australian grasslands — a form of camouflage.' },
             3: { q: 'What is the dingo\'s colour good for in its natural habitat?', options: ['A. Attracting mates only', 'B. Keeping warm', 'C. Helping it blend in and hunt', 'D. Cooling it down'], correct: 2, fact: 'The dingo\'s colouring provides camouflage, helping it sneak up on prey and avoid being easily spotted.' },
             4: { q: 'What is the dingo\'s role in the Australian ecosystem?', options: ['They are herbivores that eat only plants', 'They are apex predators that help regulate prey populations', 'They have no ecological role', 'They are introduced pests'], correct: 1, fact: 'Dingoes are apex predators in Australia and help regulate populations of kangaroos and other animals, supporting ecosystem balance.' },
@@ -2069,6 +2146,13 @@
           },
           questions: [
             { q: 'What is the dingo\'s role in the Australian ecosystem?',
+              stageVariants: {
+                1: 'What colour is a dingo\'s fur?',
+                2: 'Does the dingo\'s colour help it blend into the Australian bush?',
+                3: 'What does the dingo eat in the wild?',
+                4: 'What is the dingo\'s role in the Australian ecosystem?',
+                5: 'How does the dingo\'s role as an apex predator maintain ecosystem balance?',
+              },
               options: ['They are herbivores that eat only plants', 'They are apex predators that help regulate prey populations', 'They have no ecological role', 'They are introduced pests'],
               correct: 1, fact: 'Dingoes are apex predators in Australia and help regulate populations of kangaroos and other animals, supporting ecosystem balance.' }
           ],
@@ -2088,6 +2172,13 @@
           },
           questions: [
             { q: 'Which behaviour did you observe the MOST?',
+              stageVariants: {
+                1: 'What were the lemurs doing?',
+                2: 'Were the lemurs mostly resting, moving, eating, or playing?',
+                3: 'Which behaviour did you see the lemurs doing most?',
+                4: 'Which behaviour did you observe the MOST?',
+                5: 'What does the most common behaviour you observed tell us about lemur needs in captivity?',
+              },
               options: ['A. Feeding', 'B. Resting', 'C. Moving', 'D. Social'],
               correct: 0,
               fact: 'Ring-tailed lemurs spend their time in a mix of feeding, resting, moving, and social interactions — your observation reflects real field research methods!' }
@@ -2129,12 +2220,33 @@
           },
           questions: [
             { q: 'What is at the top of the waterfall?',
+              stageVariants: {
+                1: 'Is there something at the top of the waterfall?',
+                2: 'Can you see an object at the top of the waterfall?',
+                3: 'What did you notice at the top of the waterfall?',
+                4: 'What is at the top of the waterfall?',
+                5: 'What object marks the waterfall and why might it be placed there?',
+              },
               options: ['A rock', 'A sign', 'A bell', 'A rope'],
               correct: 2 },
             { q: 'What number does the clue represent?',
+              stageVariants: {
+                1: 'Can you find a number in the clue?',
+                2: 'What number is in the clue?',
+                3: 'What number does the clue stand for?',
+                4: 'What number does the clue represent?',
+                5: 'How does the clue encode the number and what strategy did you use to decode it?',
+              },
               options: ['1', '3', '5', '10'],
               correct: 1 },
             { q: 'Who am I?',
+              stageVariants: {
+                1: 'Which bird makes the sound?',
+                2: 'Which bird copies other sounds?',
+                3: 'Which bird from the riddle can mimic other animals?',
+                4: 'Who am I?',
+                5: 'Why might the ability to mimic sounds give this bird a survival or social advantage?',
+              },
               options: ['Kookaburra', 'Parrot', 'Eagle', 'Lyrebird'],
               correct: 3 },
           ],
@@ -2145,8 +2257,6 @@
           id: 'asian-water-buffalo', name: 'Asian Water Buffalo', scientificName: 'Bubalus bubalis',
           image: 'images/asian-water-buffalo.jpg', latitude: -33.8450, longitude: 151.2410,
           radius: 50, color: '#6B5E4E',
-          questionsByStage: {
-            1: { q: 'What other animals were near the buffalo?', options: ['A. No other animals', 'B. Birds or other animals nearby', 'C. Only fish', 'D. Only insects'], correct: 1, fact: 'Animals often live alongside other species — looking for these relationships is an important observation skill!' },
             2: { q: 'Were there birds near or on the buffalo?', options: ['A. Yes', 'B. No', 'C. Not sure', 'D. Only butterflies'], correct: 0, fact: 'Birds like oxpeckers often sit on large animals, eating ticks and insects from their skin.' },
             3: { q: 'What might a bird sitting on a buffalo be doing?', options: ['A. Trying to push it over', 'B. Just resting in the sun', 'C. Eating insects from the buffalo\'s skin', 'D. Looking for water'], correct: 2, fact: 'Birds like oxpeckers eat ticks and parasites off the buffalo\'s skin — helping the buffalo and getting a meal at the same time.' },
             4: { q: 'Looking at the buffalo, what can you notice that helps it not sink into soft ground?', options: ['A. It has small, narrow feet', 'B. It has wide hooves that spread its weight', 'C. It is very fast', 'D. It avoids muddy areas'], correct: 1, fact: 'Wide hooves spread weight and reduce pressure on soft ground — an adaptation that helps buffalo move through wet, muddy environments.' },
@@ -2161,6 +2271,13 @@
           },
           questions: [
             { q: 'Looking at the buffalo, what can you notice that helps it not sink into soft ground?',
+              stageVariants: {
+                1: 'Are there other animals near the buffalo?',
+                2: 'Do the buffalo\'s feet look wide or narrow?',
+                3: 'What feature of the buffalo\'s feet might help it in muddy ground?',
+                4: 'Looking at the buffalo, what can you notice that helps it not sink into soft ground?',
+                5: 'How do the buffalo\'s wide hooves function as an adaptation to its muddy wetland habitat?',
+              },
               options: ['A. It has small, narrow feet', 'B. It has wide hooves that spread its weight', 'C. It is very fast', 'D. It avoids muddy areas'],
               correct: 1, fact: 'Wide hooves spread weight and reduce pressure on soft ground — an adaptation that helps buffalo move through wet, muddy environments.' }
           ],
@@ -2206,15 +2323,17 @@
         return { header: '✔ A high-quality response includes:', points: ['A precise observation using scientific terms', 'A concept (adaptation, behaviour, ecosystem)', 'An explanation linking observation to survival or function'], starters: ['Based on my observation…', 'This suggests that…', 'This adaptation allows the animal to…'] };
       }
 
-      // Returns the question array appropriate for the current stage.
-      // If the animal has questionsByStage, uses that stage's single question wrapped in an array.
-      // Falls back to the standard questions array for animals without stage differentiation.
+      // Returns the question array for the current stage.
+      // Each question may have a stageVariants object with per-stage question text.
+      // The options, correct, and fact fields are ALWAYS preserved from the base question.
+      // Falls back to the base q field when no variant is defined.
       function getStageQuestions(animal) {
-        if (animal && animal.questionsByStage) {
-          const stageQ = animal.questionsByStage[classStage] || animal.questionsByStage[4];
-          return stageQ ? [stageQ] : (animal.questions || []);
-        }
-        return animal ? (animal.questions || []) : [];
+        const baseQuestions = (animal && animal.questions) ? animal.questions : [];
+        return baseQuestions.map(q => {
+          if (!q.stageVariants) return q;
+          const stageText = q.stageVariants[classStage] || q.stageVariants[4] || q.q;
+          return { ...q, q: stageText };
+        });
       }
 
       function isLowQualityResponse(text) {
