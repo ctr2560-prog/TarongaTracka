@@ -497,7 +497,6 @@
       const [teacherClassStudentCounts, setTeacherClassStudentCounts] = useState({});
       const [studentJoinError, setStudentJoinError] = useState('');
       const [lookedUpClass, setLookedUpClass] = useState(null);
-      const [newYearGroup, setNewYearGroup] = useState('');
       const [newClassName, setNewClassName] = useState('');
       const [newSchoolName, setNewSchoolName] = useState('');
       const [selectedClass, setSelectedClass] = useState(null);
@@ -965,7 +964,7 @@
       };
 
       const createClass = async () => {
-        if (!newYearGroup.trim() || !newClassName.trim() || !newSchoolName.trim()) return;
+        if (!newClassName.trim() || !newSchoolName.trim()) return;
         
         // Validate access code
         if (!accessCodeInput.trim()) {
@@ -1025,7 +1024,6 @@
               .collection('classes').doc(code);
             transaction.set(teacherClassRef, {
               classCode: code,
-              yearGroup: newYearGroup.trim(),
               className: newClassName.trim(),
               schoolName: newSchoolName.trim(),
               stage: newClassStage,
@@ -1041,7 +1039,6 @@
             const classRef = window.db.collection('classes').doc(code);
             transaction.set(classRef, {
               classCode: code,
-              yearGroup: newYearGroup.trim(),
               className: newClassName.trim(),
               schoolName: newSchoolName.trim(),
               stage: newClassStage,
@@ -1055,7 +1052,6 @@
           });
 
           // Clear form on success
-          setNewYearGroup('');
           setNewClassName('');
           setNewSchoolName('');
           setAccessCodeInput('');
@@ -2301,7 +2297,8 @@
       function submitTigerReflection() {
         const text = reflectionText.trim();
         const wc = text.split(/\s+/).filter(Boolean).length;
-        if (wc < 10) { alert(`Please write at least 10 words. You have ${wc}.`); return; }
+        const minW = {1:3,2:5,3:8,4:10,5:12}[classStage] || 10;
+        if (wc < minW) { alert(`Please write at least ${minW} words. You have ${wc}.`); return; }
 
         const behaviourScore = calculateBehaviourScore(text);
         const detailScore = calculateDetailScore(text);
@@ -3729,7 +3726,8 @@
         if (sessionLocked) return;
         if (activityCompleted) return;
         const wc = observation.trim().match(/\b\w+\b/g)?.length || 0;
-        if (wc < 10) { alert(`Your observation needs at least 10 words. You have ${wc}.`); return; }
+        const minW = {1:3,2:5,3:8,4:10,5:12}[classStage] || 10;
+        if (wc < minW) { alert(`Your response needs at least ${minW} words. You have ${wc}.`); return; }
 
         // Quiz score = questions correct on first attempt only
         const quizResults = currentAnimal.questions.map((q, i) => {
@@ -4599,12 +4597,13 @@
                         <li>How the environment supports the tiger</li>
                       </ul>
                     </div>
-                    <div style={{ marginTop:'0.5rem', fontSize:'0.9rem', color: (reflectionText.trim().split(/\s+/).filter(Boolean).length >= 10) ? 'rgba(255,255,255,0.9)' : 'rgba(255,180,100,0.9)', fontWeight:600 }}>
-                      {reflectionText.trim().split(/\s+/).filter(Boolean).length}/10 words
+                    <div style={{ marginTop:'0.5rem', fontSize:'0.9rem', color: (reflectionText.trim().split(/\s+/).filter(Boolean).length >= ({1:3,2:5,3:8,4:10,5:12}[classStage]||10)) ? 'rgba(255,255,255,0.9)' : 'rgba(255,180,100,0.9)', fontWeight:600 }}>
+                      {reflectionText.trim().split(/\s+/).filter(Boolean).length}/{({1:3,2:5,3:8,4:10,5:12}[classStage]||10)} words
                     </div>
                     <button onClick={() => {
                         const wc = reflectionText.trim().split(/\s+/).filter(Boolean).length;
-                        if (wc < 10) { alert(`Please write at least 10 words describing what you heard or smelled. You have ${wc}.`); return; }
+                        const minW = {1:3,2:5,3:8,4:10,5:12}[classStage] || 10;
+                        if (wc < minW) { alert(`Please write at least ${minW} words. You have ${wc}.`); return; }
                         if (currentAnimal && currentAnimal.id === 'tiger') { submitTigerReflection(); } else { setImmersionActive(false); }
                       }}
                       style={{ marginTop:'1rem', width:'100%', padding:'1rem', background:'var(--sunset-orange)', color:'white', border:'none', borderRadius:'30px', fontWeight:700, fontSize:'1.1rem', cursor:'pointer' }}>
@@ -4676,10 +4675,10 @@
                       <li>How conservation helps protect lions</li>
                     </ul>
                   </div>
-                  <div style={{ marginTop:'1rem', fontSize:'0.95rem', color: wordCount >= 10 ? '#059669' : '#E86A33', fontWeight:600 }}>{wordCount}/10 words minimum</div>
-                  <button onClick={submitObservation} disabled={wordCount < 10}
-                    style={{ width:'100%', padding:'1.5rem', borderRadius:'50px', border:'none', background: wordCount >= 10 ? 'linear-gradient(135deg, #D4A574, #A0714A)' : '#CCC', color:'white', fontSize:'1.3rem', fontWeight:700, cursor: wordCount >= 10 ? 'pointer' : 'not-allowed', transition:'all 0.3s ease', textTransform:'uppercase', letterSpacing:'0.1em', marginTop:'2rem', boxShadow: wordCount >= 10 ? '0 8px 24px rgba(212,165,116,0.4)' : 'none' }}>
-                    {wordCount < 10 ? 'Write More to Continue' : 'Submit Conservation Reflection'}
+                  <div style={{ marginTop:'1rem', fontSize:'0.95rem', color: wordCount >= ({1:3,2:5,3:8,4:10,5:12}[classStage]||10) ? '#059669' : '#E86A33', fontWeight:600 }}>{wordCount}/{({1:3,2:5,3:8,4:10,5:12}[classStage]||10)} words minimum</div>
+                  <button onClick={submitObservation} disabled={wordCount < ({1:3,2:5,3:8,4:10,5:12}[classStage]||10)}
+                    style={{ width:'100%', padding:'1.5rem', borderRadius:'50px', border:'none', background: wordCount >= ({1:3,2:5,3:8,4:10,5:12}[classStage]||10) ? 'linear-gradient(135deg, #D4A574, #A0714A)' : '#CCC', color:'white', fontSize:'1.3rem', fontWeight:700, cursor: wordCount >= ({1:3,2:5,3:8,4:10,5:12}[classStage]||10) ? 'pointer' : 'not-allowed', transition:'all 0.3s ease', textTransform:'uppercase', letterSpacing:'0.1em', marginTop:'2rem', boxShadow: wordCount >= ({1:3,2:5,3:8,4:10,5:12}[classStage]||10) ? '0 8px 24px rgba(212,165,116,0.4)' : 'none' }}>
+                    {wordCount < ({1:3,2:5,3:8,4:10,5:12}[classStage]||10) ? 'Write More to Continue' : 'Submit Conservation Reflection'}
                   </button>
                 </div>
               ) : (
@@ -6551,24 +6550,9 @@
                     style={{ width:'100%', padding:'0.7rem 0.9rem', borderRadius:'12px', border:'2px solid #E5E5E5', fontSize:'0.95rem', fontFamily:'DM Sans, sans-serif', marginBottom:'0.9rem', boxSizing:'border-box', transition:'border-color 0.2s' }}
                     onFocus={(e)=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'} />
 
-                  <label style={{ display:'block', fontSize:'0.82rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Year Group</label>
-                  <select value={newYearGroup} onChange={(e)=>setNewYearGroup(e.target.value)}
-                    style={{ width:'100%', padding:'0.7rem 0.9rem', borderRadius:'12px', border:'2px solid #E5E5E5', fontSize:'0.95rem', fontFamily:'DM Sans, sans-serif', marginBottom:'0.9rem', background:'white', color: newYearGroup ? '#0A2F1F' : '#999', appearance:'auto', cursor:'pointer', transition:'border-color 0.2s' }}
-                    onFocus={(e)=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'}>
-                    <option value="" disabled>Select year group...</option>
-                    {['K','1','2','3','4','5','6','7','8','9','10','11','12'].map(y => (
-                      <option key={y} value={y}>{y}</option>
-                    ))}
-                  </select>
-
-                  <label style={{ display:'block', fontSize:'0.82rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Class Name</label>
-                  <input type="text" value={newClassName} onChange={(e)=>setNewClassName(e.target.value)} placeholder="e.g. 7A, Biology, Koala Crew"
-                    style={{ width:'100%', padding:'0.7rem 0.9rem', borderRadius:'12px', border:'2px solid #E5E5E5', fontSize:'0.95rem', fontFamily:'DM Sans, sans-serif', marginBottom:'1.2rem', boxSizing:'border-box', transition:'border-color 0.2s' }}
-                    onFocus={(e)=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'} />
-
                   <label style={{ display:'block', fontSize:'0.82rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>NSW Stage</label>
                   <select value={newClassStage} onChange={(e) => setNewClassStage(Number(e.target.value))}
-                    style={{ width:'100%', padding:'0.7rem 0.9rem', borderRadius:'12px', border:'2px solid #E5E5E5', fontSize:'0.95rem', fontFamily:'DM Sans, sans-serif', marginBottom:'1.2rem', background:'white', color:'var(--jungle-deep)', appearance:'auto', cursor:'pointer', transition:'border-color 0.2s' }}
+                    style={{ width:'100%', padding:'0.7rem 0.9rem', borderRadius:'12px', border:'2px solid #E5E5E5', fontSize:'0.95rem', fontFamily:'DM Sans, sans-serif', marginBottom:'0.9rem', background:'white', color:'var(--jungle-deep)', appearance:'auto', cursor:'pointer', transition:'border-color 0.2s' }}
                     onFocus={(e)=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'}>
                     <option value={1}>Stage 1 (K–2)</option>
                     <option value={2}>Stage 2 (3–4)</option>
@@ -6577,23 +6561,23 @@
                     <option value={5}>Stage 5 (9–10)</option>
                   </select>
 
+                  <label style={{ display:'block', fontSize:'0.82rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Class Name</label>
+                  <input type="text" value={newClassName} onChange={(e)=>setNewClassName(e.target.value)} placeholder="e.g. 7A, Biology, Koala Crew"
+                    style={{ width:'100%', padding:'0.7rem 0.9rem', borderRadius:'12px', border:'2px solid #E5E5E5', fontSize:'0.95rem', fontFamily:'DM Sans, sans-serif', marginBottom:'1.2rem', boxSizing:'border-box', transition:'border-color 0.2s' }}
+                    onFocus={(e)=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'} />
+
                   <input
                     type="password"
                     placeholder="Enter Taronga Access Code"
                     value={accessCodeInput}
                     onChange={(e) => setAccessCodeInput(e.target.value)}
                     autoComplete="off"
-                    style={{
-                      padding: "10px",
-                      marginBottom: "10px",
-                      width: "100%",
-                      borderRadius: "6px",
-                      border: "1px solid #ccc"
-                    }}
+                    style={{ padding:'0.7rem 0.9rem', marginBottom:'1.2rem', width:'100%', borderRadius:'12px', border:'2px solid #E5E5E5', fontSize:'0.95rem', fontFamily:'DM Sans, sans-serif', boxSizing:'border-box', transition:'border-color 0.2s' }}
+                    onFocus={(e)=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'}
                   />
 
-                  <button onClick={createClass} disabled={!newYearGroup.trim() || !newClassName.trim() || !newSchoolName.trim() || creatingClass}
-                    style={{ width:'100%', padding:'0.75rem', borderRadius:'50px', border:'none', background:(newYearGroup.trim()&&newClassName.trim()&&newSchoolName.trim()&&!creatingClass)?'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))':'#CCC', color:'white', fontSize:'0.95rem', fontWeight:700, cursor:(newYearGroup.trim()&&newClassName.trim()&&newSchoolName.trim()&&!creatingClass)?'pointer':'not-allowed', textTransform:'uppercase', letterSpacing:'0.08em', transition:'all 0.3s ease' }}>
+                  <button onClick={createClass} disabled={!newClassName.trim() || !newSchoolName.trim() || creatingClass}
+                    style={{ width:'100%', padding:'0.75rem', borderRadius:'50px', border:'none', background:(newClassName.trim()&&newSchoolName.trim()&&!creatingClass)?'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))':'#CCC', color:'white', fontSize:'0.95rem', fontWeight:700, cursor:(newClassName.trim()&&newSchoolName.trim()&&!creatingClass)?'pointer':'not-allowed', textTransform:'uppercase', letterSpacing:'0.08em', transition:'all 0.3s ease' }}>
                     {creatingClass ? 'Creating...' : '+ Create Class'}
                   </button>
                   {classCreated && (
