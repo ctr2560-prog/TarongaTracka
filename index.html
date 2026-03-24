@@ -1852,6 +1852,20 @@
           id: 'chimpanzee', name: 'Chimpanzee', scientificName: 'Pan troglodytes',
           image: 'images/chimpanzee.jpg', latitude: -33.8428, longitude: 151.2401,
           radius: 50, color: '#8B5A3C',
+          questionsByStage: {
+            1: { q: 'Are the chimpanzees alone or together?', options: ['A. Alone', 'B. In a group', 'C. Hiding', 'D. Sleeping'], correct: 1, fact: 'Chimpanzees are highly social and live in groups called communities.' },
+            2: { q: 'Are chimpanzees more like humans or fish?', options: ['A. Fish', 'B. Birds', 'C. Humans', 'D. Reptiles'], correct: 2, fact: 'Chimpanzees are our closest living relatives and share many behaviours with humans.' },
+            3: { q: 'What do chimpanzees use their hands for?', options: ['A. Flying', 'B. Swimming', 'C. Grabbing food and climbing', 'D. Digging only'], correct: 2, fact: 'Chimpanzees have dexterous hands they use for climbing, feeding, grooming, and using tools.' },
+            4: { q: 'Chimpanzee Behaviour Graph', options: ['A', 'B', 'C', 'D'], correct: 0, fact: 'Chimpanzees are highly social animals that spend their time resting, feeding, and moving through their environment.' },
+            5: { q: 'Why is group living beneficial for chimpanzees?', options: ['A. It makes them harder to see', 'B. It has no advantage', 'C. It provides protection, social learning, and cooperative foraging', 'D. It helps them stay warm only'], correct: 2, fact: 'Group living gives chimpanzees safety in numbers, opportunities to learn from others, and support in finding food.' },
+          },
+          writingPromptByStage: {
+            1: 'What did you see the chimpanzees doing?',
+            2: 'What were the chimpanzees doing and were they together or alone?',
+            3: 'Describe what you saw the chimpanzees doing and how they were interacting.',
+            4: 'Describe the group dynamics you can observe in the chimpanzees.',
+            5: 'Explain how social behaviour helps chimpanzees survive and what you observed that supports this.',
+          },
           questions: [
             { q: 'Chimpanzee Behaviour Graph',
               options: ['A', 'B', 'C', 'D'],
@@ -1865,6 +1879,20 @@
           id: 'gorilla', name: 'Western Lowland Gorilla', scientificName: 'Gorilla gorilla gorilla',
           image: 'images/gorilla.jpg', latitude: -33.8443, longitude: 151.2413,
           radius: 50, color: '#2E2E2E',
+          questionsByStage: {
+            1: { q: 'Are gorillas big or small animals?', options: ['A. Very small', 'B. About cat-sized', 'C. Big and strong', 'D. Tiny'], correct: 2, fact: 'Gorillas are the largest primates — a male can weigh over 180 kg!' },
+            2: { q: 'Where do gorillas live in the wild?', options: ['A. Australia', 'B. Africa', 'C. Antarctica', 'D. Asia'], correct: 1, fact: 'Western Lowland Gorillas live in the forests of Central-West Africa.' },
+            3: { q: 'What do gorillas eat?', options: ['A. Meat only', 'B. Fish', 'C. Plants, fruit, and leaves', 'D. Only insects'], correct: 2, fact: 'Gorillas are mainly herbivores, eating plants, leaves, stems, and fruit.' },
+            4: { q: 'Gorilla Habitat', options: ['A', 'B', 'C', 'D'], correct: 0, fact: 'Western Lowland Gorillas live in Central-West Africa, in dense tropical rainforests.' },
+            5: { q: 'Why is the silverback gorilla important to the group?', options: ['A. It finds the most food', 'B. It leads, protects, and maintains group stability', 'C. It is the only one that can climb', 'D. It does all the grooming'], correct: 1, fact: 'The dominant male silverback leads the group, making decisions, resolving conflicts, and protecting members from danger.' },
+          },
+          writingPromptByStage: {
+            1: 'What did you see the gorilla doing?',
+            2: 'What were the gorillas doing and what did they look like?',
+            3: 'Describe what you saw the gorillas doing and how they moved.',
+            4: 'How are the gorillas similar to humans, including yourself?',
+            5: 'Explain how gorilla behaviour shows signs of intelligence or social structure and what you observed to support this.',
+          },
           questions: [
             { q: 'Gorilla Habitat',
               options: ['A', 'B', 'C', 'D'],
@@ -1878,6 +1906,20 @@
           id: 'lion', name: 'African Lion', scientificName: 'Panthera leo',
           image: 'images/lion.jpg', latitude: -33.8427, longitude: 151.2393,
           radius: 50, color: '#D4A574',
+          questionsByStage: {
+            1: { q: 'Did you see a lion?', options: ['A. Yes', 'B. No', 'C. Maybe', 'D. Not sure'], correct: 0, fact: 'African lions are one of the most recognisable animals in the world!' },
+            2: { q: 'Are lions more likely to hunt alone or in groups?', options: ['A. Always alone', 'B. In groups called prides', 'C. In pairs only', 'D. They do not hunt'], correct: 1, fact: 'Lions live and often hunt in family groups called prides.' },
+            3: { q: 'What do lions eat?', options: ['A. Only plants', 'B. Fish and insects', 'C. Large animals like zebras and wildebeest', 'D. Fruit and seeds'], correct: 2, fact: 'Lions are carnivores that hunt large prey such as zebras, wildebeest, and buffalo.' },
+            4: { q: 'Lion Micro Investigation', options: ['A', 'B', 'C', 'D'], correct: 1, fact: 'Lions are apex predators.' },
+            5: { q: 'Why are lions important to the ecosystem?', options: ['A. They pollinate plants', 'B. They have no ecological role', 'C. As apex predators, they regulate prey populations and maintain ecosystem balance', 'D. They are only important for tourism'], correct: 2, fact: 'Lions regulate prey populations which prevents overgrazing and maintains healthy ecosystems — removing them causes trophic cascades.' },
+          },
+          writingPromptByStage: {
+            1: 'What did you see?',
+            2: 'What was the lion doing and what did it look like?',
+            3: 'Describe the lion and what it was doing when you observed it.',
+            4: 'Watch the lions. Describe their behavior and social interactions.',
+            5: 'Explain why lions are important to the ecosystem and what you observed that supports this.',
+          },
           questions: [
             { q: 'Lion Micro Investigation',
               options: ['A', 'B', 'C', 'D'],
@@ -1918,6 +1960,20 @@
           id: 'koala', name: 'Koala', scientificName: 'Phascolarctos cinereus',
           image: 'images/koala.jpg', latitude: -34.206927872669155, longitude: 150.57988056189498,
           radius: 50, color: '#7A8B6F',
+          questionsByStage: {
+            1: { q: 'What was the koala doing?', options: ['A. Swimming', 'B. Running fast', 'C. Sleeping or resting in a tree', 'D. Eating meat'], correct: 2, fact: 'Koalas sleep up to 20 hours a day to conserve energy from their leafy diet.' },
+            2: { q: 'What do koalas eat?', options: ['A. Meat', 'B. Eucalyptus leaves', 'C. Fish', 'D. Seeds and berries'], correct: 1, fact: 'Koalas eat eucalyptus leaves, which are toxic to most animals but not to koalas.' },
+            3: { q: 'Why do koalas sleep so much?', options: ['A. They are nocturnal hunters', 'B. Their fur makes them hot', 'C. Their leafy diet provides very little energy', 'D. They are lazy animals'], correct: 2, fact: 'Eucalyptus leaves are low in energy, so koalas must conserve energy by resting.' },
+            4: { q: 'Without intervention, by what year could koalas become extinct in NSW?', options: ['2030', '2040', '2050', '2060'], correct: 2, fact: 'Some projections warn koalas could disappear from parts of NSW by around 2050 without action.' },
+            5: { q: 'How do koalas survive on a diet of toxic eucalyptus leaves?', options: ['A. They eat very little', 'B. They only eat young leaves', 'C. They have a specialised digestive system that detoxifies the leaves', 'D. The leaves are not actually toxic to them'], correct: 2, fact: 'Koalas have a specialised liver and long digestive tract that breaks down the toxic compounds in eucalyptus leaves.' },
+          },
+          writingPromptByStage: {
+            1: 'What was the koala doing?',
+            2: 'What did the koala look like and what was it doing?',
+            3: 'Describe where the koala was and what you could observe about it.',
+            4: 'Watch the koala carefully. What position is it in?',
+            5: 'Explain how koalas survive in their environment and what you observed that supports this.',
+          },
           questions: [
             { q: 'Without intervention, by what year could koalas become extinct in NSW?',
               options: ['2030', '2040', '2050', '2060'],
@@ -1936,6 +1992,20 @@
           id: 'tiger', name: 'Sumatran Tiger', scientificName: 'Panthera tigris sumatrae',
           image: 'images/tiger.jpg', latitude: -33.8433, longitude: 151.2394,
           radius: 50, color: '#E86A33',
+          questionsByStage: {
+            1: { q: 'What colour are a tiger\'s stripes?', options: ['A. Blue and white', 'B. Green and yellow', 'C. Orange and black', 'D. Red and brown'], correct: 2, fact: 'Tigers have distinctive orange fur with black stripes — each tiger has a unique stripe pattern!' },
+            2: { q: 'Are tigers in danger of dying out?', options: ['A. No, there are millions', 'B. Yes, they are endangered', 'C. They are already extinct', 'D. Only in Australia'], correct: 1, fact: 'Sumatran tigers are critically endangered with fewer than 400 thought to remain in the wild.' },
+            3: { q: 'About how many Sumatran tigers are left in the wild?', options: ['A. Over 10,000', 'B. Around 5,000', 'C. Around 1,000', 'D. Fewer than 400'], correct: 3, fact: 'Sumatran tiger numbers are critically low — fewer than 400 are estimated to remain in the wild.' },
+            4: { q: 'How many Sumatran tigers are left in the wild?', options: ['Over 10,000', '5,000-7,000', 'Fewer than 400', 'They are extinct'], correct: 2, fact: 'Estimates often place the wild population at fewer than 400.' },
+            5: { q: 'What is the greatest threat to Sumatran tiger survival?', options: ['A. Climate change alone', 'B. Natural predators', 'C. Habitat loss and poaching combined', 'D. Disease only'], correct: 2, fact: 'The combination of deforestation and poaching creates a critical pressure on Sumatran tiger populations — habitat loss isolates populations while poaching removes individuals.' },
+          },
+          writingPromptByStage: {
+            1: 'What did you see the tiger doing?',
+            2: 'What did the tiger look like and what was it doing?',
+            3: 'Describe the tiger and what you noticed about how it moved or behaved.',
+            4: 'Watch the tiger\'s behavior. Describe how it moves.',
+            5: 'Explain how the tiger\'s physical features and behaviour help it survive, and describe what you observed.',
+          },
           questions: [
             { q: 'How many Sumatran tigers are left in the wild?',
               options: ['Over 10,000', '5,000-7,000', 'Fewer than 400', 'They are extinct'],
@@ -1954,6 +2024,13 @@
           id: 'concert-lawn', name: 'Concert Lawn', scientificName: 'Taronga Zoo Event Space',
           image: 'images/concert-lawn.jpg', latitude: -33.8435, longitude: 151.2400,
           radius: 80, color: '#5B8C5A',
+          writingPromptByStage: {
+            1: 'What did the ground feel like?',
+            2: 'What did the ground feel like and what did you notice around you?',
+            3: 'Describe what you felt and noticed in this environment.',
+            4: 'Describe your experience walking on the grass and explain how this environment is different to a built environment like the city.',
+            5: 'Explain why natural environments like this support more living things than built environments, using what you observed as evidence.',
+          },
           missionTitle: '🕵️ Habitat Detective: Compare the Landscapes',
           missionTask: '🚶 Walk around the Concert Lawn and observe the environment.\nThen turn and look at Sydney city across the water.',
           correctFeedback: 'Great observation! You\'re thinking like a habitat detective.',
@@ -1976,6 +2053,20 @@
           id: 'dingo', name: 'Dingo', scientificName: 'Canis lupus dingo',
           image: 'images/dingo.jpg', latitude: -33.8440, longitude: 151.2408,
           radius: 50, color: '#C4873A',
+          questionsByStage: {
+            1: { q: 'What did the dingo look like?', options: ['A. Black and white spots', 'B. Sandy or golden brown fur', 'C. Bright orange', 'D. Striped like a tiger'], correct: 1, fact: 'Dingoes typically have sandy-golden fur that blends into the Australian landscape.' },
+            2: { q: 'Is the dingo\'s colour similar to or different from its habitat?', options: ['A. Very different — it stands out', 'B. Similar — it blends in', 'C. It has no colour', 'D. It changes colour'], correct: 1, fact: 'The dingo\'s sandy fur helps it blend into dry Australian grasslands — a form of camouflage.' },
+            3: { q: 'What is the dingo\'s colour good for in its natural habitat?', options: ['A. Attracting mates only', 'B. Keeping warm', 'C. Helping it blend in and hunt', 'D. Cooling it down'], correct: 2, fact: 'The dingo\'s colouring provides camouflage, helping it sneak up on prey and avoid being easily spotted.' },
+            4: { q: 'What is the dingo\'s role in the Australian ecosystem?', options: ['They are herbivores that eat only plants', 'They are apex predators that help regulate prey populations', 'They have no ecological role', 'They are introduced pests'], correct: 1, fact: 'Dingoes are apex predators in Australia and help regulate populations of kangaroos and other animals, supporting ecosystem balance.' },
+            5: { q: 'How does the dingo\'s appearance help it survive?', options: ['A. Bright colour warns predators', 'B. Sandy fur provides camouflage matching Australian grasslands', 'C. Its fur provides waterproofing only', 'D. The pattern mimics poisonous animals'], correct: 1, fact: 'The dingo\'s sandy-golden coat acts as camouflage in dry Australian grasslands, making it harder to detect while hunting.' },
+          },
+          writingPromptByStage: {
+            1: 'What did the dingo look like?',
+            2: 'What did the dingo look like and what was it doing?',
+            3: 'Describe the dingo\'s appearance and the environment around it.',
+            4: 'Explain how the dingo\'s appearance helps it survive in its environment.',
+            5: 'Explain how the dingo\'s colouring is an adaptation for survival and link this to what you observed.',
+          },
           questions: [
             { q: 'What is the dingo\'s role in the Australian ecosystem?',
               options: ['They are herbivores that eat only plants', 'They are apex predators that help regulate prey populations', 'They have no ecological role', 'They are introduced pests'],
@@ -1988,6 +2079,13 @@
           id: 'lemur', name: 'Ring-tailed Lemur', scientificName: 'Lemur catta',
           image: 'images/lemur.jpg', latitude: -33.8448, longitude: 151.2396,
           radius: 50, color: '#7A6E8A',
+          writingPromptByStage: {
+            1: 'What were the lemurs doing?',
+            2: 'What were the lemurs doing and where were they?',
+            3: 'Describe what the lemurs were doing and which part of their enclosure they used.',
+            4: 'Describe how the lemurs use different parts of their enclosure.',
+            5: 'Explain why lemurs use different parts of their enclosure and what this tells us about their needs.',
+          },
           questions: [
             { q: 'Which behaviour did you observe the MOST?',
               options: ['A. Feeding', 'B. Resting', 'C. Moving', 'D. Social'],
@@ -2001,6 +2099,13 @@
           id: 'sea-lion', name: 'Sea Lion', scientificName: 'Neophoca cinerea',
           image: 'images/sea-lion.jpg', latitude: -33.8425, longitude: 151.2415,
           radius: 50, color: '#4A7FA0',
+          writingPromptByStage: {
+            1: 'Was the sea lion in the water or on land?',
+            2: 'What was the sea lion doing and where was it?',
+            3: 'Describe what you could see the sea lion doing in the water or on land.',
+            4: 'Explain how humans can impact sea lions and their environment.',
+            5: 'Explain how human activities affect sea lions and their ocean environment, using specific examples.',
+          },
           questions: [
             { q: 'Blank 1', options: ['desert','forest','water','sky'],        correct: 2 },
             { q: 'Blank 2', options: ['land','ocean','air','underground'],      correct: 0 },
@@ -2015,6 +2120,13 @@
           id: 'blue-mountains-bushwalk', name: 'Blue Mountains Bushwalk', scientificName: 'Blue Mountains National Park',
           image: 'images/blue-mountains-bushwalk.jpg', latitude: -33.7350, longitude: 150.3119,
           radius: 100, color: '#4A7FA0',
+          writingPromptByStage: {
+            1: 'What could you hear?',
+            2: 'What could you hear and how did it make you feel?',
+            3: 'Describe what you heard and whether the sounds were from nature or humans.',
+            4: 'Describe what you could hear and explain how it made you feel.',
+            5: 'Explain why natural environments are important for living things, using what you heard as evidence.',
+          },
           questions: [
             { q: 'What is at the top of the waterfall?',
               options: ['A rock', 'A sign', 'A bell', 'A rope'],
@@ -2033,6 +2145,20 @@
           id: 'asian-water-buffalo', name: 'Asian Water Buffalo', scientificName: 'Bubalus bubalis',
           image: 'images/asian-water-buffalo.jpg', latitude: -33.8450, longitude: 151.2410,
           radius: 50, color: '#6B5E4E',
+          questionsByStage: {
+            1: { q: 'What other animals were near the buffalo?', options: ['A. No other animals', 'B. Birds or other animals nearby', 'C. Only fish', 'D. Only insects'], correct: 1, fact: 'Animals often live alongside other species — looking for these relationships is an important observation skill!' },
+            2: { q: 'Were there birds near or on the buffalo?', options: ['A. Yes', 'B. No', 'C. Not sure', 'D. Only butterflies'], correct: 0, fact: 'Birds like oxpeckers often sit on large animals, eating ticks and insects from their skin.' },
+            3: { q: 'What might a bird sitting on a buffalo be doing?', options: ['A. Trying to push it over', 'B. Just resting in the sun', 'C. Eating insects from the buffalo\'s skin', 'D. Looking for water'], correct: 2, fact: 'Birds like oxpeckers eat ticks and parasites off the buffalo\'s skin — helping the buffalo and getting a meal at the same time.' },
+            4: { q: 'Looking at the buffalo, what can you notice that helps it not sink into soft ground?', options: ['A. It has small, narrow feet', 'B. It has wide hooves that spread its weight', 'C. It is very fast', 'D. It avoids muddy areas'], correct: 1, fact: 'Wide hooves spread weight and reduce pressure on soft ground — an adaptation that helps buffalo move through wet, muddy environments.' },
+            5: { q: 'How do relationships between animals help them survive?', options: ['A. They always compete for the same resources', 'B. Relationships have no effect on survival', 'C. Mutualistic relationships benefit both animals — like birds removing parasites from buffalo', 'D. One animal always harms the other'], correct: 2, fact: 'Mutualistic relationships — where both animals benefit — are a key survival strategy. Oxpeckers get food; buffalo get parasite removal.' },
+          },
+          writingPromptByStage: {
+            1: 'What animals were near the buffalo?',
+            2: 'What animals were near the buffalo and what were they doing?',
+            3: 'Describe the buffalo and any other animals nearby, and what they were doing.',
+            4: 'Describe a relationship you can observe between the buffalo (or rhino) and another animal, and explain how it may help them.',
+            5: 'Explain how the relationship you observed between the buffalo and another animal helps one or both survive — use scientific vocabulary.',
+          },
           questions: [
             { q: 'Looking at the buffalo, what can you notice that helps it not sink into soft ground?',
               options: ['A. It has small, narrow feet', 'B. It has wide hooves that spread its weight', 'C. It is very fast', 'D. It avoids muddy areas'],
@@ -2078,6 +2204,17 @@
         if (stage === 3) return { header: '✏️ A good response includes:', points: ['What you can observe', 'One feature or behaviour', 'Why you think it does that'], starters: ['I noticed…', 'I think this is because…'] };
         if (stage === 4) return { header: '✔ A strong response includes:', points: ['A clear observation (what + where/what doing)', 'A relevant concept or feature', 'A simple explanation or link to survival'], starters: ['I observed that…', 'This may help the animal because…'] };
         return { header: '✔ A high-quality response includes:', points: ['A precise observation using scientific terms', 'A concept (adaptation, behaviour, ecosystem)', 'An explanation linking observation to survival or function'], starters: ['Based on my observation…', 'This suggests that…', 'This adaptation allows the animal to…'] };
+      }
+
+      // Returns the question array appropriate for the current stage.
+      // If the animal has questionsByStage, uses that stage's single question wrapped in an array.
+      // Falls back to the standard questions array for animals without stage differentiation.
+      function getStageQuestions(animal) {
+        if (animal && animal.questionsByStage) {
+          const stageQ = animal.questionsByStage[classStage] || animal.questionsByStage[4];
+          return stageQ ? [stageQ] : (animal.questions || []);
+        }
+        return animal ? (animal.questions || []) : [];
       }
 
       function isLowQualityResponse(text) {
@@ -2444,7 +2581,7 @@
         const holdPct = Math.min(buffaloHoldTime / 2000, 1);
         const pressureLabel = holdPct < 0.33 ? 'LOW' : holdPct < 0.66 ? 'MEDIUM' : 'HIGH';
         const pressureColor = holdPct < 0.33 ? '#4A90D9' : holdPct < 0.66 ? '#E86A33' : '#C4303A';
-        const currentQuestion = currentAnimal.questions[0];
+        const currentQuestion = getStageQuestions(currentAnimal)[0];
 
         const startPress = () => { if (!buffaloInteractionComplete) setBuffaloIsPressing(true); };
         const endPress = () => {
@@ -2897,7 +3034,7 @@
 
         const nextExpected = CORRECT_SEQUENCE[dingoChainItems.length];
         const isCorrectChain = dingoChainItems.length === CORRECT_SEQUENCE.length;
-        const currentQuestion = currentAnimal.questions[0];
+        const currentQuestion = getStageQuestions(currentAnimal)[0];
 
         function tapItem(id) {
           if (isCorrectChain) return;
@@ -3729,7 +3866,7 @@
           setCurrentScreen('observation');
           return;
         }
-        if (currentQuestionIndex < currentAnimal.questions.length - 1) {
+        if (currentQuestionIndex < getStageQuestions(currentAnimal).length - 1) {
           setCurrentQuestionIndex(i => i + 1);
         } else {
           if (currentAnimal.id === 'tiger') { stopCamera(); startImmersion(); }
@@ -3745,7 +3882,7 @@
         if (wc < minW) { alert(`Your response needs at least ${minW} words. You have ${wc}.`); return; }
 
         // Quiz score = questions correct on first attempt only
-        const quizResults = currentAnimal.questions.map((q, i) => {
+        const quizResults = getStageQuestions(currentAnimal).map((q, i) => {
           const wasCorrect = firstAttemptResults[i] === true;
           return { question: q.q || q.question || 'Question unavailable', correctOnFirstAttempt: wasCorrect, missionType: "knowledge" };
         });
@@ -3761,7 +3898,16 @@
           const conservationHits = conservationWords.filter(w => lower.includes(w)).length;
           const detailHits = detailWords.filter(w => lower.includes(w)).length;
           behaviourBonus = Math.min(conservationHits + 1, 5);
-          detailBonus = Math.min(detailHits + 1, 5);
+          if (classStage <= 2) {
+            if (conservationHits >= 1) behaviourBonus = Math.max(behaviourBonus, 3);
+            detailBonus = detailHits >= 1 ? 3 : 1;
+          } else if (classStage === 3) {
+            detailBonus = detailHits === 0 ? 0 : detailHits === 1 ? 2 : Math.min(detailHits + 1, 4);
+          } else if (classStage === 5) {
+            detailBonus = detailHits === 0 ? 0 : detailHits === 1 ? 1 : Math.min(detailHits + 1, 5);
+          } else {
+            detailBonus = Math.min(detailHits + 1, 5);
+          }
           literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'chimpanzee') {
           const behaviourWords = ['groom','play','interact','fight','chase','touch','hug','follow','watch','look','sit','move','climb','eat','feed','rest','sleep','call','scream','gesture','together','each other','one another','dominant','social','group'];
@@ -3769,7 +3915,16 @@
           behaviourBonus = Math.min(behaviourHits + 1, 5);
           const detailWords = ['groom','dominan','leader','young','baby','infant','adult','male','female','hierarchy','bond','relation','communicat','gesture','express','sound','noise','fur','branch','tree','platform','enclosure','group','community','family'];
           const detailHits = detailWords.filter(w => lower.includes(w)).length;
-          detailBonus = Math.min(detailHits + 1, 5);
+          if (classStage <= 2) {
+            if (behaviourHits >= 1) behaviourBonus = Math.max(behaviourBonus, 3);
+            detailBonus = detailHits >= 1 ? 3 : 1;
+          } else if (classStage === 3) {
+            detailBonus = detailHits === 0 ? 0 : detailHits === 1 ? 2 : Math.min(detailHits + 1, 4);
+          } else if (classStage === 5) {
+            detailBonus = detailHits === 0 ? 0 : detailHits === 1 ? 1 : Math.min(detailHits + 1, 5);
+          } else {
+            detailBonus = Math.min(detailHits + 1, 5);
+          }
           literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'gorilla') {
           behaviourBonus = calculateBehaviourScore(text);
@@ -3781,9 +3936,24 @@
           const hasConcept = conceptWords.some(w => lower.includes(w));
           const hasExplanation = explanationPatterns.some(p => lower.includes(p));
           const elements = [hasObservation, hasConcept, hasExplanation].filter(Boolean).length;
-          if (elements === 0) detailBonus = 0;
-          else if (elements === 1) detailBonus = 1;
-          else detailBonus = Math.min(elements + 1, 5);
+          if (classStage <= 2) {
+            if (hasObservation) behaviourBonus = Math.max(behaviourBonus, 3);
+            detailBonus = (hasObservation || hasConcept) ? 3 : 1;
+          } else if (classStage === 3) {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 2;
+            else if (hasExplanation) detailBonus = Math.min(elements + 1, 4);
+            else detailBonus = Math.min(elements + 1, 3);
+          } else if (classStage === 5) {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 1;
+            else if (hasExplanation && elements >= 2) detailBonus = Math.min(elements + 1, 5);
+            else detailBonus = Math.min(elements, 3);
+          } else {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 1;
+            else detailBonus = Math.min(elements + 1, 5);
+          }
         } else if (currentAnimal.id === 'giraffe') {
           behaviourBonus = calculateBehaviourScore(text);
           literacyBonus = calculateWritingScore(text, classStage);
@@ -3846,9 +4016,24 @@
           const hasExplanation = explanationPatterns.some(p => lower.includes(p));
           const hasConnection = connectionWords.some(w => lower.includes(w));
           const elements = [hasLocation, hasBehaviourDetail, hasExplanation, hasConnection].filter(Boolean).length;
-          if (elements === 0) detailBonus = 0;
-          else if (elements === 1) detailBonus = 1;
-          else detailBonus = Math.min(elements + 1, 5);
+          if (classStage <= 2) {
+            if (hasBehaviourDetail) behaviourBonus = Math.max(behaviourBonus, 3);
+            detailBonus = (hasBehaviourDetail || hasLocation) ? 3 : 1;
+          } else if (classStage === 3) {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 2;
+            else if (hasExplanation) detailBonus = Math.min(elements + 1, 4);
+            else detailBonus = Math.min(elements + 1, 3);
+          } else if (classStage === 5) {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 1;
+            else if (hasExplanation && elements >= 2) detailBonus = Math.min(elements + 1, 5);
+            else detailBonus = Math.min(elements, 3);
+          } else {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 1;
+            else detailBonus = Math.min(elements + 1, 5);
+          }
           literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'dingo') {
           const behaviourWords = ['fur','coat','colour','color','tan','sandy','brown','golden','yellow','pale','dark','blend','camouflage','hide','look','appear','observe','notice','see','watch','spot','match','similar'];
@@ -3863,9 +4048,24 @@
           const hasExplanation = explanationPatterns.some(p => lower.includes(p));
           const hasLink = linkWords.some(p => lower.includes(p));
           const elements = [hasDingoAppearance, hasEnvironment, hasExplanation, hasLink].filter(Boolean).length;
-          if (elements === 0) detailBonus = 0;
-          else if (elements === 1) detailBonus = 1;
-          else detailBonus = Math.min(elements + 1, 5);
+          if (classStage <= 2) {
+            if (hasDingoAppearance) behaviourBonus = Math.max(behaviourBonus, 3);
+            detailBonus = (hasDingoAppearance || hasEnvironment) ? 3 : 1;
+          } else if (classStage === 3) {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 2;
+            else if (hasExplanation) detailBonus = Math.min(elements + 1, 4);
+            else detailBonus = Math.min(elements + 1, 3);
+          } else if (classStage === 5) {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 1;
+            else if (hasExplanation && elements >= 2) detailBonus = Math.min(elements + 1, 5);
+            else detailBonus = Math.min(elements, 3);
+          } else {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 1;
+            else detailBonus = Math.min(elements + 1, 5);
+          }
           literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'asian-water-buffalo') {
           const behaviourWords = ['bird','birds','buffalo','rhino','tick','tickbird','oxpecker','cattle','egret','sit','perch','stand','walk','follow','eat','feed','groom','clean','pick','peck','fly','land','nearby','together','interact','observe','see','notice','watch'];
@@ -3880,9 +4080,24 @@
           const hasExplanation = explanationPatterns.some(p => lower.includes(p));
           const hasPositioning = positionWords.some(p => lower.includes(p));
           const elements = [hasAnimals, hasInteraction, hasExplanation, hasPositioning].filter(Boolean).length;
-          if (elements === 0) detailBonus = 0;
-          else if (elements === 1) detailBonus = 1;
-          else detailBonus = Math.min(elements + 1, 5);
+          if (classStage <= 2) {
+            if (hasAnimals) behaviourBonus = Math.max(behaviourBonus, 3);
+            detailBonus = (hasAnimals || hasInteraction) ? 3 : 1;
+          } else if (classStage === 3) {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 2;
+            else if (hasExplanation) detailBonus = Math.min(elements + 1, 4);
+            else detailBonus = Math.min(elements + 1, 3);
+          } else if (classStage === 5) {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 1;
+            else if (hasExplanation && elements >= 2) detailBonus = Math.min(elements + 1, 5);
+            else detailBonus = Math.min(elements, 3);
+          } else {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 1;
+            else detailBonus = Math.min(elements + 1, 5);
+          }
           literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'sea-lion') {
           const behaviourWords = ['human','people','person','pollution','plastic','waste','rubbish','litter','fishing','boat','ship','noise','oil','chemical','tourist','visitor','enclosure','structure','fence','water','ocean','sea'];
@@ -3897,9 +4112,24 @@
           const hasExplanation = explanationPatterns.some(p => lower.includes(p));
           const hasCauseEffect = causeEffectWords.some(p => lower.includes(p));
           const elements = [hasHumanImpact, hasEnvironment, hasExplanation, hasCauseEffect].filter(Boolean).length;
-          if (elements === 0) detailBonus = 0;
-          else if (elements === 1) detailBonus = 1;
-          else detailBonus = Math.min(elements + 1, 5);
+          if (classStage <= 2) {
+            if (hasHumanImpact) behaviourBonus = Math.max(behaviourBonus, 3);
+            detailBonus = (hasHumanImpact || hasEnvironment) ? 3 : 1;
+          } else if (classStage === 3) {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 2;
+            else if (hasExplanation) detailBonus = Math.min(elements + 1, 4);
+            else detailBonus = Math.min(elements + 1, 3);
+          } else if (classStage === 5) {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 1;
+            else if (hasExplanation && elements >= 2) detailBonus = Math.min(elements + 1, 5);
+            else detailBonus = Math.min(elements, 3);
+          } else {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 1;
+            else detailBonus = Math.min(elements + 1, 5);
+          }
           literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'blue-mountains-bushwalk') {
           const behaviourWords = ['hear','heard','listen','sound','sounds','bird','birds','wind','leaf','leaves','water','rain','insect','cricket','frog','silence','quiet','rustl','distant','echo','noise','voice','step','footstep','crunch'];
@@ -3914,9 +4144,24 @@
           const hasEnvironment = environmentWords.some(w => lower.includes(w));
           const hasFeeling = feelingWords.some(w => lower.includes(w));
           const elements = [hasSounds, hasSource, hasEnvironment, hasFeeling].filter(Boolean).length;
-          if (elements === 0) detailBonus = 0;
-          else if (elements === 1) detailBonus = 1;
-          else detailBonus = Math.min(elements + 1, 5);
+          if (classStage <= 2) {
+            if (hasSounds) behaviourBonus = Math.max(behaviourBonus, 3);
+            detailBonus = (hasSounds || hasEnvironment) ? 3 : 1;
+          } else if (classStage === 3) {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 2;
+            else if (hasFeeling) detailBonus = Math.min(elements + 1, 4);
+            else detailBonus = Math.min(elements + 1, 3);
+          } else if (classStage === 5) {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 1;
+            else if (hasFeeling && elements >= 2) detailBonus = Math.min(elements + 1, 5);
+            else detailBonus = Math.min(elements, 3);
+          } else {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 1;
+            else detailBonus = Math.min(elements + 1, 5);
+          }
           literacyBonus = calculateWritingScore(text, classStage);
         } else {
           behaviourBonus = calculateBehaviourScore(text);
@@ -4456,7 +4701,7 @@
         if (currentAnimal.id === 'sea-lion') { return renderSeaLionMission(); }
         if (currentAnimal.id === 'blue-mountains-bushwalk') { return renderBushwalkMission(); }
         if (currentAnimal.id === 'asian-water-buffalo') { return renderBuffaloMission(); }
-        const currentQuestion = currentAnimal.questions[currentQuestionIndex];
+        const currentQuestion = getStageQuestions(currentAnimal)[currentQuestionIndex];
         return (
           <div style={{ position:'fixed', inset:0, overflow:'hidden', background:showResult?(isCorrect?'linear-gradient(135deg, #10b981 0%, #059669 100%)':'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'):'var(--mist-light)', transition:'background 0.5s ease', display:'flex', flexDirection:'column' }}>
             {showResult&&isCorrect&&(
@@ -4485,7 +4730,7 @@
                 {currentAnimal.missionTitle && (
                   <p style={{ fontSize:'clamp(0.9rem, 2vh, 1.1rem)', color:showResult?'white':'var(--jungle-deep)', fontWeight:700, marginBottom:'0.3rem' }}>{currentAnimal.missionTitle}</p>
                 )}
-                <p style={{ fontSize:'clamp(0.75rem, 1.8vh, 0.9rem)', color:showResult?'white':'var(--jungle-mid)', fontWeight:600 }}>Question {currentQuestionIndex+1} of {currentAnimal.questions.length}</p>
+                <p style={{ fontSize:'clamp(0.75rem, 1.8vh, 0.9rem)', color:showResult?'white':'var(--jungle-mid)', fontWeight:600 }}>Question {currentQuestionIndex+1} of {getStageQuestions(currentAnimal).length}</p>
                 {!showResult && currentAnimal.missionTask && (
                   <div style={{ background:'rgba(91,140,90,0.1)', border:'1px solid rgba(91,140,90,0.3)', borderRadius:'10px', padding:'0.6rem 0.9rem', marginTop:'0.5rem', textAlign:'left' }}>
                     {currentAnimal.missionTask.split('\n').map((line, i) => (
@@ -4508,7 +4753,7 @@
                   )}
                   <button onClick={()=>{ if(isCorrect){handleNextQuestion();}else{setIsProcessingAnswer(false);setShowResult(false);} }}
                     style={{ background:isCorrect?'linear-gradient(135deg, #10b981, #059669)':'linear-gradient(135deg, #ef4444, #dc2626)', color:'white', border:'none', padding:'clamp(0.8rem, 2vh, 1.2rem) clamp(2rem, 5vw, 3rem)', fontSize:'clamp(1rem, 2.5vh, 1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.05em', boxShadow:'0 4px 12px rgba(0,0,0,0.2)', marginTop:'0.5rem' }}>
-                    {isCorrect?(currentQuestionIndex<currentAnimal.questions.length-1?'Next Question ':'Continue to Observation '):'Try Again'}
+                    {isCorrect?(currentQuestionIndex<getStageQuestions(currentAnimal).length-1?'Next Question ':'Continue to Observation '):'Try Again'}
                   </button>
                 </div>
               )}
@@ -4835,7 +5080,9 @@
                 ) : (
                   <>
                     <h2 className="heading-display" style={{ fontSize:'2.5rem', color:'var(--jungle-deep)', marginBottom:'1rem', textAlign:'center' }}>Your Observations</h2>
-                    <p style={{ color:'#666', marginBottom:'1.2rem', lineHeight:1.6, fontSize:'1.1rem', textAlign:'center' }}>{currentAnimal.observationPrompt}</p>
+                    <p style={{ color:'#666', marginBottom:'1.2rem', lineHeight:1.6, fontSize:'1.1rem', textAlign:'center' }}>
+                      {(currentAnimal.writingPromptByStage && currentAnimal.writingPromptByStage[classStage]) || currentAnimal.observationPrompt}
+                    </p>
                     <div style={{ display:'flex', flexWrap:'wrap', gap:'0.6rem', justifyContent:'center', marginBottom:'1.5rem' }}>
                       {[
                         { label:' What is it doing right now?', color:'var(--jungle-light)' },
@@ -4849,10 +5096,10 @@
                 )}
                 <p style={{ color:'#444', fontWeight:600, marginBottom:'1rem', fontSize:'1rem', textAlign:'center' }}>
                   {currentAnimal.id === 'concert-lawn'
-                    ? 'Describe your experience walking on the grass and explain how this environment is different to a built environment like the city.'
+                    ? (currentAnimal.writingPromptByStage && currentAnimal.writingPromptByStage[classStage]) || 'Describe your experience walking on the grass and explain how this environment is different to a built environment like the city.'
                     : currentAnimal.id === 'blue-mountains-bushwalk'
                     ? null
-                    : currentAnimal.observationPrompt}
+                    : (currentAnimal.writingPromptByStage && currentAnimal.writingPromptByStage[classStage]) || currentAnimal.observationPrompt}
                 </p>
                 {currentAnimal.id === 'concert-lawn' && (
                   <div style={{ background:'#F0F7F4', border:'1px solid #B8D9C8', borderRadius:'12px', padding:'0.9rem 1.1rem', marginBottom:'0.75rem' }}>
