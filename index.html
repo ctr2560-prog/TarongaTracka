@@ -475,6 +475,8 @@
       // Step 1 – Teacher/Student state
       const [studentName, setStudentName] = useState(() => { try { return JSON.parse(localStorage.getItem('tarongaStudentName')) || ''; } catch(e) { return ''; } });
       const [classCode, setClassCode] = useState(() => { try { return JSON.parse(localStorage.getItem('tarongaClassCode')) || ''; } catch(e) { return ''; } });
+      const [classStage, setClassStage] = useState(() => { try { return JSON.parse(localStorage.getItem('tarongaClassStage')) || 4; } catch(e) { return 4; } });
+      const [newClassStage, setNewClassStage] = useState(4);
       const [teacherEmail, setTeacherEmail] = useState('');
       const [adminAccessCode, setAdminAccessCode] = useState('');
       const [accessCodeInput, setAccessCodeInput] = useState('');
@@ -611,6 +613,7 @@
                 className: d.className || "",
                 yearGroup: d.yearGroup || "",
                 schoolName: d.schoolName || "",
+                stage: d.stage || 4,
                 teacherEmail: d.teacherEmail || teacherEmail,
                 archived: d.archived || false,
                 students: [] // Keep for local student join tracking
@@ -1025,6 +1028,7 @@
               yearGroup: newYearGroup.trim(),
               className: newClassName.trim(),
               schoolName: newSchoolName.trim(),
+              stage: newClassStage,
               accessCodeUsed: accessCodeInput.trim(),
               venue: freshData.venue || 'Taronga Zoo',
               createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -1040,6 +1044,7 @@
               yearGroup: newYearGroup.trim(),
               className: newClassName.trim(),
               schoolName: newSchoolName.trim(),
+              stage: newClassStage,
               teacherEmail: teacherEmail,
               accessCodeUsed: accessCodeInput.trim(),
               venue: freshData.venue || 'Taronga Zoo',
@@ -2049,6 +2054,22 @@
       }
 
 
+      // Stage-differentiated writing prompts and scaffolds
+      function getStagePrompt(basePrompt, stage) {
+        if (stage <= 2) return `Look at the animal. ${basePrompt.split('.')[0]}. Draw or write what you see.`;
+        if (stage === 3) return basePrompt;
+        if (stage === 4) return basePrompt;
+        // Stage 5: add explanation requirement
+        return basePrompt.replace(/\.$/, '') + '. Use scientific vocabulary to explain your thinking.';
+      }
+
+      function getStageScaffoldTip(stage) {
+        if (stage <= 2) return { header: '✏️ Try to include:', points: ['What the animal looks like', 'What it is doing right now', 'One thing you noticed'], starters: ['I can see…', 'The animal is…'] };
+        if (stage === 3) return { header: '✏️ A good response includes:', points: ['What you can observe', 'One feature or behaviour', 'Why you think it does that'], starters: ['I noticed…', 'I think this is because…'] };
+        if (stage === 4) return { header: '✔ A strong response includes:', points: ['A clear observation (what + where/what doing)', 'A relevant concept or feature', 'A simple explanation or link to survival'], starters: ['I observed that…', 'This may help the animal because…'] };
+        return { header: '✔ A high-quality response includes:', points: ['A precise observation using scientific terms', 'A concept (adaptation, behaviour, ecosystem)', 'An explanation linking observation to survival or function'], starters: ['Based on my observation…', 'This suggests that…', 'This adaptation allows the animal to…'] };
+      }
+
       function isLowQualityResponse(text) {
         const t = text.trim().toLowerCase();
         if (!t) return true;
@@ -2093,7 +2114,8 @@
         return Math.min(matches.length + 1, 5);
       }
 
-      function calculateWritingScore(studentResponse) {
+      function calculateWritingScore(studentResponse, stage) {
+        const stg = stage || classStage || 4;
         const text = studentResponse.trim();
         if (!text) return 0;
         if (isLowQualityResponse(text)) return Math.min(1, 2);
@@ -2105,13 +2127,17 @@
         const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 3);
         const hasMultipleSentences = sentences.length >= 2;
         const isAllCaps = text === text.toUpperCase() && wordCount > 2;
-        // Vocabulary variety gate — must have real word variety to score ≥3
         const hasVocabularyVariety = uniqueWords.size >= Math.min(wordCount * 0.6, 8);
+        // Stage-adjusted thresholds: lower stages need fewer words to score well
+        const t = stg <= 2 ? { w2:4, w3:7,  w4:10, w5:18, u5:6  }
+                : stg === 3 ? { w2:6, w3:10, w4:14, w5:22, u5:8  }
+                : stg === 4 ? { w2:8, w3:12, w4:18, w5:30, u5:12 }
+                :             { w2:10,w3:15, w4:22, w5:35, u5:15 };
         let score = 1;
-        if (wordCount >= 8 && hasVocabularyVariety) score = 2;
-        if (hasCapital && hasPunctuation && wordCount >= 12 && hasVocabularyVariety) score = 3;
-        if (hasMultipleSentences && wordCount >= 18 && hasVocabularyVariety) score = 4;
-        if (hasMultipleSentences && wordCount >= 30 && hasCapital && hasPunctuation && uniqueWords.size >= 12) score = 5;
+        if (wordCount >= t.w2 && hasVocabularyVariety) score = 2;
+        if (hasCapital && hasPunctuation && wordCount >= t.w3 && hasVocabularyVariety) score = 3;
+        if (hasMultipleSentences && wordCount >= t.w4 && hasVocabularyVariety) score = 4;
+        if (hasMultipleSentences && wordCount >= t.w5 && hasCapital && hasPunctuation && uniqueWords.size >= t.u5) score = 5;
         if (isAllCaps) score = Math.max(score - 1, 1);
         return Math.min(score, 5);
       }
@@ -2279,7 +2305,7 @@
 
         const behaviourScore = calculateBehaviourScore(text);
         const detailScore = calculateDetailScore(text);
-        const writingScore = calculateWritingScore(text);
+        const writingScore = calculateWritingScore(text, classStage);
 
         const observationScore = {
           behaviour: behaviourScore || 0,
@@ -3723,7 +3749,7 @@
           const detailHits = detailWords.filter(w => lower.includes(w)).length;
           behaviourBonus = Math.min(conservationHits + 1, 5);
           detailBonus = Math.min(detailHits + 1, 5);
-          literacyBonus = calculateWritingScore(text);
+          literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'chimpanzee') {
           const behaviourWords = ['groom','play','interact','fight','chase','touch','hug','follow','watch','look','sit','move','climb','eat','feed','rest','sleep','call','scream','gesture','together','each other','one another','dominant','social','group'];
           const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
@@ -3731,10 +3757,10 @@
           const detailWords = ['groom','dominan','leader','young','baby','infant','adult','male','female','hierarchy','bond','relation','communicat','gesture','express','sound','noise','fur','branch','tree','platform','enclosure','group','community','family'];
           const detailHits = detailWords.filter(w => lower.includes(w)).length;
           detailBonus = Math.min(detailHits + 1, 5);
-          literacyBonus = calculateWritingScore(text);
+          literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'gorilla') {
           behaviourBonus = calculateBehaviourScore(text);
-          literacyBonus = calculateWritingScore(text);
+          literacyBonus = calculateWritingScore(text, classStage);
           const observationWords = ['sit','stand','move','eat','groom','play','look','climb','walk','rest','interact','together','group'];
           const conceptWords = ['social','group','behaviour','bond','family','dominan','hierarch','communicat','cooperat','relation','protect','young','leader','silverback'];
           const explanationPatterns = ['because','helps','so that','in order','allows','enables','this means','for survival','stay safe','each other'];
@@ -3747,7 +3773,7 @@
           else detailBonus = Math.min(elements + 1, 5);
         } else if (currentAnimal.id === 'giraffe') {
           behaviourBonus = calculateBehaviourScore(text);
-          literacyBonus = calculateWritingScore(text);
+          literacyBonus = calculateWritingScore(text, classStage);
           const observationWords = ['neck','leg','tall','height','eat','leaf','leaves','reach','tree','branch','ground','drink','spot','pattern','colour','color','coat','tongue'];
           const conceptWords = ['adapt','survival','feature','advantage','predator','food','habitat','evolution','camouflage','protect','savanna'];
           const explanationPatterns = ['because','helps','so that','in order','allows','enables','this means','for survival','to reach','to see','stay safe'];
@@ -3774,7 +3800,7 @@
           if (elements === 0) detailBonus = 0;
           else if (elements === 1) detailBonus = 1;
           else detailBonus = Math.min(elements + 1, 5);
-          literacyBonus = calculateWritingScore(text);
+          literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'lemur') {
           const behaviourWords = ['feed','feeding','eat','eating','rest','resting','sleep','sleeping','move','moving','climb','climbing','jump','jumping','sit','sitting','groom','grooming','play','playing','social','interact','watch','observe'];
           const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
@@ -3791,7 +3817,7 @@
           if (elements === 0) detailBonus = 0;
           else if (elements === 1) detailBonus = 1;
           else detailBonus = Math.min(elements + 1, 5);
-          literacyBonus = calculateWritingScore(text);
+          literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'dingo') {
           const behaviourWords = ['fur','coat','colour','color','tan','sandy','brown','golden','yellow','pale','dark','blend','camouflage','hide','look','appear','observe','notice','see','watch','spot','match','similar'];
           const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
@@ -3808,7 +3834,7 @@
           if (elements === 0) detailBonus = 0;
           else if (elements === 1) detailBonus = 1;
           else detailBonus = Math.min(elements + 1, 5);
-          literacyBonus = calculateWritingScore(text);
+          literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'asian-water-buffalo') {
           const behaviourWords = ['bird','birds','buffalo','rhino','tick','tickbird','oxpecker','cattle','egret','sit','perch','stand','walk','follow','eat','feed','groom','clean','pick','peck','fly','land','nearby','together','interact','observe','see','notice','watch'];
           const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
@@ -3825,7 +3851,7 @@
           if (elements === 0) detailBonus = 0;
           else if (elements === 1) detailBonus = 1;
           else detailBonus = Math.min(elements + 1, 5);
-          literacyBonus = calculateWritingScore(text);
+          literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'sea-lion') {
           const behaviourWords = ['human','people','person','pollution','plastic','waste','rubbish','litter','fishing','boat','ship','noise','oil','chemical','tourist','visitor','enclosure','structure','fence','water','ocean','sea'];
           const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
@@ -3842,7 +3868,7 @@
           if (elements === 0) detailBonus = 0;
           else if (elements === 1) detailBonus = 1;
           else detailBonus = Math.min(elements + 1, 5);
-          literacyBonus = calculateWritingScore(text);
+          literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'blue-mountains-bushwalk') {
           const behaviourWords = ['hear','heard','listen','sound','sounds','bird','birds','wind','leaf','leaves','water','rain','insect','cricket','frog','silence','quiet','rustl','distant','echo','noise','voice','step','footstep','crunch'];
           const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
@@ -3859,11 +3885,11 @@
           if (elements === 0) detailBonus = 0;
           else if (elements === 1) detailBonus = 1;
           else detailBonus = Math.min(elements + 1, 5);
-          literacyBonus = calculateWritingScore(text);
+          literacyBonus = calculateWritingScore(text, classStage);
         } else {
           behaviourBonus = calculateBehaviourScore(text);
           detailBonus = calculateDetailScore(text);
-          literacyBonus = calculateWritingScore(text);
+          literacyBonus = calculateWritingScore(text, classStage);
         }
 
         // Quality cap — prevent nonsense responses scoring above 2/1/2
@@ -4949,11 +4975,35 @@
                     ))}
                   </div>
                 )}
-                <div style={{ marginTop:'1rem', fontSize:'1rem', color:wordCount>=10?'var(--jungle-light)':'#E86A33', fontWeight:600 }}>{wordCount}/10 words {wordCount>=10?'':''}</div>
-                <button onClick={submitObservation} disabled={wordCount<10}
-                  style={{ width:'100%', padding:'1.5rem', borderRadius:'50px', border:'none', background:wordCount>=10?'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))':'#CCC', color:'white', fontSize:'1.3rem', fontWeight:700, cursor:wordCount>=10?'pointer':'not-allowed', transition:'all 0.3s ease', textTransform:'uppercase', letterSpacing:'0.1em', marginTop:'2rem', boxShadow:wordCount>=10?'0 8px 24px rgba(232,106,51,0.4)':'none' }}>
-                  {wordCount<10?'Write More to Continue':' Submit & Earn Badge'}
-                </button>
+                {(() => {
+                  const tip = getStageScaffoldTip(classStage);
+                  const hasAnimalSpecificCard = ['chimpanzee','gorilla','giraffe','concert-lawn','lemur','dingo','asian-water-buffalo','sea-lion','blue-mountains-bushwalk'].includes(currentAnimal?.id);
+                  if (hasAnimalSpecificCard) return null;
+                  return (
+                    <div style={{ background:'#F7FAF8', border:'1px solid #D4E8DC', borderRadius:'12px', padding:'0.9rem 1.1rem', marginTop:'0.75rem' }}>
+                      <p style={{ fontSize:'0.75rem', fontWeight:700, color:'#059669', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.4rem' }}>{tip.header}</p>
+                      <ul style={{ margin:'0 0 0.5rem', paddingLeft:'1.1rem', fontSize:'0.8rem', color:'#555', lineHeight:1.8 }}>
+                        {tip.points.map((pt, i) => <li key={i}>{pt}</li>)}
+                      </ul>
+                      <p style={{ fontSize:'0.73rem', fontWeight:600, color:'var(--jungle-mid)', marginBottom:'0.2rem' }}>Sentence starters:</p>
+                      {tip.starters.map((s, i) => (
+                        <p key={i} style={{ fontSize:'0.75rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.5rem', fontStyle:'italic' }}>"{s}"</p>
+                      ))}
+                    </div>
+                  );
+                })()}
+                {(() => {
+                  const minWords = classStage <= 2 ? 5 : classStage === 3 ? 7 : 10;
+                  return (
+                    <>
+                      <div style={{ marginTop:'1rem', fontSize:'1rem', color:wordCount>=minWords?'var(--jungle-light)':'#E86A33', fontWeight:600 }}>{wordCount}/{minWords} words {wordCount>=minWords?'':''}</div>
+                      <button onClick={submitObservation} disabled={wordCount<minWords}
+                        style={{ width:'100%', padding:'1.5rem', borderRadius:'50px', border:'none', background:wordCount>=minWords?'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))':'#CCC', color:'white', fontSize:'1.3rem', fontWeight:700, cursor:wordCount>=minWords?'pointer':'not-allowed', transition:'all 0.3s ease', textTransform:'uppercase', letterSpacing:'0.1em', marginTop:'2rem', boxShadow:wordCount>=minWords?'0 8px 24px rgba(232,106,51,0.4)':'none' }}>
+                        {wordCount<minWords?'Write More to Continue':' Submit & Earn Badge'}
+                      </button>
+                    </>
+                  );
+                })()}
               </div>
               )}
             </div>
@@ -5141,6 +5191,9 @@
             // Verify class exists
             const classDoc = await window.db.collection('classes').doc(code).get();
             if (!classDoc.exists) { setStudentJoinError('Code not found — check with your teacher.'); return; }
+            const joinedStage = classDoc.data().stage || 4;
+            setClassStage(joinedStage);
+            localStorage.setItem('tarongaClassStage', JSON.stringify(joinedStage));
             
             // Check for existing incomplete session
             const existingQuery = await window.db.collection('classes').doc(code)
@@ -6513,6 +6566,17 @@
                     style={{ width:'100%', padding:'0.7rem 0.9rem', borderRadius:'12px', border:'2px solid #E5E5E5', fontSize:'0.95rem', fontFamily:'DM Sans, sans-serif', marginBottom:'1.2rem', boxSizing:'border-box', transition:'border-color 0.2s' }}
                     onFocus={(e)=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'} />
 
+                  <label style={{ display:'block', fontSize:'0.82rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>NSW Stage</label>
+                  <select value={newClassStage} onChange={(e) => setNewClassStage(Number(e.target.value))}
+                    style={{ width:'100%', padding:'0.7rem 0.9rem', borderRadius:'12px', border:'2px solid #E5E5E5', fontSize:'0.95rem', fontFamily:'DM Sans, sans-serif', marginBottom:'1.2rem', background:'white', color:'var(--jungle-deep)', appearance:'auto', cursor:'pointer', transition:'border-color 0.2s' }}
+                    onFocus={(e)=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'}>
+                    <option value={1}>Stage 1 (K–2)</option>
+                    <option value={2}>Stage 2 (3–4)</option>
+                    <option value={3}>Stage 3 (5–6)</option>
+                    <option value={4}>Stage 4 (7–8)</option>
+                    <option value={5}>Stage 5 (9–10)</option>
+                  </select>
+
                   <input
                     type="password"
                     placeholder="Enter Taronga Access Code"
@@ -6573,6 +6637,7 @@
                             )}
                             <p style={{ color:'#888', fontSize:'0.78rem' }}>
                               {cls.yearGroup} · {teacherClassStudentCounts[cls.classCode]?.total || 0} student{(teacherClassStudentCounts[cls.classCode]?.total || 0) !== 1 ? 's' : ''}
+                              {cls.stage ? <span style={{ marginLeft:'0.5rem', background:'#E8F4EE', color:'var(--jungle-mid)', fontWeight:700, borderRadius:'6px', padding:'0 0.35rem', fontSize:'0.7rem' }}>Stage {cls.stage}</span> : null}
                             </p>
                           </div>
                           <div style={{ display:'flex', alignItems:'center', gap:'0.75rem' }}>
