@@ -2049,7 +2049,25 @@
       }
 
 
+      function isLowQualityResponse(text) {
+        const t = text.trim().toLowerCase();
+        if (!t) return true;
+        const words = t.split(/\s+/).filter(Boolean);
+        if (words.length < 3) return true;
+        // Detect repeated single word/character: "a a a a", "the the the"
+        const uniqueWords = new Set(words);
+        if (uniqueWords.size <= 2 && words.length >= 4) return true;
+        // Detect keyboard smash or single-char repetition: "aaaa", "asdfasdf"
+        if (/^(.)\1{4,}$/.test(t.replace(/\s/g,''))) return true;
+        // Detect no real vocabulary — only stop words or single letters
+        const stopWords = new Set(['a','an','the','is','it','i','in','on','at','to','of','and','or','but','so','my','me','we','he','she','they','this','that','was','are','be','do','go','no','yes','ok','hi']);
+        const meaningfulWords = words.filter(w => w.length > 1 && !stopWords.has(w));
+        if (meaningfulWords.length < 2) return true;
+        return false;
+      }
+
       function calculateBehaviourScore(text) {
+        if (isLowQualityResponse(text)) return Math.min(1, 2);
         const lower = text.toLowerCase();
         const behaviourRoots = [
           'walk','run','jump','climb','pace','rest','sleep',
@@ -2057,10 +2075,12 @@
           'stretch','play','hunt','feed'
         ];
         const matches = behaviourRoots.filter(root => lower.includes(root));
+        if (matches.length === 0) return 1;
         return Math.min(matches.length + 1, 5);
       }
 
       function calculateDetailScore(text) {
+        if (isLowQualityResponse(text)) return 0;
         const lower = text.toLowerCase();
         const detailRoots = [
           'tree','rock','water','grass','shade','log','branch',
@@ -2069,23 +2089,29 @@
           'stripe','fur','tail','claw'
         ];
         const matches = detailRoots.filter(root => lower.includes(root));
+        if (matches.length === 0) return 1;
         return Math.min(matches.length + 1, 5);
       }
 
       function calculateWritingScore(studentResponse) {
         const text = studentResponse.trim();
         if (!text) return 0;
-        const wordCount = text.split(/\s+/).length;
+        if (isLowQualityResponse(text)) return Math.min(1, 2);
+        const words = text.split(/\s+/).filter(Boolean);
+        const wordCount = words.length;
+        const uniqueWords = new Set(words.map(w => w.toLowerCase()));
         const hasCapital = /^[A-Z]/.test(text);
-        const hasPunctuation = /[.!?]$/.test(text);
-        const hasSentenceStructure = wordCount >= 5 && text.includes(' ');
-        const sentences = text.split(/[.!?]/).filter(s => s.trim().length > 0);
+        const hasPunctuation = /[.!?]/.test(text);
+        const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 3);
         const hasMultipleSentences = sentences.length >= 2;
-        const isAllCaps = text === text.toUpperCase();
+        const isAllCaps = text === text.toUpperCase() && wordCount > 2;
+        // Vocabulary variety gate — must have real word variety to score ≥3
+        const hasVocabularyVariety = uniqueWords.size >= Math.min(wordCount * 0.6, 8);
         let score = 1;
-        if (hasSentenceStructure) score = 2;
-        if (hasCapital && hasPunctuation) score = 3;
-        if (hasMultipleSentences) score = 4;
+        if (wordCount >= 8 && hasVocabularyVariety) score = 2;
+        if (hasCapital && hasPunctuation && wordCount >= 12 && hasVocabularyVariety) score = 3;
+        if (hasMultipleSentences && wordCount >= 18 && hasVocabularyVariety) score = 4;
+        if (hasMultipleSentences && wordCount >= 30 && hasCapital && hasPunctuation && uniqueWords.size >= 12) score = 5;
         if (isAllCaps) score = Math.max(score - 1, 1);
         return Math.min(score, 5);
       }
@@ -3838,6 +3864,13 @@
           behaviourBonus = calculateBehaviourScore(text);
           detailBonus = calculateDetailScore(text);
           literacyBonus = calculateWritingScore(text);
+        }
+
+        // Quality cap — prevent nonsense responses scoring above 2/1/2
+        if (isLowQualityResponse(text)) {
+          behaviourBonus = Math.min(behaviourBonus || 0, 2);
+          detailBonus    = Math.min(detailBonus    || 0, 1);
+          literacyBonus  = Math.min(literacyBonus  || 0, 2);
         }
 
         // Build observationScore object — feeds analytics radar
