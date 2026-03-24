@@ -7071,21 +7071,20 @@
                       return (
                         <div style={{ marginBottom:'1rem' }}>
                           <h3 style={{ fontSize:'1rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.75rem' }}>📊 Class Insights</h3>
-                          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 160px', gap:'0.75rem', alignItems:'start' }}>
 
                             {/* Most Visited Animals */}
-                            <div style={{ background:'white', borderRadius:'12px', padding:'0.9rem 1rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
-                              <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.6rem' }}>Most Visited</p>
+                            <div style={{ background:'white', borderRadius:'12px', padding:'1.1rem 1.2rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:'0.75rem' }}>
+                              <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.75rem' }}>Most Visited Animals</p>
                               {topAnimals.length === 0
                                 ? <p style={{ fontSize:'0.78rem', color:'#bbb' }}>No data yet</p>
                                 : topAnimals.map(([name, count]) => (
-                                  <div key={name} style={{ marginBottom:'0.35rem' }}>
-                                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.72rem', color:'#555', marginBottom:'0.1rem' }}>
-                                      <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:'75%' }}>{name}</span>
+                                  <div key={name} style={{ marginBottom:'0.5rem' }}>
+                                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.78rem', color:'#555', marginBottom:'0.2rem' }}>
+                                      <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:'80%' }}>{name}</span>
                                       <span style={{ fontWeight:700, color:'var(--jungle-mid)', flexShrink:0 }}>{count}</span>
                                     </div>
-                                    <div style={{ height:'5px', borderRadius:'3px', background:'#EEE', overflow:'hidden' }}>
-                                      <div style={{ height:'100%', width:`${(count/maxAnimalCount)*100}%`, background:'linear-gradient(90deg, var(--jungle-mid), var(--jungle-light))', borderRadius:'3px', transition:'width 0.4s' }} />
+                                    <div style={{ height:'7px', borderRadius:'4px', background:'#EEE', overflow:'hidden' }}>
+                                      <div style={{ height:'100%', width:`${(count/maxAnimalCount)*100}%`, background:'linear-gradient(90deg, var(--jungle-mid), var(--jungle-light))', borderRadius:'4px', transition:'width 0.4s' }} />
                                     </div>
                                   </div>
                                 ))
@@ -7093,25 +7092,25 @@
                             </div>
 
                             {/* Quiz Distribution */}
-                            <div style={{ background:'white', borderRadius:'12px', padding:'0.9rem 1rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
-                              <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.6rem' }}>Quiz Distribution</p>
-                              <div style={{ display:'flex', alignItems:'flex-end', gap:'0.4rem', height:'70px' }}>
+                            <div style={{ background:'white', borderRadius:'12px', padding:'1.1rem 1.2rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:'0.75rem' }}>
+                              <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.75rem' }}>Quiz Distribution</p>
+                              <div style={{ display:'flex', alignItems:'flex-end', gap:'0.6rem', height:'110px', paddingBottom:'0.2rem' }}>
                                 {Object.entries(quizBuckets).map(([label, val]) => (
-                                  <div key={label} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'0.2rem' }}>
-                                    <span style={{ fontSize:'0.65rem', fontWeight:700, color:'var(--jungle-mid)' }}>{val}</span>
-                                    <div style={{ width:'100%', height:`${Math.max((val/maxQuizBucket)*52, val > 0 ? 4 : 0)}px`, background:'linear-gradient(180deg, var(--jungle-light), var(--jungle-mid))', borderRadius:'3px 3px 0 0', transition:'height 0.4s' }} />
-                                    <span style={{ fontSize:'0.58rem', color:'#999', textAlign:'center', lineHeight:1.1 }}>{label}</span>
+                                  <div key={label} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'0.25rem' }}>
+                                    <span style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)' }}>{val}</span>
+                                    <div style={{ width:'100%', height:`${Math.max((val/maxQuizBucket)*80, val > 0 ? 6 : 0)}px`, background:'linear-gradient(180deg, var(--jungle-light), var(--jungle-mid))', borderRadius:'4px 4px 0 0', transition:'height 0.4s' }} />
+                                    <span style={{ fontSize:'0.65rem', color:'#999', textAlign:'center', lineHeight:1.2 }}>{label}</span>
                                   </div>
                                 ))}
                               </div>
                             </div>
 
                             {/* Writing Radar */}
-                            <div style={{ background:'white', borderRadius:'12px', padding:'0.75rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', display:'flex', flexDirection:'column', alignItems:'center' }}>
-                              <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.25rem' }}>Writing Scores</p>
+                            <div style={{ background:'white', borderRadius:'12px', padding:'1.1rem 1.2rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:'0.75rem', display:'flex', flexDirection:'column', alignItems:'center' }}>
+                              <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.5rem', alignSelf:'flex-start' }}>Writing Scores</p>
                               {cnt === 0
                                 ? <p style={{ fontSize:'0.78rem', color:'#bbb', textAlign:'center', marginTop:'0.5rem' }}>No data yet</p>
-                                : <svg viewBox="0 0 160 160" style={{ width:'100%', maxWidth:'160px' }}>
+                                : <svg viewBox="0 0 160 160" style={{ width:'100%', maxWidth:'220px' }}>
                                     {/* Grid */}
                                     {gridLevels.map(lvl => {
                                       const pts = axes.map(ax => pt(lvl, ax.angle));
@@ -7144,7 +7143,6 @@
                               }
                             </div>
 
-                          </div>
                         </div>
                       );
                     })()}
