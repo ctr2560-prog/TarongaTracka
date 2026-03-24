@@ -3682,7 +3682,7 @@
         // Quiz score = questions correct on first attempt only
         const quizResults = currentAnimal.questions.map((q, i) => {
           const wasCorrect = firstAttemptResults[i] === true;
-          return { question: q.question, correctOnFirstAttempt: wasCorrect, missionType: "knowledge" };
+          return { question: q.q || q.question || 'Question unavailable', correctOnFirstAttempt: wasCorrect, missionType: "knowledge" };
         });
 
         const text = observation.trim();
@@ -5805,16 +5805,17 @@
                             cls.studentBadges.forEach(badge => {
                               if (!Array.isArray(badge.quizResults)) return;
                               badge.quizResults.forEach(qr => {
-                                if (!qr.question) return;
-                                if (!questionStats[qr.question]) questionStats[qr.question] = { attempts: 0, correct: 0 };
-                                questionStats[qr.question].attempts++;
-                                if (qr.correctOnFirstAttempt === true) questionStats[qr.question].correct++;
+                                const key = qr.question;
+                                if (!key || key.trim() === '') return;
+                                if (!questionStats[key]) questionStats[key] = { attempts: 0, correct: 0, animal: badge.animal || '' };
+                                questionStats[key].attempts++;
+                                if (qr.correctOnFirstAttempt === true) questionStats[key].correct++;
                               });
                             });
                           });
                           const insights = Object.keys(questionStats).map(q => {
-                            const { attempts, correct } = questionStats[q];
-                            return { question: q, attempts, correct, percentCorrect: attempts === 0 ? 0 : Math.round((correct / attempts) * 100) };
+                            const { attempts, correct, animal } = questionStats[q];
+                            return { question: q, animal, attempts, correct, percentCorrect: attempts === 0 ? 0 : Math.round((correct / attempts) * 100) };
                           }).sort((a, b) => a.percentCorrect - b.percentCorrect).slice(0, 5);
                           if (insights.length === 0) return null;
                           return (
@@ -5825,6 +5826,7 @@
                                   <div key={i} style={{ display:'flex', alignItems:'center', gap:'1rem', padding:'0.75rem 0', borderBottom: i < insights.length - 1 ? '1px solid #F0EDE8' : 'none' }}>
                                     <span style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)', minWidth:'1.5rem' }}>{i + 1}.</span>
                                     <div style={{ flex:1 }}>
+                                      {item.animal && <p style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'uppercase', letterSpacing:'0.05em', margin:'0 0 0.2rem' }}>{item.animal}</p>}
                                       <p style={{ fontSize:'0.9rem', fontWeight:600, color:'#333', margin:0, lineHeight:1.4 }}>{item.question}</p>
                                       <p style={{ fontSize:'0.8rem', color:'#888', margin:'0.2rem 0 0' }}>{item.attempts} attempt{item.attempts !== 1 ? 's' : ''}</p>
                                     </div>
