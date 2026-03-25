@@ -1853,7 +1853,7 @@
           image: 'images/chimpanzee.jpg', latitude: -33.8428, longitude: 151.2401,
           radius: 50, color: '#8B5A3C',
           writingPromptByStage: {
-            1: 'What did you see the chimpanzees doing?',
+            1: 'What did you see?',
             2: 'What were the chimpanzees doing and were they together or alone?',
             3: 'Describe what you saw the chimpanzees doing and how they were interacting.',
             4: 'Describe the group dynamics you can observe in the chimpanzees.',
@@ -1880,7 +1880,7 @@
           image: 'images/gorilla.jpg', latitude: -33.8443, longitude: 151.2413,
           radius: 50, color: '#2E2E2E',
           writingPromptByStage: {
-            1: 'What did you see the gorilla doing?',
+            1: 'What did you see?',
             2: 'What were the gorillas doing and what did they look like?',
             3: 'Describe what you saw the gorillas doing and how they moved.',
             4: 'How are the gorillas similar to humans, including yourself?',
@@ -1916,13 +1916,21 @@
           questions: [
             { q: 'Lion Micro Investigation',
               stageVariants: {
-                1: 'Did you see a lion?',
-                2: 'Are lions big or small compared to a dog?',
-                3: 'What makes lions different from other big cats?',
+                1: 'Is the lion bigger or smaller when you zoom in?',
+                2: 'When you zoom in, what happens to the image?',
+                3: 'The image is 10 mm. The real lion is 200 cm. Which is bigger?',
                 4: 'Lion Micro Investigation',
-                5: 'Why are lions important to the savanna ecosystem?',
+                5: 'If magnification = 0.05 and the real lion is 200 cm, what is the image size?',
               },
-              options: ['A', 'B', 'C', 'D'],
+              options: ['A. Bigger', 'B. Smaller', 'C. The same', 'D. Not sure'],
+              stageOptions: {
+                1: ['A. Bigger', 'B. Smaller', 'C. The same', 'D. Not sure'],
+                2: ['A. It gets bigger', 'B. It gets smaller', 'C. It disappears', 'D. Nothing changes'],
+                3: ['A. The image (10 mm)', 'B. The real lion (200 cm)', 'C. They are the same', 'D. Not sure'],
+                4: ['A. 2×', 'B. 5×', 'C. 10×', 'D. 20×'],
+                5: ['A. 1 cm', 'B. 10 mm', 'C. 100 mm', 'D. 200 mm'],
+              },
+              stageCorrect: { 1: 0, 2: 0, 3: 1, 4: 1, 5: 1 },
               correct: 1,
               fact: 'Lions are apex predators.' }
           ],
@@ -1961,7 +1969,7 @@
           image: 'images/koala.jpg', latitude: -34.206927872669155, longitude: 150.57988056189498,
           radius: 50, color: '#7A8B6F',
           writingPromptByStage: {
-            1: 'What was the koala doing?',
+            1: 'What did you see?',
             2: 'What did the koala look like and what was it doing?',
             3: 'Describe where the koala was and what you could observe about it.',
             4: 'Watch the koala carefully. What position is it in?',
@@ -1976,6 +1984,10 @@
                 4: 'Without intervention, by what year could koalas become extinct in NSW?',
                 5: 'Why could koalas disappear from NSW without human intervention?',
               },
+              stageOptions: {
+                1: ['A. Yes', 'B. No', 'C. Maybe', 'D. Not sure'],
+              },
+              stageCorrect: { 1: 0 },
               options: ['2030', '2040', '2050', '2060'],
               correct: 2, fact: 'Some projections warn koalas could disappear from parts of NSW by around 2050 without action.' },
             { q: 'Which adaptation helps koalas climb and grip tree trunks effectively?',
@@ -1986,6 +1998,10 @@
                 4: 'Which adaptation helps koalas climb and grip tree trunks effectively?',
                 5: 'How does the koala\'s climbing adaptation increase its survival chances?',
               },
+              stageOptions: {
+                1: ['A. Sharp claws', 'B. Long tails', 'C. Big teeth', 'D. Fast legs'],
+              },
+              stageCorrect: { 1: 0 },
               options: ['Sharp claws and opposable toes', 'Long tails for balance', 'Webbed feet for swimming', 'Flexible spines for jumping'],
               correct: 0, fact: 'Koalas have sharp claws and opposable toes for gripping.' },
             { q: 'Why do koalas spend up to 18–20 hours a day sleeping?',
@@ -1996,6 +2012,10 @@
                 4: 'Why do koalas spend up to 18–20 hours a day sleeping?',
                 5: 'How does the koala\'s sleeping behaviour relate to its diet and energy needs?',
               },
+              stageOptions: {
+                1: ['A. A lot', 'B. A little', 'C. Sometimes', 'D. Never'],
+              },
+              stageCorrect: { 1: 0 },
               options: ['They are nocturnal predators', 'Their fur causes them to overheat', 'They are avoiding competition', 'Their diet is low in energy, requiring energy conservation'],
               correct: 3, fact: 'Eucalyptus leaves are low in energy, so koalas conserve energy by resting.' }
           ],
@@ -2007,7 +2027,7 @@
           image: 'images/tiger.jpg', latitude: -33.8433, longitude: 151.2394,
           radius: 50, color: '#E86A33',
           writingPromptByStage: {
-            1: 'What did you see the tiger doing?',
+            1: 'What did you see?',
             2: 'What did the tiger look like and what was it doing?',
             3: 'Describe the tiger and what you noticed about how it moved or behaved.',
             4: 'Watch the tiger\'s behavior. Describe how it moves.',
@@ -2053,7 +2073,7 @@
           image: 'images/concert-lawn.jpg', latitude: -33.8435, longitude: 151.2400,
           radius: 80, color: '#5B8C5A',
           writingPromptByStage: {
-            1: 'What did the ground feel like?',
+            1: 'What did you see or feel?',
             2: 'What did the ground feel like and what did you notice around you?',
             3: 'Describe what you felt and noticed in this environment.',
             4: 'Describe your experience walking on the grass and explain how this environment is different to a built environment like the city.',
@@ -2072,6 +2092,10 @@
                 4: 'What is something BOTH environments have?',
                 5: 'How can two very different environments share similar resources?',
               },
+              stageOptions: {
+                1: ['A. Yes', 'B. No', 'C. Only at the zoo', 'D. Only in the city'],
+              },
+              stageCorrect: { 1: 0 },
               options: ['Open space and sunlight', 'Only natural features', 'Only buildings', 'Only animals'],
               correct: 0, fact: 'Both environments have open space and receive sunlight, even though they are very different types of environments.' },
             { q: 'What is the main difference between the two environments?',
@@ -2082,6 +2106,10 @@
                 4: 'What is the main difference between the two environments?',
                 5: 'How does being natural versus human-built affect what can live in each environment?',
               },
+              stageOptions: {
+                1: ['A. Zoo lawn', 'B. City', 'C. Both the same', 'D. Neither'],
+              },
+              stageCorrect: { 1: 1 },
               options: ['One has more sunlight', 'One is natural and the other is human-built', 'One has more water', 'There is no difference'],
               correct: 1, fact: 'The Concert Lawn includes natural features, while the city is mostly human-built.' },
             { q: 'Why might the Concert Lawn support more living things than the city?',
@@ -2092,6 +2120,10 @@
                 4: 'Why might the Concert Lawn support more living things than the city?',
                 5: 'How do natural features like soil and plants enable greater biodiversity than built environments?',
               },
+              stageOptions: {
+                1: ['A. Yes', 'B. No', 'C. The same', 'D. Not sure'],
+              },
+              stageCorrect: { 1: 0 },
               options: ['It has more buildings', 'It has natural features like plants and soil', 'It is closer to the water', 'It is larger'],
               correct: 1, fact: 'Plants, soil, and habitat features help support more living things in natural environments.' }
           ],
@@ -2103,7 +2135,7 @@
           image: 'images/dingo.jpg', latitude: -33.8440, longitude: 151.2408,
           radius: 50, color: '#C4873A',
           writingPromptByStage: {
-            1: 'What did the dingo look like?',
+            1: 'What did you see?',
             2: 'What did the dingo look like and what was it doing?',
             3: 'Describe the dingo\'s appearance and the environment around it.',
             4: 'Explain how the dingo\'s appearance helps it survive in its environment.',
@@ -2118,6 +2150,10 @@
                 4: 'What is the dingo\'s role in the Australian ecosystem?',
                 5: 'How does the dingo\'s role as an apex predator maintain ecosystem balance?',
               },
+              stageOptions: {
+                1: ['A. Kangaroo', 'B. Grass', 'C. Tree', 'D. Rock'],
+              },
+              stageCorrect: { 1: 0 },
               options: ['They are herbivores that eat only plants', 'They are apex predators that help regulate prey populations', 'They have no ecological role', 'They are introduced pests'],
               correct: 1, fact: 'Dingoes are apex predators in Australia and help regulate populations of kangaroos and other animals, supporting ecosystem balance.' }
           ],
@@ -2129,7 +2165,7 @@
           image: 'images/lemur.jpg', latitude: -33.8448, longitude: 151.2396,
           radius: 50, color: '#7A6E8A',
           writingPromptByStage: {
-            1: 'What were the lemurs doing?',
+            1: 'What did you see?',
             2: 'What were the lemurs doing and where were they?',
             3: 'Describe what the lemurs were doing and which part of their enclosure they used.',
             4: 'Describe how the lemurs use different parts of their enclosure.',
@@ -2156,7 +2192,7 @@
           image: 'images/sea-lion.jpg', latitude: -33.8425, longitude: 151.2415,
           radius: 50, color: '#4A7FA0',
           writingPromptByStage: {
-            1: 'Was the sea lion in the water or on land?',
+            1: 'What did you see?',
             2: 'What was the sea lion doing and where was it?',
             3: 'Describe what you could see the sea lion doing in the water or on land.',
             4: 'Explain how humans can impact sea lions and their environment.',
@@ -2177,7 +2213,7 @@
           image: 'images/blue-mountains-bushwalk.jpg', latitude: -33.7350, longitude: 150.3119,
           radius: 100, color: '#4A7FA0',
           writingPromptByStage: {
-            1: 'What could you hear?',
+            1: 'What did you hear?',
             2: 'What could you hear and how did it make you feel?',
             3: 'Describe what you heard and whether the sounds were from nature or humans.',
             4: 'Describe what you could hear and explain how it made you feel.',
@@ -2196,7 +2232,7 @@
               correct: 2 },
             { q: 'What number does the clue represent?',
               stageVariants: {
-                1: 'Can you find a number in the clue?',
+                1: 'Look under the bench — what do you see?',
                 2: 'What number is in the clue?',
                 3: 'What number does the clue stand for?',
                 4: 'What number does the clue represent?',
@@ -2206,7 +2242,7 @@
               correct: 1 },
             { q: 'Who am I?',
               stageVariants: {
-                1: 'Which bird makes the sound?',
+                1: 'Which bird copies sounds?',
                 2: 'Which bird copies other sounds?',
                 3: 'Which bird from the riddle can mimic other animals?',
                 4: 'Who am I?',
@@ -2223,7 +2259,7 @@
           image: 'images/asian-water-buffalo.jpg', latitude: -33.8450, longitude: 151.2410,
           radius: 50, color: '#6B5E4E',
           writingPromptByStage: {
-            1: 'What animals were near the buffalo?',
+            1: 'What did you see?',
             2: 'What animals were near the buffalo and what were they doing?',
             3: 'Describe the buffalo and any other animals nearby, and what they were doing.',
             4: 'Describe a relationship you can observe between the buffalo (or rhino) and another animal, and explain how it may help them.',
@@ -2238,6 +2274,10 @@
                 4: 'Looking at the buffalo, what can you notice that helps it not sink into soft ground?',
                 5: 'How do the buffalo\'s wide hooves function as an adaptation to its muddy wetland habitat?',
               },
+              stageOptions: {
+                1: ['A. Big', 'B. Small', 'C. The same as a cat', 'D. No feet'],
+              },
+              stageCorrect: { 1: 0 },
               options: ['A. It has small, narrow feet', 'B. It has wide hooves that spread its weight', 'C. It is very fast', 'D. It avoids muddy areas'],
               correct: 1, fact: 'Wide hooves spread weight and reduce pressure on soft ground — an adaptation that helps buffalo move through wet, muddy environments.' }
           ],
@@ -2277,22 +2317,23 @@
       }
 
       function getStageScaffoldTip(stage) {
-        if (stage <= 2) return { header: '✏️ Try to include:', points: ['What the animal looks like', 'What it is doing right now', 'One thing you noticed'], starters: ['I can see…', 'The animal is…'] };
+        if (stage <= 2) return { header: '✏️ Start with:', points: [], starters: ['I saw…', 'I can see…'] };
         if (stage === 3) return { header: '✏️ A good response includes:', points: ['What you can observe', 'One feature or behaviour', 'Why you think it does that'], starters: ['I noticed…', 'I think this is because…'] };
         if (stage === 4) return { header: '✔ A strong response includes:', points: ['A clear observation (what + where/what doing)', 'A relevant concept or feature', 'A simple explanation or link to survival'], starters: ['I observed that…', 'This may help the animal because…'] };
         return { header: '✔ A high-quality response includes:', points: ['A precise observation using scientific terms', 'A concept (adaptation, behaviour, ecosystem)', 'An explanation linking observation to survival or function'], starters: ['Based on my observation…', 'This suggests that…', 'This adaptation allows the animal to…'] };
       }
 
       // Returns the question array for the current stage.
-      // Each question may have a stageVariants object with per-stage question text.
-      // The options, correct, and fact fields are ALWAYS preserved from the base question.
-      // Falls back to the base q field when no variant is defined.
+      // Each question may have stageVariants (text), stageOptions (options array), stageCorrect (correct index).
+      // Options and correct answer are preserved from base unless stageOptions/stageCorrect override them.
       function getStageQuestions(animal) {
         const baseQuestions = (animal && animal.questions) ? animal.questions : [];
         return baseQuestions.map(q => {
-          if (!q.stageVariants) return q;
-          const stageText = q.stageVariants[classStage] || q.stageVariants[4] || q.q;
-          return { ...q, q: stageText };
+          if (!q.stageVariants && !q.stageOptions && !q.stageCorrect) return q;
+          const stageText = q.stageVariants ? (q.stageVariants[classStage] || q.stageVariants[4] || q.q) : q.q;
+          const stageOpts = q.stageOptions ? (q.stageOptions[classStage] || q.stageOptions[4] || q.options) : q.options;
+          const stageCor  = q.stageCorrect ? (q.stageCorrect[classStage] !== undefined ? q.stageCorrect[classStage] : (q.stageCorrect[4] !== undefined ? q.stageCorrect[4] : q.correct)) : q.correct;
+          return { ...q, q: stageText, options: stageOpts, correct: stageCor };
         });
       }
 
@@ -2574,7 +2615,7 @@
                     <p style={{ color:'#333', fontSize:'clamp(0.9rem,2vh,1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentQuestion.fact}</p>
                   </div>
                 )}
-                <button onClick={() => { if (isCorrect) { stopCamera(); handleNextQuestion(); } else { setIsProcessingAnswer(false); setShowResult(false); } }}
+                <button onClick={() => { if (isCorrect) { stopCamera(); handleNextQuestion(); } else { setIsProcessingAnswer(false); setShowResult(false); startCamera(); } }}
                   style={{ background: isCorrect ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)', color:'white', border:'none', padding:'clamp(0.8rem,2vh,1.2rem) clamp(2rem,5vw,3rem)', fontSize:'clamp(1rem,2.5vh,1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.05em', boxShadow:'0 4px 12px rgba(0,0,0,0.2)', marginTop:'0.5rem' }}>
                   {isCorrect ? 'Continue to Observation ' : 'Try Again'}
                 </button>
@@ -2705,9 +2746,11 @@
 
                 {/* Title */}
                 <div style={{ background:'white', borderRadius:'16px', padding:'1rem 1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem', textAlign:'center' }}>
-                  <h2 style={{ fontSize:'1.2rem', fontWeight:700, color:'var(--jungle-deep)', margin:'0 0 0.2rem' }}>🐃 Footprint Pressure Test</h2>
+                  <h2 style={{ fontSize:'1.2rem', fontWeight:700, color:'var(--jungle-deep)', margin:'0 0 0.2rem' }}>🐃 {classStage <= 2 ? 'Buffalo Feet Task' : 'Footprint Pressure Test'}</h2>
                   <p style={{ fontSize:'0.82rem', color:'#666', margin:0 }}>
-                    {!buffaloInteractionComplete ? 'Press and hold the mud to test pressure, then observe the buffalo.' : buffaloShowObservation ? 'Now answer the question below.' : 'Interaction complete — read the result.'}
+                    {classStage <= 2
+                      ? (!buffaloInteractionComplete ? 'Press the mud — feel how heavy the buffalo is!' : 'Now answer the question below.')
+                      : (!buffaloInteractionComplete ? 'Press and hold the mud to test pressure, then observe the buffalo.' : buffaloShowObservation ? 'Now answer the question below.' : 'Interaction complete — read the result.')}
                   </p>
                 </div>
 
@@ -2722,16 +2765,16 @@
                     <div
                       onMouseDown={startPress} onMouseUp={endPress} onMouseLeave={endPress}
                       onTouchStart={startPress} onTouchEnd={endPress} onTouchCancel={endPress}
-                      style={{ width:'100%', height:'160px', background:`linear-gradient(180deg, #8B6914 0%, #6B4F0F ${40 + holdPct * 30}%, #4A3508 100%)`, borderRadius:'12px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden', userSelect:'none', WebkitUserSelect:'none', touchAction:'none', transition:'background 0.2s' }}>
+                      style={{ width:'100%', height: classStage <= 2 ? '220px' : '160px', background:`linear-gradient(180deg, #8B6914 0%, #6B4F0F ${40 + holdPct * 30}%, #4A3508 100%)`, borderRadius:'12px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden', userSelect:'none', WebkitUserSelect:'none', touchAction:'none', transition:'background 0.2s' }}>
 
                       {/* Footprint impression */}
                       {buffaloIsPressing && (
-                        <div style={{ position:'absolute', display:'flex', flexDirection:'column', alignItems:'center', gap:'4px', opacity: 0.3 + holdPct * 0.7, transform:`scale(${0.6 + holdPct * 0.6})`, transition:'transform 0.1s, opacity 0.1s' }}>
-                          <div style={{ display:'flex', gap:'8px' }}>
-                            <div style={{ width:'22px', height:'28px', background:'#3A2A08', borderRadius:'50% 50% 40% 40%', transform:'rotate(-8deg)' }} />
-                            <div style={{ width:'22px', height:'28px', background:'#3A2A08', borderRadius:'50% 50% 40% 40%', transform:'rotate(8deg)' }} />
+                        <div style={{ position:'absolute', display:'flex', flexDirection:'column', alignItems:'center', gap:'4px', opacity: 0.3 + holdPct * 0.7, transform:`scale(${0.8 + holdPct * 0.8})`, transition:'transform 0.1s, opacity 0.1s' }}>
+                          <div style={{ display:'flex', gap:'12px' }}>
+                            <div style={{ width:'30px', height:'38px', background:'#3A2A08', borderRadius:'50% 50% 40% 40%', transform:'rotate(-8deg)' }} />
+                            <div style={{ width:'30px', height:'38px', background:'#3A2A08', borderRadius:'50% 50% 40% 40%', transform:'rotate(8deg)' }} />
                           </div>
-                          <div style={{ width:'48px', height:'36px', background:'#3A2A08', borderRadius:'40%', marginTop:'-6px' }} />
+                          <div style={{ width:'66px', height:'50px', background:'#3A2A08', borderRadius:'40%', marginTop:'-8px' }} />
                         </div>
                       )}
 
@@ -2868,7 +2911,8 @@
               correctOnFirstAttempt: [...bushwalkResults, isClueCorrect][i] ?? false
             }));
             recordMissionResult('blue-mountains-bushwalk', 'Blue Mountains Bushwalk', quizResults);
-            setIsCorrect(correctCount + (isClueCorrect ? 1 : 0) === 3);
+            const finalCorrect = Math.min(correctCount + (isClueCorrect ? 1 : 0), clues.length);
+            setIsCorrect(finalCorrect === clues.length);
             setShowResult(true);
           } else {
             setBushwalkClue(nextClue);
@@ -2896,7 +2940,7 @@
                   {isCorrect ? 'Hunt Complete!' : 'Good Effort!'}
                 </h2>
                 <p style={{ fontSize:'clamp(0.85rem,2vh,1rem)', color:'#555', marginBottom:'1rem', lineHeight:1.6 }}>
-                  You solved {correctCount + (isClueCorrect ? 1 : 0)} of 3 clues.
+                  You solved {Math.min(correctCount + (isClueCorrect ? 1 : 0), clues.length)} of {clues.length} clues.
                 </p>
                 <button onClick={() => handleNextQuestion()}
                   style={{ background:'linear-gradient(135deg, #5B8C5A, #3d6b3c)', color:'white', border:'none', padding:'1rem 2.5rem', fontSize:'1.1rem', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.05em', boxShadow:'0 4px 12px rgba(0,0,0,0.2)' }}>
@@ -3504,8 +3548,19 @@
                 {/* Title */}
                 <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
                   <h2 style={{ fontSize:'1.2rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>🐒 Chimpanzee Behaviour Graph</h2>
-                  <p style={{ fontSize:'0.85rem', color:'#555', marginBottom:'0.2rem' }}>Scientists collect and interpret data to understand animal behaviour.</p>
-                  <p style={{ fontSize:'0.85rem', color:'#666', margin:0 }}>Observe the chimpanzees and build a graph to represent how they are spending their time.</p>
+                  {classStage <= 2 ? (
+                    <div>
+                      <p style={{ fontSize:'0.95rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.4rem' }}>3 easy steps:</p>
+                      {['1. Watch the chimpanzees', '2. Choose what they are doing most', '3. Pick your answer below'].map((s, i) => (
+                        <p key={i} style={{ fontSize:'0.88rem', color:'#555', margin:'0.15rem 0', paddingLeft:'0.5rem' }}>{s}</p>
+                      ))}
+                    </div>
+                  ) : (
+                    <>
+                      <p style={{ fontSize:'0.85rem', color:'#555', marginBottom:'0.2rem' }}>Scientists collect and interpret data to understand animal behaviour.</p>
+                      <p style={{ fontSize:'0.85rem', color:'#666', margin:0 }}>Observe the chimpanzees and build a graph to represent how they are spending their time.</p>
+                    </>
+                  )}
                 </div>
 
                 {/* Sliders */}
@@ -3566,8 +3621,25 @@
       function renderLionMission() {
         const zoomOptions = ['2×', '5×', '10×', '20×'];
         const correctZoom = '5×';
+        const currentQuestion = getStageQuestions(currentAnimal)[0];
+        const correctAnswerIndex = currentQuestion ? currentQuestion.correct : 1;
 
-        const correctAnswerIndex = 1;
+        // Stage-adapted info panel content
+        const infoPanelContent = classStage <= 2
+          ? { label: '🔍 Zoom Task', body: 'Use the zoom buttons below. Watch what happens to the image as you zoom in.' }
+          : classStage === 3
+          ? { label: '🔍 Compare Sizes', body: 'Image size: 10 mm  ·  Real size: 200 cm — which is bigger?' }
+          : classStage === 5
+          ? { label: '🔍 Magnification Calculation', body: 'If magnification = 0.05 and the real size = 200 cm, what is the image size? (Image = magnification × real)' }
+          : { label: '🔍 Magnification Challenge', body: 'Actual size: 2 mm  ·  Readable size: 10 mm  ·  Formula: image ÷ real' };
+
+        const hintContent = classStage <= 2
+          ? 'Zoom in → the image gets bigger!'
+          : classStage === 3
+          ? '10 mm vs 200 cm — which is bigger?'
+          : classStage === 5
+          ? '0.05 × 200 = 10 mm (image size)'
+          : '10 ÷ 2 = 5×';
 
         return (
           <div style={{ position:'fixed', inset:0, background: showResult ? (isCorrect ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)') : 'var(--mist-light)', transition:'background 0.5s ease', display:'flex', flexDirection:'column' }}>
@@ -3589,12 +3661,12 @@
                 </h2>
                 {isCorrect && <p style={{ fontSize:'clamp(0.95rem, 2.2vh, 1.1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>You used magnification effectively to observe the lion.</p>}
                 {!isCorrect && <p style={{ fontSize:'clamp(0.9rem, 2vh, 1rem)', color:'#555', marginBottom:'0.8rem', lineHeight:1.6 }}>Not quite — adjust your zoom and read the question carefully.</p>}
-                {isCorrect && currentAnimal.questions[0].fact && (
+                {isCorrect && currentQuestion && currentQuestion.fact && (
                   <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'12px', padding:'clamp(1rem, 2vh, 1.5rem)', marginTop:'0.8rem', marginBottom:'1rem' }}>
-                    <p style={{ color:'#333', fontSize:'clamp(0.9rem, 2vh, 1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentAnimal.questions[0].fact}</p>
+                    <p style={{ color:'#333', fontSize:'clamp(0.9rem, 2vh, 1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentQuestion.fact}</p>
                   </div>
                 )}
-                <button onClick={() => { if (isCorrect) { handleNextQuestion(); } else { setIsProcessingAnswer(false); setShowResult(false); } }}
+                <button onClick={() => { if (isCorrect) { handleNextQuestion(); } else { setIsProcessingAnswer(false); setShowResult(false); startCamera(); } }}
                   style={{ background: isCorrect ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #ef4444, #dc2626)', color:'white', border:'none', padding:'clamp(0.8rem, 2vh, 1.2rem) clamp(2rem, 5vw, 3rem)', fontSize:'clamp(1rem, 2.5vh, 1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.05em', boxShadow:'0 4px 12px rgba(0,0,0,0.2)', marginTop:'0.5rem' }}>
                   {isCorrect ? 'Continue to Reflection ' : 'Try Again'}
                 </button>
@@ -3607,29 +3679,32 @@
 
                 {/* Title */}
                 <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
-                  <h2 style={{ fontSize:'1.2rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>🦁 Lion Micro Investigation</h2>
-                  <p style={{ fontSize:'0.85rem', color:'#666', margin:0 }}>A tiny multiple-choice question is hidden on the lion sign. Use the microscope zoom to read it clearly.</p>
+                  <h2 style={{ fontSize:'1.2rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>🦁 Lion {classStage <= 2 ? 'Camera Task' : 'Micro Investigation'}</h2>
+                  <p style={{ fontSize:'0.85rem', color:'#666', margin:0 }}>
+                    {classStage <= 2
+                      ? 'Use your camera. Zoom in on the lion. Then answer the question.'
+                      : 'A tiny multiple-choice question is hidden on the lion sign. Use the microscope zoom to read it clearly.'}
+                  </p>
                 </div>
 
                 {/* Info panel */}
                 <div style={{ background:'linear-gradient(135deg, #EFF6FF, #DBEAFE)', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 4px 16px rgba(59,130,246,0.1)', marginBottom:'1rem' }}>
-                  <p style={{ fontSize:'0.75rem', fontWeight:700, color:'#1D4ED8', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:'0.6rem' }}>🔍 Magnification Challenge</p>
-                  <div style={{ display:'flex', gap:'1.5rem' }}>
-                    <div><p style={{ fontSize:'0.78rem', color:'#555', margin:0 }}>Actual size</p><p style={{ fontSize:'1rem', fontWeight:700, color:'#1D4ED8', margin:0 }}>2 mm</p></div>
-                    <div><p style={{ fontSize:'0.78rem', color:'#555', margin:0 }}>Readable size</p><p style={{ fontSize:'1rem', fontWeight:700, color:'#1D4ED8', margin:0 }}>10 mm</p></div>
-                  </div>
+                  <p style={{ fontSize:'0.75rem', fontWeight:700, color:'#1D4ED8', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:'0.5rem' }}>{infoPanelContent.label}</p>
+                  <p style={{ fontSize:'0.88rem', color:'#1D4ED8', fontWeight:600, margin:0 }}>{infoPanelContent.body}</p>
                 </div>
 
                 {/* Thinking prompt */}
                 <div style={{ background:'white', borderRadius:'16px', padding:'1rem 1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.06)', marginBottom:'1rem', display:'flex', alignItems:'center', justifyContent:'space-between', gap:'1rem' }}>
-                  <p style={{ fontSize:'0.9rem', fontWeight:600, color:'var(--jungle-deep)', margin:0 }}>What magnification do you need?</p>
+                  <p style={{ fontSize:'0.9rem', fontWeight:600, color:'var(--jungle-deep)', margin:0 }}>
+                    {currentQuestion ? currentQuestion.q : 'What magnification do you need?'}
+                  </p>
                   <button onClick={() => setLionHintVisible(h => !h)} style={{ background:'var(--jungle-light)', color:'white', border:'none', padding:'0.4rem 0.9rem', borderRadius:'20px', fontSize:'0.78rem', fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}>
                     {lionHintVisible ? 'Hide Hint' : 'Hint 💡'}
                   </button>
                 </div>
                 {lionHintVisible && (
                   <div style={{ background:'#FFFBEB', border:'1px solid #FDE68A', borderRadius:'12px', padding:'0.75rem 1rem', marginBottom:'1rem', textAlign:'center' }}>
-                    <p style={{ fontSize:'0.95rem', fontWeight:700, color:'#92400E', margin:0 }}>10 ÷ 2 = 5×</p>
+                    <p style={{ fontSize:'0.95rem', fontWeight:700, color:'#92400E', margin:0 }}>{hintContent}</p>
                   </div>
                 )}
 
@@ -3667,10 +3742,10 @@
                 <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.08)' }}>
                   <p style={{ fontSize:'0.85rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.75rem', textAlign:'center' }}>Select your answer:</p>
                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' }}>
-                    {['A','B','C','D'].map((label, i) => (
+                    {(currentQuestion ? currentQuestion.options : ['A','B','C','D']).map((opt, i) => (
                       <button key={i} onClick={() => handleQuizAnswer(0, i)}
-                        style={{ padding:'0.9rem', borderRadius:'12px', border:'2px solid transparent', background: quizAnswers[0] === i ? (i === correctAnswerIndex ? '#D1FAE5' : '#FEE2E2') : '#f4f8f6', color:'var(--jungle-deep)', fontSize:'1.2rem', fontWeight:700, cursor:'pointer', textAlign:'center', transition:'all 0.2s' }}>
-                        {label}
+                        style={{ padding:'0.9rem', borderRadius:'12px', border:'2px solid transparent', background: quizAnswers[0] === i ? (i === correctAnswerIndex ? '#D1FAE5' : '#FEE2E2') : '#f4f8f6', color:'var(--jungle-deep)', fontSize:'0.9rem', fontWeight:700, cursor:'pointer', textAlign:'center', transition:'all 0.2s' }}>
+                        {opt}
                       </button>
                     ))}
                   </div>
@@ -4253,6 +4328,13 @@
           behaviourBonus = Math.min(behaviourBonus || 0, 2);
           detailBonus    = Math.min(detailBonus    || 0, 1);
           literacyBonus  = Math.min(literacyBonus  || 0, 2);
+        }
+
+        // Stage 1–2 floor: any attempt with real words earns at least 3 on each dimension
+        if (classStage <= 2 && !isLowQualityResponse(text)) {
+          behaviourBonus = Math.max(behaviourBonus || 0, 3);
+          detailBonus    = Math.max(detailBonus    || 0, 3);
+          literacyBonus  = Math.max(literacyBonus  || 0, 3);
         }
 
         // Build observationScore object — feeds analytics radar
@@ -5195,9 +5277,15 @@
                   </div>
                 )}
                 <textarea value={observation} onChange={(e)=>setObservation(e.target.value)}
-                  placeholder={currentAnimal.id === 'chimpanzee' ? 'I observed that...' : currentAnimal.id === 'gorilla' ? 'I noticed that the gorillas...' : currentAnimal.id === 'giraffe' ? (classStage <= 2 ? 'The giraffe is...' : classStage === 3 ? 'I can see the giraffe...' : classStage === 5 ? 'The giraffe\'s height is an adaptation that...' : "I noticed that the giraffe's ... helps it to...") : currentAnimal.id === 'concert-lawn' ? 'The grass felt...' : currentAnimal.id === 'lemur' ? 'The lemurs are using...' : currentAnimal.id === 'dingo' ? "The dingo's fur is..." : currentAnimal.id === 'asian-water-buffalo' ? 'I can see...' : currentAnimal.id === 'sea-lion' ? 'Humans can...' : currentAnimal.id === 'blue-mountains-bushwalk' ? 'I could hear...' : 'Describe what you observe in detail...'}
+                  placeholder={classStage <= 2 ? 'I saw...' : currentAnimal.id === 'chimpanzee' ? 'I observed that...' : currentAnimal.id === 'gorilla' ? 'I noticed that the gorillas...' : currentAnimal.id === 'giraffe' ? (classStage === 3 ? 'I can see the giraffe...' : classStage === 5 ? 'The giraffe\'s height is an adaptation that...' : "I noticed that the giraffe's ... helps it to...") : currentAnimal.id === 'concert-lawn' ? 'The grass felt...' : currentAnimal.id === 'lemur' ? 'The lemurs are using...' : currentAnimal.id === 'dingo' ? "The dingo's fur is..." : currentAnimal.id === 'asian-water-buffalo' ? 'I can see...' : currentAnimal.id === 'sea-lion' ? 'Humans can...' : currentAnimal.id === 'blue-mountains-bushwalk' ? 'I could hear...' : 'Describe what you observe in detail...'}
                   style={{ width:'100%', minHeight:'200px', padding:'1.5rem', borderRadius:'16px', border:'3px solid #E5E5E5', fontSize:'1.1rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', transition:'border-color 0.2s ease' }}
                   onFocus={(e)=>e.target.style.borderColor=currentAnimal.color} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'} />
+                {classStage <= 2 && (
+                  <div style={{ background:'#F4FAF6', border:'1px solid #C8E6D4', borderRadius:'10px', padding:'0.6rem 1rem', marginTop:'0.5rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
+                    <span style={{ fontSize:'0.85rem', color:'#555' }}>💡 Try starting with:</span>
+                    <span style={{ fontSize:'0.88rem', fontWeight:600, color:'var(--jungle-deep)', fontStyle:'italic' }}>"I saw…"</span>
+                  </div>
+                )}
                 {currentAnimal.id === 'chimpanzee' && (
                   <div style={{ background:'#F7FAF8', border:'1px solid #E4EDE8', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
                     <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>You may include:</p>
@@ -5392,10 +5480,14 @@
                   return (
                     <div style={{ background:'#F7FAF8', border:'1px solid #D4E8DC', borderRadius:'12px', padding:'0.9rem 1.1rem', marginTop:'0.75rem' }}>
                       <p style={{ fontSize:'0.75rem', fontWeight:700, color:'#059669', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.4rem' }}>{tip.header}</p>
-                      <ul style={{ margin:'0 0 0.5rem', paddingLeft:'1.1rem', fontSize:'0.8rem', color:'#555', lineHeight:1.8 }}>
-                        {tip.points.map((pt, i) => <li key={i}>{pt}</li>)}
-                      </ul>
-                      <p style={{ fontSize:'0.73rem', fontWeight:600, color:'var(--jungle-mid)', marginBottom:'0.2rem' }}>Sentence starters:</p>
+                      {tip.points.length > 0 && (
+                        <ul style={{ margin:'0 0 0.5rem', paddingLeft:'1.1rem', fontSize:'0.8rem', color:'#555', lineHeight:1.8 }}>
+                          {tip.points.map((pt, i) => <li key={i}>{pt}</li>)}
+                        </ul>
+                      )}
+                      <p style={{ fontSize:'0.73rem', fontWeight:600, color:'var(--jungle-mid)', marginBottom:'0.2rem' }}>
+                        {classStage <= 2 ? 'You could write:' : 'Sentence starters:'}
+                      </p>
                       {tip.starters.map((s, i) => (
                         <p key={i} style={{ fontSize:'0.75rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.5rem', fontStyle:'italic' }}>"{s}"</p>
                       ))}
