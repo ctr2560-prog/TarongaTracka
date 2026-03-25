@@ -2513,10 +2513,9 @@
       };
 
       const checkAnimalProximity = (animal) => {
-        if (!userLocation) return { nearby: DEV_GPS_OVERRIDE || animal.id === 'koala', distance: null };
-        const animalLat = DEV_GPS_OVERRIDE ? DEV_KOALA_LAT : animal.latitude;
-        const animalLng = DEV_GPS_OVERRIDE ? DEV_KOALA_LNG : animal.longitude;
-        const distance = calculateDistance(userLocation.latitude, userLocation.longitude, animalLat, animalLng);
+        if (DEV_GPS_OVERRIDE) return { nearby: true, distance: 0 };
+        if (!userLocation) return { nearby: false, distance: null };
+        const distance = calculateDistance(userLocation.latitude, userLocation.longitude, animal.latitude, animal.longitude);
         const isNearby = distance <= (animal.radius || 50);
         return { nearby: isNearby, distance: Math.round(distance) };
       };
@@ -4797,8 +4796,8 @@
                     const alreadyFound=foundAnimals.has(animal.id);
                     const userLat = userLocation?.latitude;
                     const userLon = userLocation?.longitude;
-                    const animalLat = DEV_GPS_OVERRIDE ? DEV_KOALA_LAT : animal.latitude;
-                    const animalLng = DEV_GPS_OVERRIDE ? DEV_KOALA_LNG : animal.longitude;
+                    const animalLat = animal.latitude;
+                    const animalLng = animal.longitude;
                     const compassBearing = userLat && userLon ? getBearing(userLat, userLon, animalLat, animalLng) : null;
                     const compassDistance = userLat && userLon ? getDistance(userLat, userLon, animalLat, animalLng) : null;
                     return (
