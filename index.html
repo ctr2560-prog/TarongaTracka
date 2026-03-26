@@ -2344,10 +2344,10 @@
         const wc = words.length;
         if (wc === 0) return 0;
         const hits = relevanceWords.filter(w => lower.includes(w)).length;
-        if (hits === 0 && wc < 2) return 1;         // 1 — unrelated, too short
-        if (hits === 0) return 2;                     // 2 — vague, no keywords
-        if (hits >= 1 && wc <= 3) return 3;          // 3 — correct observation (single word OK)
-        if (hits >= 1 && wc >= 4 && hits < 3) return 4; // 4 — relevant observation
+        if (hits === 0 && wc < 2) return 1;          // 1 — unrelated, too short
+        if (hits === 0) return 2;                      // 2 — vague, no keywords
+        if (hits === 1 && wc === 1) return 3;          // 3 — single relevant word
+        if (hits >= 1 && wc >= 2 && hits < 3) return 4; // 4 — relevant observation (e.g. "koala sleeping")
         if (hits >= 3 || (hits >= 1 && wc >= 6)) return 5; // 5 — clear detailed observation
         return 3;
       }
@@ -2360,8 +2360,8 @@
         const hits = ideaWords.filter(w => lower.includes(w)).length;
         if (hits === 0 && wc < 2) return 1;           // 1 — no idea, too short
         if (hits === 0 && wc >= 2) return 2;           // 2 — partial / vague idea
-        if (hits >= 1 && wc <= 3) return 3;            // 3 — simple correct idea (single word OK)
-        if (hits >= 1 && wc >= 4 && hits < 3) return 4; // 4 — clear idea
+        if (hits === 1 && wc === 1) return 3;          // 3 — single correct idea
+        if (hits >= 1 && wc >= 2 && hits < 3) return 4; // 4 — clear idea (e.g. "koala sleeping")
         if (hits >= 3 || (hits >= 1 && wc >= 7)) return 5; // 5 — strong idea with detail
         return 3;
       }
@@ -4352,7 +4352,7 @@
           const hasConnection = connectionWords.some(w => lower.includes(w));
           const elements = [hasLocation, hasBehaviourDetail, hasExplanation, hasConnection].filter(Boolean).length;
           if (classStage <= 2) {
-            const s1words = ['grass','lawn','green','soft','ground','dirt','soil','tree','plant','outside','nature','sunny','warm','cool','birds','insects','smell','feel','walking','standing'];
+            const s1words = ['lemur','lemurs','tree','trees','branch','rope','platform','ground','high','low','climbing','clinging','jumping','sitting','sleeping','resting','eating','playing','grooming','together','black','white','striped','tail','ring','fluffy','watching','hanging','moving','fast','slow'];
             behaviourBonus = stage1BehaviourScore(text, s1words);
             detailBonus = stage1DetailScore(text, s1words);
             literacyBonus = stage1WritingScore(text);
@@ -4485,9 +4485,10 @@
           const hasFeeling = feelingWords.some(w => lower.includes(w));
           const elements = [hasSounds, hasSource, hasEnvironment, hasFeeling].filter(Boolean).length;
           if (classStage <= 2) {
-            const s1words = ['bird','birds','tree','trees','leaves','water','waterfall','wind','quiet','loud','sound','sounds','hear','listening','walking','nature','bush','green','insects','animals','voice'];
+            const s1words = ['hear','heard','sound','sounds','noise','loud','quiet','silent','bird','birds','chirping','singing','tweet','wind','rustle','rustling','water','waterfall','splash','drip','insects','buzzing','cricket','frog','leaves','crunch','footstep','echo','far','close','peaceful','still'];
             behaviourBonus = stage1BehaviourScore(text, s1words);
             detailBonus = stage1DetailScore(text, s1words);
+            literacyBonus = stage1WritingScore(text);
           } else if (classStage === 3) {
             if (elements === 0) detailBonus = 0;
             else if (elements === 1) detailBonus = 2;
@@ -4504,10 +4505,36 @@
             else detailBonus = Math.min(elements + 1, 5);
           }
           literacyBonus = calculateWritingScore(text, classStage);
-        } else {
-          behaviourBonus = calculateBehaviourScore(text);
-          detailBonus = calculateDetailScore(text);
+        } else if (currentAnimal.id === 'tiger') {
+          const tigerBehaviourWords = ['tiger','tigers','stripe','stripes','orange','black','white','fur','coat','big','large','huge','long','tall','heavy','fast','strong','slow','walking','pacing','resting','sleeping','sitting','lying','watching','prowling','enclosure','grass','tree','rock','water','pool'];
+          const tigerDetailWords = ['stripe','stripes','orange','black','white','fur','coat','big','large','huge','long','tall','heavy','fast','strong','pacing','prowling','stealthy','predator','pattern','marking','eye','teeth','claw','paw','tail'];
+          const tigerBehaviourHits = tigerBehaviourWords.filter(w => lower.includes(w)).length;
+          const tigerDetailHits = tigerDetailWords.filter(w => lower.includes(w)).length;
+          behaviourBonus = Math.min(tigerBehaviourHits + 1, 5);
+          if (classStage <= 2) {
+            const s1words = ['hear','heard','sound','sounds','noise','quiet','silent','loud','bird','birds','wind','water','splash','drip','rustle','rustling','leaves','insect','insects','buzzing','people','talking','smell','smells','smelled','fresh','earthy','grass','dirt','animal','zoo','tiger','strong','nice','bad','rain','far','close','echo','footstep','crunch'];
+            behaviourBonus = stage1BehaviourScore(text, s1words);
+            detailBonus = stage1DetailScore(text, s1words);
+            literacyBonus = stage1WritingScore(text);
+          } else if (classStage === 3) {
+            detailBonus = tigerDetailHits === 0 ? 0 : tigerDetailHits === 1 ? 2 : Math.min(tigerDetailHits + 1, 4);
+          } else if (classStage === 5) {
+            detailBonus = tigerDetailHits === 0 ? 0 : tigerDetailHits === 1 ? 1 : Math.min(tigerDetailHits + 1, 5);
+          } else {
+            detailBonus = Math.min(tigerDetailHits + 1, 5);
+          }
           literacyBonus = calculateWritingScore(text, classStage);
+        } else {
+          if (classStage <= 2) {
+            const s1words = ['animal','big','large','small','colour','color','brown','black','white','grey','green','eating','sleeping','walking','sitting','standing','running','looking','watching','tree','grass','water','ground','enclosure'];
+            behaviourBonus = stage1BehaviourScore(text, s1words);
+            detailBonus = stage1DetailScore(text, s1words);
+            literacyBonus = stage1WritingScore(text);
+          } else {
+            behaviourBonus = calculateBehaviourScore(text);
+            detailBonus = calculateDetailScore(text);
+            literacyBonus = calculateWritingScore(text, classStage);
+          }
         }
 
         // Quality cap — prevent nonsense responses scoring above 2/1/2
@@ -5248,7 +5275,7 @@
                      Submit & Earn Badge
                   </button>
                 </div>
-              ) : currentAnimal.id === 'lion' ? (
+\              ) : currentAnimal.id === 'lion' ? (
                 <div style={{ background:'white', borderRadius:'20px', padding:'2.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
                   {classStage <= 2 ? (
                     <>
@@ -5263,58 +5290,55 @@
                         ))}
                       </div>
                     </>
-                  ) : (<>
-                  {/* Conservation scientist framing */}
-                  <div style={{ display:'flex', gap:'0.75rem', marginBottom:'1.5rem' }}>
-                    <div style={{ flex:1, background:'linear-gradient(135deg, #D1FAE5, #A7F3D0)', borderRadius:'12px', padding:'0.75rem 1rem' }}>
-                      <p style={{ fontSize:'0.78rem', fontWeight:700, color:'#065F46', margin:0 }}>🟩 You are now a conservation scientist</p>
+                  ) : (
+                    <>
+                    <div style={{ display:'flex', gap:'0.75rem', marginBottom:'1.5rem' }}>
+                      <div style={{ flex:1, background:'linear-gradient(135deg, #D1FAE5, #A7F3D0)', borderRadius:'12px', padding:'0.75rem 1rem' }}>
+                        <p style={{ fontSize:'0.78rem', fontWeight:700, color:'#065F46', margin:0 }}>🟩 You are now a conservation scientist</p>
+                      </div>
+                      <div style={{ flex:1, background:'linear-gradient(135deg, #FEF3C7, #FDE68A)', borderRadius:'12px', padding:'0.75rem 1rem' }}>
+                        <p style={{ fontSize:'0.78rem', fontWeight:700, color:'#92400E', margin:0 }}>🟨 Explain your thinking clearly</p>
+                      </div>
                     </div>
-                    <div style={{ flex:1, background:'linear-gradient(135deg, #FEF3C7, #FDE68A)', borderRadius:'12px', padding:'0.75rem 1rem' }}>
-                      <p style={{ fontSize:'0.78rem', fontWeight:700, color:'#92400E', margin:0 }}>🟨 Explain your thinking clearly</p>
+                    <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'0.5rem', textAlign:'center' }}>🦁 Conservation Reflection</h2>
+                    <p style={{ fontSize:'1.1rem', fontWeight:600, color:'#333', marginBottom:'0.5rem', textAlign:'center', lineHeight:1.5 }}>
+                      Why is it important to conserve lion populations?
+                    </p>
+                    <p style={{ fontSize:'0.9rem', color:'#888', marginBottom:'1.5rem', textAlign:'center', fontStyle:'italic' }}>
+                      Think about ecosystems, food chains, and human impact.
+                    </p>
+                    <div style={{ display:'flex', flexWrap:'wrap', gap:'0.6rem', justifyContent:'center', marginBottom:'1.5rem' }}>
+                      {[
+                        { label:'🌿 Ecosystem', color:'#059669' },
+                        { label:'🔗 Food chain', color:'#0284C7' },
+                        { label:'🧬 Biodiversity', color:'#7C3AED' },
+                        { label:'🚨 Threats', color:'#DC2626' }
+                      ].map((chip, i) => (
+                        <div key={i} style={{ background:`${chip.color}18`, border:`1.5px solid ${chip.color}40`, borderRadius:'20px', padding:'0.4rem 0.85rem', fontSize:'0.82rem', fontWeight:600, color:chip.color }}>{chip.label}</div>
+                      ))}
                     </div>
-                  </div>
-
-                  {/* Title */}
-                  <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'0.5rem', textAlign:'center' }}>🦁 Conservation Reflection</h2>
-                  <p style={{ fontSize:'1.1rem', fontWeight:600, color:'#333', marginBottom:'0.5rem', textAlign:'center', lineHeight:1.5 }}>
-                    Why is it important to conserve lion populations?
-                  </p>
-                  <p style={{ fontSize:'0.9rem', color:'#888', marginBottom:'1.5rem', textAlign:'center', fontStyle:'italic' }}>
-                    Think about ecosystems, food chains, and human impact.
-                  </p>
-
-                  {/* Hint chips */}
-                  <div style={{ display:'flex', flexWrap:'wrap', gap:'0.6rem', justifyContent:'center', marginBottom:'1.5rem' }}>
-                    {[
-                      { label:'🌿 Ecosystem', color:'#059669' },
-                      { label:'🔗 Food chain', color:'#0284C7' },
-                      { label:'🧬 Biodiversity', color:'#7C3AED' },
-                      { label:'🚨 Threats', color:'#DC2626' }
-                    ].map((chip, i) => (
-                      <div key={i} style={{ background:`${chip.color}18`, border:`1.5px solid ${chip.color}40`, borderRadius:'20px', padding:'0.4rem 0.85rem', fontSize:'0.82rem', fontWeight:600, color:chip.color }}>{chip.label}</div>
-                    ))}
-                  </div>
-
+                    <div style={{ background:'#F7FAF8', border:'1px solid #E4EDE8', borderRadius:'12px', padding:'1rem 1.25rem', marginBottom:'1rem' }}>
+                      <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>You may include:</p>
+                      <ul style={{ margin:0, paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                        <li>Why lions are important in the ecosystem</li>
+                        <li>What happens if lions disappear</li>
+                        <li>Human impacts (poaching, habitat loss)</li>
+                        <li>How conservation helps protect lions</li>
+                      </ul>
+                    </div>
+                    </>
+                  )}
+                  {/* Textarea always shown — Stage 1 and Stage 2+ */}
                   <textarea value={observation} onChange={(e) => setObservation(e.target.value)}
-                    placeholder="Write your conservation argument here. Use evidence and examples..."
-                    style={{ width:'100%', minHeight:'200px', padding:'1.5rem', borderRadius:'16px', border:'3px solid #E5E5E5', fontSize:'1.05rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', transition:'border-color 0.2s ease', lineHeight:1.6 }}
+                    placeholder={classStage <= 2 ? 'I saw...' : 'Write your conservation argument here. Use evidence and examples...'}
+                    style={{ width:'100%', minHeight:'160px', padding:'1.5rem', borderRadius:'16px', border:'3px solid #E5E5E5', fontSize:'1.05rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', transition:'border-color 0.2s ease', lineHeight:1.6 }}
                     onFocus={(e) => e.target.style.borderColor='#D4A574'}
                     onBlur={(e) => e.target.style.borderColor='#E5E5E5'} />
-                  <div style={{ background:'#F7FAF8', border:'1px solid #E4EDE8', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
-                    <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>You may include:</p>
-                    <ul style={{ margin:0, paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
-                      <li>Why lions are important in the ecosystem</li>
-                      <li>What happens if lions disappear</li>
-                      <li>Human impacts (poaching, habitat loss)</li>
-                      <li>How conservation helps protect lions</li>
-                    </ul>
-                  </div>
                   <div style={{ marginTop:'1rem', fontSize:'0.95rem', color: wordCount >= ({1:3,2:5,3:8,4:10,5:12}[classStage]||10) ? '#059669' : '#E86A33', fontWeight:600 }}>{wordCount}/{({1:3,2:5,3:8,4:10,5:12}[classStage]||10)} words minimum</div>
                   <button onClick={submitObservation} disabled={wordCount < ({1:3,2:5,3:8,4:10,5:12}[classStage]||10)}
-                    style={{ width:'100%', padding:'1.5rem', borderRadius:'50px', border:'none', background: wordCount >= ({1:3,2:5,3:8,4:10,5:12}[classStage]||10) ? 'linear-gradient(135deg, #D4A574, #A0714A)' : '#CCC', color:'white', fontSize:'1.3rem', fontWeight:700, cursor: wordCount >= ({1:3,2:5,3:8,4:10,5:12}[classStage]||10) ? 'pointer' : 'not-allowed', transition:'all 0.3s ease', textTransform:'uppercase', letterSpacing:'0.1em', marginTop:'2rem', boxShadow: wordCount >= ({1:3,2:5,3:8,4:10,5:12}[classStage]||10) ? '0 8px 24px rgba(212,165,116,0.4)' : 'none' }}>
-                    {wordCount < ({1:3,2:5,3:8,4:10,5:12}[classStage]||10) ? 'Write More to Continue' : 'Submit Conservation Reflection'}
+                    style={{ width:'100%', padding:'1.5rem', borderRadius:'50px', border:'none', background: wordCount >= ({1:3,2:5,3:8,4:10,5:12}[classStage]||10) ? 'linear-gradient(135deg, #D4A574, #A0714A)' : '#CCC', color:'white', fontSize:'1.3rem', fontWeight:700, cursor: wordCount >= ({1:3,2:5,3:8,4:10,5:12}[classStage]||10) ? 'pointer' : 'not-allowed', transition:'all 0.3s ease', textTransform:'uppercase', letterSpacing:'0.1em', marginTop:'1rem', boxShadow: wordCount >= ({1:3,2:5,3:8,4:10,5:12}[classStage]||10) ? '0 8px 24px rgba(212,165,116,0.4)' : 'none' }}>
+                    {wordCount < ({1:3,2:5,3:8,4:10,5:12}[classStage]||10) ? 'Write More to Continue' : classStage <= 2 ? 'Submit & Earn Badge' : 'Submit Conservation Reflection'}
                   </button>
-                  </>)}
                 </div>
               ) : (
                 <div style={{ background:'white', borderRadius:'20px', padding:'2.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
@@ -5325,14 +5349,14 @@
                       'chimpanzee':           { q: 'What are the chimpanzees doing together?',    icon: '🐒' },
                       'gorilla':              { q: 'How does the gorilla look like a human?',      icon: '🦍' },
                       'lion':                 { q: 'Why do we need to look after lions?',           icon: '🦁' },
-                      'giraffe':              { q: 'How tall is the giraffe?',                     icon: '🦒' },
+                      'giraffe':              { q: 'Why is the giraffe tall?',                     icon: '🦒' },
                       'koala':                { q: 'What position is the koala in?',               icon: '🐨' },
-                      'tiger':                { q: 'How does the tiger move?',                     icon: '🐅' },
+                      'tiger':                { q: 'What did you hear or smell?',                     icon: '🐅' },
                       'dingo':                { q: "What colour is the dingo's fur?",              icon: '🐕' },
                       'lemur':                { q: 'Where are the lemurs in their home?',          icon: '🐒' },
                       'sea-lion':             { q: 'How do people affect sea lions?',              icon: '🦭' },
                       'asian-water-buffalo':  { q: 'What other animals are near the buffalo?',     icon: '🐃' },
-                      'concert-lawn':         { q: 'What can you see around you?',                 icon: '🌿' },
+                      'concert-lawn':         { q: 'How did the ground feel on your feet?',        icon: '🌿' },
                       'blue-mountains-bushwalk': { q: 'What could you hear?',                     icon: '🌲' },
                     }[currentAnimal?.id] || { q: 'What did you see?', icon: '👀' };
                     return (
@@ -5341,11 +5365,19 @@
                           {s1q.icon} {s1q.q}
                         </h2>
                         <div style={{ display:'flex', flexWrap:'wrap', gap:'0.6rem', justifyContent:'center', marginBottom:'1.4rem' }}>
-                          {[
+                          {(currentAnimal?.id === 'concert-lawn' ? [
+                            { label:'What did it feel like?', color:'var(--jungle-light)' },
+                            { label:'Soft, hard, warm, or cold?', color:'var(--discovery-blue)' },
+                            { label:'What was under your feet?', color:'var(--sunset-orange)' }
+                          ] : currentAnimal?.id === 'blue-mountains-bushwalk' ? [
+                            { label:'What did you hear?', color:'var(--jungle-light)' },
+                            { label:'Was it loud or quiet?', color:'var(--discovery-blue)' },
+                            { label:'What made the sound?', color:'var(--sunset-orange)' }
+                          ] : [
                             { label:'What did you see?', color:'var(--jungle-light)' },
                             { label:'What is it doing?', color:'var(--discovery-blue)' },
                             { label:'Where is it?', color:'var(--sunset-orange)' }
-                          ].map((chip, i) => (
+                          ]).map((chip, i) => (
                             <div key={i} style={{ background:`${chip.color}18`, border:`1.5px solid ${chip.color}40`, borderRadius:'20px', padding:'0.45rem 0.9rem', fontSize:'0.9rem', fontWeight:700, color:chip.color }}>{chip.label}</div>
                           ))}
                         </div>
@@ -5475,14 +5507,14 @@
                           'chimpanzee': 'What are the chimpanzees doing together?',
                           'gorilla': 'How does the gorilla look like a human?',
                           'lion': 'Why do we need to look after lions?',
-                          'giraffe': 'How tall is the giraffe?',
+                          'giraffe': 'Why is the giraffe tall?',
                           'koala': 'What position is the koala in?',
-                          'tiger': 'How does the tiger move?',
+                          'tiger': 'What did you hear or smell?',
                           'dingo': "What colour is the dingo's fur?",
                           'lemur': 'Where are the lemurs in their home?',
                           'sea-lion': 'How do people affect sea lions?',
                           'asian-water-buffalo': 'What other animals are near the buffalo?',
-                          'concert-lawn': 'What can you see around you?',
+                          'concert-lawn': 'How did the ground feel on your feet?',
                           'blue-mountains-bushwalk': 'What could you hear?',
                         }[currentAnimal?.id] || 'What did you see?'
                       ) : 'Your Observations'}
@@ -5540,7 +5572,7 @@
                     <span style={{ fontSize:'0.88rem', fontWeight:600, color:'var(--jungle-deep)', fontStyle:'italic' }}>"I saw…"</span>
                   </div>
                 )}
-                {currentAnimal.id === 'chimpanzee' && (
+                {classStage > 2 && currentAnimal.id === 'chimpanzee' && (
                   <div style={{ background:'#F7FAF8', border:'1px solid #E4EDE8', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
                     <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>You may include:</p>
                     <ul style={{ margin:0, paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
@@ -5551,7 +5583,7 @@
                     </ul>
                   </div>
                 )}
-                {currentAnimal.id === 'koala' && (
+                {classStage > 2 && currentAnimal.id === 'koala' && (
                   <div style={{ background:'#F7FAF8', border:'1px solid #E4EDE8', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
                     <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>You may include:</p>
                     <ul style={{ margin:0, paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
@@ -5562,7 +5594,7 @@
                     </ul>
                   </div>
                 )}
-                {currentAnimal.id === 'gorilla' && (
+                {classStage > 2 && currentAnimal.id === 'gorilla' && (
                   <div style={{ background:'#F7FAF8', border:'1px solid #E4EDE8', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
                     <p style={{ fontSize:'0.75rem', fontWeight:700, color:'#059669', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>✔ A good start — describe what you can see:</p>
                     <ul style={{ margin:'0 0 0.75rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
@@ -5578,7 +5610,7 @@
                     </ul>
                   </div>
                 )}
-                {currentAnimal.id === 'giraffe' && (
+                {classStage > 2 && currentAnimal.id === 'giraffe' && (
                   <div style={{ background:'#F7FAF8', border:'1px solid #E4EDE8', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
                     {classStage <= 2 ? (
                       <>
@@ -5636,7 +5668,7 @@
                     )}
                   </div>
                 )}
-                {currentAnimal.id === 'lemur' && (
+                {classStage > 2 && currentAnimal.id === 'lemur' && (
                   <div style={{ background:'#F4F0F8', border:'1px solid #C8BCD8', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
                     <p style={{ fontSize:'0.75rem', fontWeight:700, color:'#059669', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>✔ A good start — describe what you can see:</p>
                     <ul style={{ margin:'0 0 0.75rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
@@ -5654,7 +5686,7 @@
                     ))}
                   </div>
                 )}
-                {currentAnimal.id === 'dingo' && (
+                {classStage > 2 && currentAnimal.id === 'dingo' && (
                   <div style={{ background:'#FDF3E8', border:'1px solid #E8C897', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
                     <p style={{ fontSize:'0.75rem', fontWeight:700, color:'#059669', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>✔ A good start — describe what you can see:</p>
                     <ul style={{ margin:'0 0 0.75rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
@@ -5672,7 +5704,7 @@
                     ))}
                   </div>
                 )}
-                {currentAnimal.id === 'asian-water-buffalo' && (
+                {classStage > 2 && currentAnimal.id === 'asian-water-buffalo' && (
                   <div style={{ background:'#EDF4F0', border:'1px solid #B8D4C4', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
                     <p style={{ fontSize:'0.75rem', fontWeight:700, color:'#059669', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>✔ A good start — describe what you can see:</p>
                     <ul style={{ margin:'0 0 0.75rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
@@ -5690,7 +5722,7 @@
                     ))}
                   </div>
                 )}
-                {currentAnimal.id === 'sea-lion' && (
+                {classStage > 2 && currentAnimal.id === 'sea-lion' && (
                   <div style={{ background:'#EAF3F8', border:'1px solid #AACFE0', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
                     <p style={{ fontSize:'0.75rem', fontWeight:700, color:'#059669', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>✔ A good start — include:</p>
                     <ul style={{ margin:'0 0 0.75rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
