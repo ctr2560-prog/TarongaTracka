@@ -5781,10 +5781,36 @@
                     ))}
                   </div>
                 )}
-                {(() => {
+                {classStage <= 2 ? (() => {
+                  const s1cues = {
+                    'koala':                { cues: ['What does it look like?', 'What is it doing?'] },
+                    'lion':                 { cues: ['What are people doing?', 'How can we help?'] },
+                    'tiger':                { cues: ['What could you hear?', 'Could you smell anything?'] },
+                    'giraffe':              { cues: ['What is it reaching?', 'Why is it tall?'] },
+                    'gorilla':              { cues: ['How big is it?', 'What is it doing?'] },
+                    'chimpanzee':           { cues: ['Are they together?', 'What are they doing?'] },
+                    'dingo':                { cues: ['What colour is it?', 'What does its fur look like?'] },
+                    'lemur':                { cues: ['Where is it?', 'What is it doing?'] },
+                    'sea-lion':             { cues: ['What is in the water?', 'What are people doing?'] },
+                    'asian-water-buffalo':  { cues: ['What do its feet look like?', 'Is it big or small?'] },
+                    'concert-lawn':         { cues: ['How did it feel?', 'Was it soft or hard?'] },
+                    'blue-mountains-bushwalk': { cues: ['What could you hear?', 'Was it quiet or loud?'] },
+                  };
+                  const animal = s1cues[currentAnimal?.id] || { cues: ['What did you see?', 'What was it doing?'] };
+                  return (
+                    <div style={{ background:'#F7FAF8', border:'1px solid #D4E8DC', borderRadius:'12px', padding:'0.9rem 1.1rem', marginTop:'0.75rem' }}>
+                      <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#059669', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.5rem' }}>✏️ You could write:</p>
+                      {['I saw…', 'It was…'].map((s, i) => (
+                        <p key={i} style={{ fontSize:'0.78rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.5rem', fontStyle:'italic' }}>"{s}"</p>
+                      ))}
+                      <p style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'uppercase', letterSpacing:'0.05em', margin:'0.6rem 0 0.3rem' }}>💭 Think about:</p>
+                      {animal.cues.map((cue, i) => (
+                        <p key={i} style={{ fontSize:'0.78rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.5rem' }}>– {cue}</p>
+                      ))}
+                    </div>
+                  );
+                })() : (() => {
                   const tip = getStageScaffoldTip(classStage);
-                  const hasAnimalSpecificCard = ['chimpanzee','gorilla','giraffe','concert-lawn','lemur','dingo','asian-water-buffalo','sea-lion','blue-mountains-bushwalk'].includes(currentAnimal?.id);
-                  if (hasAnimalSpecificCard) return null;
                   return (
                     <div style={{ background:'#F7FAF8', border:'1px solid #D4E8DC', borderRadius:'12px', padding:'0.9rem 1.1rem', marginTop:'0.75rem' }}>
                       <p style={{ fontSize:'0.75rem', fontWeight:700, color:'#059669', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.4rem' }}>{tip.header}</p>
@@ -5793,9 +5819,7 @@
                           {tip.points.map((pt, i) => <li key={i}>{pt}</li>)}
                         </ul>
                       )}
-                      <p style={{ fontSize:'0.73rem', fontWeight:600, color:'var(--jungle-mid)', marginBottom:'0.2rem' }}>
-                        {classStage <= 2 ? 'You could write:' : 'Sentence starters:'}
-                      </p>
+                      <p style={{ fontSize:'0.73rem', fontWeight:600, color:'var(--jungle-mid)', marginBottom:'0.2rem' }}>Sentence starters:</p>
                       {tip.starters.map((s, i) => (
                         <p key={i} style={{ fontSize:'0.75rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.5rem', fontStyle:'italic' }}>"{s}"</p>
                       ))}
