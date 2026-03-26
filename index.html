@@ -1985,9 +1985,9 @@
                 5: 'Why could koalas disappear from NSW without human intervention?',
               },
               stageOptions: {
-                1: ['A. Yes', 'B. No', 'C. Maybe', 'D. Not sure'],
+                1: ['A. Maybe', 'B. Yes', 'C. No', 'D. Not sure'],
               },
-              stageCorrect: { 1: 0 },
+              stageCorrect: { 1: 1 },
               options: ['2030', '2040', '2050', '2060'],
               correct: 2, fact: 'Some projections warn koalas could disappear from parts of NSW by around 2050 without action.' },
             { q: 'Which adaptation helps koalas climb and grip tree trunks effectively?',
@@ -1999,9 +1999,9 @@
                 5: 'How does the koala\'s climbing adaptation increase its survival chances?',
               },
               stageOptions: {
-                1: ['A. Sharp claws', 'B. Long tails', 'C. Big teeth', 'D. Fast legs'],
+                1: ['A. Long tails', 'B. Big teeth', 'C. Sharp claws', 'D. Fast legs'],
               },
-              stageCorrect: { 1: 0 },
+              stageCorrect: { 1: 2 },
               options: ['Sharp claws and opposable toes', 'Long tails for balance', 'Webbed feet for swimming', 'Flexible spines for jumping'],
               correct: 0, fact: 'Koalas have sharp claws and opposable toes for gripping.' },
             { q: 'Why do koalas spend up to 18–20 hours a day sleeping?',
@@ -2013,9 +2013,9 @@
                 5: 'How does the koala\'s sleeping behaviour relate to its diet and energy needs?',
               },
               stageOptions: {
-                1: ['A. A lot', 'B. A little', 'C. Sometimes', 'D. Never'],
+                1: ['A. A little', 'B. A lot', 'C. Sometimes', 'D. Never'],
               },
-              stageCorrect: { 1: 0 },
+              stageCorrect: { 1: 1 },
               options: ['They are nocturnal predators', 'Their fur causes them to overheat', 'They are avoiding competition', 'Their diet is low in energy, requiring energy conservation'],
               correct: 3, fact: 'Eucalyptus leaves are low in energy, so koalas conserve energy by resting.' }
           ],
@@ -2073,7 +2073,7 @@
           image: 'images/concert-lawn.jpg', latitude: -33.8435, longitude: 151.2400,
           radius: 80, color: '#5B8C5A',
           writingPromptByStage: {
-            1: 'What did you see or feel?',
+            1: 'What did you see?',
             2: 'What did the ground feel like and what did you notice around you?',
             3: 'Describe what you felt and noticed in this environment.',
             4: 'Describe your experience walking on the grass and explain how this environment is different to a built environment like the city.',
@@ -2213,7 +2213,7 @@
           image: 'images/blue-mountains-bushwalk.jpg', latitude: -33.7350, longitude: 150.3119,
           radius: 100, color: '#4A7FA0',
           writingPromptByStage: {
-            1: 'What did you hear?',
+            1: 'What did you see?',
             2: 'What could you hear and how did it make you feel?',
             3: 'Describe what you heard and whether the sounds were from nature or humans.',
             4: 'Describe what you could hear and explain how it made you feel.',
@@ -2344,11 +2344,12 @@
         const wc = words.length;
         if (wc === 0) return 0;
         const hits = relevanceWords.filter(w => lower.includes(w)).length;
-        if (hits === 0 && wc < 2) return 1;      // no relevance, too short
-        if (hits === 0) return 2;                  // vague, no keywords
-        if (hits >= 1 && wc < 4) return 3;        // relevant mention (single word OK)
-        if (hits >= 1 && wc >= 4) return 4;       // relevant observation
-        return Math.min(hits + 2, 5);
+        if (hits === 0 && wc < 2) return 1;         // 1 — unrelated, too short
+        if (hits === 0) return 2;                     // 2 — vague, no keywords
+        if (hits >= 1 && wc <= 3) return 3;          // 3 — correct observation (single word OK)
+        if (hits >= 1 && wc >= 4 && hits < 3) return 4; // 4 — relevant observation
+        if (hits >= 3 || (hits >= 1 && wc >= 6)) return 5; // 5 — clear detailed observation
+        return 3;
       }
 
       function stage1DetailScore(text, ideaWords) {
@@ -2357,11 +2358,12 @@
         const wc = words.length;
         if (wc === 0) return 0;
         const hits = ideaWords.filter(w => lower.includes(w)).length;
-        if (hits === 0 && wc < 2) return 1;          // no idea, too short
-        if (hits === 0) return 2;                      // weak / vague idea
-        if (hits === 1) return 3;                      // simple correct idea
-        if (hits === 2) return 4;                      // clear idea
-        return 5;                                      // strong idea
+        if (hits === 0 && wc < 2) return 1;           // 1 — no idea, too short
+        if (hits === 0 && wc >= 2) return 2;           // 2 — partial / vague idea
+        if (hits >= 1 && wc <= 3) return 3;            // 3 — simple correct idea (single word OK)
+        if (hits >= 1 && wc >= 4 && hits < 3) return 4; // 4 — clear idea
+        if (hits >= 3 || (hits >= 1 && wc >= 7)) return 5; // 5 — strong idea with detail
+        return 3;
       }
 
       function stage1WritingScore(text) {
@@ -2371,11 +2373,11 @@
         const wc = words.length;
         const realWords = words.map(w => w.toLowerCase().replace(/[^a-z]/g, '')).filter(w => w.length >= 2);
         const realCount = realWords.length;
-        if (realCount === 0) return 1;          // unreadable / symbols only
-        if (realCount === 1 && wc === 1) return 3;   // single recognisable word
-        if (realCount >= 2 && wc <= 3) return 3;     // recognisable words
-        if (realCount >= 3 && wc >= 4) return 4;     // mostly correct spelling
-        if (realCount >= 5 && wc >= 6) return 5;     // clear and readable
+        if (realCount === 0) return 1;               // 1 — unreadable / symbols only
+        if (realCount >= 1 && wc === 1) return 3;   // 3 — single recognisable word
+        if (realCount >= 2 && wc <= 4) return 3;    // 3 — recognisable words
+        if (realCount >= 3 && wc >= 5) return 4;    // 4 — mostly readable
+        if (realCount >= 5 && wc >= 7) return 5;    // 5 — clear and readable
         return 3;
       }
 
@@ -3060,9 +3062,23 @@
       }
 
       function renderSeaLionMission() {
-        // Stage 1: single sentence + one question
+        // Stage 1: interactive fill-the-blank passage
         if (classStage <= 2) {
-          const stageQ = { q: 'What do sea lions use to swim?', options: ['A. Flippers', 'B. Wings', 'C. Legs', 'D. Tail'], correct: 0, fact: 'Sea lions use their strong flippers to swim quickly through the water.' };
+          const opts = ['Flippers', 'Wings', 'Legs', 'Tail'];
+          const correctIdx = 0;
+          const selected = seaLionAnswers[0];
+          const isSelected = selected !== undefined;
+
+          function submitS1() {
+            const correct = selected === correctIdx;
+            recordMissionResult('sea-lion', 'Sea Lion', [{
+              question: 'What do sea lions use to swim?',
+              correctOnFirstAttempt: correct
+            }]);
+            setIsCorrect(correct);
+            setShowResult(true);
+          }
+
           return (
             <div style={{ position:'fixed', inset:0, background: showResult ? (isCorrect ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)') : 'var(--mist-light)', transition:'background 0.5s ease', display:'flex', flexDirection:'column' }}>
               <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'0.6rem 1rem', flex:'0 0 auto', zIndex:100 }}>
@@ -3072,34 +3088,56 @@
                   <div style={{ width:'70px' }} />
                 </div>
               </div>
+
               {showResult && (
                 <div className="animate-scale-in" style={{ textAlign:'center', padding:'clamp(1.5rem,3vh,2rem)', background:'rgba(255,255,255,0.95)', borderRadius:'20px', boxShadow:'0 8px 32px rgba(0,0,0,0.2)', margin:'clamp(1rem,2vh,1.5rem)', maxWidth:'90%', marginLeft:'auto', marginRight:'auto', marginTop:'clamp(1rem,3vh,2rem)' }}>
                   <div style={{ fontSize:'3rem', marginBottom:'0.5rem' }}>{isCorrect ? '✔' : '❌'}</div>
                   <h2 className="heading-display" style={{ fontSize:'clamp(2rem,5vh,3rem)', color: isCorrect ? '#10b981' : '#ef4444', marginBottom:'0.4rem' }}>{isCorrect ? 'Correct!' : 'Try Again'}</h2>
-                  <div style={{ background:'#EAF3F8', borderRadius:'12px', padding:'1rem', marginTop:'0.8rem', marginBottom:'1rem' }}><p style={{ color:'#333', fontSize:'1rem', lineHeight:1.5, fontWeight:500 }}>{stageQ.fact}</p></div>
-                  <button onClick={() => { if (isCorrect) { handleNextQuestion(); } else { setIsProcessingAnswer(false); setShowResult(false); } }}
+                  <div style={{ background:'#EAF3F8', borderRadius:'12px', padding:'1rem', marginTop:'0.8rem', marginBottom:'1rem' }}>
+                    <p style={{ color:'#333', fontSize:'1rem', lineHeight:1.5, fontWeight:500 }}>Sea lions use their strong flippers to swim quickly through the water.</p>
+                  </div>
+                  <button onClick={() => { if (isCorrect) { handleNextQuestion(); } else { setSeaLionAnswers({}); setIsProcessingAnswer(false); setShowResult(false); } }}
                     style={{ background: isCorrect ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #3B82F6, #1D4ED8)', color:'white', border:'none', padding:'1rem 3rem', fontSize:'1.1rem', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.05em', marginTop:'0.5rem' }}>
                     {isCorrect ? 'Continue to Observation ' : 'Try Again'}
                   </button>
                 </div>
               )}
+
               {!showResult && (
                 <div style={{ flex:'1 1 auto', overflowY:'auto', padding:'1.5rem', maxWidth:'540px', margin:'0 auto', width:'100%' }}>
-                  <div style={{ background:'#EAF3F8', borderRadius:'16px', padding:'1.4rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1.2rem', textAlign:'center' }}>
-                    <div style={{ fontSize:'3rem', marginBottom:'0.5rem' }}>🦭</div>
-                    <p style={{ fontSize:'1.2rem', fontWeight:700, color:'#4A7FA0', margin:0 }}>Sea lions use flippers to swim.</p>
+                  {/* Passage card with blank */}
+                  <div style={{ background:'white', borderRadius:'16px', padding:'1.6rem 1.4rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1.2rem', textAlign:'center' }}>
+                    <div style={{ fontSize:'2.5rem', marginBottom:'0.7rem' }}>🦭</div>
+                    <p style={{ fontSize:'1.1rem', color:'#333', fontWeight:500, lineHeight:2, margin:0 }}>
+                      {'Sea lions use '}
+                      <span
+                        style={{ display:'inline-block', minWidth:'110px', borderBottom:'3px solid #4A7FA0', padding:'0.1rem 0.5rem', color: isSelected ? '#4A7FA0' : '#aaa', fontWeight:700, fontSize:'1.05rem', cursor:'default', background: isSelected ? '#EAF3F8' : 'transparent', borderRadius:'6px 6px 0 0', transition:'all 0.2s' }}>
+                        {isSelected ? opts[selected] : '_______'}
+                      </span>
+                      {' to swim.'}
+                    </p>
+                    {!isSelected && <p style={{ fontSize:'0.8rem', color:'#999', marginTop:'0.6rem', marginBottom:0 }}>Tap an answer below to fill the blank</p>}
                   </div>
-                  <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
-                    <p style={{ fontSize:'1rem', fontWeight:600, color:'var(--jungle-deep)', textAlign:'center', marginBottom:'0.9rem' }}>{stageQ.q}</p>
-                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' }}>
-                      {stageQ.options.map((opt, i) => (
-                        <button key={i} onClick={() => handleQuizAnswer(0, i)}
-                          style={{ padding:'1rem', borderRadius:'12px', border:'2px solid transparent', background:'#F0F7FA', color:'var(--jungle-deep)', fontSize:'0.95rem', fontWeight:700, cursor:'pointer', transition:'all 0.15s' }}>
-                          {opt}
+
+                  {/* Option buttons */}
+                  <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', marginBottom:'1.2rem' }}>
+                    <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.7rem', textAlign:'center' }}>Choose one:</p>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.7rem' }}>
+                      {opts.map((opt, i) => (
+                        <button key={i}
+                          onClick={() => setSeaLionAnswers({ 0: i })}
+                          style={{ padding:'0.9rem', borderRadius:'12px', border: selected === i ? '2.5px solid #4A7FA0' : '2px solid #E5E5E5', background: selected === i ? '#EAF3F8' : '#F8FAFB', color: selected === i ? '#4A7FA0' : 'var(--jungle-deep)', fontSize:'0.95rem', fontWeight:700, cursor:'pointer', transition:'all 0.15s' }}>
+                          {String.fromCharCode(65 + i)}. {opt}
                         </button>
                       ))}
                     </div>
                   </div>
+
+                  {/* Submit button */}
+                  <button onClick={submitS1} disabled={!isSelected}
+                    style={{ width:'100%', padding:'1rem', borderRadius:'50px', border:'none', background: isSelected ? 'linear-gradient(135deg, #4A7FA0, #2D5F7F)' : '#CCC', color:'white', fontSize:'1.1rem', fontWeight:700, cursor: isSelected ? 'pointer' : 'not-allowed', transition:'all 0.2s', textTransform:'uppercase', letterSpacing:'0.08em' }}>
+                    {isSelected ? 'Submit Answer ✔' : 'Select an answer first'}
+                  </button>
                 </div>
               )}
             </div>
@@ -4190,8 +4228,9 @@
           const detailHits = detailWords.filter(w => lower.includes(w)).length;
           behaviourBonus = Math.min(conservationHits + 1, 5);
           if (classStage <= 2) {
-            behaviourBonus = stage1BehaviourScore(text, conservationWords);
-            detailBonus = stage1DetailScore(text, detailWords);
+            const s1words = ['lion','lions','big','large','sleeping','resting','walking','running','eating','sitting','lying','watching','looking','mane','fur','yellow','golden','spotted','enclosure','cage','grass'];
+            behaviourBonus = stage1BehaviourScore(text, s1words);
+            detailBonus = stage1DetailScore(text, s1words);
             literacyBonus = stage1WritingScore(text);
           } else if (classStage === 3) {
             detailBonus = detailHits === 0 ? 0 : detailHits === 1 ? 2 : Math.min(detailHits + 1, 4);
@@ -4208,8 +4247,9 @@
           const detailWords = ['groom','dominan','leader','young','baby','infant','adult','male','female','hierarchy','bond','relation','communicat','gesture','express','sound','noise','fur','branch','tree','platform','enclosure','group','community','family'];
           const detailHits = detailWords.filter(w => lower.includes(w)).length;
           if (classStage <= 2) {
-            behaviourBonus = stage1BehaviourScore(text, behaviourWords);
-            detailBonus = stage1DetailScore(text, detailWords);
+            const s1words = ['chimpanzee','chimp','chimps','monkey','together','playing','eating','sitting','climbing','grooming','hugging','touching','looking','tree','branch','group','fur','black','brown','noisy','quiet'];
+            behaviourBonus = stage1BehaviourScore(text, s1words);
+            detailBonus = stage1DetailScore(text, s1words);
             literacyBonus = stage1WritingScore(text);
           } else if (classStage === 3) {
             detailBonus = detailHits === 0 ? 0 : detailHits === 1 ? 2 : Math.min(detailHits + 1, 4);
@@ -4230,8 +4270,9 @@
           const hasExplanation = explanationPatterns.some(p => lower.includes(p));
           const elements = [hasObservation, hasConcept, hasExplanation].filter(Boolean).length;
           if (classStage <= 2) {
-            behaviourBonus = stage1BehaviourScore(text, observationWords);
-            detailBonus = stage1DetailScore(text, [...observationWords, ...conceptWords]);
+            const s1words = ['gorilla','gorillas','big','large','sitting','eating','climbing','moving','walking','resting','sleeping','black','arm','hand','tree','branch','ground','group','together','strong','quiet'];
+            behaviourBonus = stage1BehaviourScore(text, s1words);
+            detailBonus = stage1DetailScore(text, s1words);
             literacyBonus = stage1WritingScore(text);
           } else if (classStage === 3) {
             if (elements === 0) detailBonus = 0;
@@ -4259,9 +4300,9 @@
           const hasExplanation = explanationPatterns.some(p => lower.includes(p));
           const elements = [hasObservation, hasConcept, hasExplanation].filter(Boolean).length;
           if (classStage <= 2) {
-            behaviourBonus = stage1BehaviourScore(text, observationWords);
-            detailBonus = stage1DetailScore(text, [...observationWords, ...conceptWords]);
-            literacyBonus = stage1WritingScore(text);
+            const s1words = ['giraffe','giraffes','tall','long','neck','eating','leaves','standing','walking','tree','brown','spotted','big','huge','high','reaching','grass','yellow','spots'];
+            behaviourBonus = stage1BehaviourScore(text, s1words);
+            detailBonus = stage1DetailScore(text, s1words);
           } else if (classStage === 3) {
             // Stage 3: simple explanation → detail ≥ 3–4
             if (elements === 0) detailBonus = 0;
@@ -4311,8 +4352,9 @@
           const hasConnection = connectionWords.some(w => lower.includes(w));
           const elements = [hasLocation, hasBehaviourDetail, hasExplanation, hasConnection].filter(Boolean).length;
           if (classStage <= 2) {
-            behaviourBonus = stage1BehaviourScore(text, behaviourWords);
-            detailBonus = stage1DetailScore(text, behaviourWords);
+            const s1words = ['grass','lawn','green','soft','ground','dirt','soil','tree','plant','outside','nature','sunny','warm','cool','birds','insects','smell','feel','walking','standing'];
+            behaviourBonus = stage1BehaviourScore(text, s1words);
+            detailBonus = stage1DetailScore(text, s1words);
             literacyBonus = stage1WritingScore(text);
           } else if (classStage === 3) {
             if (elements === 0) detailBonus = 0;
@@ -4344,9 +4386,9 @@
           const hasLink = linkWords.some(p => lower.includes(p));
           const elements = [hasDingoAppearance, hasEnvironment, hasExplanation, hasLink].filter(Boolean).length;
           if (classStage <= 2) {
-            behaviourBonus = stage1BehaviourScore(text, behaviourWords);
-            detailBonus = stage1DetailScore(text, behaviourWords);
-            literacyBonus = stage1WritingScore(text);
+            const s1words = ['dingo','dingos','dog','fur','brown','golden','sandy','yellow','sitting','standing','walking','looking','sniffing','eating','running','tail','ears','nose','paws','fence'];
+            behaviourBonus = stage1BehaviourScore(text, s1words);
+            detailBonus = stage1DetailScore(text, s1words);
           } else if (classStage === 3) {
             if (elements === 0) detailBonus = 0;
             else if (elements === 1) detailBonus = 2;
@@ -4377,9 +4419,9 @@
           const hasPositioning = positionWords.some(p => lower.includes(p));
           const elements = [hasAnimals, hasInteraction, hasExplanation, hasPositioning].filter(Boolean).length;
           if (classStage <= 2) {
-            behaviourBonus = stage1BehaviourScore(text, behaviourWords);
-            detailBonus = stage1DetailScore(text, behaviourWords);
-            literacyBonus = stage1WritingScore(text);
+            const s1words = ['buffalo','buffaloes','big','large','horns','grey','brown','sitting','standing','eating','grass','mud','water','hooves','feet','heavy','bird','birds','watching','moving','nearby'];
+            behaviourBonus = stage1BehaviourScore(text, s1words);
+            detailBonus = stage1DetailScore(text, s1words);
           } else if (classStage === 3) {
             if (elements === 0) detailBonus = 0;
             else if (elements === 1) detailBonus = 2;
@@ -4410,9 +4452,9 @@
           const hasCauseEffect = causeEffectWords.some(p => lower.includes(p));
           const elements = [hasHumanImpact, hasEnvironment, hasExplanation, hasCauseEffect].filter(Boolean).length;
           if (classStage <= 2) {
-            behaviourBonus = stage1BehaviourScore(text, behaviourWords);
-            detailBonus = stage1DetailScore(text, behaviourWords);
-            literacyBonus = stage1WritingScore(text);
+            const s1words = ['sea lion','seal','seals','water','swimming','flippers','wet','splashing','sitting','lying','rock','big','brown','grey','nose','whiskers','diving','watching','playing','jumping'];
+            behaviourBonus = stage1BehaviourScore(text, s1words);
+            detailBonus = stage1DetailScore(text, s1words);
           } else if (classStage === 3) {
             if (elements === 0) detailBonus = 0;
             else if (elements === 1) detailBonus = 2;
@@ -4443,9 +4485,9 @@
           const hasFeeling = feelingWords.some(w => lower.includes(w));
           const elements = [hasSounds, hasSource, hasEnvironment, hasFeeling].filter(Boolean).length;
           if (classStage <= 2) {
-            behaviourBonus = stage1BehaviourScore(text, behaviourWords);
-            detailBonus = stage1DetailScore(text, behaviourWords);
-            literacyBonus = stage1WritingScore(text);
+            const s1words = ['bird','birds','tree','trees','leaves','water','waterfall','wind','quiet','loud','sound','sounds','hear','listening','walking','nature','bush','green','insects','animals','voice'];
+            behaviourBonus = stage1BehaviourScore(text, s1words);
+            detailBonus = stage1DetailScore(text, s1words);
           } else if (classStage === 3) {
             if (elements === 0) detailBonus = 0;
             else if (elements === 1) detailBonus = 2;
@@ -5208,6 +5250,20 @@
                 </div>
               ) : currentAnimal.id === 'lion' ? (
                 <div style={{ background:'white', borderRadius:'20px', padding:'2.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
+                  {classStage <= 2 ? (
+                    <>
+                      <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'0.8rem', textAlign:'center' }}>🦁 What did you see?</h2>
+                      <div style={{ display:'flex', flexWrap:'wrap', gap:'0.6rem', justifyContent:'center', marginBottom:'1.4rem' }}>
+                        {[
+                          { label:'What animal?', color:'var(--jungle-light)' },
+                          { label:'What is it doing?', color:'var(--discovery-blue)' },
+                          { label:'Where is it?', color:'var(--sunset-orange)' }
+                        ].map((chip, i) => (
+                          <div key={i} style={{ background:`${chip.color}18`, border:`1.5px solid ${chip.color}40`, borderRadius:'20px', padding:'0.45rem 0.9rem', fontSize:'0.9rem', fontWeight:700, color:chip.color }}>{chip.label}</div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (<>
                   {/* Conservation scientist framing */}
                   <div style={{ display:'flex', gap:'0.75rem', marginBottom:'1.5rem' }}>
                     <div style={{ flex:1, background:'linear-gradient(135deg, #D1FAE5, #A7F3D0)', borderRadius:'12px', padding:'0.75rem 1rem' }}>
@@ -5258,10 +5314,25 @@
                     style={{ width:'100%', padding:'1.5rem', borderRadius:'50px', border:'none', background: wordCount >= ({1:3,2:5,3:8,4:10,5:12}[classStage]||10) ? 'linear-gradient(135deg, #D4A574, #A0714A)' : '#CCC', color:'white', fontSize:'1.3rem', fontWeight:700, cursor: wordCount >= ({1:3,2:5,3:8,4:10,5:12}[classStage]||10) ? 'pointer' : 'not-allowed', transition:'all 0.3s ease', textTransform:'uppercase', letterSpacing:'0.1em', marginTop:'2rem', boxShadow: wordCount >= ({1:3,2:5,3:8,4:10,5:12}[classStage]||10) ? '0 8px 24px rgba(212,165,116,0.4)' : 'none' }}>
                     {wordCount < ({1:3,2:5,3:8,4:10,5:12}[classStage]||10) ? 'Write More to Continue' : 'Submit Conservation Reflection'}
                   </button>
+                  </>)}
                 </div>
               ) : (
                 <div style={{ background:'white', borderRadius:'20px', padding:'2.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
-                {currentAnimal.id === 'chimpanzee' ? (
+                {classStage <= 2 ? (
+                  /* Stage 1 — unified simple prompt for ALL animals */
+                  <>
+                    <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'0.8rem', textAlign:'center' }}>What did you see? 👀</h2>
+                    <div style={{ display:'flex', flexWrap:'wrap', gap:'0.6rem', justifyContent:'center', marginBottom:'1.4rem' }}>
+                      {[
+                        { label:'What animal?', color:'var(--jungle-light)' },
+                        { label:'What is it doing?', color:'var(--discovery-blue)' },
+                        { label:'Where is it?', color:'var(--sunset-orange)' }
+                      ].map((chip, i) => (
+                        <div key={i} style={{ background:`${chip.color}18`, border:`1.5px solid ${chip.color}40`, borderRadius:'20px', padding:'0.45rem 0.9rem', fontSize:'0.9rem', fontWeight:700, color:chip.color }}>{chip.label}</div>
+                      ))}
+                    </div>
+                  </>
+                ) : currentAnimal.id === 'chimpanzee' ? (
                   <>
                     <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'0.5rem', textAlign:'center' }}>🐒 Chimpanzee Group Dynamics</h2>
                     <p style={{ color:'#555', marginBottom:'0.5rem', lineHeight:1.6, fontSize:'0.95rem', textAlign:'center' }}>
@@ -5401,14 +5472,16 @@
                     </div>
                   </>
                 )}
-                <p style={{ color:'#444', fontWeight:600, marginBottom:'1rem', fontSize:'1rem', textAlign:'center' }}>
-                  {currentAnimal.id === 'concert-lawn'
-                    ? (currentAnimal.writingPromptByStage && currentAnimal.writingPromptByStage[classStage]) || 'Describe your experience walking on the grass and explain how this environment is different to a built environment like the city.'
-                    : currentAnimal.id === 'blue-mountains-bushwalk'
-                    ? null
-                    : (currentAnimal.writingPromptByStage && currentAnimal.writingPromptByStage[classStage]) || currentAnimal.observationPrompt}
-                </p>
-                {currentAnimal.id === 'concert-lawn' && (
+                {classStage > 2 && (
+                  <p style={{ color:'#444', fontWeight:600, marginBottom:'1rem', fontSize:'1rem', textAlign:'center' }}>
+                    {currentAnimal.id === 'concert-lawn'
+                      ? (currentAnimal.writingPromptByStage && currentAnimal.writingPromptByStage[classStage]) || 'Describe your experience walking on the grass and explain how this environment is different to a built environment like the city.'
+                      : currentAnimal.id === 'blue-mountains-bushwalk'
+                      ? null
+                      : (currentAnimal.writingPromptByStage && currentAnimal.writingPromptByStage[classStage]) || currentAnimal.observationPrompt}
+                  </p>
+                )}
+                {currentAnimal.id === 'concert-lawn' && classStage > 2 && (
                   <div style={{ background:'#F0F7F4', border:'1px solid #B8D9C8', borderRadius:'12px', padding:'0.9rem 1.1rem', marginBottom:'0.75rem' }}>
                     <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.35rem' }}>Write 2–3 sentences. Include:</p>
                     <ul style={{ margin:'0 0 0.5rem', paddingLeft:'1.1rem', fontSize:'0.8rem', color:'#555', lineHeight:1.8 }}>
