@@ -1911,7 +1911,7 @@
             2: 'What was the lion doing and what did it look like?',
             3: 'Describe the lion and what it was doing when you observed it.',
             4: 'Watch the lions. Describe their behavior and social interactions.',
-            5: 'Explain why lions are important to the ecosystem and what you observed that supports this.',
+            5: 'Explain how humans impact lions and why protecting them is important.',
           },
           questions: [
             { q: 'Lion Micro Investigation',
@@ -1959,7 +1959,7 @@
             2: 'What did you see and what was it doing?',
             3: 'Describe the giraffe and where it was.',
             4: 'Describe your observation and explain how the giraffe\'s height helps it.',
-            5: 'Explain how the giraffe\'s height helps it survive in its environment.',
+            5: 'Explain why the giraffe is tall and how this helps it survive.',
           },
           observationPrompt: 'Describe your observation and explain how the giraffe\'s height helps it.',
           pointValue: 50
@@ -1973,7 +1973,7 @@
             2: 'What did the koala look like and what was it doing?',
             3: 'Describe where the koala was and what you could observe about it.',
             4: 'Watch the koala carefully. What position is it in?',
-            5: 'Explain how koalas survive in their environment and what you observed that supports this.',
+            5: 'Explain what the koala is doing and why this helps it survive.',
           },
           questions: [
             { q: 'Without intervention, by what year could koalas become extinct in NSW?',
@@ -2031,7 +2031,7 @@
             2: 'What did the tiger look like and what was it doing?',
             3: 'Describe the tiger and what you noticed about how it moved or behaved.',
             4: 'Watch the tiger\'s behavior. Describe how it moves.',
-            5: 'Explain how the tiger\'s physical features and behaviour help it survive, and describe what you observed.',
+            5: 'Explain what you observed about the tiger and how this relates to its behaviour or environment.',
           },
           questions: [
             { q: 'How many Sumatran tigers are left in the wild?',
@@ -2077,7 +2077,7 @@
             2: 'What did the ground feel like and what did you notice around you?',
             3: 'Describe what you felt and noticed in this environment.',
             4: 'Describe your experience walking on the grass and explain how this environment is different to a built environment like the city.',
-            5: 'Explain why natural environments like this support more living things than built environments, using what you observed as evidence.',
+            5: 'Explain what you experienced and why the environment felt that way.',
           },
           missionTitle: '🕵️ Habitat Detective: Compare the Landscapes',
           missionTask: '🚶 Walk around the Concert Lawn and observe the environment.\nThen turn and look at Sydney city across the water.',
@@ -2139,7 +2139,7 @@
             2: 'What did the dingo look like and what was it doing?',
             3: 'Describe the dingo\'s appearance and the environment around it.',
             4: 'Explain how the dingo\'s appearance helps it survive in its environment.',
-            5: 'Explain how the dingo\'s colouring is an adaptation for survival and link this to what you observed.',
+            5: 'Explain what you noticed about the dingo and how it helps it survive.',
           },
           questions: [
             { q: 'What is the dingo\'s role in the Australian ecosystem?',
@@ -2169,7 +2169,7 @@
             2: 'What were the lemurs doing and where were they?',
             3: 'Describe what the lemurs were doing and which part of their enclosure they used.',
             4: 'Describe how the lemurs use different parts of their enclosure.',
-            5: 'Explain why lemurs use different parts of their enclosure and what this tells us about their needs.',
+            5: 'Explain where the lemurs are and why they use that space.',
           },
           questions: [
             { q: 'Which behaviour did you observe the MOST?',
@@ -2196,7 +2196,7 @@
             2: 'What was the sea lion doing and where was it?',
             3: 'Describe what you could see the sea lion doing in the water or on land.',
             4: 'Explain how humans can impact sea lions and their environment.',
-            5: 'Explain how human activities affect sea lions and their ocean environment, using specific examples.',
+            5: 'Explain how humans impact sea lions and why this matters.',
           },
           questions: [
             { q: 'Blank 1', options: ['desert','forest','water','sky'],        correct: 2 },
@@ -2217,7 +2217,7 @@
             2: 'What could you hear and how did it make you feel?',
             3: 'Describe what you heard and whether the sounds were from nature or humans.',
             4: 'Describe what you could hear and explain how it made you feel.',
-            5: 'Explain why natural environments are important for living things, using what you heard as evidence.',
+            5: 'Explain what you heard and how it reflects the environment.',
           },
           questions: [
             { q: 'What is at the top of the waterfall?',
@@ -2263,7 +2263,7 @@
             2: 'What animals were near the buffalo and what were they doing?',
             3: 'Describe the buffalo and any other animals nearby, and what they were doing.',
             4: 'Describe a relationship you can observe between the buffalo (or rhino) and another animal, and explain how it may help them.',
-            5: 'Explain how the relationship you observed between the buffalo and another animal helps one or both survive — use scientific vocabulary.',
+            5: 'Explain how the buffalo\'s features or relationships help it survive.',
           },
           questions: [
             { q: 'Looking at the buffalo, what can you notice that helps it not sink into soft ground?',
@@ -2320,7 +2320,7 @@
         if (stage <= 2) return { header: '✏️ Start with:', points: [], starters: ['I saw…', 'I can see…'] };
         if (stage === 3) return { header: '✏️ A good response includes:', points: ['What you can observe', 'One feature or behaviour', 'Why you think it does that'], starters: ['I noticed…', 'I think this is because…'] };
         if (stage === 4) return { header: '✔ A strong response includes:', points: ['A clear observation (what + where/what doing)', 'A relevant concept or feature', 'A simple explanation or link to survival'], starters: ['I observed that…', 'This may help the animal because…'] };
-        return { header: '✔ A high-quality response includes:', points: ['A precise observation using scientific terms', 'A concept (adaptation, behaviour, ecosystem)', 'An explanation linking observation to survival or function'], starters: ['Based on my observation…', 'This suggests that…', 'This adaptation allows the animal to…'] };
+        return { header: '✔ Stage 5 — Explain and reason:', points: ['What did you observe?', 'Why does this happen?', 'How does this help the animal or environment?'], starters: ['Based on my observation…', 'This is significant because…', 'This adaptation allows the animal to…'] };
       }
 
       // Returns the question array for the current stage.
@@ -2379,6 +2379,50 @@
         if (realCount >= 3 && wc >= 5) return 4;    // 4 — mostly readable
         if (realCount >= 5 && wc >= 7) return 5;    // 5 — clear and readable
         return 3;
+      }
+
+      // Stage 5 scoring: explanation required for high scores, observation alone caps at 3.
+      // behaviourWords = the same relevance words used in the animal's standard scoring.
+      // detailWords    = the concept/detail words for the animal.
+      // hasExplanation = boolean — text contains causal/reasoning language.
+      function stage5Score(text, behaviourWords, detailWords, hasExplanation) {
+        const lower = text.toLowerCase();
+        const words = text.trim().split(/\s+/).filter(Boolean);
+        const wc = words.length;
+
+        // Behaviour: correct + explanation needed for 4–5
+        const bHits = behaviourWords.filter(w => lower.includes(w)).length;
+        let bScore;
+        if (bHits === 0 && wc < 3) bScore = 1;
+        else if (bHits === 0) bScore = 2;
+        else if (bHits >= 1 && !hasExplanation) bScore = 3;   // observation but no reasoning
+        else if (bHits >= 1 && hasExplanation && wc < 8) bScore = 4;
+        else if (bHits >= 1 && hasExplanation && wc >= 8) bScore = 5;
+        else bScore = 3;
+
+        // Detail: specific keywords + explanation needed for 4–5
+        const dHits = detailWords.filter(w => lower.includes(w)).length;
+        let dScore;
+        if (dHits === 0 && wc < 3) dScore = 1;
+        else if (dHits === 0) dScore = 2;
+        else if (dHits === 1 && !hasExplanation) dScore = 3;
+        else if (dHits >= 1 && hasExplanation && dHits < 3) dScore = 4;
+        else if (dHits >= 3 && hasExplanation) dScore = 5;
+        else if (dHits >= 2 && !hasExplanation) dScore = 3;
+        else dScore = 3;
+
+        // Writing: structure and clarity required
+        const hasSentence = /[A-Z].*[.!?]/.test(text.trim());
+        const uniqueWords = new Set(words.map(w => w.toLowerCase()));
+        let wScore;
+        if (wc < 3) wScore = 1;
+        else if (wc < 6) wScore = 2;
+        else if (wc < 10 && !hasSentence) wScore = 3;
+        else if (wc >= 6 && hasSentence && uniqueWords.size >= 5) wScore = 4;
+        else if (wc >= 10 && hasSentence && uniqueWords.size >= 8) wScore = 5;
+        else wScore = 3;
+
+        return { b: bScore, d: dScore, w: wScore };
       }
 
       function isLowQualityResponse(text) {
@@ -4226,6 +4270,7 @@
           const detailWords = ['prey','predator','extinction','humans','habitat','biodiversity','threat','poaching','population','climate','savanna','africa','apex','chain'];
           const conservationHits = conservationWords.filter(w => lower.includes(w)).length;
           const detailHits = detailWords.filter(w => lower.includes(w)).length;
+          const hasExplanation = ['because','so','helps','allows','leads','since','therefore','means','in order','as a result'].some(p => lower.includes(p));
           behaviourBonus = Math.min(conservationHits + 1, 5);
           if (classStage <= 2) {
             const s1words = ['lion','lions','big','large','huge','long','tall','heavy','strong','fast','sleeping','resting','walking','running','eating','sitting','watching','mane','fur','yellow','golden','orange','paw','tail','shade','grass'];
@@ -4235,11 +4280,12 @@
           } else if (classStage === 3) {
             detailBonus = detailHits === 0 ? 0 : detailHits === 1 ? 2 : Math.min(detailHits + 1, 4);
           } else if (classStage === 5) {
-            detailBonus = detailHits === 0 ? 0 : detailHits === 1 ? 1 : Math.min(detailHits + 1, 5);
+            const s5 = stage5Score(text, conservationWords, detailWords, hasExplanation);
+            behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
           } else {
             detailBonus = Math.min(detailHits + 1, 5);
           }
-          literacyBonus = calculateWritingScore(text, classStage);
+          if (classStage !== 5) literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'chimpanzee') {
           const behaviourWords = ['groom','play','interact','fight','chase','touch','hug','follow','watch','look','sit','move','climb','eat','feed','rest','sleep','call','scream','gesture','together','each other','one another','dominant','social','group'];
           const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
@@ -4254,11 +4300,13 @@
           } else if (classStage === 3) {
             detailBonus = detailHits === 0 ? 0 : detailHits === 1 ? 2 : Math.min(detailHits + 1, 4);
           } else if (classStage === 5) {
-            detailBonus = detailHits === 0 ? 0 : detailHits === 1 ? 1 : Math.min(detailHits + 1, 5);
+            const hasExp5 = ['because','so','helps','allows','leads','since','therefore','means'].some(p => lower.includes(p));
+            const s5 = stage5Score(text, behaviourWords, detailWords, hasExp5);
+            behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
           } else {
             detailBonus = Math.min(detailHits + 1, 5);
           }
-          literacyBonus = calculateWritingScore(text, classStage);
+          if (classStage !== 5) literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'gorilla') {
           behaviourBonus = calculateBehaviourScore(text);
           literacyBonus = calculateWritingScore(text, classStage);
@@ -4280,10 +4328,8 @@
             else if (hasExplanation) detailBonus = Math.min(elements + 1, 4);
             else detailBonus = Math.min(elements + 1, 3);
           } else if (classStage === 5) {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 1;
-            else if (hasExplanation && elements >= 2) detailBonus = Math.min(elements + 1, 5);
-            else detailBonus = Math.min(elements, 3);
+            const s5 = stage5Score(text, observationWords, conceptWords, hasExplanation);
+            behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
           } else {
             if (elements === 0) detailBonus = 0;
             else if (elements === 1) detailBonus = 1;
@@ -4310,11 +4356,8 @@
             else if (hasExplanation) detailBonus = Math.min(elements + 1, 4);
             else detailBonus = Math.min(elements + 1, 3);
           } else if (classStage === 5) {
-            // Stage 5: require explanation for detail ≥ 4
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 1;
-            else if (hasExplanation && elements >= 2) detailBonus = Math.min(elements + 1, 5);
-            else detailBonus = Math.min(elements, 3); // no explanation caps at 3
+            const s5 = stage5Score(text, observationWords, conceptWords, hasExplanation);
+            behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
           } else {
             // Stage 4 (default)
             if (elements === 0) detailBonus = 0;
@@ -4367,15 +4410,8 @@
             else if (hasExplanation) detailBonus = Math.min(elements + 1, 4);
             else detailBonus = Math.min(elements + 1, 3);
           } else if (classStage === 5) {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 1;
-            else if (hasExplanation && elements >= 2) detailBonus = Math.min(elements + 1, 5);
-            else detailBonus = Math.min(elements, 3);
-          } else {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 1;
-            else detailBonus = Math.min(elements + 1, 5);
-          }
+            const s5 = stage5Score(text, locationWords, behaviourDetailWords, hasExplanation);
+            behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
           literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'dingo') {
           const behaviourWords = ['fur','coat','colour','color','tan','sandy','brown','golden','yellow','pale','dark','blend','camouflage','hide','look','appear','observe','notice','see','watch','spot','match','similar'];
@@ -4400,15 +4436,8 @@
             else if (hasExplanation) detailBonus = Math.min(elements + 1, 4);
             else detailBonus = Math.min(elements + 1, 3);
           } else if (classStage === 5) {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 1;
-            else if (hasExplanation && elements >= 2) detailBonus = Math.min(elements + 1, 5);
-            else detailBonus = Math.min(elements, 3);
-          } else {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 1;
-            else detailBonus = Math.min(elements + 1, 5);
-          }
+            const s5 = stage5Score(text, dingoAppearanceWords, envWords, hasExplanation);
+            behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
           literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'asian-water-buffalo') {
           const behaviourWords = ['bird','birds','buffalo','rhino','tick','tickbird','oxpecker','cattle','egret','sit','perch','stand','walk','follow','eat','feed','groom','clean','pick','peck','fly','land','nearby','together','interact','observe','see','notice','watch'];
@@ -4433,15 +4462,8 @@
             else if (hasExplanation) detailBonus = Math.min(elements + 1, 4);
             else detailBonus = Math.min(elements + 1, 3);
           } else if (classStage === 5) {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 1;
-            else if (hasExplanation && elements >= 2) detailBonus = Math.min(elements + 1, 5);
-            else detailBonus = Math.min(elements, 3);
-          } else {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 1;
-            else detailBonus = Math.min(elements + 1, 5);
-          }
+            const s5 = stage5Score(text, animalWords, interactionWords, hasExplanation);
+            behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
           literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'sea-lion') {
           const behaviourWords = ['human','people','person','pollution','plastic','waste','rubbish','litter','fishing','boat','ship','noise','oil','chemical','tourist','visitor','enclosure','structure','fence','water','ocean','sea'];
@@ -4466,15 +4488,8 @@
             else if (hasExplanation) detailBonus = Math.min(elements + 1, 4);
             else detailBonus = Math.min(elements + 1, 3);
           } else if (classStage === 5) {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 1;
-            else if (hasExplanation && elements >= 2) detailBonus = Math.min(elements + 1, 5);
-            else detailBonus = Math.min(elements, 3);
-          } else {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 1;
-            else detailBonus = Math.min(elements + 1, 5);
-          }
+            const s5 = stage5Score(text, humanImpactWords, environmentWords, hasExplanation);
+            behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
           literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'blue-mountains-bushwalk') {
           const behaviourWords = ['hear','heard','listen','sound','sounds','bird','birds','wind','leaf','leaves','water','rain','insect','cricket','frog','silence','quiet','rustl','distant','echo','noise','voice','step','footstep','crunch'];
@@ -4500,15 +4515,8 @@
             else if (hasFeeling) detailBonus = Math.min(elements + 1, 4);
             else detailBonus = Math.min(elements + 1, 3);
           } else if (classStage === 5) {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 1;
-            else if (hasFeeling && elements >= 2) detailBonus = Math.min(elements + 1, 5);
-            else detailBonus = Math.min(elements, 3);
-          } else {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 1;
-            else detailBonus = Math.min(elements + 1, 5);
-          }
+            const s5 = stage5Score(text, soundWords, environmentWords, hasFeeling);
+            behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
           literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'tiger') {
           const tigerBehaviourWords = ['tiger','tigers','stripe','stripes','orange','black','white','fur','coat','big','large','huge','long','tall','heavy','fast','strong','slow','walking','pacing','resting','sleeping','sitting','lying','watching','prowling','enclosure','grass','tree','rock','water','pool'];
@@ -4524,11 +4532,13 @@
           } else if (classStage === 3) {
             detailBonus = tigerDetailHits === 0 ? 0 : tigerDetailHits === 1 ? 2 : Math.min(tigerDetailHits + 1, 4);
           } else if (classStage === 5) {
-            detailBonus = tigerDetailHits === 0 ? 0 : tigerDetailHits === 1 ? 1 : Math.min(tigerDetailHits + 1, 5);
+            const hasExp5 = ['because','so','helps','allows','leads','since','therefore','means','in order'].some(p => lower.includes(p));
+            const s5 = stage5Score(text, tigerBehaviourWords, tigerDetailWords, hasExp5);
+            behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
           } else {
             detailBonus = Math.min(tigerDetailHits + 1, 5);
           }
-          literacyBonus = calculateWritingScore(text, classStage);
+          if (classStage !== 5) literacyBonus = calculateWritingScore(text, classStage);
         } else {
           if (classStage <= 2) {
             const s1words = ['tiger','tigers','big','large','huge','long','fast','strong','stripe','stripes','orange','black','white','walking','pacing','resting','sleeping','watching','fur','grass','water','rock'];
@@ -5378,6 +5388,10 @@
                             { label:'What did you hear?', color:'var(--jungle-light)' },
                             { label:'Was it loud or quiet?', color:'var(--discovery-blue)' },
                             { label:'What made the sound?', color:'var(--sunset-orange)' }
+                          ] : classStage === 5 ? [
+                            { label:'What did you observe?', color:'var(--jungle-light)' },
+                            { label:'Why does this happen?', color:'var(--discovery-blue)' },
+                            { label:'How does this help survive?', color:'var(--sunset-orange)' }
                           ] : [
                             { label:'What did you see?', color:'var(--jungle-light)' },
                             { label:'What is it doing?', color:'var(--discovery-blue)' },
@@ -5539,7 +5553,7 @@
                           'concert-lawn': 'How did the ground feel on your feet?',
                           'blue-mountains-bushwalk': 'What could you hear?',
                         }[currentAnimal?.id] || 'What did you see?'
-                      ) : 'Your Observations'}
+                      ) : classStage === 5 ? ((currentAnimal.writingPromptByStage && currentAnimal.writingPromptByStage[5]) || 'Your Observations') : 'Your Observations'}
                     </h2>
                     {classStage > 2 && (
                       <p style={{ color:'#666', marginBottom:'1.2rem', lineHeight:1.6, fontSize:'1.1rem', textAlign:'center' }}>
@@ -5585,7 +5599,21 @@
                   </div>
                 )}
                 <textarea value={observation} onChange={(e)=>setObservation(e.target.value)}
-                  placeholder={classStage <= 2 ? 'I saw...' : currentAnimal.id === 'chimpanzee' ? 'I observed that...' : currentAnimal.id === 'gorilla' ? 'I noticed that the gorillas...' : currentAnimal.id === 'giraffe' ? (classStage === 3 ? 'I can see the giraffe...' : classStage === 5 ? 'The giraffe\'s height is an adaptation that...' : "I noticed that the giraffe's ... helps it to...") : currentAnimal.id === 'concert-lawn' ? 'The grass felt...' : currentAnimal.id === 'lemur' ? 'The lemurs are using...' : currentAnimal.id === 'dingo' ? "The dingo's fur is..." : currentAnimal.id === 'asian-water-buffalo' ? 'I can see...' : currentAnimal.id === 'sea-lion' ? 'Humans can...' : currentAnimal.id === 'blue-mountains-bushwalk' ? 'I could hear...' : 'Describe what you observe in detail...'}
+                  placeholder={classStage <= 2 ? 'I saw...' : classStage === 5 ? (
+                    currentAnimal.id === 'koala' ? 'The koala is adapting to its environment by...' :
+                    currentAnimal.id === 'lion' ? 'Humans impact lions by... This is important because...' :
+                    currentAnimal.id === 'tiger' ? 'I observed the tiger... This relates to its behaviour because...' :
+                    currentAnimal.id === 'giraffe' ? 'The giraffe\'s height helps it survive by...' :
+                    currentAnimal.id === 'gorilla' ? 'The gorilla\'s behaviour shows... This suggests...' :
+                    currentAnimal.id === 'chimpanzee' ? 'Social behaviour helps chimpanzees because...' :
+                    currentAnimal.id === 'dingo' ? 'The dingo\'s appearance is an adaptation because...' :
+                    currentAnimal.id === 'lemur' ? 'The lemurs use this space because...' :
+                    currentAnimal.id === 'sea-lion' ? 'Human activities affect sea lions by...' :
+                    currentAnimal.id === 'asian-water-buffalo' ? 'The relationship I observed helps survival because...' :
+                    currentAnimal.id === 'concert-lawn' ? 'This environment felt this way because...' :
+                    currentAnimal.id === 'blue-mountains-bushwalk' ? 'What I heard reflects this environment because...' :
+                    'Based on my observation...'
+                  ) : currentAnimal.id === 'chimpanzee' ? 'I observed that...' : currentAnimal.id === 'gorilla' ? 'I noticed that the gorillas...' : currentAnimal.id === 'giraffe' ? (classStage === 3 ? 'I can see the giraffe...' : "I noticed that the giraffe's ... helps it to...") : currentAnimal.id === 'concert-lawn' ? 'The grass felt...' : currentAnimal.id === 'lemur' ? 'The lemurs are using...' : currentAnimal.id === 'dingo' ? "The dingo's fur is..." : currentAnimal.id === 'asian-water-buffalo' ? 'I can see...' : currentAnimal.id === 'sea-lion' ? 'Humans can...' : currentAnimal.id === 'blue-mountains-bushwalk' ? 'I could hear...' : 'Describe what you observe in detail...'}
                   style={{ width:'100%', minHeight:'200px', padding:'1.5rem', borderRadius:'16px', border:'3px solid #E5E5E5', fontSize:'1.1rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', transition:'border-color 0.2s ease' }}
                   onFocus={(e)=>e.target.style.borderColor=currentAnimal.color} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'} />
                 {classStage <= 2 && (
