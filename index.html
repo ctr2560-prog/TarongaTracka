@@ -5252,10 +5252,10 @@
                 <div style={{ background:'white', borderRadius:'20px', padding:'2.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
                   {classStage <= 2 ? (
                     <>
-                      <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'0.8rem', textAlign:'center' }}>🦁 What did you see?</h2>
+                      <h2 className="heading-display" style={{ fontSize:'1.8rem', color:'var(--jungle-deep)', marginBottom:'0.6rem', textAlign:'center' }}>🦁 Why do we need to look after lions?</h2>
                       <div style={{ display:'flex', flexWrap:'wrap', gap:'0.6rem', justifyContent:'center', marginBottom:'1.4rem' }}>
                         {[
-                          { label:'What animal?', color:'var(--jungle-light)' },
+                          { label:'What did you see?', color:'var(--jungle-light)' },
                           { label:'What is it doing?', color:'var(--discovery-blue)' },
                           { label:'Where is it?', color:'var(--sunset-orange)' }
                         ].map((chip, i) => (
@@ -5319,19 +5319,39 @@
               ) : (
                 <div style={{ background:'white', borderRadius:'20px', padding:'2.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
                 {classStage <= 2 ? (
-                  /* Stage 1 — unified simple prompt for ALL animals */
-                  <>
-                    <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'0.8rem', textAlign:'center' }}>What did you see? 👀</h2>
-                    <div style={{ display:'flex', flexWrap:'wrap', gap:'0.6rem', justifyContent:'center', marginBottom:'1.4rem' }}>
-                      {[
-                        { label:'What animal?', color:'var(--jungle-light)' },
-                        { label:'What is it doing?', color:'var(--discovery-blue)' },
-                        { label:'Where is it?', color:'var(--sunset-orange)' }
-                      ].map((chip, i) => (
-                        <div key={i} style={{ background:`${chip.color}18`, border:`1.5px solid ${chip.color}40`, borderRadius:'20px', padding:'0.45rem 0.9rem', fontSize:'0.9rem', fontWeight:700, color:chip.color }}>{chip.label}</div>
-                      ))}
-                    </div>
-                  </>
+                  /* Stage 1 — simplified question preserving original concept per animal */
+                  (() => {
+                    const s1q = {
+                      'chimpanzee':           { q: 'What are the chimpanzees doing together?',    icon: '🐒' },
+                      'gorilla':              { q: 'How does the gorilla look like a human?',      icon: '🦍' },
+                      'lion':                 { q: 'Why do we need to look after lions?',           icon: '🦁' },
+                      'giraffe':              { q: 'How tall is the giraffe?',                     icon: '🦒' },
+                      'koala':                { q: 'What position is the koala in?',               icon: '🐨' },
+                      'tiger':                { q: 'How does the tiger move?',                     icon: '🐅' },
+                      'dingo':                { q: "What colour is the dingo's fur?",              icon: '🐕' },
+                      'lemur':                { q: 'Where are the lemurs in their home?',          icon: '🐒' },
+                      'sea-lion':             { q: 'How do people affect sea lions?',              icon: '🦭' },
+                      'asian-water-buffalo':  { q: 'What other animals are near the buffalo?',     icon: '🐃' },
+                      'concert-lawn':         { q: 'What can you see around you?',                 icon: '🌿' },
+                      'blue-mountains-bushwalk': { q: 'What could you hear?',                     icon: '🌲' },
+                    }[currentAnimal?.id] || { q: 'What did you see?', icon: '👀' };
+                    return (
+                      <>
+                        <h2 className="heading-display" style={{ fontSize:'1.8rem', color:'var(--jungle-deep)', marginBottom:'0.6rem', textAlign:'center' }}>
+                          {s1q.icon} {s1q.q}
+                        </h2>
+                        <div style={{ display:'flex', flexWrap:'wrap', gap:'0.6rem', justifyContent:'center', marginBottom:'1.4rem' }}>
+                          {[
+                            { label:'What did you see?', color:'var(--jungle-light)' },
+                            { label:'What is it doing?', color:'var(--discovery-blue)' },
+                            { label:'Where is it?', color:'var(--sunset-orange)' }
+                          ].map((chip, i) => (
+                            <div key={i} style={{ background:`${chip.color}18`, border:`1.5px solid ${chip.color}40`, borderRadius:'20px', padding:'0.45rem 0.9rem', fontSize:'0.9rem', fontWeight:700, color:chip.color }}>{chip.label}</div>
+                          ))}
+                        </div>
+                      </>
+                    );
+                  })()
                 ) : currentAnimal.id === 'chimpanzee' ? (
                   <>
                     <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'0.5rem', textAlign:'center' }}>🐒 Chimpanzee Group Dynamics</h2>
@@ -5450,7 +5470,22 @@
                 ) : (
                   <>
                     <h2 className="heading-display" style={{ fontSize: classStage <= 2 ? '2rem' : '2.5rem', color:'var(--jungle-deep)', marginBottom:'0.8rem', textAlign:'center' }}>
-                      {classStage <= 2 ? 'What did you see?' : 'Your Observations'}
+                      {classStage <= 2 ? (
+                        {
+                          'chimpanzee': 'What are the chimpanzees doing together?',
+                          'gorilla': 'How does the gorilla look like a human?',
+                          'lion': 'Why do we need to look after lions?',
+                          'giraffe': 'How tall is the giraffe?',
+                          'koala': 'What position is the koala in?',
+                          'tiger': 'How does the tiger move?',
+                          'dingo': "What colour is the dingo's fur?",
+                          'lemur': 'Where are the lemurs in their home?',
+                          'sea-lion': 'How do people affect sea lions?',
+                          'asian-water-buffalo': 'What other animals are near the buffalo?',
+                          'concert-lawn': 'What can you see around you?',
+                          'blue-mountains-bushwalk': 'What could you hear?',
+                        }[currentAnimal?.id] || 'What did you see?'
+                      ) : 'Your Observations'}
                     </h2>
                     {classStage > 2 && (
                       <p style={{ color:'#666', marginBottom:'1.2rem', lineHeight:1.6, fontSize:'1.1rem', textAlign:'center' }}>
