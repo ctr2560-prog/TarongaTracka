@@ -2344,12 +2344,12 @@
         const wc = words.length;
         if (wc === 0) return 0;
         const hits = relevanceWords.filter(w => lower.includes(w)).length;
-        if (hits === 0 && wc < 2) return 1;          // 1 — unrelated, too short
-        if (hits === 0) return 2;                      // 2 — vague, no keywords
-        if (hits === 1 && wc === 1) return 3;          // 3 — single relevant word
-        if (hits >= 1 && wc >= 2 && hits < 3) return 4; // 4 — relevant observation (e.g. "koala sleeping")
-        if (hits >= 3 || (hits >= 1 && wc >= 6)) return 5; // 5 — clear detailed observation
-        return 3;
+        if (hits === 0 && wc < 2) return 1;            // 1 — unrelated or too short
+        if (hits === 0) return 3;                        // 3 — attempted but no keyword
+        if (hits >= 1 && wc === 1) return 4;            // 4 — single correct keyword
+        if (hits >= 1 && wc >= 2 && hits < 3) return 4; // 4 — correct observation
+        if (hits >= 3 || (hits >= 1 && wc >= 5)) return 5; // 5 — clear detailed observation
+        return 4;
       }
 
       function stage1DetailScore(text, ideaWords) {
@@ -2358,11 +2358,11 @@
         const wc = words.length;
         if (wc === 0) return 0;
         const hits = ideaWords.filter(w => lower.includes(w)).length;
-        if (hits === 0 && wc < 2) return 1;           // 1 — no idea, too short
-        if (hits === 0 && wc >= 2) return 2;           // 2 — partial / vague idea
-        if (hits === 1 && wc === 1) return 3;          // 3 — single correct idea
-        if (hits >= 1 && wc >= 2 && hits < 3) return 4; // 4 — clear idea (e.g. "koala sleeping")
-        if (hits >= 3 || (hits >= 1 && wc >= 7)) return 5; // 5 — strong idea with detail
+        if (hits === 0 && wc < 2) return 1;            // 1 — no idea, too short
+        if (hits === 0) return 2;                        // 2 — vague, no keywords
+        if (hits >= 1 && wc <= 3) return 3;             // 3 — single correct idea
+        if (hits >= 1 && wc >= 4 && hits < 3) return 4; // 4 — clear idea
+        if (hits >= 3 || (hits >= 1 && wc >= 6)) return 5; // 5 — strong idea with detail
         return 3;
       }
 
@@ -4228,7 +4228,7 @@
           const detailHits = detailWords.filter(w => lower.includes(w)).length;
           behaviourBonus = Math.min(conservationHits + 1, 5);
           if (classStage <= 2) {
-            const s1words = ['lion','lions','big','large','sleeping','resting','walking','running','eating','sitting','lying','watching','looking','mane','fur','yellow','golden','spotted','enclosure','cage','grass'];
+            const s1words = ['lion','lions','big','large','huge','long','tall','heavy','strong','fast','sleeping','resting','walking','running','eating','sitting','watching','mane','fur','yellow','golden','orange','paw','tail','shade','grass'];
             behaviourBonus = stage1BehaviourScore(text, s1words);
             detailBonus = stage1DetailScore(text, s1words);
             literacyBonus = stage1WritingScore(text);
@@ -4247,7 +4247,7 @@
           const detailWords = ['groom','dominan','leader','young','baby','infant','adult','male','female','hierarchy','bond','relation','communicat','gesture','express','sound','noise','fur','branch','tree','platform','enclosure','group','community','family'];
           const detailHits = detailWords.filter(w => lower.includes(w)).length;
           if (classStage <= 2) {
-            const s1words = ['chimpanzee','chimp','chimps','monkey','together','playing','eating','sitting','climbing','grooming','hugging','touching','looking','tree','branch','group','fur','black','brown','noisy','quiet'];
+            const s1words = ['chimp','chimpanzee','together','group','playing','eating','sitting','climbing','grooming','touching','looking','tree','branch','fur','black','brown','noisy','quiet','hugging','moving'];
             behaviourBonus = stage1BehaviourScore(text, s1words);
             detailBonus = stage1DetailScore(text, s1words);
             literacyBonus = stage1WritingScore(text);
@@ -4270,7 +4270,7 @@
           const hasExplanation = explanationPatterns.some(p => lower.includes(p));
           const elements = [hasObservation, hasConcept, hasExplanation].filter(Boolean).length;
           if (classStage <= 2) {
-            const s1words = ['gorilla','gorillas','big','large','sitting','eating','climbing','moving','walking','resting','sleeping','black','arm','hand','tree','branch','ground','group','together','strong','quiet'];
+            const s1words = ['gorilla','gorillas','big','large','strong','black','sitting','eating','climbing','walking','resting','arm','hand','tree','branch','ground','together','group','quiet','human','like'];
             behaviourBonus = stage1BehaviourScore(text, s1words);
             detailBonus = stage1DetailScore(text, s1words);
             literacyBonus = stage1WritingScore(text);
@@ -4300,7 +4300,7 @@
           const hasExplanation = explanationPatterns.some(p => lower.includes(p));
           const elements = [hasObservation, hasConcept, hasExplanation].filter(Boolean).length;
           if (classStage <= 2) {
-            const s1words = ['giraffe','giraffes','tall','long','neck','eating','leaves','standing','walking','tree','brown','spotted','big','huge','high','reaching','grass','yellow','spots'];
+            const s1words = ['giraffe','giraffes','tall','long','neck','big','huge','eating','leaves','standing','walking','reaching','tree','high','spots','yellow','brown','enclosure'];
             behaviourBonus = stage1BehaviourScore(text, s1words);
             detailBonus = stage1DetailScore(text, s1words);
           } else if (classStage === 3) {
@@ -4334,10 +4334,15 @@
           const hasComparison = comparisonWords.some(w => lower.includes(w));
           const hasExplanation = explanationPatterns.some(p => lower.includes(p));
           const elements = [hasSensory, hasEnvironment, hasComparison, hasExplanation].filter(Boolean).length;
-          if (elements === 0) detailBonus = 0;
-          else if (elements === 1) detailBonus = 1;
-          else detailBonus = Math.min(elements + 1, 5);
-          literacyBonus = calculateWritingScore(text, classStage);
+          if (classStage <= 2) {
+            const s1words = ['grass','lawn','soft','hard','cold','warm','cool','wet','dry','ground','feet','toes','barefoot','feel','felt','smooth','rough','squishy','green','outside','nice'];
+            behaviourBonus = stage1BehaviourScore(text, s1words);
+            detailBonus = stage1DetailScore(text, s1words);
+            literacyBonus = stage1WritingScore(text);
+          } else if (elements === 0) { detailBonus = 0; }
+          else if (elements === 1) { detailBonus = 1; }
+          else { detailBonus = Math.min(elements + 1, 5); }
+          if (classStage > 2) literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'lemur') {
           const behaviourWords = ['feed','feeding','eat','eating','rest','resting','sleep','sleeping','move','moving','climb','climbing','jump','jumping','sit','sitting','groom','grooming','play','playing','social','interact','watch','observe'];
           const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
@@ -4352,7 +4357,7 @@
           const hasConnection = connectionWords.some(w => lower.includes(w));
           const elements = [hasLocation, hasBehaviourDetail, hasExplanation, hasConnection].filter(Boolean).length;
           if (classStage <= 2) {
-            const s1words = ['lemur','lemurs','tree','trees','branch','rope','platform','ground','high','low','climbing','clinging','jumping','sitting','sleeping','resting','eating','playing','grooming','together','black','white','striped','tail','ring','fluffy','watching','hanging','moving','fast','slow'];
+            const s1words = ['lemur','lemurs','tree','branch','rope','platform','ground','high','low','climbing','jumping','sitting','sleeping','resting','eating','playing','tail','ring','striped','black','white','together'];
             behaviourBonus = stage1BehaviourScore(text, s1words);
             detailBonus = stage1DetailScore(text, s1words);
             literacyBonus = stage1WritingScore(text);
@@ -4386,7 +4391,7 @@
           const hasLink = linkWords.some(p => lower.includes(p));
           const elements = [hasDingoAppearance, hasEnvironment, hasExplanation, hasLink].filter(Boolean).length;
           if (classStage <= 2) {
-            const s1words = ['dingo','dingos','dog','fur','brown','golden','sandy','yellow','sitting','standing','walking','looking','sniffing','eating','running','tail','ears','nose','paws','fence'];
+            const s1words = ['dingo','dingos','kangaroo','eat','eating','fur','brown','golden','sandy','yellow','dog','sitting','standing','walking','looking','tail','ears','fence','grass'];
             behaviourBonus = stage1BehaviourScore(text, s1words);
             detailBonus = stage1DetailScore(text, s1words);
           } else if (classStage === 3) {
@@ -4419,7 +4424,7 @@
           const hasPositioning = positionWords.some(p => lower.includes(p));
           const elements = [hasAnimals, hasInteraction, hasExplanation, hasPositioning].filter(Boolean).length;
           if (classStage <= 2) {
-            const s1words = ['buffalo','buffaloes','big','large','horns','grey','brown','sitting','standing','eating','grass','mud','water','hooves','feet','heavy','bird','birds','watching','moving','nearby'];
+            const s1words = ['buffalo','buffaloes','big','large','heavy','horns','bird','birds','sitting','standing','eating','grass','mud','water','hooves','feet','together','nearby','watching'];
             behaviourBonus = stage1BehaviourScore(text, s1words);
             detailBonus = stage1DetailScore(text, s1words);
           } else if (classStage === 3) {
@@ -4452,7 +4457,7 @@
           const hasCauseEffect = causeEffectWords.some(p => lower.includes(p));
           const elements = [hasHumanImpact, hasEnvironment, hasExplanation, hasCauseEffect].filter(Boolean).length;
           if (classStage <= 2) {
-            const s1words = ['sea lion','seal','seals','water','swimming','flippers','wet','splashing','sitting','lying','rock','big','brown','grey','nose','whiskers','diving','watching','playing','jumping'];
+            const s1words = ['sea lion','seal','seals','flipper','flippers','water','swimming','people','trash','rubbish','plastic','pollution','wet','rock','splash','ocean','fish','enclosure','watching','big'];
             behaviourBonus = stage1BehaviourScore(text, s1words);
             detailBonus = stage1DetailScore(text, s1words);
           } else if (classStage === 3) {
@@ -4485,7 +4490,7 @@
           const hasFeeling = feelingWords.some(w => lower.includes(w));
           const elements = [hasSounds, hasSource, hasEnvironment, hasFeeling].filter(Boolean).length;
           if (classStage <= 2) {
-            const s1words = ['hear','heard','sound','sounds','noise','loud','quiet','silent','bird','birds','chirping','singing','tweet','wind','rustle','rustling','water','waterfall','splash','drip','insects','buzzing','cricket','frog','leaves','crunch','footstep','echo','far','close','peaceful','still'];
+            const s1words = ['hear','heard','sound','bird','birds','wind','quiet','loud','water','waterfall','insects','chirping','rustling','echo','peaceful','still','silent','noise','crunch','far','close'];
             behaviourBonus = stage1BehaviourScore(text, s1words);
             detailBonus = stage1DetailScore(text, s1words);
             literacyBonus = stage1WritingScore(text);
@@ -4512,7 +4517,7 @@
           const tigerDetailHits = tigerDetailWords.filter(w => lower.includes(w)).length;
           behaviourBonus = Math.min(tigerBehaviourHits + 1, 5);
           if (classStage <= 2) {
-            const s1words = ['hear','heard','sound','sounds','noise','quiet','silent','loud','bird','birds','wind','water','splash','drip','rustle','rustling','leaves','insect','insects','buzzing','people','talking','smell','smells','smelled','fresh','earthy','grass','dirt','animal','zoo','tiger','strong','nice','bad','rain','far','close','echo','footstep','crunch'];
+            const s1words = ['tiger','tigers','big','large','huge','long','fast','strong','stripe','stripes','orange','black','white','walking','pacing','resting','sleeping','watching','fur','grass','water','rock'];
             behaviourBonus = stage1BehaviourScore(text, s1words);
             detailBonus = stage1DetailScore(text, s1words);
             literacyBonus = stage1WritingScore(text);
@@ -4526,7 +4531,7 @@
           literacyBonus = calculateWritingScore(text, classStage);
         } else {
           if (classStage <= 2) {
-            const s1words = ['animal','big','large','small','colour','color','brown','black','white','grey','green','eating','sleeping','walking','sitting','standing','running','looking','watching','tree','grass','water','ground','enclosure'];
+            const s1words = ['tiger','tigers','big','large','huge','long','fast','strong','stripe','stripes','orange','black','white','walking','pacing','resting','sleeping','watching','fur','grass','water','rock'];
             behaviourBonus = stage1BehaviourScore(text, s1words);
             detailBonus = stage1DetailScore(text, s1words);
             literacyBonus = stage1WritingScore(text);
@@ -5284,7 +5289,7 @@
                         {[
                           { label:'What did you see?', color:'var(--jungle-light)' },
                           { label:'What is it doing?', color:'var(--discovery-blue)' },
-                          { label:'Where is it?', color:'var(--sunset-orange)' }
+                          { label:'Is it big or small?', color:'var(--sunset-orange)' }
                         ].map((chip, i) => (
                           <div key={i} style={{ background:`${chip.color}18`, border:`1.5px solid ${chip.color}40`, borderRadius:'20px', padding:'0.45rem 0.9rem', fontSize:'0.9rem', fontWeight:700, color:chip.color }}>{chip.label}</div>
                         ))}
@@ -5473,19 +5478,36 @@
                   </>
                 ) : currentAnimal.id === 'sea-lion' ? (
                   <>
-                    <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'0.5rem', textAlign:'center' }}>🌊 Humans and the Ocean</h2>
-                    <p style={{ color:'#555', marginBottom:'0.5rem', lineHeight:1.6, fontSize:'0.95rem', textAlign:'center' }}>
-                      Human activities can affect ocean environments and the animals that live in them.
-                    </p>
-                    <p style={{ color:'var(--jungle-mid)', fontWeight:600, marginBottom:'0.4rem', fontSize:'0.9rem', textAlign:'center' }}>
-                      👀 Observe the sea lion enclosure and surrounding environment
-                    </p>
-                    <div style={{ background:'#EAF3F8', border:'1px solid #AACFE0', borderRadius:'10px', padding:'0.6rem 0.9rem', marginBottom:'1.2rem', textAlign:'left' }}>
-                      <p style={{ fontSize:'0.8rem', color:'#555', margin:'0 0 0.25rem', fontWeight:600 }}>Think about:</p>
-                      {['the water', 'the enclosure', 'human presence (people, structures)'].map((pt, i) => (
-                        <p key={i} style={{ fontSize:'0.8rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.7rem' }}>– {pt}</p>
-                      ))}
-                    </div>
+                    {classStage <= 2 ? (
+                      <>
+                        <h2 className="heading-display" style={{ fontSize:'1.8rem', color:'var(--jungle-deep)', marginBottom:'0.6rem', textAlign:'center' }}>🦭 How do people affect sea lions?</h2>
+                        <div style={{ display:'flex', flexWrap:'wrap', gap:'0.6rem', justifyContent:'center', marginBottom:'1.4rem' }}>
+                          {[
+                            { label:'What did you see?', color:'var(--jungle-light)' },
+                            { label:'What is it doing?', color:'var(--discovery-blue)' },
+                            { label:'What is in the water?', color:'var(--sunset-orange)' }
+                          ].map((chip, i) => (
+                            <div key={i} style={{ background:`${chip.color}18`, border:`1.5px solid ${chip.color}40`, borderRadius:'20px', padding:'0.45rem 0.9rem', fontSize:'0.9rem', fontWeight:700, color:chip.color }}>{chip.label}</div>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'0.5rem', textAlign:'center' }}>🌊 Humans and the Ocean</h2>
+                        <p style={{ color:'#555', marginBottom:'0.5rem', lineHeight:1.6, fontSize:'0.95rem', textAlign:'center' }}>
+                          Human activities can affect ocean environments and the animals that live in them.
+                        </p>
+                        <p style={{ color:'var(--jungle-mid)', fontWeight:600, marginBottom:'0.4rem', fontSize:'0.9rem', textAlign:'center' }}>
+                          👀 Observe the sea lion enclosure and surrounding environment
+                        </p>
+                        <div style={{ background:'#EAF3F8', border:'1px solid #AACFE0', borderRadius:'10px', padding:'0.6rem 0.9rem', marginBottom:'1.2rem', textAlign:'left' }}>
+                          <p style={{ fontSize:'0.8rem', color:'#555', margin:'0 0 0.25rem', fontWeight:600 }}>Think about:</p>
+                          {['the water', 'the enclosure', 'human presence (people, structures)'].map((pt, i) => (
+                            <p key={i} style={{ fontSize:'0.8rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.7rem' }}>– {pt}</p>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </>
                 ) : currentAnimal.id === 'blue-mountains-bushwalk' ? (
                   <>
