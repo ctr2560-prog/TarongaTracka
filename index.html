@@ -2144,7 +2144,7 @@
           questions: [
             { q: 'What is the dingo\'s role in the Australian ecosystem?',
               stageVariants: {
-                1: 'What colour is a dingo\'s fur?',
+                1: 'What does a dingo eat?',
                 2: 'Does the dingo\'s colour help it blend into the Australian bush?',
                 3: 'What does the dingo eat in the wild?',
                 4: 'What is the dingo\'s role in the Australian ecosystem?',
@@ -2339,26 +2339,29 @@
 
       // Stage 1 scoring: relevance, idea presence, and readability — no sentence structure required
       function stage1BehaviourScore(text, relevanceWords) {
-        if (isLowQualityResponse(text)) return 1;
         const lower = text.toLowerCase();
         const words = text.trim().split(/\s+/).filter(Boolean);
+        const wc = words.length;
+        if (wc === 0) return 0;
         const hits = relevanceWords.filter(w => lower.includes(w)).length;
-        if (hits === 0 && words.length < 2) return 1;      // no relevance
-        if (hits === 0) return 2;                           // vague, no keywords
-        if (hits === 1 && words.length < 5) return 3;      // relevant mention
-        if (hits >= 1 && words.length >= 5) return 4;      // relevant observation
-        return Math.min(hits + 2, 5);                      // clear specific
+        if (hits === 0 && wc < 2) return 1;      // no relevance, too short
+        if (hits === 0) return 2;                  // vague, no keywords
+        if (hits >= 1 && wc < 4) return 3;        // relevant mention (single word OK)
+        if (hits >= 1 && wc >= 4) return 4;       // relevant observation
+        return Math.min(hits + 2, 5);
       }
 
       function stage1DetailScore(text, ideaWords) {
-        if (isLowQualityResponse(text)) return 1;
         const lower = text.toLowerCase();
         const words = text.trim().split(/\s+/).filter(Boolean);
+        const wc = words.length;
+        if (wc === 0) return 0;
         const hits = ideaWords.filter(w => lower.includes(w)).length;
-        if (hits === 0) return words.length >= 2 ? 2 : 1;  // no idea / vague
-        if (hits === 1) return 3;                           // simple idea
-        if (hits === 2) return 4;                           // correct idea
-        return 5;                                           // strong idea
+        if (hits === 0 && wc < 2) return 1;          // no idea, too short
+        if (hits === 0) return 2;                      // weak / vague idea
+        if (hits === 1) return 3;                      // simple correct idea
+        if (hits === 2) return 4;                      // clear idea
+        return 5;                                      // strong idea
       }
 
       function stage1WritingScore(text) {
@@ -2366,17 +2369,13 @@
         if (!t) return 0;
         const words = t.split(/\s+/).filter(Boolean);
         const wc = words.length;
-        if (wc === 0) return 0;
-        // Readability — based on recognisable words, not sentences
-        const uniqueWords = new Set(words.map(w => w.toLowerCase().replace(/[^a-z]/g, '')).filter(Boolean));
-        const realWords = [...uniqueWords].filter(w => w.length >= 2).length;
-        if (realWords === 0) return 1;       // unreadable
-        if (realWords === 1) return 2;       // partial / single word
-        if (wc < 3) return 3;               // recognisable words
-        const hasCapital = /^[A-Z]/.test(t);
-        const hasPunct = /[.!?]/.test(t);
-        if (wc >= 3 && realWords >= 2) return hasPunct ? 4 : 3;  // mostly correct
-        if (wc >= 5 && hasCapital && hasPunct) return 5;
+        const realWords = words.map(w => w.toLowerCase().replace(/[^a-z]/g, '')).filter(w => w.length >= 2);
+        const realCount = realWords.length;
+        if (realCount === 0) return 1;          // unreadable / symbols only
+        if (realCount === 1 && wc === 1) return 3;   // single recognisable word
+        if (realCount >= 2 && wc <= 3) return 3;     // recognisable words
+        if (realCount >= 3 && wc >= 4) return 4;     // mostly correct spelling
+        if (realCount >= 5 && wc >= 6) return 5;     // clear and readable
         return 3;
       }
 
@@ -4099,7 +4098,7 @@
               if (feeding === max) return 1;
               return 2;
             })()
-          : currentAnimal.questions[questionIndex].correct;
+          : getStageQuestions(currentAnimal)[questionIndex]?.correct ?? currentAnimal.questions[questionIndex].correct;
         const correct = answerIndex === correctIndex;
         setIsCorrect(correct);
         setShowResult(true);
