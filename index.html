@@ -5388,7 +5388,7 @@
                       </p>
                     )}
                     <div style={{ display:'flex', flexWrap:'wrap', gap:'0.6rem', justifyContent:'center', marginBottom:'1.5rem' }}>
-                      {classStage <= 2 ? [
+                      {(classStage <= 2 ? [
                         { label:'What animal?', color:'var(--jungle-light)' },
                         { label:'What was it doing?', color:'var(--discovery-blue)' },
                         { label:'Where was it?', color:'var(--sunset-orange)' }
@@ -5396,7 +5396,7 @@
                         { label:' What is it doing right now?', color:'var(--jungle-light)' },
                         { label:' What does it look like?', color:'var(--discovery-blue)' },
                         { label:' Use full sentences.', color:'var(--sunset-orange)' }
-                      ].map((hint, i) => (
+                      ]).map((hint, i) => (
                         <div key={i} style={{ background:`${hint.color}18`, border:`1.5px solid ${hint.color}40`, borderRadius:'20px', padding:'0.45rem 0.9rem', fontSize:'0.85rem', fontWeight:600, color:hint.color }}>{hint.label}</div>
                       ))}
                     </div>
