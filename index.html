@@ -2622,16 +2622,16 @@
         else if (dHits >= 2 && !hasExplanation) dScore = 3;
         else dScore = 3;
 
-        // Writing: word count is primary gate; structure pushes to 5
+        // Writing: step-up logic — each if can upgrade the score independently
         const hasSentence = /[A-Z].*[.!?]/.test(text.trim());
         const uniqueWords = new Set(words.map(w => w.toLowerCase()));
-        let wScore;
-        if (wc < 3) wScore = 1;
-        else if (wc < 6) wScore = 2;
-        else if (wc < 10) wScore = 3;
-        else if (wc >= 10 && uniqueWords.size >= 6) wScore = 4;
-        else if (wc >= 15 && hasSentence && uniqueWords.size >= 10) wScore = 5;
-        else wScore = 3;
+        let wScore = 1;
+        if (wc >= 3)                                          wScore = 2;
+        if (wc >= 6)                                          wScore = 3;
+        if (wc >= 10 && uniqueWords.size >= 6)                wScore = Math.max(wScore, 4);
+        if (wc >= 12 && hasExplanation)                       wScore = Math.max(wScore, 4);
+        if (wc >= 15 && hasSentence && uniqueWords.size >= 10) wScore = Math.max(wScore, 5);
+        if (wc >= 12 && hasExplanation && uniqueWords.size >= 10) wScore = Math.max(wScore, 5);
 
         return { b: bScore, d: dScore, w: wScore };
       }
@@ -2684,27 +2684,58 @@
         const stg = stage || classStage || 4;
         const text = studentResponse.trim();
         if (!text) return 0;
-        if (isLowQualityResponse(text)) return Math.min(1, 2);
-        const words = text.split(/\s+/).filter(Boolean);
-        const wordCount = words.length;
-        const uniqueWords = new Set(words.map(w => w.toLowerCase()));
-        const hasCapital = /^[A-Z]/.test(text);
-        const hasPunctuation = /[.!?]/.test(text);
-        const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 3);
-        const hasMultipleSentences = sentences.length >= 2;
-        const isAllCaps = text === text.toUpperCase() && wordCount > 2;
-        const hasVocabularyVariety = uniqueWords.size >= Math.min(wordCount * 0.6, 8);
-        // Stage-adjusted thresholds: lower stages need fewer words to score well
-        const t = stg <= 2 ? { w2:4, w3:7,  w4:10, w5:18, u5:6  }
-                : stg === 3 ? { w2:6, w3:10, w4:14, w5:22, u5:8  }
-                : stg === 4 ? { w2:8, w3:12, w4:18, w5:30, u5:12 }
-                :             { w2:10,w3:15, w4:22, w5:35, u5:15 };
+        if (isLowQualityResponse(text)) return 1;
+
+        const words     = text.split(/\s+/).filter(Boolean);
+        const wc        = words.length;
+        const unique    = new Set(words.map(w => w.toLowerCase().replace(/[^a-z]/g, '')).filter(Boolean));
+        const uCount    = unique.size;
+
+        // Structural signals
+        const hasCapital    = /^[A-Z]/.test(text);
+        const hasFullStop   = /[.!?]/.test(text);
+        const sentences     = text.split(/[.!?]+/).filter(s => s.trim().length > 2);
+        const multiSentence = sentences.length >= 2;
+        const isAllCaps     = text === text.toUpperCase() && wc > 2;
+
+        // Idea/explanation signals
+        const hasExplanation = ['because','so','helps','allows','means','therefore','since','so that'].some(w => text.toLowerCase().includes(w));
+        const hasConnective  = ['and','but','however','also','then','when','which','that'].some(w => text.toLowerCase().includes(w));
+
         let score = 1;
-        if (wordCount >= t.w2 && hasVocabularyVariety) score = 2;
-        if (hasCapital && hasPunctuation && wordCount >= t.w3 && hasVocabularyVariety) score = 3;
-        if (hasMultipleSentences && wordCount >= t.w4 && hasVocabularyVariety) score = 4;
-        if (hasMultipleSentences && wordCount >= t.w5 && hasCapital && hasPunctuation && uniqueWords.size >= t.u5) score = 5;
+
+        if (stg <= 2) {
+          if (wc >= 2)                                        score = 2;
+          if (wc >= 4)                                        score = 3;
+          if (score >= 3 && (hasCapital || hasFullStop))      score = Math.max(score, 4);
+          if (hasCapital && hasFullStop)                       score = Math.max(score, 4);
+          if (hasCapital && hasFullStop && wc >= 6)           score = Math.max(score, 5);
+        }
+
+        else if (stg === 3) {
+          if (wc >= 4)                                        score = 2;
+          if (wc >= 6)                                        score = 3;
+          if (hasCapital && hasFullStop)                       score = Math.max(score, 4);
+          if (hasCapital && hasFullStop && (multiSentence || uCount >= 8)) score = Math.max(score, 5);
+        }
+
+        else if (stg === 4) {
+          if (wc >= 5)                                        score = 2;
+          if (wc >= 7)                                        score = 3;
+          if (hasCapital && hasFullStop)                       score = Math.max(score, 4);
+          if (hasCapital && hasFullStop && (multiSentence || hasExplanation || uCount >= 10)) score = Math.max(score, 5);
+        }
+
+        else {
+          if (wc >= 6)                                        score = 2;
+          if (wc >= 9)                                        score = 3;
+          if (hasCapital && hasFullStop && uCount >= 7)       score = Math.max(score, 4);
+          if (hasCapital && hasFullStop && (multiSentence || hasExplanation) && uCount >= 10) score = Math.max(score, 5);
+        }
+
+        // Penalise all-caps (keyboard smash indicator) but not below 1
         if (isAllCaps) score = Math.max(score - 1, 1);
+
         return Math.min(score, 5);
       }
 
