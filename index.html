@@ -556,6 +556,9 @@
       const [tfEntries, setTfEntries] = useState([]);
       const [tfLoading, setTfLoading] = useState(true);
       const [qdOpen, setQdOpen] = useState(false);
+      const [reviewModal, setReviewModal] = useState({ open: false, studentName: '', animalId: '', currentNote: '' });
+      const [reviewNote, setReviewNote] = useState('');
+      const [reviewSaving, setReviewSaving] = useState(false);
       const stageMeta = [
         { key:1, label:'Stage 1', tag:'Easy',     bg:'#F0FDF4', border:'#86EFAC', color:'#15803D' },
         { key:3, label:'Stage 3', tag:'Moderate', bg:'#EFF6FF', border:'#93C5FD', color:'#1D4ED8' },
@@ -4547,6 +4550,8 @@
                 reviewFlag: {
                   flagged: overrideData.flagged || false,
                   reason:  overrideData.flagReason || '',
+                  note:    overrideData.flagReason || '',
+                  timestamp: new Date().toISOString(),
                 },
               },
             };
@@ -7728,6 +7733,13 @@
                                   {badge.timestamp && <span style={{ fontSize:'0.65rem', color:'#bbb' }}>· {new Date(badge.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short' })}</span>}
                                 </div>
                                 {flag.reason && <p style={{ fontSize:'0.7rem', color:'#888', margin:'0.2rem 0 0', fontStyle:'italic' }}>Reason: {flag.reason}</p>}
+                                {(flag.note) && (
+                                  <div style={{ marginTop:'0.35rem', background:'#FEF9C3', borderRadius:'6px', padding:'0.35rem 0.55rem', border:'1px solid #FDE68A' }}>
+                                    <p style={{ fontSize:'0.72rem', color:'#92400E', margin:0, lineHeight:1.5 }}>
+                                      <strong>📝 Teacher note:</strong> {flag.note}
+                                    </p>
+                                  </div>
+                                )}
                               </div>
                               {obs.behaviour !== undefined && (() => {
                                 const activeB = override.applied ? (override.behaviourScore ?? obs.behaviour) : obs.behaviour;
@@ -8115,20 +8127,21 @@
                                             {isActive ? '✏️ Edit Override' : '✏️ Override Scores'}
                                           </button>
                                           <button onClick={async () => {
-                                            const newFlagged = !obs.reviewFlag?.flagged;
-                                            const result = await saveOverride(
-                                              observationsModal?.name || studentName,
-                                              b.animalId,
-                                              { flagged: newFlagged, flagReason: obs.reviewFlag?.reason || '', flagOnly: true, active: false },
-                                              selectedAdminClass
-                                            );
-                                            if (result?.ok !== false) {
-                                              const sName = observationsModal?.name || studentName;
-                                              setFirestoreStudents(prev => prev.map(s => {
-                                                if (s.name !== sName) return s;
-                                                return { ...s, badges: (s.badges||[]).map(bd => bd.animalId !== b.animalId ? bd
-                                                  : { ...bd, observationScore: { ...(bd.observationScore||{}), reviewFlag: { flagged: newFlagged, reason: '', timestamp: new Date().toISOString() } }}) };
-                                              }));
+                                            const sName = observationsModal?.name || studentName;
+                                            if (obs.reviewFlag?.flagged) {
+                                              // Already flagged — unflag immediately
+                                              const result = await saveOverride(sName, b.animalId,
+                                                { flagged: false, flagReason: '', flagOnly: true, active: false },
+                                                selectedAdminClass || selectedClass);
+                                              if (result?.ok !== false) {
+                                                setFirestoreStudents(prev => prev.map(s => s.name !== sName ? s : { ...s,
+                                                  badges: (s.badges||[]).map(bd => bd.animalId !== b.animalId ? bd : { ...bd,
+                                                    observationScore: { ...(bd.observationScore||{}), reviewFlag: { flagged: false, note: '', timestamp: new Date().toISOString() } } }) }));
+                                              }
+                                            } else {
+                                              // Open modal to add note before flagging
+                                              setReviewNote(obs.reviewFlag?.note || '');
+                                              setReviewModal({ open: true, studentName: sName, animalId: b.animalId });
                                             }
                                           }}
                                             style={{ fontSize:'0.65rem', padding:'0.2rem 0.55rem', borderRadius:'4px', border:'1px solid #D1D5DB', background: obs.reviewFlag?.flagged ? '#FEF3C7' : '#F9FAFB', cursor:'pointer', fontWeight:600, color: obs.reviewFlag?.flagged ? '#92400E' : '#374151' }}>
@@ -8428,6 +8441,66 @@
                     </button>
                     <button onClick={() => setShowFeedbackModal(false)}
                       style={{ padding:'0.75rem 1.1rem', borderRadius:'10px', border:'1px solid #E5E5E5', background:'white', fontSize:'0.9rem', color:'#888', cursor:'pointer' }}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {reviewModal.open && (
+              <div onClick={() => setReviewModal({ open: false, studentName: '', animalId: '', currentNote: '' })}
+                style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:250, display:'flex', alignItems:'center', justifyContent:'center', padding:'1.5rem' }}>
+                <div onClick={e => e.stopPropagation()}
+                  style={{ background:'white', borderRadius:'20px', padding:'1.75rem', width:'100%', maxWidth:'400px', boxShadow:'0 24px 60px rgba(0,0,0,0.25)' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:'0.6rem', marginBottom:'0.3rem' }}>
+                    <span style={{ fontSize:'1.3rem' }}>🚩</span>
+                    <h3 style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)', margin:0 }}>Flag for Review</h3>
+                  </div>
+                  <p style={{ fontSize:'0.8rem', color:'#888', marginBottom:'1rem' }}>
+                    <strong style={{ color:'var(--jungle-deep)' }}>{reviewModal.studentName}</strong>
+                    {' · '}{reviewModal.animalId}
+                  </p>
+                  <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.35rem' }}>
+                    Note for review <span style={{ fontWeight:400, color:'#aaa' }}>(optional)</span>
+                  </label>
+                  <textarea
+                    value={reviewNote}
+                    onChange={e => setReviewNote(e.target.value)}
+                    placeholder="Add context for why this response needs review..."
+                    rows={4}
+                    style={{ width:'100%', padding:'0.65rem 0.75rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', fontSize:'0.85rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', boxSizing:'border-box', marginBottom:'1rem' }}
+                    onFocus={e => e.target.style.borderColor = 'var(--jungle-mid)'}
+                    onBlur={e => e.target.style.borderColor = '#E5E5E5'}
+                    autoFocus
+                  />
+                  <div style={{ display:'flex', gap:'0.6rem' }}>
+                    <button onClick={async () => {
+                      setReviewSaving(true);
+                      const result = await saveOverride(
+                        reviewModal.studentName,
+                        reviewModal.animalId,
+                        { flagged: true, flagReason: reviewNote.trim(), flagOnly: true, active: false },
+                        selectedAdminClass || selectedClass
+                      );
+                      if (result?.ok !== false) {
+                        setFirestoreStudents(prev => prev.map(s => s.name !== reviewModal.studentName ? s : {
+                          ...s, badges: (s.badges||[]).map(bd => bd.animalId !== reviewModal.animalId ? bd : {
+                            ...bd, observationScore: { ...(bd.observationScore||{}),
+                              reviewFlag: { flagged: true, note: reviewNote.trim(), timestamp: new Date().toISOString() }
+                            }
+                          })
+                        }));
+                        setReviewModal({ open: false, studentName: '', animalId: '', currentNote: '' });
+                        setReviewNote('');
+                      }
+                      setReviewSaving(false);
+                    }} disabled={reviewSaving}
+                      style={{ flex:1, padding:'0.7rem', borderRadius:'10px', border:'none', background:'linear-gradient(135deg, #DC2626, #EF4444)', color:'white', fontSize:'0.88rem', fontWeight:700, cursor:'pointer' }}>
+                      {reviewSaving ? 'Saving…' : '🚩 Flag for Review'}
+                    </button>
+                    <button onClick={() => { setReviewModal({ open: false, studentName: '', animalId: '', currentNote: '' }); setReviewNote(''); }}
+                      style={{ padding:'0.7rem 1rem', borderRadius:'10px', border:'1px solid #E5E5E5', background:'white', fontSize:'0.88rem', color:'#888', cursor:'pointer' }}>
                       Cancel
                     </button>
                   </div>
@@ -9521,22 +9594,21 @@
                                               {isActive ? '✏️ Edit Override' : '✏️ Override Scores'}
                                             </button>
                                             <button onClick={async () => {
-                                            const newFlagged = !obs.reviewFlag?.flagged;
-                                            const result = await saveOverride(
-                                              observationsModal?.name || studentName,
-                                              b.animalId,
-                                              { flagged: newFlagged, flagReason: obs.reviewFlag?.reason || '', flagOnly: true, active: false },
-                                              selectedAdminClass
-                                            );
-                                            if (result?.ok !== false) {
                                               const sName = observationsModal?.name || studentName;
-                                              setFirestoreStudents(prev => prev.map(s => {
-                                                if (s.name !== sName) return s;
-                                                return { ...s, badges: (s.badges||[]).map(bd => bd.animalId !== b.animalId ? bd
-                                                  : { ...bd, observationScore: { ...(bd.observationScore||{}), reviewFlag: { flagged: newFlagged, reason: '', timestamp: new Date().toISOString() } }}) };
-                                              }));
-                                            }
-                                          }}
+                                              if (obs.reviewFlag?.flagged) {
+                                                const result = await saveOverride(sName, b.animalId,
+                                                  { flagged: false, flagReason: '', flagOnly: true, active: false },
+                                                  selectedAdminClass || selectedClass);
+                                                if (result?.ok !== false) {
+                                                  setFirestoreStudents(prev => prev.map(s => s.name !== sName ? s : { ...s,
+                                                    badges: (s.badges||[]).map(bd => bd.animalId !== b.animalId ? bd : { ...bd,
+                                                      observationScore: { ...(bd.observationScore||{}), reviewFlag: { flagged: false, note: '', timestamp: new Date().toISOString() } } }) }));
+                                                }
+                                              } else {
+                                                setReviewNote(obs.reviewFlag?.note || '');
+                                                setReviewModal({ open: true, studentName: sName, animalId: b.animalId });
+                                              }
+                                            }}
                                               style={{ fontSize:'0.65rem', padding:'0.2rem 0.55rem', borderRadius:'4px', border:'1px solid #D1D5DB', background: obs.reviewFlag?.flagged ? '#FEF3C7' : '#F9FAFB', cursor:'pointer', fontWeight:600, color: obs.reviewFlag?.flagged ? '#92400E' : '#374151' }}>
                                               {obs.reviewFlag?.flagged ? '🚩 Flagged' : '🚩 Flag for Review'}
                                             </button>
