@@ -545,6 +545,10 @@
       const [firestoreStudents, setFirestoreStudents] = useState([]);
       const [firestoreLoading, setFirestoreLoading] = useState(true);
       const [observationsModal, setObservationsModal] = useState(null);
+      const [expandedBreakdown, setExpandedBreakdown] = useState(null); // "animalId-idx"
+      const [overrideForms, setOverrideForms] = useState({}); // bKey → { b, d, w, note, reason, active }
+      const [overrideSaving, setOverrideSaving] = useState(null); // bKey currently saving
+      const [expandedGroup, setExpandedGroup] = useState(null); // 'support'|'developing'|'proficient'|'lowB'|'lowD'|'lowW'
       const [selectedConservation, setSelectedConservation] = useState(null);
       const [classCodeModal, setClassCodeModal] = useState(null);
       const [classCodeFullscreen, setClassCodeFullscreen] = useState(false);
@@ -2337,7 +2341,216 @@
         });
       }
 
+      // Shared Stage 3 scoring thresholds — applied consistently across all animals
+      // hits = number of relevant keyword matches; hasExplanation = boolean; wc = word count
+      function stage3Score(hits, hasExplanation, wc) {
+        // Behaviour
+        let b;
+        if (hits === 0) b = 1;
+        else if (hits === 1 && wc < 5) b = 2;
+        else if (hits >= 1 && !hasExplanation) b = 3;
+        else b = Math.min(hits + 2, 4);
+
+        // Detail — Stage 3: needs some context but not full explanation
+        let d;
+        if (hits === 0) d = 1;
+        else if (hits === 1 && !hasExplanation) d = 2;
+        else if (hits === 1 && hasExplanation) d = 3;
+        else if (hits >= 2) d = Math.min(hits + 1, 4);
+        else d = 2;
+
+        return { b, d };
+      }
+
+      // Shared Stage 4 scoring thresholds — the default/baseline stage
+      function stage4Score(hits, hasExplanation, wc) {
+        // Behaviour: clear correct behaviour = 3, with context = 4, strong explanation = 5
+        let b;
+        if (hits === 0 && wc < 3) b = 1;
+        else if (hits === 0) b = 2;
+        else if (hits === 1 && !hasExplanation) b = 3;
+        else if (hits >= 1 && hasExplanation && wc < 12) b = 4;
+        else if (hits >= 1 && hasExplanation && wc >= 12) b = 5;
+        else b = Math.min(hits + 2, 5);
+
+        // Detail: one clear relevant detail = 3, multiple = 4, detailed evidence = 5
+        let d;
+        if (hits === 0) d = Math.min(1, 2);
+        else if (hits === 1 && !hasExplanation) d = 3;
+        else if (hits === 1 && hasExplanation) d = 4;
+        else if (hits >= 2 && !hasExplanation) d = Math.min(hits + 1, 4);
+        else if (hits >= 2 && hasExplanation) d = Math.min(hits + 2, 5);
+        else d = 3;
+
+        return { b, d };
+      }
+
       // Stage 1 scoring: relevance, idea presence, and readability — no sentence structure required
+      // Generates teacher-facing score rationale, improvement tips, confidence, and extracted evidence.
+      // Called at submit time — enriches observationScore before saving.
+      function generateScoreRationale(text, behaviourScore, detailScore, writingScore, animalId, stage) {
+        const lower = text.toLowerCase();
+        const words = text.trim().split(/\s+/).filter(Boolean);
+        const wc = words.length;
+        const s = stage || 4;
+
+        // ── Stage-differentiated tip builder ─────────────────────────────────
+        // Returns the right tip string for a given domain, score, and stage.
+        function getTip(domain, score) {
+          const level = score <= 2 ? 'low' : score === 3 ? 'mid' : 'high';
+
+          const tips = {
+            behaviour: {
+              low: {
+                1: 'Great job trying! Next time, write what animal you saw and what it was doing.',
+                2: 'Good try! Try to write about what the animal was doing.',
+                3: 'You identified some behaviour. Try to describe it more clearly — what exactly was it doing?',
+                4: 'Accurate observation. Strengthen your response by explaining its significance.',
+                5: 'Precise and relevant. Consider linking to a scientific concept such as adaptation or survival.',
+              },
+              mid: {
+                1: 'Great job! Can you tell me one more thing the animal was doing?',
+                2: 'You noticed something — can you describe it more clearly?',
+                3: 'Good observation. Add more detail about what you saw.',
+                4: 'Clear observation. Include more specific context to strengthen your response.',
+                5: 'Accurate observation. Strengthen by explaining its significance in this environment.',
+              },
+              high: {
+                1: 'Amazing noticing! You can also write what the animal looked like.',
+                2: "Great work! You've described the behaviour well.",
+                3: 'Good description. Try explaining why the animal behaves this way.',
+                4: 'Strong observation. Try linking it to a concept like adaptation or habitat.',
+                5: 'Excellent. Extend by connecting this observation to ecosystem function or evolutionary advantage.',
+              },
+            },
+            detail: {
+              low: {
+                1: 'Try writing one thing you noticed — any small detail counts!',
+                2: 'Try adding one fact you know about this animal.',
+                3: 'Try adding a reason or an extra fact to support your idea.',
+                4: 'Include specific and relevant supporting evidence.',
+                5: 'Include precise, evidence-based supporting detail with appropriate terminology.',
+              },
+              mid: {
+                1: 'Try to write one thing you know about this animal.',
+                2: "You've made a start! What else did you notice?",
+                3: 'Good idea. Add another detail to make your answer stronger.',
+                4: 'Include more specific evidence to strengthen your response.',
+                5: 'Include specific and relevant supporting evidence linked to your observation.',
+              },
+              high: {
+                1: 'Well done! Can you write about another thing you saw?',
+                2: "Great detail! You're doing really well.",
+                3: 'Good ideas. Try explaining why this detail matters.',
+                4: 'Strong detail. Encourage use of scientific vocabulary or a second supporting idea.',
+                5: 'Strong supporting detail. Extend by addressing cause-and-effect or ecological significance.',
+              },
+            },
+            writing: {
+              low: {
+                1: 'Try to write a word or two — even one word is a great start!',
+                2: 'Good start! Try writing your idea as a full sentence.',
+                3: 'Make sure your ideas are clearly explained in sentences.',
+                4: 'Develop your explanation further using complete sentences.',
+                5: 'Develop a clearer explanation using precise language and appropriate structure.',
+              },
+              mid: {
+                1: 'Try writing a full sentence about what you saw!',
+                2: 'Try writing your idea as a complete sentence.',
+                3: 'You wrote a sentence! Check for a capital letter and full stop.',
+                4: 'Mostly clear. Encourage full stops and capital letters for each sentence.',
+                5: 'Clear writing. Improve structure and consider more precise language.',
+              },
+              high: {
+                1: "You're writing! Try to write one full sentence.",
+                2: 'Well written! Try writing even more next time.',
+                3: 'Well written. Try using scientific vocabulary in your next response.',
+                4: 'Good structure. Encourage precise vocabulary and full sentence development.',
+                5: 'Well structured. Extend by using discipline-specific terminology and complex sentence forms.',
+              },
+            },
+          };
+
+          return tips[domain][level][s] || tips[domain][level][4];
+        }
+
+        // ── Behaviour rationale (generic — describes what was detected) ───────
+        let behaviourRationale;
+        if (behaviourScore >= 5)      behaviourRationale = 'Clear, specific observation directly relevant to the task.';
+        else if (behaviourScore === 4) behaviourRationale = 'Relevant observation with supporting context.';
+        else if (behaviourScore === 3) behaviourRationale = 'Response mentions something relevant to the task.';
+        else if (behaviourScore === 2) behaviourRationale = 'Response is vague or does not clearly relate to the question.';
+        else                           behaviourRationale = 'No clear connection to the task or animal observed.';
+
+        // ── Detail rationale ──────────────────────────────────────────────────
+        let detailRationale;
+        const hasExplanation = ['because','so that','helps','allows','means','therefore','so','since'].some(w => lower.includes(w));
+        if (detailScore >= 5)      detailRationale = 'Response includes multiple specific, accurate supporting details.';
+        else if (detailScore === 4) detailRationale = 'Response includes a clear supporting idea or explanation.';
+        else if (detailScore === 3) detailRationale = 'Response includes at least one relevant idea.';
+        else if (detailScore === 2) detailRationale = 'Response attempts a related idea but lacks accuracy or clarity.';
+        else                        detailRationale = 'No supporting detail or idea identified.';
+
+        // ── Writing rationale ─────────────────────────────────────────────────
+        let writingRationale;
+        const hasPunct = /[.!?]/.test(text);
+        const hasCapital = /^[A-Z]/.test(text.trim());
+        if (writingScore >= 5)      writingRationale = `Clear, well-structured response (${wc} words). Good use of sentences.`;
+        else if (writingScore === 4) writingRationale = `Mostly readable response (${wc} words). Reasonable sentence structure.`;
+        else if (writingScore === 3) writingRationale = `Readable response (${wc} words)${hasPunct ? '' : ' — missing punctuation'}.`;
+        else if (writingScore === 2) writingRationale = `Short or partial response (${wc} words). Some readable content.`;
+        else                         writingRationale = `Very short response (${wc} word${wc !== 1 ? 's' : ''}). Difficult to assess written communication.`;
+
+        // ── Stage-differentiated improvement tips ────────────────────────────
+        const behaviourTip = getTip('behaviour', behaviourScore);
+        const detailTip    = getTip('detail',    detailScore);
+        const writingTip   = getTip('writing',   writingScore);
+
+        // ── Overall feedback (stage-toned summary) ────────────────────────────
+        const total = behaviourScore + detailScore + writingScore;
+        let overallFeedback;
+        if (s <= 2) {
+          if (total >= 12)     overallFeedback = 'Amazing work! You noticed lots of things.';
+          else if (total >= 9) overallFeedback = 'Great job! Try adding one more detail next time.';
+          else if (total >= 6) overallFeedback = 'Good try! Keep looking carefully and write what you see.';
+          else                 overallFeedback = 'Keep trying! Write one thing you noticed about the animal.';
+        } else if (s === 3) {
+          if (total >= 12)     overallFeedback = 'Strong response. Well observed and clearly written.';
+          else if (total >= 9) overallFeedback = 'Good response. Add another detail to make it even stronger.';
+          else if (total >= 6) overallFeedback = 'You have the right idea. Make sure your ideas are clearly explained.';
+          else                 overallFeedback = 'Try again — focus on what you saw and write it clearly.';
+        } else if (s === 4) {
+          if (total >= 12)     overallFeedback = 'Strong, well-structured response with clear observation.';
+          else if (total >= 9) overallFeedback = 'Good response. Include more specific evidence to strengthen it.';
+          else if (total >= 6) overallFeedback = 'Developing response. Focus on precise description and explanation.';
+          else                 overallFeedback = 'Limited response. Encourage more detailed and targeted observation.';
+        } else {
+          if (total >= 12)     overallFeedback = 'Excellent. Precise observation with clear explanatory reasoning.';
+          else if (total >= 9) overallFeedback = 'Good observation. Improve by explaining why this behaviour or feature is significant.';
+          else if (total >= 6) overallFeedback = 'Partial response. Strengthen by adding explanation and specific evidence.';
+          else                 overallFeedback = 'Insufficient explanation. Ensure the response addresses the why and how, not just the what.';
+        }
+
+        // ── Confidence and review flag ────────────────────────────────────────
+        let confidence = 'high';
+        if (wc < 5 || behaviourScore <= 1) confidence = 'low';
+        else if (wc < 10 || behaviourScore <= 2) confidence = 'medium';
+        const reviewRecommended = confidence === 'low' || (behaviourScore <= 2 && detailScore <= 2);
+
+        // ── Extracted evidence ────────────────────────────────────────────────
+        const behaviourSignals = words.filter(w => ['see','saw','observe','noticed','watch','look','found','heard'].some(k => w.toLowerCase().includes(k)));
+        const explanationSignals = words.filter(w => ['because','so','helps','allows','means','therefore'].some(k => w.toLowerCase().includes(k)));
+
+        return {
+          rationale: { behaviour: behaviourRationale, detail: detailRationale, writing: writingRationale },
+          improvementTips: { behaviour: behaviourTip, detail: detailTip, writing: writingTip },
+          overallFeedback,
+          extractedEvidence: { wordCount: wc, hasExplanation, hasPunctuation: hasPunct, behaviourSignals, explanationSignals },
+          confidence,
+          reviewRecommended,
+        };
+      }
+
       function stage1BehaviourScore(text, relevanceWords) {
         const lower = text.toLowerCase();
         const words = text.trim().split(/\s+/).filter(Boolean);
@@ -4247,6 +4460,45 @@
         }
       };
 
+      // Teacher override: saves adjusted scores + note to Firestore on the student's badge record
+      const saveOverride = async (studentName, badgeAnimalId, overrideData, classId) => {
+        try {
+          const db = firebase.firestore();
+          const targetClassId = classId || classCode;
+          const snap = await db.collection('classes').doc(targetClassId)
+            .collection('students').where('name', '==', studentName).limit(1).get();
+          if (snap.empty) return { ok: false, error: 'Student not found' };
+          const docRef = snap.docs[0].ref;
+          const data = snap.docs[0].data();
+          const badges = (data.badges || []).map(b => {
+            if (b.animalId !== badgeAnimalId) return b;
+            return {
+              ...b,
+              observationScore: {
+                ...(b.observationScore || {}),
+                teacherOverride: {
+                  applied:        overrideData.active,
+                  behaviourScore: overrideData.b !== null ? Number(overrideData.b) : null,
+                  detailScore:    overrideData.d !== null ? Number(overrideData.d) : null,
+                  writingScore:   overrideData.w !== null ? Number(overrideData.w) : null,
+                  note:           overrideData.note || '',
+                  reasonType:     overrideData.reason || '',
+                  savedAt:        new Date().toISOString(),
+                },
+                reviewFlag: {
+                  flagged: overrideData.flagged || false,
+                  reason:  overrideData.flagReason || '',
+                },
+              },
+            };
+          });
+          await docRef.update({ badges });
+          return { ok: true };
+        } catch (e) {
+          return { ok: false, error: e.message };
+        }
+      };
+
       const submitObservation = () => {
         if (sessionLocked) return;
         if (activityCompleted) return;
@@ -4278,12 +4530,14 @@
             detailBonus = stage1DetailScore(text, s1words);
             literacyBonus = stage1WritingScore(text);
           } else if (classStage === 3) {
-            detailBonus = detailHits === 0 ? 0 : detailHits === 1 ? 2 : Math.min(detailHits + 1, 4);
+            const s3 = stage3Score(detailHits, hasExplanation, text.trim().split(/\s+/).filter(Boolean).length);
+            behaviourBonus = s3.b; detailBonus = s3.d;
           } else if (classStage === 5) {
             const s5 = stage5Score(text, conservationWords, detailWords, hasExplanation);
             behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
           } else {
-            detailBonus = Math.min(detailHits + 1, 5);
+            const s4 = stage4Score(detailHits, hasExplanation, text.trim().split(/\s+/).filter(Boolean).length);
+            behaviourBonus = Math.max(behaviourBonus, s4.b); detailBonus = s4.d;
           }
           if (classStage !== 5) literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'chimpanzee') {
@@ -4298,13 +4552,15 @@
             detailBonus = stage1DetailScore(text, s1words);
             literacyBonus = stage1WritingScore(text);
           } else if (classStage === 3) {
-            detailBonus = detailHits === 0 ? 0 : detailHits === 1 ? 2 : Math.min(detailHits + 1, 4);
+            const s3 = stage3Score(detailHits, ['because','so','helps','allows'].some(p => lower.includes(p)), text.trim().split(/\s+/).filter(Boolean).length);
+            behaviourBonus = s3.b; detailBonus = s3.d;
           } else if (classStage === 5) {
             const hasExp5 = ['because','so','helps','allows','leads','since','therefore','means'].some(p => lower.includes(p));
             const s5 = stage5Score(text, behaviourWords, detailWords, hasExp5);
             behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
           } else {
-            detailBonus = Math.min(detailHits + 1, 5);
+            const s4 = stage4Score(detailHits, ['because','so','helps','allows','leads'].some(p => lower.includes(p)), text.trim().split(/\s+/).filter(Boolean).length);
+            behaviourBonus = Math.max(behaviourBonus, s4.b); detailBonus = s4.d;
           }
           if (classStage !== 5) literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'gorilla') {
@@ -4323,17 +4579,14 @@
             detailBonus = stage1DetailScore(text, s1words);
             literacyBonus = stage1WritingScore(text);
           } else if (classStage === 3) {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 2;
-            else if (hasExplanation) detailBonus = Math.min(elements + 1, 4);
-            else detailBonus = Math.min(elements + 1, 3);
+            const s3 = stage3Score(elements, hasExplanation, text.trim().split(/\s+/).filter(Boolean).length);
+            behaviourBonus = Math.max(behaviourBonus, s3.b); detailBonus = s3.d;
           } else if (classStage === 5) {
             const s5 = stage5Score(text, observationWords, conceptWords, hasExplanation);
             behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
           } else {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 1;
-            else detailBonus = Math.min(elements + 1, 5);
+            const s4 = stage4Score(elements, hasExplanation, text.trim().split(/\s+/).filter(Boolean).length);
+            behaviourBonus = Math.max(behaviourBonus, s4.b); detailBonus = s4.d;
           }
         } else if (currentAnimal.id === 'giraffe') {
           behaviourBonus = calculateBehaviourScore(text);
@@ -4350,19 +4603,14 @@
             behaviourBonus = stage1BehaviourScore(text, s1words);
             detailBonus = stage1DetailScore(text, s1words);
           } else if (classStage === 3) {
-            // Stage 3: simple explanation → detail ≥ 3–4
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 2;
-            else if (hasExplanation) detailBonus = Math.min(elements + 1, 4);
-            else detailBonus = Math.min(elements + 1, 3);
+            const s3 = stage3Score(elements, hasExplanation, text.trim().split(/\s+/).filter(Boolean).length);
+            behaviourBonus = Math.max(behaviourBonus, s3.b); detailBonus = s3.d;
           } else if (classStage === 5) {
             const s5 = stage5Score(text, observationWords, conceptWords, hasExplanation);
             behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
           } else {
-            // Stage 4 (default)
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 1;
-            else detailBonus = Math.min(elements + 1, 5);
+            const s4 = stage4Score(elements, hasExplanation, text.trim().split(/\s+/).filter(Boolean).length);
+            behaviourBonus = Math.max(behaviourBonus, s4.b); detailBonus = s4.d;
           }
         } else if (currentAnimal.id === 'concert-lawn') {
           const behaviourWords = ['walk','feel','felt','stand','touch','sit','notice','observe','sense','hear','smell','look','step','move','ground','grass','soil','surface'];
@@ -4405,17 +4653,14 @@
             detailBonus = stage1DetailScore(text, s1words);
             literacyBonus = stage1WritingScore(text);
           } else if (classStage === 3) {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 2;
-            else if (hasExplanation) detailBonus = Math.min(elements + 1, 4);
-            else detailBonus = Math.min(elements + 1, 3);
+            const s3 = stage3Score(elements, hasExplanation, text.trim().split(/\s+/).filter(Boolean).length);
+            behaviourBonus = Math.max(behaviourBonus, s3.b); detailBonus = s3.d;
           } else if (classStage === 5) {
             const s5 = stage5Score(text, locationWords, behaviourDetailWords, hasExplanation);
             behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
           } else {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 1;
-            else detailBonus = Math.min(elements + 1, 5);
+            const s4 = stage4Score(elements, hasExplanation, text.trim().split(/\s+/).filter(Boolean).length);
+            behaviourBonus = Math.max(behaviourBonus, s4.b); detailBonus = s4.d;
           }
           if (classStage !== 5) literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'dingo') {
@@ -4436,17 +4681,14 @@
             behaviourBonus = stage1BehaviourScore(text, s1words);
             detailBonus = stage1DetailScore(text, s1words);
           } else if (classStage === 3) {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 2;
-            else if (hasExplanation) detailBonus = Math.min(elements + 1, 4);
-            else detailBonus = Math.min(elements + 1, 3);
+            const s3 = stage3Score(elements, hasExplanation, text.trim().split(/\s+/).filter(Boolean).length);
+            behaviourBonus = Math.max(behaviourBonus, s3.b); detailBonus = s3.d;
           } else if (classStage === 5) {
             const s5 = stage5Score(text, dingoAppearanceWords, envWords, hasExplanation);
             behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
           } else {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 1;
-            else detailBonus = Math.min(elements + 1, 5);
+            const s4 = stage4Score(elements, hasExplanation, text.trim().split(/\s+/).filter(Boolean).length);
+            behaviourBonus = Math.max(behaviourBonus, s4.b); detailBonus = s4.d;
           }
           if (classStage !== 5) literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'asian-water-buffalo') {
@@ -4467,17 +4709,14 @@
             behaviourBonus = stage1BehaviourScore(text, s1words);
             detailBonus = stage1DetailScore(text, s1words);
           } else if (classStage === 3) {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 2;
-            else if (hasExplanation) detailBonus = Math.min(elements + 1, 4);
-            else detailBonus = Math.min(elements + 1, 3);
+            const s3 = stage3Score(elements, hasExplanation, text.trim().split(/\s+/).filter(Boolean).length);
+            behaviourBonus = Math.max(behaviourBonus, s3.b); detailBonus = s3.d;
           } else if (classStage === 5) {
             const s5 = stage5Score(text, animalWords, interactionWords, hasExplanation);
             behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
           } else {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 1;
-            else detailBonus = Math.min(elements + 1, 5);
+            const s4 = stage4Score(elements, hasExplanation, text.trim().split(/\s+/).filter(Boolean).length);
+            behaviourBonus = Math.max(behaviourBonus, s4.b); detailBonus = s4.d;
           }
           if (classStage !== 5) literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'sea-lion') {
@@ -4498,17 +4737,14 @@
             behaviourBonus = stage1BehaviourScore(text, s1words);
             detailBonus = stage1DetailScore(text, s1words);
           } else if (classStage === 3) {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 2;
-            else if (hasExplanation) detailBonus = Math.min(elements + 1, 4);
-            else detailBonus = Math.min(elements + 1, 3);
+            const s3 = stage3Score(elements, hasExplanation, text.trim().split(/\s+/).filter(Boolean).length);
+            behaviourBonus = Math.max(behaviourBonus, s3.b); detailBonus = s3.d;
           } else if (classStage === 5) {
             const s5 = stage5Score(text, humanImpactWords, environmentWords, hasExplanation);
             behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
           } else {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 1;
-            else detailBonus = Math.min(elements + 1, 5);
+            const s4 = stage4Score(elements, hasExplanation, text.trim().split(/\s+/).filter(Boolean).length);
+            behaviourBonus = Math.max(behaviourBonus, s4.b); detailBonus = s4.d;
           }
           if (classStage !== 5) literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'blue-mountains-bushwalk') {
@@ -4530,17 +4766,14 @@
             detailBonus = stage1DetailScore(text, s1words);
             literacyBonus = stage1WritingScore(text);
           } else if (classStage === 3) {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 2;
-            else if (hasFeeling) detailBonus = Math.min(elements + 1, 4);
-            else detailBonus = Math.min(elements + 1, 3);
+            const s3 = stage3Score(elements, hasFeeling, text.trim().split(/\s+/).filter(Boolean).length);
+            behaviourBonus = Math.max(behaviourBonus, s3.b); detailBonus = s3.d;
           } else if (classStage === 5) {
             const s5 = stage5Score(text, soundWords, environmentWords, hasFeeling);
             behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
           } else {
-            if (elements === 0) detailBonus = 0;
-            else if (elements === 1) detailBonus = 1;
-            else detailBonus = Math.min(elements + 1, 5);
+            const s4 = stage4Score(elements, hasExplanation, text.trim().split(/\s+/).filter(Boolean).length);
+            behaviourBonus = Math.max(behaviourBonus, s4.b); detailBonus = s4.d;
           }
           if (classStage !== 5) literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'tiger') {
@@ -4555,8 +4788,8 @@
             detailBonus = stage1DetailScore(text, s1words);
             literacyBonus = stage1WritingScore(text);
           } else if (classStage === 3) {
-            detailBonus = tigerDetailHits === 0 ? 0 : tigerDetailHits === 1 ? 2 : Math.min(tigerDetailHits + 1, 4);
-          } else if (classStage === 5) {
+            const s3 = stage3Score(tigerDetailHits, ['because','so','helps','allows'].some(p => lower.includes(p)), text.trim().split(/\s+/).filter(Boolean).length);
+            behaviourBonus = Math.max(behaviourBonus, s3.b); detailBonus = s3.d;
             const hasExp5 = ['because','so','helps','allows','leads','since','therefore','means','in order'].some(p => lower.includes(p));
             const s5 = stage5Score(text, tigerBehaviourWords, tigerDetailWords, hasExp5);
             behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
@@ -4584,11 +4817,69 @@
           literacyBonus  = Math.min(literacyBonus  || 0, 2);
         }
 
+      // Step 3: Stage-differentiated score normalisation.
+      // Called AFTER per-animal scoring, BEFORE saving to Firestore.
+      // Adjusts raw scores up/down based on stage expectations without
+      // changing the underlying scoring architecture.
+      function normaliseScores({ behaviourScore, detailScore, writingScore, evidence, stage }) {
+        let b = behaviourScore, d = detailScore, w = writingScore;
+        const s = stage || 4;
+        const { hasExplanation, wordCount, behaviourDetected, detailCount } = {
+          hasExplanation: evidence?.hasExplanation || false,
+          wordCount:      evidence?.wordCount       || 0,
+          behaviourDetected: (behaviourScore || 0) >= 3,
+          detailCount:    (detailScore     || 0),
+        };
+
+        if (s === 5) {
+          // Stage 5: explanation required for 4–5
+          if (!hasExplanation) b = Math.min(b, 3);
+          if (!hasExplanation) w = Math.min(w, 3);
+          if (!hasExplanation && detailCount <= 3) d = Math.min(d, 3);
+        }
+
+        if (s <= 2) {
+          // Stage 1–2: any correct behaviour floors at 3
+          if (behaviourDetected) b = Math.max(b, 3);
+          if (detailCount >= 1)  d = Math.max(d, 3);
+          if (wordCount > 3)     w = Math.max(w, 3);
+        }
+
+        if (s === 3) {
+          // Stage 3: behaviour must be at least clear (3 minimum if detected)
+          if (behaviourDetected) b = Math.max(b, 3);
+          if (detailCount >= 1)  d = Math.max(d, 3);
+        }
+
+        // Clamp all to 0–5
+        return {
+          behaviourScore: Math.max(0, Math.min(5, Math.round(b))),
+          detailScore:    Math.max(0, Math.min(5, Math.round(d))),
+          writingScore:   Math.max(0, Math.min(5, Math.round(w))),
+        };
+      }
+
         // Build observationScore object — feeds analytics radar
+        const scoreRationale = generateScoreRationale(text, behaviourBonus || 0, detailBonus || 0, literacyBonus || 0, currentAnimal.id, classStage);
+
+        // Apply stage-differentiated normalisation on top of raw scores
+        const normalisedScores = normaliseScores({
+          behaviourScore: behaviourBonus || 0,
+          detailScore:    detailBonus    || 0,
+          writingScore:   literacyBonus  || 0,
+          evidence:       scoreRationale.extractedEvidence,
+          stage:          classStage,
+        });
+
         const observationScore = {
-          behaviour: behaviourBonus || 0,
-          detail: detailBonus || 0,
-          writing: literacyBonus || 0
+          behaviour: normalisedScores.behaviourScore,
+          detail:    normalisedScores.detailScore,
+          writing:   normalisedScores.writingScore,
+          rationale: scoreRationale.rationale,
+          improvementTips: scoreRationale.improvementTips,
+          extractedEvidence: scoreRationale.extractedEvidence,
+          confidence: scoreRationale.confidence,
+          reviewRecommended: scoreRationale.reviewRecommended,
         };
 
         setFoundAnimals(prev => new Set([...prev, currentAnimal.id]));
@@ -7380,34 +7671,170 @@
           </div>
 
           {observationsModal && (
-            <div onClick={() => setObservationsModal(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'1.5rem' }}>
+            <div onClick={() => setObservationsModal(null); setExpandedBreakdown(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'1.5rem' }}>
               <div onClick={(e) => e.stopPropagation()} style={{ background:'white', borderRadius:'18px', width:'100%', maxWidth:'480px', maxHeight:'80vh', overflowY:'auto', boxShadow:'0 24px 60px rgba(0,0,0,0.25)' }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'1.2rem 1.4rem 0.8rem', borderBottom:'1px solid #F0EDE8', position:'sticky', top:0, background:'white', zIndex:1 }}>
                   <div>
                     <h3 style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)', margin:0 }}> Observations</h3>
                     <p style={{ fontSize:'0.78rem', color:'#888', margin:'0.15rem 0 0' }}>{observationsModal.name}</p>
                   </div>
-                  <button onClick={() => setObservationsModal(null)} style={{ background:'none', border:'none', fontSize:'1.4rem', color:'#aaa', cursor:'pointer', lineHeight:1, padding:'0.2rem 0.4rem' }}>x</button>
+                  <button onClick={() => setObservationsModal(null); setExpandedBreakdown(null)} style={{ background:'none', border:'none', fontSize:'1.4rem', color:'#aaa', cursor:'pointer', lineHeight:1, padding:'0.2rem 0.4rem' }}>x</button>
                 </div>
                 <div style={{ padding:'1rem 1.4rem 1.4rem' }}>
-                  {(observationsModal.badges || []).filter(b => b.observationScore || (b.observation && b.observation.trim())).map((b, idx, arr) => (
-                    <div key={idx} style={{ borderLeft:'3px solid var(--jungle-mid)', background:'#F7FAF8', borderRadius:'0 10px 10px 0', padding:'0.75rem 1rem', marginBottom: idx < arr.length - 1 ? '0.75rem' : 0 }}>
-                      <div style={{ display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.35rem' }}>
-                        <span style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{b.animal} – Observation</span>
-                        {b.timestamp && <span style={{ fontSize:'0.65rem', color:'#aaa' }}>· {new Date(b.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short' })}</span>}
-                      </div>
-                      {b.observation && b.observation.trim() && (
-                        <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.55, margin:'0 0 0.4rem' }}>{b.observation}</p>
-                      )}
-                      {b.observationScore && (
-                        <div style={{ display:'flex', gap:'0.75rem', flexWrap:'wrap' }}>
-                          <span style={{ fontSize:'0.7rem', color:'#666' }}>Behaviour: <strong style={{ color:'var(--jungle-mid)' }}>{b.observationScore.behaviour ?? 0}/5</strong></span>
-                          <span style={{ fontSize:'0.7rem', color:'#666' }}>Detail: <strong style={{ color:'var(--jungle-mid)' }}>{b.observationScore.detail ?? 0}/5</strong></span>
-                          <span style={{ fontSize:'0.7rem', color:'#666' }}>Writing: <strong style={{ color:'var(--jungle-mid)' }}>{b.observationScore.writing ?? 0}/5</strong></span>
+                  {(observationsModal.badges || []).filter(b => b.observationScore || (b.observation && b.observation.trim())).map((b, idx, arr) => {
+                    const bKey = `modal-${observationsModal.name}-${idx}`;
+                    const isExpanded = expandedBreakdown === bKey;
+                    const obs = b.observationScore;
+                    const domains = obs ? [
+                      { icon: '🧠', label: 'Behaviour', val: obs.behaviour ?? 0, color: '#059669', rationale: obs.rationale?.behaviour, tip: obs.improvementTips?.behaviour },
+                      { icon: '🔍', label: 'Detail',    val: obs.detail    ?? 0, color: '#0284C7', rationale: obs.rationale?.detail,    tip: obs.improvementTips?.detail },
+                      { icon: '✏️', label: 'Writing',   val: obs.writing   ?? 0, color: '#7C3AED', rationale: obs.rationale?.writing,   tip: obs.improvementTips?.writing },
+                    ] : [];
+                    return (
+                      <div key={idx} style={{ borderLeft:'3px solid var(--jungle-mid)', background:'#F7FAF8', borderRadius:'0 10px 10px 0', padding:'0.75rem 1rem', marginBottom: idx < arr.length - 1 ? '0.75rem' : 0 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.35rem' }}>
+                          <span style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{b.animal} – Observation</span>
+                          {b.timestamp && <span style={{ fontSize:'0.65rem', color:'#aaa' }}>· {new Date(b.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short' })}</span>}
                         </div>
-                      )}
-                    </div>
-                  ))}
+                        {b.observation && b.observation.trim() && (
+                          <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.55, margin:'0 0 0.5rem' }}>{b.observation}</p>
+                        )}
+                        {obs && (
+                          <div>
+                            <div style={{ display:'flex', gap:'0.6rem', flexWrap:'wrap', alignItems:'center', marginBottom:'0.3rem' }}>
+                              {domains.map(d => (
+                                <span key={d.label} style={{ fontSize:'0.7rem', color:'#666' }}>
+                                  {d.icon} {d.label}: <strong style={{ color: d.color }}>{d.val}/5</strong>
+                                </span>
+                              ))}
+                              {obs.reviewRecommended && (
+                                <span style={{ fontSize:'0.65rem', background:'#FEF3C7', color:'#92400E', padding:'0.1rem 0.4rem', borderRadius:'4px', fontWeight:700 }}>⚠ Review</span>
+                              )}
+                              <button
+                                onClick={() => setExpandedBreakdown(isExpanded ? null : bKey)}
+                                style={{ fontSize:'0.65rem', color:'var(--jungle-mid)', background:'none', border:'1px solid var(--jungle-mid)', borderRadius:'4px', padding:'0.15rem 0.5rem', cursor:'pointer', fontWeight:700, marginLeft:'auto' }}>
+                                {isExpanded ? 'Hide ▴' : 'Marking / Feedback ▾'}
+                              </button>
+                            </div>
+                            {isExpanded && (
+                              <div style={{ marginTop:'0.5rem', background:'white', borderRadius:'10px', padding:'0.75rem 0.9rem', border:'1px solid #E8EDF0' }}>
+                                {domains.map((d, di) => (
+                                  <div key={d.label} style={{ marginBottom: di < 2 ? '0.6rem' : 0, paddingBottom: di < 2 ? '0.6rem' : 0, borderBottom: di < 2 ? '1px solid #F0F4F0' : 'none' }}>
+                                    <div style={{ display:'flex', alignItems:'center', gap:'0.5rem', marginBottom:'0.2rem' }}>
+                                      <span style={{ fontSize:'0.73rem', fontWeight:700, color: d.color, minWidth:'90px' }}>{d.icon} {d.label}: {d.val}/5</span>
+                                      <div style={{ flex:1, height:'5px', background:'#F0F0F0', borderRadius:'3px', overflow:'hidden' }}>
+                                        <div style={{ width:`${(d.val/5)*100}%`, height:'100%', background: d.color, borderRadius:'3px', transition:'width 0.3s' }} />
+                                      </div>
+                                    </div>
+                                    {d.rationale
+                                      ? <p style={{ fontSize:'0.73rem', color:'#555', margin:'0 0 0.15rem', lineHeight:1.45 }}>{d.rationale}</p>
+                                      : <p style={{ fontSize:'0.72rem', color:'#aaa', margin:'0 0 0.15rem', fontStyle:'italic' }}>
+                                          {d.val <= 1 ? 'No relevant content detected.' : d.val <= 2 ? 'Vague or minimal response.' : d.val <= 3 ? 'Basic relevant response.' : d.val <= 4 ? 'Clear and relevant response.' : 'Strong, detailed response.'}
+                                        </p>
+                                    }
+                                    {d.tip && <p style={{ fontSize:'0.7rem', color:'#888', margin:0, fontStyle:'italic', lineHeight:1.4 }}>➡ Next step: {d.tip}</p>}
+                                  </div>
+                                ))}
+                                {obs.confidence && (
+                                  <p style={{ fontSize:'0.68rem', color:'#aaa', margin:'0.4rem 0 0', textAlign:'right' }}>Score confidence: {obs.confidence}</p>
+                                )}
+                                {/* Teacher Override Section */}
+                                {(() => {
+                                  const override = obs.teacherOverride || {};
+                                  const form = overrideForms[bKey] || {};
+                                  const showForm = form.open;
+                                  const isActive = override.applied;
+                                  return (
+                                    <div style={{ marginTop:'0.75rem', borderTop:'1px solid #EEF0F2', paddingTop:'0.6rem' }}>
+                                      {isActive && (
+                                        <div style={{ display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.4rem' }}>
+                                          <span style={{ fontSize:'0.68rem', background:'#FEF3C7', color:'#92400E', padding:'0.1rem 0.45rem', borderRadius:'4px', fontWeight:700 }}>🟡 Teacher Override Applied</span>
+                                          {override.reasonType && <span style={{ fontSize:'0.65rem', color:'#aaa' }}>{override.reasonType}</span>}
+                                        </div>
+                                      )}
+                                      {!showForm && (
+                                        <div style={{ display:'flex', gap:'0.4rem', flexWrap:'wrap' }}>
+                                          <button onClick={() => setOverrideForms(prev => ({ ...prev, [bKey]: { open:true, b: override.behaviourScore ?? obs.behaviour ?? '', d: override.detailScore ?? obs.detail ?? '', w: override.writingScore ?? obs.writing ?? '', note: override.note || '', reason: override.reasonType || '', flagged: obs.reviewFlag?.flagged || false, flagReason: obs.reviewFlag?.reason || '', active: isActive } }))}
+                                            style={{ fontSize:'0.65rem', padding:'0.2rem 0.55rem', borderRadius:'4px', border:'1px solid #D1D5DB', background:'#F9FAFB', cursor:'pointer', fontWeight:600, color:'#374151' }}>
+                                            {isActive ? '✏️ Edit Override' : '✏️ Override Scores'}
+                                          </button>
+                                          <button onClick={() => setOverrideForms(prev => ({ ...prev, [bKey]: { open:true, flagged: obs.reviewFlag?.flagged || false, flagReason: obs.reviewFlag?.reason || '', flagOnly:true } }))}
+                                            style={{ fontSize:'0.65rem', padding:'0.2rem 0.55rem', borderRadius:'4px', border:'1px solid #D1D5DB', background: obs.reviewFlag?.flagged ? '#FEF3C7' : '#F9FAFB', cursor:'pointer', fontWeight:600, color: obs.reviewFlag?.flagged ? '#92400E' : '#374151' }}>
+                                            {obs.reviewFlag?.flagged ? '🚩 Flagged' : '🚩 Flag for Review'}
+                                          </button>
+                                        </div>
+                                      )}
+                                      {showForm && (
+                                        <div style={{ background:'#F9FAFB', borderRadius:'8px', padding:'0.7rem 0.8rem', border:'1px solid #E5E7EB', marginTop:'0.4rem' }}>
+                                          {!form.flagOnly && (
+                                            <>
+                                              <p style={{ fontSize:'0.7rem', fontWeight:700, color:'#374151', margin:'0 0 0.4rem' }}>Override Scores</p>
+                                              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'0.4rem', marginBottom:'0.5rem' }}>
+                                                {[['b','🧠 Behaviour'],['d','🔍 Detail'],['w','✏️ Writing']].map(([key, label]) => (
+                                                  <div key={key}>
+                                                    <label style={{ fontSize:'0.62rem', color:'#6B7280', display:'block', marginBottom:'0.15rem' }}>{label}</label>
+                                                    <select value={form[key] ?? ''} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], [key]: e.target.value } }))}
+                                                      style={{ width:'100%', padding:'0.25rem 0.3rem', borderRadius:'5px', border:'1px solid #D1D5DB', fontSize:'0.75rem', background:'white' }}>
+                                                      <option value="">–</option>
+                                                      {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}/5</option>)}
+                                                    </select>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                              <div style={{ marginBottom:'0.4rem' }}>
+                                                <label style={{ fontSize:'0.62rem', color:'#6B7280', display:'block', marginBottom:'0.15rem' }}>Reason</label>
+                                                <select value={form.reason || ''} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], reason: e.target.value } }))}
+                                                  style={{ width:'100%', padding:'0.25rem 0.3rem', borderRadius:'5px', border:'1px solid #D1D5DB', fontSize:'0.75rem', background:'white' }}>
+                                                  <option value="">Select reason…</option>
+                                                  <option value="adjusted for fairness">Adjusted for fairness</option>
+                                                  <option value="misinterpreted response">Misinterpreted response</option>
+                                                  <option value="other">Other</option>
+                                                </select>
+                                              </div>
+                                              <div style={{ marginBottom:'0.5rem' }}>
+                                                <label style={{ fontSize:'0.62rem', color:'#6B7280', display:'block', marginBottom:'0.15rem' }}>Note (optional)</label>
+                                                <input type="text" value={form.note || ''} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], note: e.target.value } }))} placeholder="e.g. Verbal explanation observed"
+                                                  style={{ width:'100%', padding:'0.3rem 0.4rem', borderRadius:'5px', border:'1px solid #D1D5DB', fontSize:'0.75rem', boxSizing:'border-box' }} />
+                                              </div>
+                                            </>
+                                          )}
+                                          <div style={{ marginBottom:'0.5rem' }}>
+                                            <label style={{ display:'flex', alignItems:'center', gap:'0.4rem', fontSize:'0.7rem', color:'#374151', cursor:'pointer' }}>
+                                              <input type="checkbox" checked={form.flagged || false} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], flagged: e.target.checked } }))} />
+                                              Flag this response for review
+                                            </label>
+                                            {form.flagged && (
+                                              <input type="text" value={form.flagReason || ''} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], flagReason: e.target.value } }))} placeholder="Reason for flag (optional)"
+                                                style={{ width:'100%', marginTop:'0.25rem', padding:'0.25rem 0.4rem', borderRadius:'5px', border:'1px solid #D1D5DB', fontSize:'0.73rem', boxSizing:'border-box' }} />
+                                            )}
+                                          </div>
+                                          <div style={{ display:'flex', gap:'0.4rem' }}>
+                                            <button onClick={async () => {
+                                              setOverrideSaving(bKey);
+                                              const result = await saveOverride(observationsModal.name, b.animalId, { ...form, active: !form.flagOnly });
+                                              setOverrideSaving(null);
+                                              if (result.ok) setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }));
+                                            }} disabled={overrideSaving === bKey}
+                                              style={{ flex:1, padding:'0.3rem', borderRadius:'5px', border:'none', background:'var(--jungle-mid)', color:'white', fontSize:'0.72rem', fontWeight:700, cursor:'pointer' }}>
+                                              {overrideSaving === bKey ? 'Saving…' : 'Save'}
+                                            </button>
+                                            <button onClick={() => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }))}
+                                              style={{ padding:'0.3rem 0.6rem', borderRadius:'5px', border:'1px solid #D1D5DB', background:'white', fontSize:'0.72rem', color:'#6B7280', cursor:'pointer' }}>
+                                              Cancel
+                                            </button>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                   {(observationsModal.badges || []).filter(b => b.observationScore || (b.observation && b.observation.trim())).length === 0 && (
                     <p style={{ fontSize:'0.85rem', color:'#aaa', textAlign:'center', padding:'1rem 0' }}>No observations recorded yet.</p>
                   )}
@@ -8146,9 +8573,240 @@
                               }
                             </div>
 
+                            {/* Strength / Focus / Teaching Actions */}
+                            {cnt > 0 && (() => {
+                              const stage = adminClassData?.stage ? parseInt(adminClassData.stage) : 4;
+                              const domainList = [
+                                { key:'behaviour', label:'Behaviour', icon:'🧠', avg: avgB, color:'#059669', desc:'identifying what animals do' },
+                                { key:'detail',    label:'Detail',    icon:'🔍', avg: avgD, color:'#0284C7', desc:'using supporting ideas and evidence' },
+                                { key:'writing',   label:'Writing',   icon:'✏️', avg: avgW, color:'#7C3AED', desc:'constructing clear sentences' },
+                              ];
+                              const sorted = [...domainList].sort((a,b) => b.avg - a.avg);
+                              const strongest = sorted[0];
+                              const weakest   = sorted[sorted.length - 1];
+
+                              const stagePrefix = stage <= 2
+                                ? 'Students are building observation skills.'
+                                : stage === 3
+                                ? 'Students are developing observation and explanation skills.'
+                                : stage === 5
+                                ? 'Students should explain their observations using clear reasoning.'
+                                : 'Students should describe observations and begin to explain them.';
+
+                              const actions = {
+                                behaviour: stage <= 2
+                                  ? 'Encourage students to say what the animal is doing — any word is a great start.'
+                                  : stage === 5
+                                  ? 'Help students link observations to scientific concepts such as adaptation or survival.'
+                                  : 'Help students identify and name specific behaviours they can see at each exhibit.',
+                                detail: stage <= 2
+                                  ? 'Ask students to add one more thing they noticed — a colour, size, or sound.'
+                                  : stage === 5
+                                  ? 'Prompt students to include specific evidence and explain the significance of each detail.'
+                                  : 'Encourage students to include specific features, sounds, or environmental details.',
+                                writing: stage <= 2
+                                  ? 'Support students to write a full sentence — "The koala was sleeping." is excellent.'
+                                  : stage === 5
+                                  ? 'Model extended response structure: observation → explanation → link to survival or ecosystem.'
+                                  : 'Encourage full sentences with capital letters, punctuation, and at least one clear idea.',
+                              };
+
+                              // Common issues scan
+                              let noExplanationCount = 0, noBehaviourCount = 0, lowDetailCount = 0, obsCount = 0;
+                              students.forEach(s => (s.badges || []).forEach(b => {
+                                const obs = b.observationScore;
+                                if (!obs || typeof obs !== 'object') return;
+                                obsCount++;
+                                if ((obs.behaviour || 0) <= 2) noBehaviourCount++;
+                                if ((obs.detail    || 0) <= 2) lowDetailCount++;
+                                if (!obs.extractedEvidence?.hasExplanation) noExplanationCount++;
+                              }));
+                              const noBehPct  = obsCount ? Math.round((noBehaviourCount  / obsCount) * 100) : 0;
+                              const lowDetPct = obsCount ? Math.round((lowDetailCount    / obsCount) * 100) : 0;
+                              const noExpPct  = obsCount ? Math.round((noExplanationCount / obsCount) * 100) : 0;
+
+                              return (
+                                <>
+                                  {/* Domain averages */}
+                                  <div style={{ background:'white', borderRadius:'12px', padding:'1.1rem 1.2rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:'0.75rem' }}>
+                                    <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.75rem' }}>Domain Averages</p>
+                                    {domainList.map(d => (
+                                      <div key={d.key} style={{ marginBottom:'0.55rem' }}>
+                                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'0.2rem' }}>
+                                          <span style={{ fontSize:'0.78rem', color:'#555' }}>{d.icon} {d.label}</span>
+                                          <span style={{ fontSize:'0.78rem', fontWeight:700, color: d.color }}>{d.avg}/5</span>
+                                        </div>
+                                        <div style={{ height:'7px', borderRadius:'4px', background:'#F0F0F0', overflow:'hidden' }}>
+                                          <div style={{ height:'100%', width:`${(d.avg/5)*100}%`, background: d.color, borderRadius:'4px', transition:'width 0.4s' }} />
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+
+                                  {/* Strength + Focus */}
+                                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.6rem', marginBottom:'0.75rem' }}>
+                                    <div style={{ background:'#F0FDF4', border:'1px solid #BBF7D0', borderRadius:'12px', padding:'0.9rem 1rem' }}>
+                                      <p style={{ fontSize:'0.65rem', fontWeight:700, color:'#15803D', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>✅ Strength</p>
+                                      <p style={{ fontSize:'0.8rem', fontWeight:700, color:'#14532D', margin:'0 0 0.2rem' }}>{strongest.icon} {strongest.label} ({strongest.avg}/5)</p>
+                                      <p style={{ fontSize:'0.72rem', color:'#166534', margin:0, lineHeight:1.4 }}>Students are performing well at {strongest.desc}.</p>
+                                    </div>
+                                    <div style={{ background:'#FFF7ED', border:'1px solid #FED7AA', borderRadius:'12px', padding:'0.9rem 1rem' }}>
+                                      <p style={{ fontSize:'0.65rem', fontWeight:700, color:'#C2410C', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>⚠️ Focus Area</p>
+                                      <p style={{ fontSize:'0.8rem', fontWeight:700, color:'#7C2D12', margin:'0 0 0.2rem' }}>{weakest.icon} {weakest.label} ({weakest.avg}/5)</p>
+                                      <p style={{ fontSize:'0.72rem', color:'#9A3412', margin:0, lineHeight:1.4 }}>Students need to improve {weakest.desc}.</p>
+                                    </div>
+                                  </div>
+
+                                  {/* Teaching action */}
+                                  <div style={{ background:'linear-gradient(135deg, #EFF6FF, #DBEAFE)', border:'1px solid #BFDBFE', borderRadius:'12px', padding:'0.9rem 1.1rem', marginBottom:'0.75rem' }}>
+                                    <p style={{ fontSize:'0.65rem', fontWeight:700, color:'#1D4ED8', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>💡 Suggested Next Step</p>
+                                    <p style={{ fontSize:'0.75rem', color:'#1E3A5F', margin:'0 0 0.3rem', lineHeight:1.5, fontStyle:'italic' }}>{stagePrefix}</p>
+                                    <p style={{ fontSize:'0.78rem', color:'#1E40AF', fontWeight:600, margin:0, lineHeight:1.5 }}>{actions[weakest.key]}</p>
+                                  </div>
+
+                                  {/* Common issues */}
+                                  {obsCount >= 3 && (
+                                    <div style={{ background:'white', borderRadius:'12px', padding:'0.9rem 1.1rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:'0.75rem' }}>
+                                      <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.5rem' }}>Common Issues</p>
+                                      {(() => {
+                                        const issues = [
+                                          { pct: noBehPct,  text: 'of responses showed low behaviour identification', show: noBehPct  > 20 },
+                                          { pct: lowDetPct, text: 'of responses showed low supporting detail',        show: lowDetPct > 20 },
+                                          { pct: noExpPct,  text: 'of responses contained no explanation language',   show: noExpPct  > 30 && stage >= 4 },
+                                        ].filter(i => i.show);
+                                        if (issues.length === 0) return (
+                                          <p style={{ fontSize:'0.75rem', color:'#16A34A', fontWeight:600, margin:0 }}>✓ No significant common issues detected</p>
+                                        );
+                                        return issues.map((item, i) => (
+                                          <div key={i} style={{ display:'flex', alignItems:'center', gap:'0.5rem', marginBottom:'0.3rem' }}>
+                                            <span style={{ fontSize:'0.78rem', fontWeight:700, color:'#DC2626', minWidth:'36px' }}>{item.pct}%</span>
+                                            <span style={{ fontSize:'0.75rem', color:'#555', lineHeight:1.4 }}>{item.text}</span>
+                                          </div>
+                                        ));
+                                      })()}
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            })()}
+
                         </div>
                       );
                     })()}
+
+                    {/* Student Groups */}
+                    {(() => {
+                      const students = firestoreStudents;
+                      if (students.length === 0) return null;
+
+                      // Build per-student average from all their observation scores
+                      const studentStats = students.map(s => {
+                        let totB = 0, totD = 0, totW = 0, n = 0;
+                        (s.badges || []).forEach(b => {
+                          const obs = b.observationScore;
+                          if (!obs || typeof obs !== 'object') return;
+                          totB += obs.behaviour || 0;
+                          totD += obs.detail    || 0;
+                          totW += obs.writing   || 0;
+                          n++;
+                        });
+                        if (n === 0) return null;
+                        const avgB = totB / n, avgD = totD / n, avgW = totW / n;
+                        const avg  = (avgB + avgD + avgW) / 3;
+                        return { name: s.name, avg, avgB, avgD, avgW };
+                      }).filter(Boolean);
+
+                      if (studentStats.length === 0) return null;
+
+                      // Overall groups
+                      const support    = studentStats.filter(s => s.avg < 2.5);
+                      const developing = studentStats.filter(s => s.avg >= 2.5 && s.avg <= 3.5);
+                      const proficient = studentStats.filter(s => s.avg > 3.5);
+
+                      // Domain-specific groups
+                      const lowBGroup = studentStats.filter(s => s.avgB < 3);
+                      const lowDGroup = studentStats.filter(s => s.avgD < 3);
+                      const lowWGroup = studentStats.filter(s => s.avgW < 3);
+
+                      const overallGroups = [
+                        { key:'support',    label:'Support',    dot:'🔴', count: support.length,    students: support,    bg:'#FEF2F2', border:'#FECACA', labelColor:'#991B1B', tip:'Work with these students on identifying behaviour and adding simple detail.' },
+                        { key:'developing', label:'Developing', dot:'🟡', count: developing.length, students: developing, bg:'#FFFBEB', border:'#FDE68A', labelColor:'#92400E', tip:'Encourage adding more specific detail and clearer explanations.' },
+                        { key:'proficient', label:'Proficient', dot:'🟢', count: proficient.length, students: proficient, bg:'#F0FDF4', border:'#BBF7D0', labelColor:'#14532D', tip:'Extend by asking students to explain significance and use scientific reasoning.' },
+                      ];
+                      const domainGroups = [
+                        { key:'lowB', label:'Needs Behaviour Support', icon:'🧠', count: lowBGroup.length, students: lowBGroup, color:'#059669' },
+                        { key:'lowD', label:'Needs Detail Support',    icon:'🔍', count: lowDGroup.length, students: lowDGroup, color:'#0284C7' },
+                        { key:'lowW', label:'Needs Writing Support',   icon:'✏️', count: lowWGroup.length, students: lowWGroup, color:'#7C3AED' },
+                      ].filter(g => g.count > 0);
+
+                      const NameList = ({ students }) => (
+                        <div style={{ marginTop:'0.5rem', display:'flex', flexWrap:'wrap', gap:'0.3rem' }}>
+                          {students.map((s, i) => (
+                            <span key={i} style={{ fontSize:'0.72rem', background:'white', border:'1px solid #E5E7EB', borderRadius:'20px', padding:'0.15rem 0.55rem', color:'#374151', fontWeight:600 }}>
+                              {s.name}
+                            </span>
+                          ))}
+                        </div>
+                      );
+
+                      return (
+                        <div style={{ marginBottom:'1rem' }}>
+                          <h3 style={{ fontSize:'1rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.75rem' }}>👥 Student Groups</h3>
+
+                          {/* Overall performance groups */}
+                          <div style={{ background:'white', borderRadius:'12px', padding:'1.1rem 1.2rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:'0.75rem' }}>
+                            <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.65rem' }}>Overall Performance</p>
+                            {overallGroups.map(g => (
+                              <div key={g.key} style={{ marginBottom:'0.5rem' }}>
+                                <button
+                                  onClick={() => setExpandedGroup(expandedGroup === g.key ? null : g.key)}
+                                  style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', background: g.bg, border:`1px solid ${g.border}`, borderRadius:'8px', padding:'0.55rem 0.75rem', cursor: g.count > 0 ? 'pointer' : 'default', textAlign:'left' }}>
+                                  <div style={{ display:'flex', alignItems:'center', gap:'0.5rem' }}>
+                                    <span style={{ fontSize:'0.9rem' }}>{g.dot}</span>
+                                    <span style={{ fontSize:'0.78rem', fontWeight:700, color: g.labelColor }}>{g.label}</span>
+                                    <span style={{ fontSize:'0.72rem', background:'rgba(0,0,0,0.07)', color: g.labelColor, borderRadius:'10px', padding:'0.05rem 0.4rem', fontWeight:700 }}>{g.count}</span>
+                                  </div>
+                                  {g.count > 0 && <span style={{ fontSize:'0.75rem', color: g.labelColor, opacity:0.7 }}>{expandedGroup === g.key ? '▴' : '▾'}</span>}
+                                </button>
+                                {expandedGroup === g.key && g.count > 0 && (
+                                  <div style={{ background: g.bg, borderLeft:`3px solid ${g.border}`, borderRadius:'0 0 8px 8px', padding:'0.6rem 0.75rem', marginTop:'-2px' }}>
+                                    <p style={{ fontSize:'0.72rem', color: g.labelColor, fontStyle:'italic', margin:'0 0 0.4rem', lineHeight:1.4 }}>{g.tip}</p>
+                                    <NameList students={g.students} />
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Domain-specific groups */}
+                          {domainGroups.length > 0 && (
+                            <div style={{ background:'white', borderRadius:'12px', padding:'1.1rem 1.2rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:'0.75rem' }}>
+                              <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.65rem' }}>Domain Support Needs</p>
+                              {domainGroups.map(g => (
+                                <div key={g.key} style={{ marginBottom:'0.5rem' }}>
+                                  <button
+                                    onClick={() => setExpandedGroup(expandedGroup === g.key ? null : g.key)}
+                                    style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', background:'#F9FAFB', border:'1px solid #E5E7EB', borderRadius:'8px', padding:'0.5rem 0.75rem', cursor:'pointer', textAlign:'left' }}>
+                                    <div style={{ display:'flex', alignItems:'center', gap:'0.5rem' }}>
+                                      <span style={{ fontSize:'0.85rem' }}>{g.icon}</span>
+                                      <span style={{ fontSize:'0.75rem', fontWeight:600, color:'#374151' }}>📌 {g.label}</span>
+                                      <span style={{ fontSize:'0.7rem', background: `${g.color}18`, color: g.color, borderRadius:'10px', padding:'0.05rem 0.4rem', fontWeight:700 }}>{g.count}</span>
+                                    </div>
+                                    <span style={{ fontSize:'0.72rem', color:'#9CA3AF' }}>{expandedGroup === g.key ? '▴' : '▾'}</span>
+                                  </button>
+                                  {expandedGroup === g.key && (
+                                    <div style={{ background:'#F9FAFB', borderLeft:`3px solid ${g.color}`, borderRadius:'0 0 8px 8px', padding:'0.55rem 0.75rem', marginTop:'-2px' }}>
+                                      <NameList students={g.students} />
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
                     <div style={{ marginBottom:'1rem', borderRadius:'14px', border:'1.5px solid #D4E8DC', background:'white', boxShadow:'0 2px 10px rgba(26,82,56,0.06)', overflow:'hidden' }}>
                       <button onClick={() => setMarkingCardOpen(o => !o)}
                         style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.85rem 1.2rem', background:'linear-gradient(135deg, #F0F7F4 0%, #E8F4EE 100%)', border:'none', cursor:'pointer', textAlign:'left' }}>
@@ -8274,14 +8932,14 @@
               </>
             )}
             {observationsModal && (
-              <div onClick={() => setObservationsModal(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'1.5rem' }}>
+              <div onClick={() => setObservationsModal(null); setExpandedBreakdown(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'1.5rem' }}>
                 <div onClick={(e) => e.stopPropagation()} style={{ background:'white', borderRadius:'18px', width:'100%', maxWidth:'480px', maxHeight:'80vh', overflowY:'auto', boxShadow:'0 24px 60px rgba(0,0,0,0.25)' }}>
                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'1.2rem 1.4rem 0.8rem', borderBottom:'1px solid #F0EDE8', position:'sticky', top:0, background:'white', zIndex:1 }}>
                     <div>
                       <h3 style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)', margin:0 }}> Observations</h3>
                       <p style={{ fontSize:'0.78rem', color:'#888', margin:'0.15rem 0 0' }}>{observationsModal.name}</p>
                     </div>
-                    <button onClick={() => setObservationsModal(null)} style={{ background:'none', border:'none', fontSize:'1.4rem', color:'#aaa', cursor:'pointer', lineHeight:1, padding:'0.2rem 0.4rem' }}>x</button>
+                    <button onClick={() => setObservationsModal(null); setExpandedBreakdown(null)} style={{ background:'none', border:'none', fontSize:'1.4rem', color:'#aaa', cursor:'pointer', lineHeight:1, padding:'0.2rem 0.4rem' }}>x</button>
                   </div>
                   <div style={{ padding:'1rem 1.4rem 1.4rem' }}>
                     {(observationsModal.badges || []).filter(b => b.observationScore || (b.observation && b.observation.trim())).map((b, idx, arr) => (
@@ -8293,13 +8951,137 @@
                         {b.observation && b.observation.trim() && (
                           <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.55, margin:'0 0 0.4rem' }}>{b.observation}</p>
                         )}
-                        {b.observationScore && (
-                          <div style={{ display:'flex', gap:'0.75rem', flexWrap:'wrap' }}>
-                            <span style={{ fontSize:'0.7rem', color:'#666' }}>Behaviour: <strong style={{ color:'var(--jungle-mid)' }}>{b.observationScore.behaviour ?? 0}/5</strong></span>
-                            <span style={{ fontSize:'0.7rem', color:'#666' }}>Detail: <strong style={{ color:'var(--jungle-mid)' }}>{b.observationScore.detail ?? 0}/5</strong></span>
-                            <span style={{ fontSize:'0.7rem', color:'#666' }}>Writing: <strong style={{ color:'var(--jungle-mid)' }}>{b.observationScore.writing ?? 0}/5</strong></span>
-                          </div>
-                        )}
+                        {b.observationScore && (() => {
+                          const obs = b.observationScore;
+                          const bKey = `${b.animalId || idx}-${idx}`;
+                          const isExpanded = expandedBreakdown === bKey;
+                          const domains = [
+                            { label: 'Behaviour', val: obs.behaviour ?? 0, color: '#059669', rationale: obs.rationale?.behaviour, tip: obs.improvementTips?.behaviour },
+                            { label: 'Detail', val: obs.detail ?? 0, color: '#0284C7', rationale: obs.rationale?.detail, tip: obs.improvementTips?.detail },
+                            { label: 'Writing', val: obs.writing ?? 0, color: '#7C3AED', rationale: obs.rationale?.writing, tip: obs.improvementTips?.writing },
+                          ];
+                          return (
+                            <div>
+                              <div style={{ display:'flex', gap:'0.75rem', flexWrap:'wrap', alignItems:'center', marginBottom:'0.3rem' }}>
+                                {domains.map(d => (
+                                  <span key={d.label} style={{ fontSize:'0.7rem', color:'#666' }}>
+                                    {d.label}: <strong style={{ color: d.color }}>{d.val}/5</strong>
+                                  </span>
+                                ))}
+                                {obs.reviewRecommended && (
+                                  <span style={{ fontSize:'0.65rem', background:'#FEF3C7', color:'#92400E', padding:'0.1rem 0.4rem', borderRadius:'4px', fontWeight:700 }}>⚠ Review</span>
+                                )}
+                                {obs.confidence && (
+                                  <span style={{ fontSize:'0.65rem', color:'#aaa' }}>{obs.confidence} confidence</span>
+                                )}
+                                <button
+                                  onClick={() => setExpandedBreakdown(isExpanded ? null : bKey)}
+                                  style={{ fontSize:'0.65rem', color:'var(--jungle-mid)', background:'none', border:'1px solid var(--jungle-mid)', borderRadius:'4px', padding:'0.1rem 0.4rem', cursor:'pointer', fontWeight:600, marginLeft:'auto' }}>
+                                  {isExpanded ? 'Hide ▴' : 'Marking / Feedback ▾'}
+                                </button>
+                              </div>
+                              {isExpanded && (
+                                <div style={{ marginTop:'0.5rem', background:'white', borderRadius:'8px', padding:'0.7rem 0.85rem', border:'1px solid #E8EDF0' }}>
+                                  {domains.map(d => (
+                                    <div key={d.label} style={{ marginBottom:'0.5rem', paddingBottom:'0.5rem', borderBottom:'1px solid #F0F0F0' }}>
+                                      <div style={{ display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.15rem' }}>
+                                        <span style={{ fontSize:'0.72rem', fontWeight:700, color: d.color }}>{d.label}: {d.val}/5</span>
+                                        <div style={{ flex:1, height:'4px', background:'#F0F0F0', borderRadius:'2px', overflow:'hidden' }}>
+                                          <div style={{ width:`${(d.val/5)*100}%`, height:'100%', background: d.color, borderRadius:'2px' }} />
+                                        </div>
+                                      </div>
+                                      {d.rationale && <p style={{ fontSize:'0.72rem', color:'#555', margin:'0 0 0.15rem', lineHeight:1.4 }}>{d.rationale}</p>}
+                                      {d.tip && <p style={{ fontSize:'0.7rem', color:'#888', margin:0, fontStyle:'italic', lineHeight:1.4 }}>Next step: {d.tip}</p>}
+                                    </div>
+                                  ))}
+                                  {obs.extractedEvidence && (
+                                    <p style={{ fontSize:'0.68rem', color:'#aaa', margin:'0 0 0.5rem' }}>
+                                      {obs.extractedEvidence.wordCount} words · {obs.extractedEvidence.hasExplanation ? 'contains explanation language' : 'no explanation language detected'} · {obs.extractedEvidence.hasPunctuation ? 'punctuated' : 'no punctuation'}
+                                    </p>
+                                  )}
+                                  {/* Teacher Override Section */}
+                                  {(() => {
+                                    const override = obs.teacherOverride || {};
+                                    const form = overrideForms[bKey] || {};
+                                    const showForm = form.open;
+                                    const isActive = override.applied;
+                                    return (
+                                      <div style={{ borderTop:'1px solid #EEF0F2', paddingTop:'0.5rem' }}>
+                                        {isActive && (
+                                          <div style={{ display:'flex', alignItems:'center', gap:'0.4rem', marginBottom:'0.35rem' }}>
+                                            <span style={{ fontSize:'0.68rem', background:'#FEF3C7', color:'#92400E', padding:'0.1rem 0.45rem', borderRadius:'4px', fontWeight:700 }}>🟡 Teacher Override Applied</span>
+                                            {override.reasonType && <span style={{ fontSize:'0.65rem', color:'#aaa' }}>{override.reasonType}</span>}
+                                          </div>
+                                        )}
+                                        {!showForm && (
+                                          <div style={{ display:'flex', gap:'0.4rem', flexWrap:'wrap' }}>
+                                            <button onClick={() => setOverrideForms(prev => ({ ...prev, [bKey]: { open:true, b: override.behaviourScore ?? obs.behaviour ?? '', d: override.detailScore ?? obs.detail ?? '', w: override.writingScore ?? obs.writing ?? '', note: override.note || '', reason: override.reasonType || '', flagged: obs.reviewFlag?.flagged || false, flagReason: obs.reviewFlag?.reason || '', active: isActive } }))}
+                                              style={{ fontSize:'0.65rem', padding:'0.2rem 0.55rem', borderRadius:'4px', border:'1px solid #D1D5DB', background:'#F9FAFB', cursor:'pointer', fontWeight:600, color:'#374151' }}>
+                                              {isActive ? '✏️ Edit Override' : '✏️ Override Scores'}
+                                            </button>
+                                            <button onClick={() => setOverrideForms(prev => ({ ...prev, [bKey]: { open:true, flagged: obs.reviewFlag?.flagged || false, flagReason: obs.reviewFlag?.reason || '', flagOnly:true } }))}
+                                              style={{ fontSize:'0.65rem', padding:'0.2rem 0.55rem', borderRadius:'4px', border:'1px solid #D1D5DB', background: obs.reviewFlag?.flagged ? '#FEF3C7' : '#F9FAFB', cursor:'pointer', fontWeight:600, color: obs.reviewFlag?.flagged ? '#92400E' : '#374151' }}>
+                                              {obs.reviewFlag?.flagged ? '🚩 Flagged' : '🚩 Flag for Review'}
+                                            </button>
+                                          </div>
+                                        )}
+                                        {showForm && (
+                                          <div style={{ background:'#F9FAFB', borderRadius:'8px', padding:'0.65rem 0.75rem', border:'1px solid #E5E7EB', marginTop:'0.35rem' }}>
+                                            {!form.flagOnly && (
+                                              <>
+                                                <p style={{ fontSize:'0.7rem', fontWeight:700, color:'#374151', margin:'0 0 0.4rem' }}>Override Scores</p>
+                                                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'0.4rem', marginBottom:'0.4rem' }}>
+                                                  {[['b','🧠 Beh'],['d','🔍 Det'],['w','✏️ Wri']].map(([key, label]) => (
+                                                    <div key={key}>
+                                                      <label style={{ fontSize:'0.62rem', color:'#6B7280', display:'block', marginBottom:'0.1rem' }}>{label}</label>
+                                                      <select value={form[key] ?? ''} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], [key]: e.target.value } }))}
+                                                        style={{ width:'100%', padding:'0.22rem 0.3rem', borderRadius:'4px', border:'1px solid #D1D5DB', fontSize:'0.75rem', background:'white' }}>
+                                                        <option value="">–</option>
+                                                        {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}/5</option>)}
+                                                      </select>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                                <select value={form.reason || ''} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], reason: e.target.value } }))}
+                                                  style={{ width:'100%', marginBottom:'0.35rem', padding:'0.22rem 0.3rem', borderRadius:'4px', border:'1px solid #D1D5DB', fontSize:'0.73rem', background:'white' }}>
+                                                  <option value="">Select reason…</option>
+                                                  <option value="adjusted for fairness">Adjusted for fairness</option>
+                                                  <option value="misinterpreted response">Misinterpreted response</option>
+                                                  <option value="other">Other</option>
+                                                </select>
+                                                <input type="text" value={form.note || ''} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], note: e.target.value } }))} placeholder="Note (optional)"
+                                                  style={{ width:'100%', marginBottom:'0.35rem', padding:'0.25rem 0.35rem', borderRadius:'4px', border:'1px solid #D1D5DB', fontSize:'0.73rem', boxSizing:'border-box' }} />
+                                              </>
+                                            )}
+                                            <label style={{ display:'flex', alignItems:'center', gap:'0.35rem', fontSize:'0.7rem', color:'#374151', cursor:'pointer', marginBottom:'0.35rem' }}>
+                                              <input type="checkbox" checked={form.flagged || false} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], flagged: e.target.checked } }))} />
+                                              Flag for review
+                                            </label>
+                                            <div style={{ display:'flex', gap:'0.35rem' }}>
+                                              <button onClick={async () => {
+                                                setOverrideSaving(bKey);
+                                                const result = await saveOverride(observationsModal.name, b.animalId, { ...form, active: !form.flagOnly });
+                                                setOverrideSaving(null);
+                                                if (result.ok) setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }));
+                                              }} disabled={overrideSaving === bKey}
+                                                style={{ flex:1, padding:'0.28rem', borderRadius:'4px', border:'none', background:'var(--jungle-mid)', color:'white', fontSize:'0.72rem', fontWeight:700, cursor:'pointer' }}>
+                                                {overrideSaving === bKey ? 'Saving…' : 'Save'}
+                                              </button>
+                                              <button onClick={() => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }))}
+                                                style={{ padding:'0.28rem 0.5rem', borderRadius:'4px', border:'1px solid #D1D5DB', background:'white', fontSize:'0.72rem', color:'#6B7280', cursor:'pointer' }}>
+                                                Cancel
+                                              </button>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     ))}
                     {(observationsModal.badges || []).filter(b => b.observationScore || (b.observation && b.observation.trim())).length === 0 && (
