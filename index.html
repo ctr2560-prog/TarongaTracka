@@ -5878,7 +5878,7 @@
                           'concert-lawn': 'How did the ground feel on your feet?',
                           'blue-mountains-bushwalk': 'What could you hear?',
                         }[currentAnimal?.id] || 'What did you see?'
-                      ) : classStage === 5 ? ((currentAnimal.writingPromptByStage && currentAnimal.writingPromptByStage[5]) || 'Your Observations') : 'Your Observations'}
+                      ) : classStage === 5 ? ((currentAnimal?.id === 'koala' ? 'Koala Observation' : (currentAnimal.writingPromptByStage && currentAnimal.writingPromptByStage[5])) || 'Your Observations') : 'Your Observations'}
                     </h2>
                     {classStage > 2 && !(classStage === 5 && currentAnimal?.id === 'koala') && (
                       <p style={{ color:'#666', marginBottom:'1.2rem', lineHeight:1.6, fontSize:'1.1rem', textAlign:'center' }}>
@@ -6202,7 +6202,7 @@
                   );
                 })()}
                 {(() => {
-                  const minWords = classStage <= 2 ? 5 : classStage === 3 ? 7 : 10;
+                  const minWords = classStage <= 2 ? 5 : classStage === 3 ? 7 : classStage === 5 ? 12 : 10;
                   return (
                     <>
                       <div style={{ marginTop:'1rem', fontSize:'1rem', color:wordCount>=minWords?'var(--jungle-light)':'#E86A33', fontWeight:600 }}>{wordCount}/{minWords} words {wordCount>=minWords?'':''}</div>
