@@ -4412,7 +4412,12 @@
           } else if (classStage === 5) {
             const s5 = stage5Score(text, locationWords, behaviourDetailWords, hasExplanation);
             behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
-          literacyBonus = calculateWritingScore(text, classStage);
+          } else {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 1;
+            else detailBonus = Math.min(elements + 1, 5);
+          }
+          if (classStage !== 5) literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'dingo') {
           const behaviourWords = ['fur','coat','colour','color','tan','sandy','brown','golden','yellow','pale','dark','blend','camouflage','hide','look','appear','observe','notice','see','watch','spot','match','similar'];
           const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
@@ -4438,7 +4443,12 @@
           } else if (classStage === 5) {
             const s5 = stage5Score(text, dingoAppearanceWords, envWords, hasExplanation);
             behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
-          literacyBonus = calculateWritingScore(text, classStage);
+          } else {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 1;
+            else detailBonus = Math.min(elements + 1, 5);
+          }
+          if (classStage !== 5) literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'asian-water-buffalo') {
           const behaviourWords = ['bird','birds','buffalo','rhino','tick','tickbird','oxpecker','cattle','egret','sit','perch','stand','walk','follow','eat','feed','groom','clean','pick','peck','fly','land','nearby','together','interact','observe','see','notice','watch'];
           const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
@@ -4464,7 +4474,12 @@
           } else if (classStage === 5) {
             const s5 = stage5Score(text, animalWords, interactionWords, hasExplanation);
             behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
-          literacyBonus = calculateWritingScore(text, classStage);
+          } else {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 1;
+            else detailBonus = Math.min(elements + 1, 5);
+          }
+          if (classStage !== 5) literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'sea-lion') {
           const behaviourWords = ['human','people','person','pollution','plastic','waste','rubbish','litter','fishing','boat','ship','noise','oil','chemical','tourist','visitor','enclosure','structure','fence','water','ocean','sea'];
           const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
@@ -4490,7 +4505,12 @@
           } else if (classStage === 5) {
             const s5 = stage5Score(text, humanImpactWords, environmentWords, hasExplanation);
             behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
-          literacyBonus = calculateWritingScore(text, classStage);
+          } else {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 1;
+            else detailBonus = Math.min(elements + 1, 5);
+          }
+          if (classStage !== 5) literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'blue-mountains-bushwalk') {
           const behaviourWords = ['hear','heard','listen','sound','sounds','bird','birds','wind','leaf','leaves','water','rain','insect','cricket','frog','silence','quiet','rustl','distant','echo','noise','voice','step','footstep','crunch'];
           const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
@@ -4517,7 +4537,12 @@
           } else if (classStage === 5) {
             const s5 = stage5Score(text, soundWords, environmentWords, hasFeeling);
             behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
-          literacyBonus = calculateWritingScore(text, classStage);
+          } else {
+            if (elements === 0) detailBonus = 0;
+            else if (elements === 1) detailBonus = 1;
+            else detailBonus = Math.min(elements + 1, 5);
+          }
+          if (classStage !== 5) literacyBonus = calculateWritingScore(text, classStage);
         } else if (currentAnimal.id === 'tiger') {
           const tigerBehaviourWords = ['tiger','tigers','stripe','stripes','orange','black','white','fur','coat','big','large','huge','long','tall','heavy','fast','strong','slow','walking','pacing','resting','sleeping','sitting','lying','watching','prowling','enclosure','grass','tree','rock','water','pool'];
           const tigerDetailWords = ['stripe','stripes','orange','black','white','fur','coat','big','large','huge','long','tall','heavy','fast','strong','pacing','prowling','stealthy','predator','pattern','marking','eye','teeth','claw','paw','tail'];
