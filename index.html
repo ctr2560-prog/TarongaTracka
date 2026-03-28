@@ -7729,16 +7729,21 @@
                                 </div>
                                 {flag.reason && <p style={{ fontSize:'0.7rem', color:'#888', margin:'0.2rem 0 0', fontStyle:'italic' }}>Reason: {flag.reason}</p>}
                               </div>
-                              {obs.behaviour !== undefined && (
-                                <div style={{ display:'flex', gap:'0.5rem', flexShrink:0 }}>
-                                  {[['🧠', obs.behaviour, '#059669'], ['🔍', obs.detail, '#0284C7'], ['✏️', obs.writing, '#7C3AED']].map(([icon, val, color], i) => (
-                                    <div key={i} style={{ textAlign:'center' }}>
-                                      <div style={{ fontSize:'0.6rem', color:'#bbb' }}>{icon}</div>
-                                      <div style={{ fontSize:'0.78rem', fontWeight:700, color }}>{val ?? '–'}/5</div>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
+                              {obs.behaviour !== undefined && (() => {
+                                const activeB = override.applied ? (override.behaviourScore ?? obs.behaviour) : obs.behaviour;
+                                const activeD = override.applied ? (override.detailScore    ?? obs.detail)    : obs.detail;
+                                const activeW = override.applied ? (override.writingScore   ?? obs.writing)   : obs.writing;
+                                return (
+                                  <div style={{ display:'flex', gap:'0.5rem', flexShrink:0 }}>
+                                    {[['🧠', activeB, '#059669'], ['🔍', activeD, '#0284C7'], ['✏️', activeW, '#7C3AED']].map(([icon, val, color], i) => (
+                                      <div key={i} style={{ textAlign:'center' }}>
+                                        <div style={{ fontSize:'0.6rem', color:'#bbb' }}>{icon}</div>
+                                        <div style={{ fontSize:'0.78rem', fontWeight:700, color }}>{val ?? '–'}/5</div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                );
+                              })()}
                             </div>
                             {badge.observation && (
                               <div style={{ background:'#F9FAFB', borderRadius:'8px', padding:'0.65rem 0.85rem', marginBottom:'0.65rem', border:'1px solid #F0F0F0' }}>
@@ -7762,13 +7767,16 @@
                             {isExpanded && obs.behaviour !== undefined && (
                               <div style={{ marginTop:'0.65rem', background:'white', borderRadius:'10px', padding:'0.75rem 0.9rem', border:'1px solid #E8EDF0' }}>
                                 {[
-                                  { icon:'🧠', label:'Behaviour', val: obs.behaviour ?? 0, color:'#059669', rationale: obs.rationale?.behaviour, tip: obs.improvementTips?.behaviour },
-                                  { icon:'🔍', label:'Detail',    val: obs.detail    ?? 0, color:'#0284C7', rationale: obs.rationale?.detail,    tip: obs.improvementTips?.detail },
-                                  { icon:'✏️', label:'Writing',   val: obs.writing   ?? 0, color:'#7C3AED', rationale: obs.rationale?.writing,   tip: obs.improvementTips?.writing },
+                                  { icon:'🧠', label:'Behaviour', val: override.applied ? (override.behaviourScore ?? obs.behaviour ?? 0) : (obs.behaviour ?? 0), origVal: obs.behaviour ?? 0, color:'#059669', rationale: obs.rationale?.behaviour, tip: obs.improvementTips?.behaviour },
+                                  { icon:'🔍', label:'Detail',    val: override.applied ? (override.detailScore    ?? obs.detail    ?? 0) : (obs.detail    ?? 0), origVal: obs.detail    ?? 0, color:'#0284C7', rationale: obs.rationale?.detail,    tip: obs.improvementTips?.detail },
+                                  { icon:'✏️', label:'Writing',   val: override.applied ? (override.writingScore   ?? obs.writing   ?? 0) : (obs.writing   ?? 0), origVal: obs.writing   ?? 0, color:'#7C3AED', rationale: obs.rationale?.writing,   tip: obs.improvementTips?.writing },
                                 ].map((d, di) => (
                                   <div key={d.label} style={{ marginBottom: di < 2 ? '0.55rem' : 0, paddingBottom: di < 2 ? '0.55rem' : 0, borderBottom: di < 2 ? '1px solid #F0F4F0' : 'none' }}>
                                     <div style={{ display:'flex', alignItems:'center', gap:'0.5rem', marginBottom:'0.15rem' }}>
-                                      <span style={{ fontSize:'0.73rem', fontWeight:700, color: d.color, minWidth:'95px' }}>{d.icon} {d.label}: {d.val}/5</span>
+                                      <span style={{ fontSize:'0.73rem', fontWeight:700, color: d.color, minWidth:'95px' }}>
+                                        {d.icon} {d.label}: {d.val}/5
+                                        {override.applied && d.origVal !== d.val && <span style={{ fontSize:'0.62rem', color:'#aaa', textDecoration:'line-through', marginLeft:'0.3rem' }}>{d.origVal}/5</span>}
+                                      </span>
                                       <div style={{ flex:1, height:'5px', background:'#F0F0F0', borderRadius:'3px', overflow:'hidden' }}>
                                         <div style={{ width:`${(d.val/5)*100}%`, height:'100%', background: d.color, borderRadius:'3px' }} />
                                       </div>
@@ -7804,10 +7812,16 @@
                                 <div style={{ display:'flex', gap:'0.4rem' }}>
                                   <button onClick={async () => {
                                     setOverrideSaving(bKey);
-                                    await saveOverride(studentName, badge.animalId, { ...overrideForms[bKey], active: true }, selectedAdminClass);
+                                    const form2 = overrideForms[bKey];
+                                    const result = await saveOverride(studentName, badge.animalId, { ...form2, active: true }, selectedAdminClass);
                                     setOverrideSaving(null);
-                                    setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }));
-                                  }} disabled={overrideSaving === bKey}
+                                    if (result?.ok !== false) {
+                                      setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }));
+                                      setFirestoreStudents(prev => prev.map(s => {
+                                        if (s.name !== studentName) return s;
+                                        return { ...s, badges: (s.badges||[]).map(bd => bd.animalId !== badge.animalId ? bd : { ...bd, observationScore: { ...(bd.observationScore||{}),
+                                          teacherOverride: { applied: true, behaviourScore: form2.b ? Number(form2.b) : null, detailScore: form2.d ? Number(form2.d) : null, writingScore: form2.w ? Number(form2.w) : null, note: form2.note||'', reasonType: form2.reason||'', savedAt: new Date().toISOString() }
+                                        }}) };\n                                      }));\n                                    }\n                                  }} disabled={overrideSaving === bKey}
                                     style={{ flex:1, padding:'0.3rem', borderRadius:'4px', border:'none', background:'var(--jungle-mid)', color:'white', fontSize:'0.72rem', fontWeight:700, cursor:'pointer' }}>
                                     {overrideSaving === bKey ? 'Saving…' : 'Save Override'}
                                   </button>
@@ -8150,9 +8164,15 @@
                                           <div style={{ display:'flex', gap:'0.4rem' }}>
                                             <button onClick={async () => {
                                               setOverrideSaving(bKey);
-                                              const result = await saveOverride(observationsModal.name, b.animalId, { ...form, active: !form.flagOnly });
+                                              const result = await saveOverride(observationsModal.name, b.animalId, { ...form, active: !form.flagOnly }, selectedAdminClass);
                                               setOverrideSaving(null);
-                                              if (result.ok) setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }));
+                                              if (result.ok) {
+                                                setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }));
+                                                setFirestoreStudents(prev => prev.map(s => {
+                                                  if (s.name !== observationsModal.name) return s;
+                                                  return { ...s, badges: (s.badges||[]).map(bd => bd.animalId !== b.animalId ? bd : { ...bd, observationScore: { ...(bd.observationScore||{}), reviewFlag: { flagged: form.flagged||false, reason: form.flagReason||'', timestamp: new Date().toISOString() } }}) };
+                                                }));
+                                              }
                                             }} disabled={overrideSaving === bKey}
                                               style={{ flex:1, padding:'0.3rem', borderRadius:'5px', border:'none', background:'var(--jungle-mid)', color:'white', fontSize:'0.72rem', fontWeight:700, cursor:'pointer' }}>
                                               {overrideSaving === bKey ? 'Saving…' : 'Save'}
@@ -9505,9 +9525,15 @@
                                             <div style={{ display:'flex', gap:'0.35rem' }}>
                                               <button onClick={async () => {
                                                 setOverrideSaving(bKey);
-                                                const result = await saveOverride(observationsModal.name, b.animalId, { ...form, active: !form.flagOnly });
+                                                const result = await saveOverride(observationsModal.name, b.animalId, { ...form, active: !form.flagOnly }, selectedAdminClass);
                                                 setOverrideSaving(null);
-                                                if (result.ok) setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }));
+                                                if (result.ok) {
+                                                setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }));
+                                                setFirestoreStudents(prev => prev.map(s => {
+                                                  if (s.name !== observationsModal.name) return s;
+                                                  return { ...s, badges: (s.badges||[]).map(bd => bd.animalId !== b.animalId ? bd : { ...bd, observationScore: { ...(bd.observationScore||{}), reviewFlag: { flagged: form.flagged||false, reason: form.flagReason||'', timestamp: new Date().toISOString() } }}) };
+                                                }));
+                                              }
                                               }} disabled={overrideSaving === bKey}
                                                 style={{ flex:1, padding:'0.28rem', borderRadius:'4px', border:'none', background:'var(--jungle-mid)', color:'white', fontSize:'0.72rem', fontWeight:700, cursor:'pointer' }}>
                                                 {overrideSaving === bKey ? 'Saving…' : 'Save'}
