@@ -553,6 +553,15 @@
       const [feedbackRating, setFeedbackRating] = useState(0);
       const [feedbackComment, setFeedbackComment] = useState('');
       const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
+      const [tfEntries, setTfEntries] = useState([]);
+      const [tfLoading, setTfLoading] = useState(true);
+      const [qdOpen, setQdOpen] = useState(false);
+      const stageMeta = [
+        { key:1, label:'Stage 1', tag:'Easy',     bg:'#F0FDF4', border:'#86EFAC', color:'#15803D' },
+        { key:3, label:'Stage 3', tag:'Moderate', bg:'#EFF6FF', border:'#93C5FD', color:'#1D4ED8' },
+        { key:4, label:'Stage 4', tag:'Standard', bg:'#FFF7ED', border:'#FCD34D', color:'#B45309' },
+        { key:5, label:'Stage 5', tag:'Advanced', bg:'#FDF4FF', border:'#D8B4FE', color:'#7C3AED' },
+      ];
       const [selectedConservation, setSelectedConservation] = useState(null);
       const [classCodeModal, setClassCodeModal] = useState(null);
       const [classCodeFullscreen, setClassCodeFullscreen] = useState(false);
@@ -1514,6 +1523,16 @@
             setResourcesLoading(false);
           });
         return () => unsub();
+      }, [currentScreen, adminTab]);
+
+      // Teacher Feedback: load from Firestore when Review tab is active
+      useEffect(() => {
+        if (currentScreen !== 'adminDashboard' || adminTab !== 'review') return;
+        setTfLoading(true);
+        const db = firebase.firestore();
+        db.collection('teacherFeedback').orderBy('timestamp', 'desc').limit(50).get()
+          .then(snap => { setTfEntries(snap.docs.map(d => ({ id: d.id, ...d.data() }))); setTfLoading(false); })
+          .catch(() => setTfLoading(false));
       }, [currentScreen, adminTab]);
 
       // Teacher Resource Hub: fetch active resources when screen opens
@@ -7804,52 +7823,40 @@
                     </div>
 
                   {/* Teacher Feedback Section */}
-                  {(() => {
-                    const [tfEntries, setTfEntries] = React.useState([]);
-                    const [tfLoading, setTfLoading] = React.useState(true);
-                    React.useEffect(() => {
-                      const db = firebase.firestore();
-                      db.collection('teacherFeedback').orderBy('timestamp', 'desc').limit(50).get()
-                        .then(snap => { setTfEntries(snap.docs.map(d => ({ id: d.id, ...d.data() }))); setTfLoading(false); })
-                        .catch(() => setTfLoading(false));
-                    }, []);
-                    return (
-                      <div style={{ marginTop:'2rem' }}>
-                        <h3 style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>💬 Teacher Feedback</h3>
-                        <p style={{ color:'#888', fontSize:'0.82rem', marginBottom:'1rem' }}>Feedback submitted by teachers from the teacher portal.</p>
-                        {tfLoading ? (
-                          <div style={{ textAlign:'center', padding:'2rem', color:'#aaa', fontSize:'0.85rem' }}>Loading…</div>
-                        ) : tfEntries.length === 0 ? (
-                          <div style={{ background:'white', borderRadius:'12px', padding:'2rem', textAlign:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
-                            <p style={{ color:'#aaa', fontSize:'0.85rem' }}>No feedback submitted yet.</p>
-                          </div>
-                        ) : (
-                          <div style={{ display:'flex', flexDirection:'column', gap:'0.65rem' }}>
-                            {tfEntries.map(entry => (
-                              <div key={entry.id} style={{ background:'white', borderRadius:'12px', padding:'1rem 1.2rem', boxShadow:'0 2px 8px rgba(0,0,0,0.07)', borderLeft:'4px solid var(--jungle-light)' }}>
-                                <div style={{ display:'flex', alignItems:'center', gap:'0.75rem', marginBottom:'0.4rem', flexWrap:'wrap' }}>
-                                  <div style={{ display:'flex', gap:'1px' }}>
-                                    {[1,2,3,4,5].map(n => (
-                                      <span key={n} style={{ fontSize:'1rem', opacity: n <= (entry.rating || 0) ? 1 : 0.2 }}>⭐</span>
-                                    ))}
-                                  </div>
-                                  <span style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)' }}>{entry.rating}/5</span>
-                                  {entry.classCode && <span style={{ fontSize:'0.72rem', background:'#F0F7F4', color:'var(--jungle-mid)', borderRadius:'6px', padding:'0.1rem 0.4rem', fontWeight:600 }}>Class: {entry.classCode}</span>}
-                                </div>
-                                <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.55, margin:'0 0 0.4rem', fontStyle: entry.comment ? 'normal' : 'italic' }}>
-                                  {entry.comment || 'No written feedback provided'}
-                                </p>
-                                <div style={{ display:'flex', gap:'0.75rem', flexWrap:'wrap' }}>
-                                  {entry.teacherName && <span style={{ fontSize:'0.7rem', color:'#aaa' }}>👤 {entry.teacherName}</span>}
-                                  {entry.timestamp && <span style={{ fontSize:'0.7rem', color:'#aaa' }}>🕐 {new Date(entry.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' })}</span>}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                  <div style={{ marginTop:'2rem' }}>
+                    <h3 style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>💬 Teacher Feedback</h3>
+                    <p style={{ color:'#888', fontSize:'0.82rem', marginBottom:'1rem' }}>Feedback submitted by teachers from the teacher portal.</p>
+                    {tfLoading ? (
+                      <div style={{ textAlign:'center', padding:'2rem', color:'#aaa', fontSize:'0.85rem' }}>Loading…</div>
+                    ) : tfEntries.length === 0 ? (
+                      <div style={{ background:'white', borderRadius:'12px', padding:'2rem', textAlign:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
+                        <p style={{ color:'#aaa', fontSize:'0.85rem' }}>No feedback submitted yet.</p>
                       </div>
-                    );
-                  })()}
+                    ) : (
+                      <div style={{ display:'flex', flexDirection:'column', gap:'0.65rem' }}>
+                        {tfEntries.map(entry => (
+                          <div key={entry.id} style={{ background:'white', borderRadius:'12px', padding:'1rem 1.2rem', boxShadow:'0 2px 8px rgba(0,0,0,0.07)', borderLeft:'4px solid var(--jungle-light)' }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:'0.75rem', marginBottom:'0.4rem', flexWrap:'wrap' }}>
+                              <div style={{ display:'flex', gap:'1px' }}>
+                                {[1,2,3,4,5].map(n => (
+                                  <span key={n} style={{ fontSize:'1rem', opacity: n <= (entry.rating || 0) ? 1 : 0.2 }}>⭐</span>
+                                ))}
+                              </div>
+                              <span style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)' }}>{entry.rating}/5</span>
+                              {entry.classCode && <span style={{ fontSize:'0.72rem', background:'#F0F7F4', color:'var(--jungle-mid)', borderRadius:'6px', padding:'0.1rem 0.4rem', fontWeight:600 }}>Class: {entry.classCode}</span>}
+                            </div>
+                            <p style={{ fontSize:'0.85rem', color:'#444', lineHeight:1.55, margin:'0 0 0.4rem', fontStyle: entry.comment ? 'normal' : 'italic' }}>
+                              {entry.comment || 'No written feedback provided'}
+                            </p>
+                            <div style={{ display:'flex', gap:'0.75rem', flexWrap:'wrap' }}>
+                              {entry.teacherName && <span style={{ fontSize:'0.7rem', color:'#aaa' }}>👤 {entry.teacherName}</span>}
+                              {entry.timestamp && <span style={{ fontSize:'0.7rem', color:'#aaa' }}>🕐 {new Date(entry.timestamp).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' })}</span>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                   );
                 })()}
@@ -9233,62 +9240,52 @@
                     </div>
 
                     {/* Question Difficulty by Stage */}
-                    {(() => {
-                      const [qdOpen, setQdOpen] = React.useState(false);
-                      const stageMeta = [
-                        { key:1, label:'Stage 1', tag:'Easy',     bg:'#F0FDF4', border:'#86EFAC', color:'#15803D' },
-                        { key:3, label:'Stage 3', tag:'Moderate', bg:'#EFF6FF', border:'#93C5FD', color:'#1D4ED8' },
-                        { key:4, label:'Stage 4', tag:'Standard', bg:'#FFF7ED', border:'#FCD34D', color:'#B45309' },
-                        { key:5, label:'Stage 5', tag:'Advanced', bg:'#FDF4FF', border:'#D8B4FE', color:'#7C3AED' },
-                      ];
-                      return (
-                        <div style={{ marginBottom:'1rem', borderRadius:'14px', border:'1.5px solid #D4E8DC', background:'white', boxShadow:'0 2px 10px rgba(26,82,56,0.06)', overflow:'hidden' }}>
-                          <button onClick={() => setQdOpen(o => !o)}
-                            style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.85rem 1.2rem', background:'linear-gradient(135deg, #F0F7F4 0%, #E8F4EE 100%)', border:'none', cursor:'pointer', textAlign:'left' }}>
-                            <span style={{ fontWeight:700, fontSize:'0.9rem', color:'var(--jungle-deep)' }}>📋 Question Difficulty by Stage</span>
-                            <span style={{ fontSize:'1.1rem', color:'var(--jungle-mid)', transition:'transform 0.2s', display:'inline-block', transform: qdOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
-                          </button>
-                          {qdOpen && (
-                            <div style={{ padding:'1rem', display:'flex', flexDirection:'column', gap:'0.75rem', maxHeight:'540px', overflowY:'auto' }}>
-                              {animals.map(animal => {
-                                const qs = animal.questions || [];
-                                if (qs.length === 0) return null;
-                                const q = qs[0];
-                                const variants = q.stageVariants || {};
-                                const wp = animal.writingPromptByStage || {};
-                                const getText = (k) => variants[k] || (k >= 4 ? (variants[4] || q.q) : q.q) || '';
-                                const getWriting = (k) => wp[k] || '';
-                                return (
-                                  <div key={animal.id} style={{ borderRadius:'10px', border:'1px solid #E8EDF0', overflow:'hidden' }}>
-                                    <div style={{ background:'var(--jungle-deep)', padding:'0.5rem 0.85rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
-                                      <span style={{ fontSize:'0.82rem', fontWeight:700, color:'white' }}>{animal.emoji || '🐾'} {animal.name}</span>
-                                      {qs.length > 1 && <span style={{ fontSize:'0.65rem', color:'rgba(255,255,255,0.45)', marginLeft:'auto' }}>{qs.length} questions</span>}
+                  <div style={{ marginBottom:'1rem', borderRadius:'14px', border:'1.5px solid #D4E8DC', background:'white', boxShadow:'0 2px 10px rgba(26,82,56,0.06)', overflow:'hidden' }}>
+                    <button onClick={() => setQdOpen(o => !o)}
+                      style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.85rem 1.2rem', background:'linear-gradient(135deg, #F0F7F4 0%, #E8F4EE 100%)', border:'none', cursor:'pointer', textAlign:'left' }}>
+                      <span style={{ fontWeight:700, fontSize:'0.9rem', color:'var(--jungle-deep)' }}>📋 Question Difficulty by Stage</span>
+                      <span style={{ fontSize:'1.1rem', color:'var(--jungle-mid)', transition:'transform 0.2s', display:'inline-block', transform: qdOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
+                    </button>
+                    {qdOpen && (
+                      <div style={{ padding:'1rem', display:'flex', flexDirection:'column', gap:'0.75rem', maxHeight:'540px', overflowY:'auto' }}>
+                        {animals.map(animal => {
+                          const qs = animal.questions || [];
+                          if (qs.length === 0) return null;
+                          const q = qs[0];
+                          const variants = q.stageVariants || {};
+                          const wp = animal.writingPromptByStage || {};
+                          const getText = (k) => variants[k] || (k >= 4 ? (variants[4] || q.q) : q.q) || '';
+                          const getWriting = (k) => wp[k] || '';
+                          return (
+                            <div key={animal.id} style={{ borderRadius:'10px', border:'1px solid #E8EDF0', overflow:'hidden' }}>
+                              <div style={{ background:'var(--jungle-deep)', padding:'0.5rem 0.85rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
+                                <span style={{ fontSize:'0.82rem', fontWeight:700, color:'white' }}>{animal.emoji || '🐾'} {animal.name}</span>
+                                {qs.length > 1 && <span style={{ fontSize:'0.65rem', color:'rgba(255,255,255,0.45)', marginLeft:'auto' }}>{qs.length} questions</span>}
+                              </div>
+                              <div>
+                                {stageMeta.map((sm, si) => {
+                                  const qText = getText(sm.key);
+                                  const wText = getWriting(sm.key);
+                                  if (!qText && !wText) return null;
+                                  return (
+                                    <div key={sm.key} style={{ padding:'0.55rem 0.85rem', borderTop: si > 0 ? '1px solid #F0F4F0' : 'none', background: si % 2 === 0 ? 'white' : '#FAFBFA' }}>
+                                      <div style={{ display:'flex', alignItems:'center', gap:'0.5rem', marginBottom:'0.2rem' }}>
+                                        <span style={{ fontSize:'0.6rem', fontWeight:700, background:sm.bg, border:`1px solid ${sm.border}`, color:sm.color, borderRadius:'4px', padding:'0.05rem 0.4rem', textTransform:'uppercase', letterSpacing:'0.04em' }}>{sm.label}</span>
+                                        <span style={{ fontSize:'0.6rem', color:'#bbb' }}>{sm.tag}</span>
+                                      </div>
+                                      {qText && <p style={{ fontSize:'0.78rem', color:'#374151', margin:'0 0 0.1rem', lineHeight:1.5, fontWeight:500 }}>🔲 {qText}</p>}
+                                      {wText && <p style={{ fontSize:'0.72rem', color:'#6B7280', margin:0, lineHeight:1.4, fontStyle:'italic' }}>✍️ {wText}</p>}
                                     </div>
-                                    <div>
-                                      {stageMeta.map((sm, si) => {
-                                        const qText = getText(sm.key);
-                                        const wText = getWriting(sm.key);
-                                        if (!qText && !wText) return null;
-                                        return (
-                                          <div key={sm.key} style={{ padding:'0.55rem 0.85rem', borderTop: si > 0 ? '1px solid #F0F4F0' : 'none', background: si % 2 === 0 ? 'white' : '#FAFBFA' }}>
-                                            <div style={{ display:'flex', alignItems:'center', gap:'0.5rem', marginBottom:'0.2rem' }}>
-                                              <span style={{ fontSize:'0.6rem', fontWeight:700, background:sm.bg, border:`1px solid ${sm.border}`, color:sm.color, borderRadius:'4px', padding:'0.05rem 0.4rem', textTransform:'uppercase', letterSpacing:'0.04em' }}>{sm.label}</span>
-                                              <span style={{ fontSize:'0.6rem', color:'#bbb' }}>{sm.tag}</span>
-                                            </div>
-                                            {qText && <p style={{ fontSize:'0.78rem', color:'#374151', margin:'0 0 0.1rem', lineHeight:1.5, fontWeight:500 }}>🔲 {qText}</p>}
-                                            {wText && <p style={{ fontSize:'0.72rem', color:'#6B7280', margin:0, lineHeight:1.4, fontStyle:'italic' }}>✍️ {wText}</p>}
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                );
-                              })}
+                                  );
+                                })}
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      );
-                    })()}
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
 
                     <div style={{ background:'white', borderRadius:'16px', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', overflow:'hidden' }}>
                       <div style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 1.4fr 0.85fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
