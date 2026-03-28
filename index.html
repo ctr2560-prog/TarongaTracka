@@ -3849,7 +3849,7 @@
           : classStage === 3
           ? { label: '🔍 Compare Sizes', body: 'Image size: 10 mm  ·  Real size: 200 cm — which is bigger?' }
           : classStage === 5
-          ? { label: '🔍 Observation Level', body: 'Choose the option that represents the correct level needed to observe the detail. Think about the zoom you used and why.' }
+          ? { label: '🔍 Magnification Calculation', body: 'Magnification = Image Size ÷ Actual Size\nImage Size = 10 mm  ·  Actual Size = 1 mm\nUse this to decide the correct zoom level.' }
           : { label: '🔍 Magnification Challenge', body: 'Actual size: 2 mm  ·  Readable size: 10 mm  ·  Formula: image ÷ real' };
 
         const hintContent = classStage <= 2
@@ -3857,7 +3857,7 @@
           : classStage === 3
           ? '10 mm vs 200 cm — which is bigger?'
           : classStage === 5
-          ? 'Think: did you need a little zoom or maximum zoom to read the sign clearly?'
+          ? 'Divide the image size by the actual size to work out the magnification.'
           : '10 ÷ 2 = 5×';
 
         return (
@@ -3894,7 +3894,7 @@
 
             {/* Main content */}
             {!showResult && (
-              <div style={{ flex:'1 1 auto', overflowY:'auto', padding:'1rem', maxWidth:'600px', margin:'0 auto', width:'100%' }}>
+              <div style={{ flex:'1 1 auto', overflowY:'auto', padding:'1rem 1rem 3rem', maxWidth:'600px', margin:'0 auto', width:'100%' }}>
 
                 {/* Title */}
                 <div style={{ background:'white', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.08)', marginBottom:'1rem' }}>
@@ -3909,7 +3909,7 @@
                 {/* Info panel */}
                 <div style={{ background:'linear-gradient(135deg, #EFF6FF, #DBEAFE)', borderRadius:'16px', padding:'1.2rem', boxShadow:'0 4px 16px rgba(59,130,246,0.1)', marginBottom:'1rem' }}>
                   <p style={{ fontSize:'0.75rem', fontWeight:700, color:'#1D4ED8', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:'0.5rem' }}>{infoPanelContent.label}</p>
-                  <p style={{ fontSize:'0.88rem', color:'#1D4ED8', fontWeight:600, margin:0 }}>{infoPanelContent.body}</p>
+                  <p style={{ fontSize:'0.88rem', color:'#1D4ED8', fontWeight:600, margin:0, whiteSpace:'pre-line' }}>{infoPanelContent.body}</p>
                 </div>
 
                 {/* Thinking prompt */}
