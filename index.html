@@ -2344,41 +2344,39 @@
       // Shared Stage 3 scoring thresholds — applied consistently across all animals
       // hits = number of relevant keyword matches; hasExplanation = boolean; wc = word count
       function stage3Score(hits, hasExplanation, wc) {
-        // Behaviour
+        // Behaviour: one relevant keyword is enough for 3 in classroom conditions
         let b;
         if (hits === 0) b = 1;
-        else if (hits === 1 && wc < 5) b = 2;
         else if (hits >= 1 && !hasExplanation) b = 3;
         else b = Math.min(hits + 2, 4);
 
-        // Detail — Stage 3: needs some context but not full explanation
+        // Detail — Stage 3: one detail = 3, with explanation or multiple = 4
         let d;
         if (hits === 0) d = 1;
-        else if (hits === 1 && !hasExplanation) d = 2;
-        else if (hits === 1 && hasExplanation) d = 3;
+        else if (hits === 1 && !hasExplanation) d = 3;
+        else if (hits === 1 && hasExplanation) d = 4;
         else if (hits >= 2) d = Math.min(hits + 1, 4);
-        else d = 2;
+        else d = 3;
 
         return { b, d };
       }
 
       // Shared Stage 4 scoring thresholds — the default/baseline stage
       function stage4Score(hits, hasExplanation, wc) {
-        // Behaviour: clear correct behaviour = 3, with context = 4, strong explanation = 5
+        // Behaviour: any correct behaviour = 3; with explanation or multiple hits = 4–5
         let b;
         if (hits === 0 && wc < 3) b = 1;
         else if (hits === 0) b = 2;
-        else if (hits === 1 && !hasExplanation) b = 3;
+        else if (hits >= 1 && !hasExplanation) b = 3;
         else if (hits >= 1 && hasExplanation && wc < 12) b = 4;
         else if (hits >= 1 && hasExplanation && wc >= 12) b = 5;
         else b = Math.min(hits + 2, 5);
 
-        // Detail: one clear relevant detail = 3, multiple = 4, detailed evidence = 5
+        // Detail: one relevant detail = 3; two details or explanation = 4; multiple + explanation = 5
         let d;
-        if (hits === 0) d = Math.min(1, 2);
-        else if (hits === 1 && !hasExplanation) d = 3;
-        else if (hits === 1 && hasExplanation) d = 4;
-        else if (hits >= 2 && !hasExplanation) d = Math.min(hits + 1, 4);
+        if (hits === 0) d = 1;
+        else if (hits === 1) d = 3;
+        else if (hits >= 2 && !hasExplanation) d = 4;
         else if (hits >= 2 && hasExplanation) d = Math.min(hits + 2, 5);
         else d = 3;
 
@@ -2624,15 +2622,15 @@
         else if (dHits >= 2 && !hasExplanation) dScore = 3;
         else dScore = 3;
 
-        // Writing: structure and clarity required
+        // Writing: word count is primary gate; structure pushes to 5
         const hasSentence = /[A-Z].*[.!?]/.test(text.trim());
         const uniqueWords = new Set(words.map(w => w.toLowerCase()));
         let wScore;
         if (wc < 3) wScore = 1;
         else if (wc < 6) wScore = 2;
-        else if (wc < 10 && !hasSentence) wScore = 3;
-        else if (wc >= 6 && hasSentence && uniqueWords.size >= 5) wScore = 4;
-        else if (wc >= 10 && hasSentence && uniqueWords.size >= 8) wScore = 5;
+        else if (wc < 10) wScore = 3;
+        else if (wc >= 10 && uniqueWords.size >= 6) wScore = 4;
+        else if (wc >= 15 && hasSentence && uniqueWords.size >= 10) wScore = 5;
         else wScore = 3;
 
         return { b: bScore, d: dScore, w: wScore };
@@ -4878,6 +4876,7 @@
           else                    b = Math.min(b, 2);
           if (detailCount >= 1)   d = Math.max(d, 3);
           else                    d = Math.min(d, 2);
+          if (wordCount >= 5)     w = Math.max(w, 3);
         }
 
         if (s === 4) {
@@ -4885,6 +4884,7 @@
           if (behaviourDetected)  b = Math.max(b, 3);
           else                    b = Math.min(b, 2);
           if (detailCount >= 1)   d = Math.max(d, 3);
+          if (wordCount >= 8)     w = Math.max(w, 3);
         }
 
         // Clamp all to 0–5
