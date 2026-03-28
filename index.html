@@ -8097,6 +8097,30 @@
                               {obs.reviewRecommended && (
                                 <span style={{ fontSize:'0.65rem', background:'#FEF3C7', color:'#92400E', padding:'0.1rem 0.4rem', borderRadius:'4px', fontWeight:700 }}>⚠ Review</span>
                               )}
+                              <button onClick={(e) => {
+                                e.stopPropagation();
+                                const sName = observationsModal?.name;
+                                console.log('FLAG CLICKED (toolbar)', sName, b.animalId);
+                                if (!sName) return;
+                                if (obs.reviewFlag?.flagged) {
+                                  saveOverride(sName, b.animalId,
+                                    { flagged: false, flagReason: '', flagOnly: true, active: false },
+                                    selectedAdminClass || selectedClass
+                                  ).then(result => {
+                                    if (result?.ok !== false) {
+                                      setFirestoreStudents(prev => prev.map(s => s.name !== sName ? s : { ...s,
+                                        badges: (s.badges||[]).map(bd => bd.animalId !== b.animalId ? bd : { ...bd,
+                                          observationScore: { ...(bd.observationScore||{}), reviewFlag: { flagged: false, note: '', timestamp: new Date().toISOString() } } }) }));
+                                    }
+                                  });
+                                } else {
+                                  setReviewNote(obs.reviewFlag?.note || '');
+                                  setReviewModal({ open: true, studentName: sName, animalId: b.animalId });
+                                }
+                              }}
+                                style={{ fontSize:'0.65rem', padding:'0.15rem 0.5rem', borderRadius:'4px', border:'1px solid #D1D5DB', background: obs.reviewFlag?.flagged ? '#FEF3C7' : '#F9FAFB', cursor:'pointer', fontWeight:600, color: obs.reviewFlag?.flagged ? '#92400E' : '#374151' }}>
+                                {obs.reviewFlag?.flagged ? '🚩 Flagged' : '🚩 Flag'}
+                              </button>
                               <button
                                 onClick={() => setExpandedBreakdown(isExpanded ? null : bKey)}
                                 style={{ fontSize:'0.65rem', color:'var(--jungle-mid)', background:'none', border:'1px solid var(--jungle-mid)', borderRadius:'4px', padding:'0.15rem 0.5rem', cursor:'pointer', fontWeight:700, marginLeft:'auto' }}>
@@ -9514,6 +9538,30 @@
                                 {obs.confidence && (
                                   <span style={{ fontSize:'0.65rem', color:'#aaa' }}>{obs.confidence} confidence</span>
                                 )}
+                                <button onClick={(e) => {
+                                  e.stopPropagation();
+                                  const sName = observationsModal?.name;
+                                  console.log('FLAG CLICKED (toolbar)', sName, b.animalId);
+                                  if (!sName) return;
+                                  if (obs.reviewFlag?.flagged) {
+                                    saveOverride(sName, b.animalId,
+                                      { flagged: false, flagReason: '', flagOnly: true, active: false },
+                                      selectedAdminClass || selectedClass
+                                    ).then(result => {
+                                      if (result?.ok !== false) {
+                                        setFirestoreStudents(prev => prev.map(s => s.name !== sName ? s : { ...s,
+                                          badges: (s.badges||[]).map(bd => bd.animalId !== b.animalId ? bd : { ...bd,
+                                            observationScore: { ...(bd.observationScore||{}), reviewFlag: { flagged: false, note: '', timestamp: new Date().toISOString() } } }) }));
+                                      }
+                                    });
+                                  } else {
+                                    setReviewNote(obs.reviewFlag?.note || '');
+                                    setReviewModal({ open: true, studentName: sName, animalId: b.animalId });
+                                  }
+                                }}
+                                  style={{ fontSize:'0.65rem', padding:'0.1rem 0.4rem', borderRadius:'4px', border:'1px solid #D1D5DB', background: obs.reviewFlag?.flagged ? '#FEF3C7' : '#F9FAFB', cursor:'pointer', fontWeight:600, color: obs.reviewFlag?.flagged ? '#92400E' : '#374151' }}>
+                                  {obs.reviewFlag?.flagged ? '🚩 Flagged' : '🚩 Flag'}
+                                </button>
                                 <button
                                   onClick={() => setExpandedBreakdown(isExpanded ? null : bKey)}
                                   style={{ fontSize:'0.65rem', color:'var(--jungle-mid)', background:'none', border:'1px solid var(--jungle-mid)', borderRadius:'4px', padding:'0.1rem 0.4rem', cursor:'pointer', fontWeight:600, marginLeft:'auto' }}>
