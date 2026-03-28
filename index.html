@@ -7671,14 +7671,14 @@
           </div>
 
           {observationsModal && (
-            <div onClick={() => setObservationsModal(null); setExpandedBreakdown(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'1.5rem' }}>
+            <div onClick={() => { setObservationsModal(null); setExpandedBreakdown(null); }} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'1.5rem' }}>
               <div onClick={(e) => e.stopPropagation()} style={{ background:'white', borderRadius:'18px', width:'100%', maxWidth:'480px', maxHeight:'80vh', overflowY:'auto', boxShadow:'0 24px 60px rgba(0,0,0,0.25)' }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'1.2rem 1.4rem 0.8rem', borderBottom:'1px solid #F0EDE8', position:'sticky', top:0, background:'white', zIndex:1 }}>
                   <div>
                     <h3 style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)', margin:0 }}> Observations</h3>
                     <p style={{ fontSize:'0.78rem', color:'#888', margin:'0.15rem 0 0' }}>{observationsModal.name}</p>
                   </div>
-                  <button onClick={() => setObservationsModal(null); setExpandedBreakdown(null)} style={{ background:'none', border:'none', fontSize:'1.4rem', color:'#aaa', cursor:'pointer', lineHeight:1, padding:'0.2rem 0.4rem' }}>x</button>
+                  <button onClick={() => { setObservationsModal(null); setExpandedBreakdown(null); }} style={{ background:'none', border:'none', fontSize:'1.4rem', color:'#aaa', cursor:'pointer', lineHeight:1, padding:'0.2rem 0.4rem' }}>x</button>
                 </div>
                 <div style={{ padding:'1rem 1.4rem 1.4rem' }}>
                   {(observationsModal.badges || []).filter(b => b.observationScore || (b.observation && b.observation.trim())).map((b, idx, arr) => {
@@ -8932,14 +8932,14 @@
               </>
             )}
             {observationsModal && (
-              <div onClick={() => setObservationsModal(null); setExpandedBreakdown(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'1.5rem' }}>
+              <div onClick={() => { setObservationsModal(null); setExpandedBreakdown(null); }} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'1.5rem' }}>
                 <div onClick={(e) => e.stopPropagation()} style={{ background:'white', borderRadius:'18px', width:'100%', maxWidth:'480px', maxHeight:'80vh', overflowY:'auto', boxShadow:'0 24px 60px rgba(0,0,0,0.25)' }}>
                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'1.2rem 1.4rem 0.8rem', borderBottom:'1px solid #F0EDE8', position:'sticky', top:0, background:'white', zIndex:1 }}>
                     <div>
                       <h3 style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)', margin:0 }}> Observations</h3>
                       <p style={{ fontSize:'0.78rem', color:'#888', margin:'0.15rem 0 0' }}>{observationsModal.name}</p>
                     </div>
-                    <button onClick={() => setObservationsModal(null); setExpandedBreakdown(null)} style={{ background:'none', border:'none', fontSize:'1.4rem', color:'#aaa', cursor:'pointer', lineHeight:1, padding:'0.2rem 0.4rem' }}>x</button>
+                    <button onClick={() => { setObservationsModal(null); setExpandedBreakdown(null); }} style={{ background:'none', border:'none', fontSize:'1.4rem', color:'#aaa', cursor:'pointer', lineHeight:1, padding:'0.2rem 0.4rem' }}>x</button>
                   </div>
                   <div style={{ padding:'1rem 1.4rem 1.4rem' }}>
                     {(observationsModal.badges || []).filter(b => b.observationScore || (b.observation && b.observation.trim())).map((b, idx, arr) => (
