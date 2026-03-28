@@ -2626,12 +2626,16 @@
         const hasSentence = /[A-Z].*[.!?]/.test(text.trim());
         const uniqueWords = new Set(words.map(w => w.toLowerCase()));
         let wScore = 1;
-        if (wc >= 3)                                          wScore = 2;
-        if (wc >= 6)                                          wScore = 3;
-        if (wc >= 10 && uniqueWords.size >= 6)                wScore = Math.max(wScore, 4);
-        if (wc >= 12 && hasExplanation)                       wScore = Math.max(wScore, 4);
-        if (wc >= 15 && hasSentence && uniqueWords.size >= 10) wScore = Math.max(wScore, 5);
-        if (wc >= 12 && hasExplanation && uniqueWords.size >= 10) wScore = Math.max(wScore, 5);
+        if (wc >= 3)                                               wScore = 2;
+        if (wc >= 6)                                               wScore = 3;
+        if (wc >= 10 && uniqueWords.size >= 6)                     wScore = Math.max(wScore, 4);
+        if (wc >= 12 && hasExplanation)                            wScore = Math.max(wScore, 4);
+        if (wc >= 15 && hasSentence && uniqueWords.size >= 10)     wScore = Math.max(wScore, 5);
+        if (wc >= 12 && hasExplanation && uniqueWords.size >= 10)  wScore = Math.max(wScore, 5);
+        // Hard cap: Stage 5 requires capital + full stop for 4–5
+        const hasCapS5 = /^[A-Z]/.test(text.trim());
+        const hasStopS5 = /[.!?]/.test(text.trim());
+        if (!hasCapS5 || !hasStopS5) wScore = Math.min(wScore, 3);
 
         return { b: bScore, d: dScore, w: wScore };
       }
@@ -2735,6 +2739,9 @@
 
         // Penalise all-caps (keyboard smash indicator) but not below 1
         if (isAllCaps) score = Math.max(score - 1, 1);
+
+        // Hard cap: missing capital or full stop → max 3 (Stage 1 exempt — beginners allowed partial structure)
+        if (stg > 2 && (!hasCapital || !hasFullStop)) score = Math.min(score, 3);
 
         return Math.min(score, 5);
       }
