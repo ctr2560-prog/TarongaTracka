@@ -7671,7 +7671,7 @@
                   const removeFlag = async (studentName, animalId) => {
                     try {
                       const db = firebase.firestore();
-                      const snap = await db.collection('classes').doc(selectedAdminClass)
+                      const snap = await db.collection('classes').doc(selectedAdminClass || selectedClass)
                         .collection('students').where('name', '==', studentName).limit(1).get();
                       if (snap.empty) return;
                       const docRef = snap.docs[0].ref;
@@ -7813,7 +7813,7 @@
                                   <button onClick={async () => {
                                     setOverrideSaving(bKey);
                                     const form2 = overrideForms[bKey];
-                                    const result = await saveOverride(studentName, badge.animalId, { ...form2, active: true }, selectedAdminClass);
+                                    const result = await saveOverride(studentName, badge.animalId, { ...form2, active: true }, selectedAdminClass || selectedClass);
                                     setOverrideSaving(null);
                                     if (result?.ok !== false) {
                                       setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }));
@@ -8183,7 +8183,7 @@
                                           <div style={{ display:'flex', gap:'0.4rem' }}>
                                             <button onClick={async () => {
                                               setOverrideSaving(bKey);
-                                              const result = await saveOverride(observationsModal.name, b.animalId, { ...form, active: !form.flagOnly }, selectedAdminClass);
+                                              const result = await saveOverride(observationsModal.name, b.animalId, { ...form, active: !form.flagOnly }, selectedAdminClass || selectedClass);
                                               setOverrideSaving(null);
                                               if (result.ok) {
                                                 setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }));
@@ -9577,7 +9577,7 @@
                                             <div style={{ display:'flex', gap:'0.35rem' }}>
                                               <button onClick={async () => {
                                                 setOverrideSaving(bKey);
-                                                const result = await saveOverride(observationsModal.name, b.animalId, { ...form, active: !form.flagOnly }, selectedAdminClass);
+                                                const result = await saveOverride(observationsModal.name, b.animalId, { ...form, active: !form.flagOnly }, selectedAdminClass || selectedClass);
                                                 setOverrideSaving(null);
                                                 if (result.ok) {
                                                 setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }));
