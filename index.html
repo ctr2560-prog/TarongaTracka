@@ -4797,6 +4797,31 @@
             detailBonus = Math.min(tigerDetailHits + 1, 5);
           }
           if (classStage !== 5) literacyBonus = calculateWritingScore(text, classStage);
+        } else if (currentAnimal.id === 'koala') {
+          const behaviourWords = ['sleep','sleeping','rest','resting','sit','sitting','climb','climbing','hold','holding','eat','eating','cling','clinging','move','moving','scratch','scratching','groom','grooming','watch','watching','hang','hanging'];
+          const behaviourHits = behaviourWords.filter(w => lower.includes(w)).length;
+          behaviourBonus = Math.min(behaviourHits + 1, 5);
+          const detailWords = ['tree','branch','fork','leaves','leaf','eucalyptus','gum','fur','grey','gray','fluffy','claws','claw','position','curled','high','low','enclosure','bark','hollow','white','soft','round','ears','nose'];
+          const detailHits = detailWords.filter(w => lower.includes(w)).length;
+          const explanationPatterns = ['because','helps','allows','so that','so it','means','in order','to survive','stay','energy','diet','protect'];
+          const hasExplanation = explanationPatterns.some(p => lower.includes(p));
+          const elements = [behaviourHits > 0, detailHits > 0, hasExplanation].filter(Boolean).length;
+          if (classStage <= 2) {
+            const s1words = ['koala','koalas','sleeping','sleep','resting','tree','branch','sitting','curled','grey','fluffy','climbing','eating','leaves','slow','quiet','hold','position'];
+            behaviourBonus = stage1BehaviourScore(text, s1words);
+            detailBonus = stage1DetailScore(text, s1words);
+            literacyBonus = stage1WritingScore(text);
+          } else if (classStage === 3) {
+            const s3 = stage3Score(elements, hasExplanation, text.trim().split(/\s+/).filter(Boolean).length);
+            behaviourBonus = Math.max(behaviourBonus, s3.b); detailBonus = s3.d;
+          } else if (classStage === 5) {
+            const s5 = stage5Score(text, behaviourWords, detailWords, hasExplanation);
+            behaviourBonus = s5.b; detailBonus = s5.d; literacyBonus = s5.w;
+          } else {
+            const s4 = stage4Score(elements, hasExplanation, text.trim().split(/\s+/).filter(Boolean).length);
+            behaviourBonus = Math.max(behaviourBonus, s4.b); detailBonus = s4.d;
+          }
+          if (classStage !== 5) literacyBonus = calculateWritingScore(text, classStage);
         } else {
           if (classStage <= 2) {
             const s1words = ['tiger','tigers','big','large','huge','long','fast','strong','stripe','stripes','orange','black','white','walking','pacing','resting','sleeping','watching','fur','grass','water','rock'];
@@ -4839,16 +4864,27 @@
         }
 
         if (s <= 2) {
-          // Stage 1–2: any correct behaviour floors at 3
-          if (behaviourDetected) b = Math.max(b, 3);
-          if (detailCount >= 1)  d = Math.max(d, 3);
-          if (wordCount > 3)     w = Math.max(w, 3);
+          // Stage 1–2: correct behaviour → floor at 3; no behaviour → cap at 2
+          if (behaviourDetected)  b = Math.max(b, 3);
+          else                    b = Math.min(b, 2);
+          if (detailCount >= 1)   d = Math.max(d, 3);
+          else                    d = Math.min(d, 2);
+          if (wordCount > 3)      w = Math.max(w, 3);
         }
 
         if (s === 3) {
-          // Stage 3: behaviour must be at least clear (3 minimum if detected)
-          if (behaviourDetected) b = Math.max(b, 3);
-          if (detailCount >= 1)  d = Math.max(d, 3);
+          // Stage 3: behaviour detected → floor at 3; not detected → cap at 2
+          if (behaviourDetected)  b = Math.max(b, 3);
+          else                    b = Math.min(b, 2);
+          if (detailCount >= 1)   d = Math.max(d, 3);
+          else                    d = Math.min(d, 2);
+        }
+
+        if (s === 4) {
+          // Stage 4: valid behaviour → floor at 3; no behaviour → cap at 2
+          if (behaviourDetected)  b = Math.max(b, 3);
+          else                    b = Math.min(b, 2);
+          if (detailCount >= 1)   d = Math.max(d, 3);
         }
 
         // Clamp all to 0–5
