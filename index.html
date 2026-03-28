@@ -8114,7 +8114,23 @@
                                             style={{ fontSize:'0.65rem', padding:'0.2rem 0.55rem', borderRadius:'4px', border:'1px solid #D1D5DB', background:'#F9FAFB', cursor:'pointer', fontWeight:600, color:'#374151' }}>
                                             {isActive ? '✏️ Edit Override' : '✏️ Override Scores'}
                                           </button>
-                                          <button onClick={() => setOverrideForms(prev => ({ ...prev, [bKey]: { open:true, flagged: obs.reviewFlag?.flagged || false, flagReason: obs.reviewFlag?.reason || '', flagOnly:true } }))}
+                                          <button onClick={async () => {
+                                            const newFlagged = !obs.reviewFlag?.flagged;
+                                            const result = await saveOverride(
+                                              observationsModal?.name || studentName,
+                                              b.animalId,
+                                              { flagged: newFlagged, flagReason: obs.reviewFlag?.reason || '', flagOnly: true, active: false },
+                                              selectedAdminClass
+                                            );
+                                            if (result?.ok !== false) {
+                                              const sName = observationsModal?.name || studentName;
+                                              setFirestoreStudents(prev => prev.map(s => {
+                                                if (s.name !== sName) return s;
+                                                return { ...s, badges: (s.badges||[]).map(bd => bd.animalId !== b.animalId ? bd
+                                                  : { ...bd, observationScore: { ...(bd.observationScore||{}), reviewFlag: { flagged: newFlagged, reason: '', timestamp: new Date().toISOString() } }}) };
+                                              }));
+                                            }
+                                          }}
                                             style={{ fontSize:'0.65rem', padding:'0.2rem 0.55rem', borderRadius:'4px', border:'1px solid #D1D5DB', background: obs.reviewFlag?.flagged ? '#FEF3C7' : '#F9FAFB', cursor:'pointer', fontWeight:600, color: obs.reviewFlag?.flagged ? '#92400E' : '#374151' }}>
                                             {obs.reviewFlag?.flagged ? '🚩 Flagged' : '🚩 Flag for Review'}
                                           </button>
@@ -8173,7 +8189,23 @@
                                                 setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }));
                                                 setFirestoreStudents(prev => prev.map(s => {
                                                   if (s.name !== observationsModal.name) return s;
-                                                  return { ...s, badges: (s.badges||[]).map(bd => bd.animalId !== b.animalId ? bd : { ...bd, observationScore: { ...(bd.observationScore||{}), reviewFlag: { flagged: form.flagged||false, reason: form.flagReason||'', timestamp: new Date().toISOString() } }}) };
+                                                  return { ...s, badges: (s.badges||[]).map(bd => {
+                                                    if (bd.animalId !== b.animalId) return bd;
+                                                    return { ...bd, observationScore: { ...(bd.observationScore||{}),
+                                                      reviewFlag: { flagged: form.flagged||false, reason: form.flagReason||'', timestamp: new Date().toISOString() },
+                                                      ...(!form.flagOnly && {
+                                                        teacherOverride: {
+                                                          applied: true,
+                                                          behaviourScore: form.b !== '' && form.b !== undefined ? Number(form.b) : (bd.observationScore?.teacherOverride?.behaviourScore ?? null),
+                                                          detailScore:    form.d !== '' && form.d !== undefined ? Number(form.d) : (bd.observationScore?.teacherOverride?.detailScore    ?? null),
+                                                          writingScore:   form.w !== '' && form.w !== undefined ? Number(form.w) : (bd.observationScore?.teacherOverride?.writingScore   ?? null),
+                                                          note:           form.note || '',
+                                                          reasonType:     form.reason || '',
+                                                          savedAt:        new Date().toISOString(),
+                                                        }
+                                                      })
+                                                    }};
+                                                  })) };
                                                 }));
                                               }
                                             }} disabled={overrideSaving === bKey}
@@ -9487,7 +9519,23 @@
                                               style={{ fontSize:'0.65rem', padding:'0.2rem 0.55rem', borderRadius:'4px', border:'1px solid #D1D5DB', background:'#F9FAFB', cursor:'pointer', fontWeight:600, color:'#374151' }}>
                                               {isActive ? '✏️ Edit Override' : '✏️ Override Scores'}
                                             </button>
-                                            <button onClick={() => setOverrideForms(prev => ({ ...prev, [bKey]: { open:true, flagged: obs.reviewFlag?.flagged || false, flagReason: obs.reviewFlag?.reason || '', flagOnly:true } }))}
+                                            <button onClick={async () => {
+                                            const newFlagged = !obs.reviewFlag?.flagged;
+                                            const result = await saveOverride(
+                                              observationsModal?.name || studentName,
+                                              b.animalId,
+                                              { flagged: newFlagged, flagReason: obs.reviewFlag?.reason || '', flagOnly: true, active: false },
+                                              selectedAdminClass
+                                            );
+                                            if (result?.ok !== false) {
+                                              const sName = observationsModal?.name || studentName;
+                                              setFirestoreStudents(prev => prev.map(s => {
+                                                if (s.name !== sName) return s;
+                                                return { ...s, badges: (s.badges||[]).map(bd => bd.animalId !== b.animalId ? bd
+                                                  : { ...bd, observationScore: { ...(bd.observationScore||{}), reviewFlag: { flagged: newFlagged, reason: '', timestamp: new Date().toISOString() } }}) };
+                                              }));
+                                            }
+                                          }}
                                               style={{ fontSize:'0.65rem', padding:'0.2rem 0.55rem', borderRadius:'4px', border:'1px solid #D1D5DB', background: obs.reviewFlag?.flagged ? '#FEF3C7' : '#F9FAFB', cursor:'pointer', fontWeight:600, color: obs.reviewFlag?.flagged ? '#92400E' : '#374151' }}>
                                               {obs.reviewFlag?.flagged ? '🚩 Flagged' : '🚩 Flag for Review'}
                                             </button>
@@ -9534,7 +9582,23 @@
                                                 setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }));
                                                 setFirestoreStudents(prev => prev.map(s => {
                                                   if (s.name !== observationsModal.name) return s;
-                                                  return { ...s, badges: (s.badges||[]).map(bd => bd.animalId !== b.animalId ? bd : { ...bd, observationScore: { ...(bd.observationScore||{}), reviewFlag: { flagged: form.flagged||false, reason: form.flagReason||'', timestamp: new Date().toISOString() } }}) };
+                                                  return { ...s, badges: (s.badges||[]).map(bd => {
+                                                    if (bd.animalId !== b.animalId) return bd;
+                                                    return { ...bd, observationScore: { ...(bd.observationScore||{}),
+                                                      reviewFlag: { flagged: form.flagged||false, reason: form.flagReason||'', timestamp: new Date().toISOString() },
+                                                      ...(!form.flagOnly && {
+                                                        teacherOverride: {
+                                                          applied: true,
+                                                          behaviourScore: form.b !== '' && form.b !== undefined ? Number(form.b) : (bd.observationScore?.teacherOverride?.behaviourScore ?? null),
+                                                          detailScore:    form.d !== '' && form.d !== undefined ? Number(form.d) : (bd.observationScore?.teacherOverride?.detailScore    ?? null),
+                                                          writingScore:   form.w !== '' && form.w !== undefined ? Number(form.w) : (bd.observationScore?.teacherOverride?.writingScore   ?? null),
+                                                          note:           form.note || '',
+                                                          reasonType:     form.reason || '',
+                                                          savedAt:        new Date().toISOString(),
+                                                        }
+                                                      })
+                                                    }};
+                                                  })) };
                                                 }));
                                               }
                                               }} disabled={overrideSaving === bKey}
