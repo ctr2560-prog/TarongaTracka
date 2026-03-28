@@ -1920,7 +1920,7 @@
                 2: 'When you zoom in, what happens to the image?',
                 3: 'The image is 10 mm. The real lion is 200 cm. Which is bigger?',
                 4: 'Lion Micro Investigation',
-                5: 'What does the magnification needed to read the sign tell you about the limits of the naked eye for scientific observation?',
+                5: 'Use the zoom to find the smallest text on the sign. Work out which zoom level allows you to read it clearly.',
               },
               options: ['A. Bigger', 'B. Smaller', 'C. The same', 'D. Not sure'],
               stageOptions: {
@@ -5589,9 +5589,14 @@
                         }[currentAnimal?.id] || 'What did you see?'
                       ) : classStage === 5 ? ((currentAnimal.writingPromptByStage && currentAnimal.writingPromptByStage[5]) || 'Your Observations') : 'Your Observations'}
                     </h2>
-                    {classStage > 2 && (
+                    {classStage > 2 && !(classStage === 5 && currentAnimal?.id === 'koala') && (
                       <p style={{ color:'#666', marginBottom:'1.2rem', lineHeight:1.6, fontSize:'1.1rem', textAlign:'center' }}>
                         {(currentAnimal.writingPromptByStage && currentAnimal.writingPromptByStage[classStage]) || currentAnimal.observationPrompt}
+                      </p>
+                    )}
+                    {classStage === 5 && currentAnimal?.id === 'koala' && (
+                      <p style={{ color:'#666', marginBottom:'1.2rem', lineHeight:1.6, fontSize:'1rem', textAlign:'center', fontStyle:'italic' }}>
+                        Use your observation to support your explanation.
                       </p>
                     )}
                     <div style={{ display:'flex', flexWrap:'wrap', gap:'0.6rem', justifyContent:'center', marginBottom:'1.5rem' }}>
@@ -5671,7 +5676,7 @@
                   <div style={{ background:'#F7FAF8', border:'1px solid #E4EDE8', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
                     {classStage === 5 ? (
                       <>
-                        <p style={{ fontSize:'0.78rem', fontWeight:700, color:'#059669', marginBottom:'0.4rem' }}>Observe the koala carefully. Explain what it is doing and why this behaviour is important for its survival.</p>
+                        <p style={{ fontSize:'0.78rem', fontWeight:700, color:'#059669', marginBottom:'0.4rem' }}>Observe the koala carefully and explain how its behaviour helps it survive.</p>
                         <ul style={{ margin:'0 0 0.5rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
                           <li>What behaviour can you observe?</li>
                           <li>Why does the koala behave this way?</li>
