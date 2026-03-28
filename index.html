@@ -7821,7 +7821,10 @@
                                         if (s.name !== studentName) return s;
                                         return { ...s, badges: (s.badges||[]).map(bd => bd.animalId !== badge.animalId ? bd : { ...bd, observationScore: { ...(bd.observationScore||{}),
                                           teacherOverride: { applied: true, behaviourScore: form2.b ? Number(form2.b) : null, detailScore: form2.d ? Number(form2.d) : null, writingScore: form2.w ? Number(form2.w) : null, note: form2.note||'', reasonType: form2.reason||'', savedAt: new Date().toISOString() }
-                                        }}) };\n                                      }));\n                                    }\n                                  }} disabled={overrideSaving === bKey}
+                                        }}) };
+                                      }));
+                                    }
+                                  }} disabled={overrideSaving === bKey}
                                     style={{ flex:1, padding:'0.3rem', borderRadius:'4px', border:'none', background:'var(--jungle-mid)', color:'white', fontSize:'0.72rem', fontWeight:700, cursor:'pointer' }}>
                                     {overrideSaving === bKey ? 'Saving…' : 'Save Override'}
                                   </button>
