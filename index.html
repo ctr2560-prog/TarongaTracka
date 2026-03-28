@@ -1920,7 +1920,7 @@
                 2: 'When you zoom in, what happens to the image?',
                 3: 'The image is 10 mm. The real lion is 200 cm. Which is bigger?',
                 4: 'Lion Micro Investigation',
-                5: 'If magnification = 0.05 and the real lion is 200 cm, what is the image size?',
+                5: 'What does the magnification needed to read the sign tell you about the limits of the naked eye for scientific observation?',
               },
               options: ['A. Bigger', 'B. Smaller', 'C. The same', 'D. Not sure'],
               stageOptions: {
@@ -1928,7 +1928,7 @@
                 2: ['A. It gets bigger', 'B. It gets smaller', 'C. It disappears', 'D. Nothing changes'],
                 3: ['A. The image (10 mm)', 'B. The real lion (200 cm)', 'C. They are the same', 'D. Not sure'],
                 4: ['A. 2×', 'B. 5×', 'C. 10×', 'D. 20×'],
-                5: ['A. 1 cm', 'B. 10 mm', 'C. 100 mm', 'D. 200 mm'],
+                5: ['A. No zoom needed — naked eye is enough', 'B. Moderate zoom — enough to read fine detail clearly', 'C. Maximum zoom — always use the highest setting', 'D. Zoom is not relevant to scientific observation'],
               },
               stageCorrect: { 1: 0, 2: 0, 3: 1, 4: 1, 5: 1 },
               correct: 1,
@@ -2226,7 +2226,7 @@
                 2: 'Can you see an object at the top of the waterfall?',
                 3: 'What did you notice at the top of the waterfall?',
                 4: 'What is at the top of the waterfall?',
-                5: 'What object marks the waterfall and why might it be placed there?',
+                5: 'Based on the clue, what does the object at the waterfall suggest about how this environment is used?',
               },
               options: ['A rock', 'A sign', 'A bell', 'A rope'],
               correct: 2 },
@@ -3436,7 +3436,7 @@
                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.6rem', marginBottom:'1rem' }}>
                     {(dingoShuffledOptions.length ? dingoShuffledOptions : CORRECT_SEQUENCE).map((opt) => {
                       const placed = dingoChainItems.includes(opt.id);
-                      const isNext = !placed && opt.id === nextExpected?.id;
+                      const isNext = !placed && opt.id === nextExpected?.id && classStage < 5;
                       const isWrong = dingoWrongTap === opt.id;
                       return (
                         <button key={opt.id} onClick={() => tapItem(opt.id)} disabled={placed}
@@ -3849,7 +3849,7 @@
           : classStage === 3
           ? { label: '🔍 Compare Sizes', body: 'Image size: 10 mm  ·  Real size: 200 cm — which is bigger?' }
           : classStage === 5
-          ? { label: '🔍 Magnification Calculation', body: 'If magnification = 0.05 and the real size = 200 cm, what is the image size? (Image = magnification × real)' }
+          ? { label: '🔍 Observation Level', body: 'Choose the option that represents the correct level needed to observe the detail. Think about the zoom you used and why.' }
           : { label: '🔍 Magnification Challenge', body: 'Actual size: 2 mm  ·  Readable size: 10 mm  ·  Formula: image ÷ real' };
 
         const hintContent = classStage <= 2
@@ -3857,7 +3857,7 @@
           : classStage === 3
           ? '10 mm vs 200 cm — which is bigger?'
           : classStage === 5
-          ? '0.05 × 200 = 10 mm (image size)'
+          ? 'Think: did you need a little zoom or maximum zoom to read the sign clearly?'
           : '10 ÷ 2 = 5×';
 
         return (
@@ -5365,6 +5365,15 @@
                         <li>Human impacts (poaching, habitat loss)</li>
                         <li>How conservation helps protect lions</li>
                       </ul>
+                      {classStage === 5 && (
+                        <div style={{ marginTop:'0.75rem', borderTop:'1px solid #E4EDE8', paddingTop:'0.6rem' }}>
+                          <p style={{ fontSize:'0.78rem', fontWeight:700, color:'#059669', marginBottom:'0.3rem' }}>To give a strong response:</p>
+                          <ul style={{ margin:0, paddingLeft:'1.2rem', fontSize:'0.78rem', color:'#555', lineHeight:1.7 }}>
+                            <li>Explain your reasoning clearly</li>
+                            <li>Link your idea to survival or conservation</li>
+                          </ul>
+                        </div>
+                      )}
                     </div>
                     </>
                   )}
@@ -5464,7 +5473,7 @@
                         : '👀 Observe the giraffes for 30 seconds — focus on how their body features help them interact with their environment.'}
                     </p>
                     <p style={{ color:'#444', fontWeight:600, marginBottom:'1.2rem', fontSize:'0.95rem', textAlign:'center' }}>
-                      {(currentAnimal.writingPromptByStage && currentAnimal.writingPromptByStage[classStage]) || currentAnimal.observationPrompt}
+                      {classStage !== 5 && ((currentAnimal.writingPromptByStage && currentAnimal.writingPromptByStage[classStage]) || currentAnimal.observationPrompt)}
                     </p>
                   </>
                 ) : currentAnimal.id === 'lemur' ? (
@@ -5660,13 +5669,30 @@
                 )}
                 {classStage > 2 && currentAnimal.id === 'koala' && (
                   <div style={{ background:'#F7FAF8', border:'1px solid #E4EDE8', borderRadius:'12px', padding:'1rem 1.25rem', marginTop:'0.75rem' }}>
-                    <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>You may include:</p>
-                    <ul style={{ margin:0, paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
-                      <li>What the koala is doing (eating, sleeping, climbing)</li>
-                      <li>Physical features (fur, claws, movement)</li>
-                      <li>How it is using the environment (trees, branches)</li>
-                      <li>Any behaviours you notice over time</li>
-                    </ul>
+                    {classStage === 5 ? (
+                      <>
+                        <p style={{ fontSize:'0.78rem', fontWeight:700, color:'#059669', marginBottom:'0.4rem' }}>Observe the koala carefully. Explain what it is doing and why this behaviour is important for its survival.</p>
+                        <ul style={{ margin:'0 0 0.5rem', paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                          <li>What behaviour can you observe?</li>
+                          <li>Why does the koala behave this way?</li>
+                          <li>How does this help it survive?</li>
+                        </ul>
+                        <p style={{ fontSize:'0.75rem', fontWeight:600, color:'var(--jungle-mid)', marginBottom:'0.2rem' }}>Sentence starters:</p>
+                        {['The koala is… because…', 'This behaviour helps the koala to…', 'This is important for survival because…'].map((s, i) => (
+                          <p key={i} style={{ fontSize:'0.78rem', color:'#555', margin:'0.1rem 0', paddingLeft:'0.5rem', fontStyle:'italic' }}>"{s}"</p>
+                        ))}
+                      </>
+                    ) : (
+                      <>
+                        <p style={{ fontSize:'0.78rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>You may include:</p>
+                        <ul style={{ margin:0, paddingLeft:'1.2rem', fontSize:'0.82rem', color:'#555', lineHeight:1.8 }}>
+                          <li>What the koala is doing (eating, sleeping, climbing)</li>
+                          <li>Physical features (fur, claws, movement)</li>
+                          <li>How it is using the environment (trees, branches)</li>
+                          <li>Any behaviours you notice over time</li>
+                        </ul>
+                      </>
+                    )}
                   </div>
                 )}
                 {classStage > 2 && currentAnimal.id === 'gorilla' && (
