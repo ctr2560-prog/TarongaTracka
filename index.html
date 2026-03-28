@@ -8145,20 +8145,24 @@
                                             style={{ fontSize:'0.65rem', padding:'0.2rem 0.55rem', borderRadius:'4px', border:'1px solid #D1D5DB', background:'#F9FAFB', cursor:'pointer', fontWeight:600, color:'#374151' }}>
                                             {isActive ? '✏️ Edit Override' : '✏️ Override Scores'}
                                           </button>
-                                          <button onClick={async () => {
-                                            const sName = observationsModal?.name || studentName;
+                                          <button onClick={(e) => {
+                                            e.stopPropagation();
+                                            const sName = observationsModal?.name;
+                                            console.log('FLAG CLICKED', sName, b.animalId, 'currently flagged:', obs.reviewFlag?.flagged);
+                                            if (!sName) return;
                                             if (obs.reviewFlag?.flagged) {
                                               // Already flagged — unflag immediately
-                                              const result = await saveOverride(sName, b.animalId,
+                                              saveOverride(sName, b.animalId,
                                                 { flagged: false, flagReason: '', flagOnly: true, active: false },
-                                                selectedAdminClass || selectedClass);
-                                              if (result?.ok !== false) {
-                                                setFirestoreStudents(prev => prev.map(s => s.name !== sName ? s : { ...s,
-                                                  badges: (s.badges||[]).map(bd => bd.animalId !== b.animalId ? bd : { ...bd,
-                                                    observationScore: { ...(bd.observationScore||{}), reviewFlag: { flagged: false, note: '', timestamp: new Date().toISOString() } } }) }));
-                                              }
+                                                selectedAdminClass || selectedClass
+                                              ).then(result => {
+                                                if (result?.ok !== false) {
+                                                  setFirestoreStudents(prev => prev.map(s => s.name !== sName ? s : { ...s,
+                                                    badges: (s.badges||[]).map(bd => bd.animalId !== b.animalId ? bd : { ...bd,
+                                                      observationScore: { ...(bd.observationScore||{}), reviewFlag: { flagged: false, note: '', timestamp: new Date().toISOString() } } }) }));
+                                                }
+                                              });
                                             } else {
-                                              // Open modal to add note before flagging
                                               setReviewNote(obs.reviewFlag?.note || '');
                                               setReviewModal({ open: true, studentName: sName, animalId: b.animalId });
                                             }
@@ -9555,17 +9559,22 @@
                                               style={{ fontSize:'0.65rem', padding:'0.2rem 0.55rem', borderRadius:'4px', border:'1px solid #D1D5DB', background:'#F9FAFB', cursor:'pointer', fontWeight:600, color:'#374151' }}>
                                               {isActive ? '✏️ Edit Override' : '✏️ Override Scores'}
                                             </button>
-                                            <button onClick={async () => {
-                                              const sName = observationsModal?.name || studentName;
+                                            <button onClick={(e) => {
+                                              e.stopPropagation();
+                                              const sName = observationsModal?.name;
+                                              console.log('FLAG CLICKED', sName, b.animalId, 'currently flagged:', obs.reviewFlag?.flagged);
+                                              if (!sName) return;
                                               if (obs.reviewFlag?.flagged) {
-                                                const result = await saveOverride(sName, b.animalId,
+                                                saveOverride(sName, b.animalId,
                                                   { flagged: false, flagReason: '', flagOnly: true, active: false },
-                                                  selectedAdminClass || selectedClass);
-                                                if (result?.ok !== false) {
-                                                  setFirestoreStudents(prev => prev.map(s => s.name !== sName ? s : { ...s,
-                                                    badges: (s.badges||[]).map(bd => bd.animalId !== b.animalId ? bd : { ...bd,
-                                                      observationScore: { ...(bd.observationScore||{}), reviewFlag: { flagged: false, note: '', timestamp: new Date().toISOString() } } }) }));
-                                                }
+                                                  selectedAdminClass || selectedClass
+                                                ).then(result => {
+                                                  if (result?.ok !== false) {
+                                                    setFirestoreStudents(prev => prev.map(s => s.name !== sName ? s : { ...s,
+                                                      badges: (s.badges||[]).map(bd => bd.animalId !== b.animalId ? bd : { ...bd,
+                                                        observationScore: { ...(bd.observationScore||{}), reviewFlag: { flagged: false, note: '', timestamp: new Date().toISOString() } } }) }));
+                                                  }
+                                                });
                                               } else {
                                                 setReviewNote(obs.reviewFlag?.note || '');
                                                 setReviewModal({ open: true, studentName: sName, animalId: b.animalId });
