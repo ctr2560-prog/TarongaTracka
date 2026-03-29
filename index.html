@@ -556,9 +556,6 @@
       const [tfEntries, setTfEntries] = useState([]);
       const [tfLoading, setTfLoading] = useState(true);
       const [qdOpen, setQdOpen] = useState(false);
-      const [reviewModal, setReviewModal] = useState({ open: false, studentName: '', animalId: '', currentNote: '' });
-      const [reviewNote, setReviewNote] = useState('');
-      const [reviewSaving, setReviewSaving] = useState(false);
       const stageMeta = [
         { key:1, label:'Stage 1', tag:'Easy',     bg:'#F0FDF4', border:'#86EFAC', color:'#15803D' },
         { key:3, label:'Stage 3', tag:'Moderate', bg:'#EFF6FF', border:'#93C5FD', color:'#1D4ED8' },
@@ -4564,9 +4561,8 @@
                   savedAt:        new Date().toISOString(),
                 },
                 reviewFlag: {
-                  flagged: overrideData.flagged || false,
-                  reason:  overrideData.flagReason || '',
-                  note:    overrideData.flagReason || '',
+                  flagged: true,
+                  note:    overrideData.note || '',
                   timestamp: new Date().toISOString(),
                 },
               },
@@ -7784,7 +7780,7 @@
                                 style={{ fontSize:'0.72rem', padding:'0.3rem 0.7rem', borderRadius:'6px', border:'1px solid #D1D5DB', background:'#F9FAFB', cursor:'pointer', fontWeight:600, color:'#374151' }}>
                                 {isExpanded ? 'Hide Detail ▴' : 'View Full Observation ▾'}
                               </button>
-                              <button onClick={() => setOverrideForms(prev => ({ ...prev, [bKey]: { open:true, b: override.behaviourScore ?? obs.behaviour ?? '', d: override.detailScore ?? obs.detail ?? '', w: override.writingScore ?? obs.writing ?? '', note: override.note || '', reason: override.reasonType || '', flagged: true, flagReason: flag.reason || '', active: override.applied || false } }))}
+                              <button onClick={() => setOverrideForms(prev => ({ ...prev, [bKey]: { open:true, b: override.behaviourScore ?? obs.behaviour ?? '', d: override.detailScore ?? obs.detail ?? '', w: override.writingScore ?? obs.writing ?? '', note: override.note || '', reason: override.reasonType || '', active: override.applied || false } }))}
                                 style={{ fontSize:'0.72rem', padding:'0.3rem 0.7rem', borderRadius:'6px', border:'1px solid #D1D5DB', background:'#F9FAFB', cursor:'pointer', fontWeight:600, color:'#374151' }}>
                                 ✏️ Apply Override
                               </button>
@@ -7836,7 +7832,7 @@
                                     </div>
                                   ))}
                                 </div>
-                                <input type="text" value={overrideForms[bKey].note || ''} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], note: e.target.value } }))} placeholder="Note (optional)"
+                                <input type="text" value={overrideForms[bKey].note || ''} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], note: e.target.value } }))} placeholder="Feedback for Taronga Staff"
                                   style={{ width:'100%', marginBottom:'0.4rem', padding:'0.25rem 0.4rem', borderRadius:'4px', border:'1px solid #D1D5DB', fontSize:'0.73rem', boxSizing:'border-box' }} />
                                 <div style={{ display:'flex', gap:'0.4rem' }}>
                                   <button onClick={async () => {
@@ -7855,7 +7851,7 @@
                                     }
                                   }} disabled={overrideSaving === bKey}
                                     style={{ flex:1, padding:'0.3rem', borderRadius:'4px', border:'none', background:'var(--jungle-mid)', color:'white', fontSize:'0.72rem', fontWeight:700, cursor:'pointer' }}>
-                                    {overrideSaving === bKey ? 'Saving…' : 'Save Override'}
+                                    {overrideSaving === bKey ? 'Saving…' : 'Submit to Review'}
                                   </button>
                                   <button onClick={() => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }))}
                                     style={{ padding:'0.3rem 0.6rem', borderRadius:'4px', border:'1px solid #D1D5DB', background:'white', fontSize:'0.72rem', color:'#6B7280', cursor:'pointer' }}>
@@ -8097,30 +8093,6 @@
                               {obs.reviewRecommended && (
                                 <span style={{ fontSize:'0.65rem', background:'#FEF3C7', color:'#92400E', padding:'0.1rem 0.4rem', borderRadius:'4px', fontWeight:700 }}>⚠ Review</span>
                               )}
-                              <button onClick={(e) => {
-                                e.preventDefault(); e.stopPropagation();
-                                const sName = observationsModal?.name;
-                                console.log('FLAG CLICKED (toolbar)', sName, b.animalId);
-                                if (!sName) return;
-                                if (obs.reviewFlag?.flagged) {
-                                  saveOverride(sName, b.animalId,
-                                    { flagged: false, flagReason: '', flagOnly: true, active: false },
-                                    selectedAdminClass || selectedClass
-                                  ).then(result => {
-                                    if (result?.ok !== false) {
-                                      setFirestoreStudents(prev => prev.map(s => s.name !== sName ? s : { ...s,
-                                        badges: (s.badges||[]).map(bd => bd.animalId !== b.animalId ? bd : { ...bd,
-                                          observationScore: { ...(bd.observationScore||{}), reviewFlag: { flagged: false, note: '', timestamp: new Date().toISOString() } } }) }));
-                                    }
-                                  });
-                                } else {
-                                  setReviewNote(obs.reviewFlag?.note || '');
-                                  setReviewModal({ open: true, studentName: sName, animalId: b.animalId });
-                                }
-                              }}
-                                style={{ fontSize:'0.65rem', padding:'0.15rem 0.5rem', borderRadius:'4px', border:'1px solid #D1D5DB', background: obs.reviewFlag?.flagged ? '#FEF3C7' : '#F9FAFB', cursor:'pointer', fontWeight:600, color: obs.reviewFlag?.flagged ? '#92400E' : '#374151', position:'relative', zIndex:10, pointerEvents:'auto' }}>
-                                {obs.reviewFlag?.flagged ? '🚩 Flagged' : '🚩 Flag'}
-                              </button>
                               <button
                                 onClick={() => setExpandedBreakdown(isExpanded ? null : bKey)}
                                 style={{ fontSize:'0.65rem', color:'var(--jungle-mid)', background:'none', border:'1px solid var(--jungle-mid)', borderRadius:'4px', padding:'0.15rem 0.5rem', cursor:'pointer', fontWeight:700, marginLeft:'auto' }}>
@@ -8165,41 +8137,13 @@
                                       )}
                                       {!showForm && (
                                         <div style={{ display:'flex', gap:'0.4rem', flexWrap:'wrap' }}>
-                                          <button onClick={() => setOverrideForms(prev => ({ ...prev, [bKey]: { open:true, b: override.behaviourScore ?? obs.behaviour ?? '', d: override.detailScore ?? obs.detail ?? '', w: override.writingScore ?? obs.writing ?? '', note: override.note || '', reason: override.reasonType || '', flagged: obs.reviewFlag?.flagged || false, flagReason: obs.reviewFlag?.reason || '', active: isActive } }))}
+                                          <button onClick={() => setOverrideForms(prev => ({ ...prev, [bKey]: { open:true, b: override.behaviourScore ?? obs.behaviour ?? '', d: override.detailScore ?? obs.detail ?? '', w: override.writingScore ?? obs.writing ?? '', note: override.note || '', reason: override.reasonType || '', active: isActive } }))}
                                             style={{ fontSize:'0.65rem', padding:'0.2rem 0.55rem', borderRadius:'4px', border:'1px solid #D1D5DB', background:'#F9FAFB', cursor:'pointer', fontWeight:600, color:'#374151' }}>
                                             {isActive ? '✏️ Edit Override' : '✏️ Override Scores'}
-                                          </button>
-                                          <button onClick={(e) => {
-                                            e.stopPropagation();
-                                            const sName = observationsModal?.name;
-                                            console.log('FLAG CLICKED', sName, b.animalId, 'currently flagged:', obs.reviewFlag?.flagged);
-                                            if (!sName) return;
-                                            if (obs.reviewFlag?.flagged) {
-                                              // Already flagged — unflag immediately
-                                              saveOverride(sName, b.animalId,
-                                                { flagged: false, flagReason: '', flagOnly: true, active: false },
-                                                selectedAdminClass || selectedClass
-                                              ).then(result => {
-                                                if (result?.ok !== false) {
-                                                  setFirestoreStudents(prev => prev.map(s => s.name !== sName ? s : { ...s,
-                                                    badges: (s.badges||[]).map(bd => bd.animalId !== b.animalId ? bd : { ...bd,
-                                                      observationScore: { ...(bd.observationScore||{}), reviewFlag: { flagged: false, note: '', timestamp: new Date().toISOString() } } }) }));
-                                                }
-                                              });
-                                            } else {
-                                              setReviewNote(obs.reviewFlag?.note || '');
-                                              setReviewModal({ open: true, studentName: sName, animalId: b.animalId });
-                                            }
-                                          }}
-                                            style={{ fontSize:'0.65rem', padding:'0.2rem 0.55rem', borderRadius:'4px', border:'1px solid #D1D5DB', background: obs.reviewFlag?.flagged ? '#FEF3C7' : '#F9FAFB', cursor:'pointer', fontWeight:600, color: obs.reviewFlag?.flagged ? '#92400E' : '#374151' }}>
-                                            {obs.reviewFlag?.flagged ? '🚩 Flagged' : '🚩 Flag for Review'}
-                                          </button>
-                                        </div>
+                                          </button>                                        </div>
                                       )}
                                       {showForm && (
                                         <div style={{ background:'#F9FAFB', borderRadius:'8px', padding:'0.7rem 0.8rem', border:'1px solid #E5E7EB', marginTop:'0.4rem' }}>
-                                          {!form.flagOnly && (
-                                            <>
                                               <p style={{ fontSize:'0.7rem', fontWeight:700, color:'#374151', margin:'0 0 0.4rem' }}>Override Scores</p>
                                               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'0.4rem', marginBottom:'0.5rem' }}>
                                                 {[['b','🧠 Behaviour'],['d','🔍 Detail'],['w','✏️ Writing']].map(([key, label]) => (
@@ -8224,26 +8168,17 @@
                                                 </select>
                                               </div>
                                               <div style={{ marginBottom:'0.5rem' }}>
-                                                <label style={{ fontSize:'0.62rem', color:'#6B7280', display:'block', marginBottom:'0.15rem' }}>Note (optional)</label>
+                                                <label style={{ fontSize:'0.62rem', color:'#6B7280', display:'block', marginBottom:'0.15rem' }}>Feedback for Taronga Staff</label>
                                                 <input type="text" value={form.note || ''} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], note: e.target.value } }))} placeholder="e.g. Verbal explanation observed"
                                                   style={{ width:'100%', padding:'0.3rem 0.4rem', borderRadius:'5px', border:'1px solid #D1D5DB', fontSize:'0.75rem', boxSizing:'border-box' }} />
                                               </div>
-                                            </>
-                                          )}
-                                          <div style={{ marginBottom:'0.5rem' }}>
-                                            <label style={{ display:'flex', alignItems:'center', gap:'0.4rem', fontSize:'0.7rem', color:'#374151', cursor:'pointer' }}>
-                                              <input type="checkbox" checked={form.flagged || false} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], flagged: e.target.checked } }))} />
-                                              Flag this response for review
-                                            </label>
-                                            {form.flagged && (
-                                              <input type="text" value={form.flagReason || ''} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], flagReason: e.target.value } }))} placeholder="Reason for flag (optional)"
-                                                style={{ width:'100%', marginTop:'0.25rem', padding:'0.25rem 0.4rem', borderRadius:'5px', border:'1px solid #D1D5DB', fontSize:'0.73rem', boxSizing:'border-box' }} />
-                                            )}
-                                          </div>
+                                            <div style={{ marginBottom:'0.5rem' }}>
+                                            <label style={{ display:'flex', alignItems:'center', gap:'0.4rem', fontSize:'0.7rem', color:'#374151', cursor:'pointer' }}>                                              Flag this response for review
+                                            </label>                                          </div>
                                           <div style={{ display:'flex', gap:'0.4rem' }}>
                                             <button onClick={async () => {
                                               setOverrideSaving(bKey);
-                                              const result = await saveOverride(observationsModal.name, b.animalId, { ...form, active: !form.flagOnly }, selectedAdminClass || selectedClass);
+                                              const result = await saveOverride(observationsModal.name, b.animalId, { ...form, active: true }, selectedAdminClass || selectedClass);
                                               setOverrideSaving(null);
                                               if (result.ok) {
                                                 setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }));
@@ -8253,8 +8188,7 @@
                                                     if (bd.animalId !== b.animalId) return bd;
                                                     return { ...bd, observationScore: { ...(bd.observationScore||{}),
                                                       reviewFlag: { flagged: form.flagged||false, reason: form.flagReason||'', timestamp: new Date().toISOString() },
-                                                      ...(form.flagOnly ? {} : {
-                                                        teacherOverride: {
+                                                                                                              teacherOverride: {
                                                           applied: true,
                                                           behaviourScore: form.b !== '' && form.b !== undefined ? Number(form.b) : (bd.observationScore?.teacherOverride?.behaviourScore ?? null),
                                                           detailScore:    form.d !== '' && form.d !== undefined ? Number(form.d) : (bd.observationScore?.teacherOverride?.detailScore    ?? null),
@@ -8263,7 +8197,6 @@
                                                           reasonType:     form.reason || '',
                                                           savedAt:        new Date().toISOString(),
                                                         }
-                                                      })
                                                     }}
                                                   })
                                                 };
@@ -8271,7 +8204,7 @@
                                               }
                                             }} disabled={overrideSaving === bKey}
                                               style={{ flex:1, padding:'0.3rem', borderRadius:'5px', border:'none', background:'var(--jungle-mid)', color:'white', fontSize:'0.72rem', fontWeight:700, cursor:'pointer' }}>
-                                              {overrideSaving === bKey ? 'Saving…' : 'Save'}
+                                              {overrideSaving === bKey ? 'Saving…' : 'Submit to Review'}
                                             </button>
                                             <button onClick={() => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }))}
                                               style={{ padding:'0.3rem 0.6rem', borderRadius:'5px', border:'1px solid #D1D5DB', background:'white', fontSize:'0.72rem', color:'#6B7280', cursor:'pointer' }}>
@@ -9538,31 +9471,7 @@
                                 {obs.confidence && (
                                   <span style={{ fontSize:'0.65rem', color:'#aaa' }}>{obs.confidence} confidence</span>
                                 )}
-                                <button onClick={(e) => {
-                                  e.preventDefault(); e.stopPropagation();
-                                  const sName = observationsModal?.name;
-                                  console.log('FLAG CLICKED (toolbar)', sName, b.animalId);
-                                  if (!sName) return;
-                                  if (obs.reviewFlag?.flagged) {
-                                    saveOverride(sName, b.animalId,
-                                      { flagged: false, flagReason: '', flagOnly: true, active: false },
-                                      selectedAdminClass || selectedClass
-                                    ).then(result => {
-                                      if (result?.ok !== false) {
-                                        setFirestoreStudents(prev => prev.map(s => s.name !== sName ? s : { ...s,
-                                          badges: (s.badges||[]).map(bd => bd.animalId !== b.animalId ? bd : { ...bd,
-                                            observationScore: { ...(bd.observationScore||{}), reviewFlag: { flagged: false, note: '', timestamp: new Date().toISOString() } } }) }));
-                                      }
-                                    });
-                                  } else {
-                                    setReviewNote(obs.reviewFlag?.note || '');
-                                    setReviewModal({ open: true, studentName: sName, animalId: b.animalId });
-                                  }
-                                }}
-                                  style={{ fontSize:'0.65rem', padding:'0.1rem 0.4rem', borderRadius:'4px', border:'1px solid #D1D5DB', background: obs.reviewFlag?.flagged ? '#FEF3C7' : '#F9FAFB', cursor:'pointer', fontWeight:600, color: obs.reviewFlag?.flagged ? '#92400E' : '#374151', position:'relative', zIndex:10, pointerEvents:'auto' }}>
-                                  {obs.reviewFlag?.flagged ? '🚩 Flagged' : '🚩 Flag'}
-                                </button>
-                                <button
+                                  <button
                                   onClick={() => setExpandedBreakdown(isExpanded ? null : bKey)}
                                   style={{ fontSize:'0.65rem', color:'var(--jungle-mid)', background:'none', border:'1px solid var(--jungle-mid)', borderRadius:'4px', padding:'0.1rem 0.4rem', cursor:'pointer', fontWeight:600, marginLeft:'auto' }}>
                                   {isExpanded ? 'Hide ▴' : 'Marking / Feedback ▾'}
@@ -9603,39 +9512,13 @@
                                         )}
                                         {!showForm && (
                                           <div style={{ display:'flex', gap:'0.4rem', flexWrap:'wrap' }}>
-                                            <button onClick={() => setOverrideForms(prev => ({ ...prev, [bKey]: { open:true, b: override.behaviourScore ?? obs.behaviour ?? '', d: override.detailScore ?? obs.detail ?? '', w: override.writingScore ?? obs.writing ?? '', note: override.note || '', reason: override.reasonType || '', flagged: obs.reviewFlag?.flagged || false, flagReason: obs.reviewFlag?.reason || '', active: isActive } }))}
+                                            <button onClick={() => setOverrideForms(prev => ({ ...prev, [bKey]: { open:true, b: override.behaviourScore ?? obs.behaviour ?? '', d: override.detailScore ?? obs.detail ?? '', w: override.writingScore ?? obs.writing ?? '', note: override.note || '', reason: override.reasonType || '', active: isActive } }))}
                                               style={{ fontSize:'0.65rem', padding:'0.2rem 0.55rem', borderRadius:'4px', border:'1px solid #D1D5DB', background:'#F9FAFB', cursor:'pointer', fontWeight:600, color:'#374151' }}>
                                               {isActive ? '✏️ Edit Override' : '✏️ Override Scores'}
-                                            </button>
-                                            <button onClick={(e) => {
-                                              e.stopPropagation();
-                                              const sName = observationsModal?.name;
-                                              console.log('FLAG CLICKED', sName, b.animalId, 'currently flagged:', obs.reviewFlag?.flagged);
-                                              if (!sName) return;
-                                              if (obs.reviewFlag?.flagged) {
-                                                saveOverride(sName, b.animalId,
-                                                  { flagged: false, flagReason: '', flagOnly: true, active: false },
-                                                  selectedAdminClass || selectedClass
-                                                ).then(result => {
-                                                  if (result?.ok !== false) {
-                                                    setFirestoreStudents(prev => prev.map(s => s.name !== sName ? s : { ...s,
-                                                      badges: (s.badges||[]).map(bd => bd.animalId !== b.animalId ? bd : { ...bd,
-                                                        observationScore: { ...(bd.observationScore||{}), reviewFlag: { flagged: false, note: '', timestamp: new Date().toISOString() } } }) }));
-                                                  }
-                                                });
-                                              } else {
-                                                setReviewNote(obs.reviewFlag?.note || '');
-                                                setReviewModal({ open: true, studentName: sName, animalId: b.animalId });
-                                              }
-                                            }}
-                                              style={{ fontSize:'0.65rem', padding:'0.2rem 0.55rem', borderRadius:'4px', border:'1px solid #D1D5DB', background: obs.reviewFlag?.flagged ? '#FEF3C7' : '#F9FAFB', cursor:'pointer', fontWeight:600, color: obs.reviewFlag?.flagged ? '#92400E' : '#374151' }}>
-                                              {obs.reviewFlag?.flagged ? '🚩 Flagged' : '🚩 Flag for Review'}
-                                            </button>
-                                          </div>
+                                            </button>                                          </div>
                                         )}
                                         {showForm && (
                                           <div style={{ background:'#F9FAFB', borderRadius:'8px', padding:'0.65rem 0.75rem', border:'1px solid #E5E7EB', marginTop:'0.35rem' }}>
-                                            {!form.flagOnly && (
                                               <>
                                                 <p style={{ fontSize:'0.7rem', fontWeight:700, color:'#374151', margin:'0 0 0.4rem' }}>Override Scores</p>
                                                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'0.4rem', marginBottom:'0.4rem' }}>
@@ -9657,18 +9540,16 @@
                                                   <option value="misinterpreted response">Misinterpreted response</option>
                                                   <option value="other">Other</option>
                                                 </select>
-                                                <input type="text" value={form.note || ''} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], note: e.target.value } }))} placeholder="Note (optional)"
+                                                <input type="text" value={form.note || ''} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], note: e.target.value } }))} placeholder="Feedback for Taronga Staff"
                                                   style={{ width:'100%', marginBottom:'0.35rem', padding:'0.25rem 0.35rem', borderRadius:'4px', border:'1px solid #D1D5DB', fontSize:'0.73rem', boxSizing:'border-box' }} />
                                               </>
                                             )}
-                                            <label style={{ display:'flex', alignItems:'center', gap:'0.35rem', fontSize:'0.7rem', color:'#374151', cursor:'pointer', marginBottom:'0.35rem' }}>
-                                              <input type="checkbox" checked={form.flagged || false} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], flagged: e.target.checked } }))} />
-                                              Flag for review
+                                            <label style={{ display:'flex', alignItems:'center', gap:'0.35rem', fontSize:'0.7rem', color:'#374151', cursor:'pointer', marginBottom:'0.35rem' }}>                                              Flag for review
                                             </label>
                                             <div style={{ display:'flex', gap:'0.35rem' }}>
                                               <button onClick={async () => {
                                                 setOverrideSaving(bKey);
-                                                const result = await saveOverride(observationsModal.name, b.animalId, { ...form, active: !form.flagOnly }, selectedAdminClass || selectedClass);
+                                                const result = await saveOverride(observationsModal.name, b.animalId, { ...form, active: true }, selectedAdminClass || selectedClass);
                                                 setOverrideSaving(null);
                                                 if (result.ok) {
                                                 setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }));
@@ -9678,8 +9559,7 @@
                                                     if (bd.animalId !== b.animalId) return bd;
                                                     return { ...bd, observationScore: { ...(bd.observationScore||{}),
                                                       reviewFlag: { flagged: form.flagged||false, reason: form.flagReason||'', timestamp: new Date().toISOString() },
-                                                      ...(form.flagOnly ? {} : {
-                                                        teacherOverride: {
+                                                                                                              teacherOverride: {
                                                           applied: true,
                                                           behaviourScore: form.b !== '' && form.b !== undefined ? Number(form.b) : (bd.observationScore?.teacherOverride?.behaviourScore ?? null),
                                                           detailScore:    form.d !== '' && form.d !== undefined ? Number(form.d) : (bd.observationScore?.teacherOverride?.detailScore    ?? null),
@@ -9688,7 +9568,6 @@
                                                           reasonType:     form.reason || '',
                                                           savedAt:        new Date().toISOString(),
                                                         }
-                                                      })
                                                     }}
                                                   })
                                                 };
@@ -9696,7 +9575,7 @@
                                               }
                                               }} disabled={overrideSaving === bKey}
                                                 style={{ flex:1, padding:'0.28rem', borderRadius:'4px', border:'none', background:'var(--jungle-mid)', color:'white', fontSize:'0.72rem', fontWeight:700, cursor:'pointer' }}>
-                                                {overrideSaving === bKey ? 'Saving…' : 'Save'}
+                                                {overrideSaving === bKey ? 'Saving…' : 'Submit to Review'}
                                               </button>
                                               <button onClick={() => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }))}
                                                 style={{ padding:'0.28rem 0.5rem', borderRadius:'4px', border:'1px solid #D1D5DB', background:'white', fontSize:'0.72rem', color:'#6B7280', cursor:'pointer' }}>
@@ -9746,67 +9625,6 @@
 
 
       // Global review flag modal — renders on any screen
-      // DEV: test button — remove before production
-      // Uncomment to verify click events work end-to-end:
-      // if (true) return <button onClick={() => alert('CLICK WORKS')} style={{ position:'fixed', top:10, right:10, zIndex:999999, padding:'0.5rem 1rem', background:'red', color:'white', border:'none', borderRadius:'8px', cursor:'pointer', fontSize:'1rem' }}>TEST CLICK</button>;
-
-      if (reviewModal.open) {
-        return (
-          <div onClick={() => { setReviewModal({ open: false, studentName: '', animalId: '' }); setReviewNote(''); }}
-            style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:'1.5rem' }}>
-            <div onClick={e => e.stopPropagation()}
-              style={{ background:'white', borderRadius:'20px', padding:'1.75rem', width:'100%', maxWidth:'400px', boxShadow:'0 24px 60px rgba(0,0,0,0.25)' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:'0.6rem', marginBottom:'0.3rem' }}>
-                <span style={{ fontSize:'1.3rem' }}>🚩</span>
-                <h3 style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)', margin:0 }}>Flag for Review</h3>
-              </div>
-              <p style={{ fontSize:'0.8rem', color:'#888', marginBottom:'1rem' }}>
-                <strong style={{ color:'var(--jungle-deep)' }}>{reviewModal.studentName}</strong>{' · '}{reviewModal.animalId}
-              </p>
-              <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.35rem' }}>
-                Note for review <span style={{ fontWeight:400, color:'#aaa' }}>(optional)</span>
-              </label>
-              <textarea value={reviewNote} onChange={e => setReviewNote(e.target.value)}
-                placeholder="Add context for why this response needs review..."
-                rows={4}
-                style={{ width:'100%', padding:'0.65rem 0.75rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', fontSize:'0.85rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', boxSizing:'border-box', marginBottom:'1rem' }}
-                onFocus={e => e.target.style.borderColor='var(--jungle-mid)'}
-                onBlur={e => e.target.style.borderColor='#E5E5E5'}
-                autoFocus
-              />
-              <div style={{ display:'flex', gap:'0.6rem' }}>
-                <button onClick={async () => {
-                  setReviewSaving(true);
-                  const result = await saveOverride(
-                    reviewModal.studentName, reviewModal.animalId,
-                    { flagged: true, flagReason: reviewNote.trim(), flagOnly: true, active: false },
-                    selectedAdminClass || selectedClass
-                  );
-                  if (result?.ok !== false) {
-                    setFirestoreStudents(prev => prev.map(s => s.name !== reviewModal.studentName ? s : {
-                      ...s, badges: (s.badges||[]).map(bd => bd.animalId !== reviewModal.animalId ? bd : {
-                        ...bd, observationScore: { ...(bd.observationScore||{}),
-                          reviewFlag: { flagged: true, note: reviewNote.trim(), timestamp: new Date().toISOString() }
-                        }
-                      })
-                    }));
-                    setReviewModal({ open: false, studentName: '', animalId: '' });
-                    setReviewNote('');
-                  }
-                  setReviewSaving(false);
-                }} disabled={reviewSaving}
-                  style={{ flex:1, padding:'0.7rem', borderRadius:'10px', border:'none', background:'linear-gradient(135deg, #DC2626, #EF4444)', color:'white', fontSize:'0.88rem', fontWeight:700, cursor:'pointer' }}>
-                  {reviewSaving ? 'Saving…' : '🚩 Flag for Review'}
-                </button>
-                <button onClick={() => { setReviewModal({ open: false, studentName: '', animalId: '' }); setReviewNote(''); }}
-                  style={{ padding:'0.7rem 1rem', borderRadius:'10px', border:'1px solid #E5E5E5', background:'white', fontSize:'0.88rem', color:'#888', cursor:'pointer' }}>
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      }
 
       return null;
     };
