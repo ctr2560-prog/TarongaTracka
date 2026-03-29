@@ -1976,7 +1976,7 @@
                 1: ['A. It gets bigger', 'B. It gets smaller', 'C. It stays the same', 'D. It disappears'],
                 2: ['A. It gets bigger', 'B. It gets smaller', 'C. It disappears', 'D. Nothing changes'],
                 3: ['A. The image (10 mm)', 'B. The real lion (200 cm)', 'C. They are the same', 'D. Not sure'],
-                4: ['A. 2×', 'B. 5×', 'C. 10×', 'D. 20×'],
+                4: ['A', 'B', 'C', 'D'],
                 5: ['A', 'B', 'C', 'D'],
               },
               stageCorrect: { 1: 0, 2: 0, 3: 1, 4: 1, 5: 1 },
@@ -2791,6 +2791,20 @@
 
         // Hard cap: missing capital or full stop → max 3 (Stage 1 exempt — beginners allowed partial structure)
         if (stg > 2 && (!hasCapital || !hasFullStop)) score = Math.min(score, 3);
+
+        // Low-quality guard: cap repetitive/nonsense text at 2
+        // (catches cases isLowQualityResponse misses, e.g. 3-unique-word spam)
+        if (wc >= 3) {
+          const uniqueRatio = uCount / wc;
+          const singleLetterCount = words.filter(w => w.replace(/[^a-zA-Z]/g,'').length === 1).length;
+          let maxRun = 1, curRun = 1;
+          for (let i = 1; i < words.length; i++) {
+            curRun = words[i].toLowerCase() === words[i-1].toLowerCase() ? curRun + 1 : 1;
+            if (curRun > maxRun) maxRun = curRun;
+          }
+          const isLowQuality = maxRun >= 4 || uniqueRatio < 0.35 || (singleLetterCount / wc > 0.6);
+          if (isLowQuality) score = Math.min(score, 2);
+        }
 
         return Math.min(score, 5);
       }
@@ -6030,7 +6044,7 @@
                     </div>
                   </>
                 )}
-                {classStage > 2 && (
+                {classStage > 2 && currentAnimal.id !== 'koala' && (
                   <p style={{ color:'#444', fontWeight:600, marginBottom:'1rem', fontSize:'1rem', textAlign:'center' }}>
                     {currentAnimal.id === 'concert-lawn'
                       ? (currentAnimal.writingPromptByStage && currentAnimal.writingPromptByStage[classStage]) || 'Describe your experience walking on the grass and explain how this environment is different to a built environment like the city.'
@@ -9305,60 +9319,6 @@
                         </div>
                       )}
                     </div>
-
-                    {/* Question Difficulty by Stage */}
-                  <div style={{ marginBottom:'1rem', borderRadius:'14px', border:'1.5px solid #D4E8DC', background:'white', boxShadow:'0 2px 10px rgba(26,82,56,0.06)', overflow:'hidden' }}>
-                    <button onClick={() => setQdOpen(o => !o)}
-                      style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.85rem 1.2rem', background:'linear-gradient(135deg, #F0F7F4 0%, #E8F4EE 100%)', border:'none', cursor:'pointer', textAlign:'left' }}>
-                      <span style={{ fontWeight:700, fontSize:'0.9rem', color:'var(--jungle-deep)' }}>📋 Question Difficulty by Stage</span>
-                      <span style={{ fontSize:'1.1rem', color:'var(--jungle-mid)', transition:'transform 0.2s', display:'inline-block', transform: qdOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
-                    </button>
-                    {qdOpen && (
-                      <div style={{ padding:'1rem', display:'flex', flexDirection:'column', gap:'0.75rem', maxHeight:'540px', overflowY:'auto' }}>
-                        {animals.map(animal => {
-                          const qs = animal.questions || [];
-                          if (qs.length === 0) return null;
-                          const q = qs[0];
-                          const variants = q.stageVariants || {};
-                          const wp = animal.writingPromptByStage || {};
-                          const getText = (k) => variants[k] || (k >= 4 ? (variants[4] || q.q) : q.q) || '';
-                          const getWriting = (k) => wp[k] || '';
-                          return (
-                            <div key={animal.id} style={{ borderRadius:'10px', border:'1px solid #E8EDF0', overflow:'hidden' }}>
-                              <div style={{ background:'var(--jungle-deep)', padding:'0.5rem 0.85rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
-                                <span style={{ fontSize:'0.82rem', fontWeight:700, color:'white' }}>{animal.emoji || '🐾'} {animal.name}</span>
-                                {qs.length > 1 && <span style={{ fontSize:'0.65rem', color:'rgba(255,255,255,0.45)', marginLeft:'auto' }}>{qs.length} questions</span>}
-                              </div>
-                              <div>
-                                {stageMeta.map((sm, si) => {
-                                  const qText = getText(sm.key);
-                                  const wText = getWriting(sm.key);
-                                  if (!qText && !wText) return null;
-                                  return (
-                                    <div key={sm.key} style={{ padding:'0.55rem 0.85rem', borderTop: si > 0 ? '1px solid #F0F4F0' : 'none', background: si % 2 === 0 ? 'white' : '#FAFBFA' }}>
-                                      {qText && (
-                                        <div style={{ display:'flex', alignItems:'baseline', gap:'0.45rem', marginBottom: wText ? '0.15rem' : 0, flexWrap:'wrap' }}>
-                                          <span style={{ fontSize:'0.62rem', fontWeight:700, background:sm.bg, border:`1px solid ${sm.border}`, color:sm.color, borderRadius:'4px', padding:'0.05rem 0.4rem', letterSpacing:'0.03em', whiteSpace:'nowrap', flexShrink:0 }}>{sm.label}</span>
-                                          <p style={{ fontSize:'0.78rem', color:'#374151', margin:0, lineHeight:1.5, fontWeight:500 }}>🔲 {qText}</p>
-                                        </div>
-                                      )}
-                                      {wText && (
-                                        <div style={{ display:'flex', alignItems:'baseline', gap:'0.45rem', flexWrap:'wrap' }}>
-                                          {!qText && <span style={{ fontSize:'0.62rem', fontWeight:700, background:sm.bg, border:`1px solid ${sm.border}`, color:sm.color, borderRadius:'4px', padding:'0.05rem 0.4rem', letterSpacing:'0.03em', whiteSpace:'nowrap', flexShrink:0 }}>{sm.label}</span>}
-                                          <p style={{ fontSize:'0.72rem', color:'#6B7280', margin:0, lineHeight:1.4, fontStyle:'italic' }}>✍️ {wText}</p>
-                                        </div>
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
 
                     <div style={{ background:'white', borderRadius:'16px', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', overflow:'hidden' }}>
                       <div style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 1.4fr 0.85fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
