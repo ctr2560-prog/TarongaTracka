@@ -2020,7 +2020,7 @@
             1: 'What did you see?',
             2: 'What did the koala look like and what was it doing?',
             3: 'Describe where the koala was and what you could observe about it.',
-            4: 'Watch the koala carefully. What position is it in?',
+            4: 'Watch the koala carefully. What does it look like? What is it doing?',
             5: 'Explain what the koala is doing and why this helps it survive.',
           },
           questions: [
@@ -2034,8 +2034,9 @@
               },
               stageOptions: {
                 1: ['A. Maybe', 'B. Yes', 'C. No', 'D. Not sure'],
+                2: ['A. They live only at night', 'B. They are not real animals', 'C. They are at risk', 'D. They are doing very well'],
               },
-              stageCorrect: { 1: 1 },
+              stageCorrect: { 1: 1, 2: 2 },
               options: ['2030', '2040', '2050', '2060'],
               correct: 2, fact: 'Some projections warn koalas could disappear from parts of NSW by around 2050 without action.' },
             { q: 'Which adaptation helps koalas climb and grip tree trunks effectively?',
@@ -2062,8 +2063,9 @@
               },
               stageOptions: {
                 1: ['A. A little', 'B. A lot', 'C. Sometimes', 'D. Never'],
+                2: ['A. 20 hours', 'B. 10 hours', 'C. 30 hours', 'D. 5 hours'],
               },
-              stageCorrect: { 1: 1 },
+              stageCorrect: { 1: 1, 2: 0 },
               options: ['They are nocturnal predators', 'Their fur causes them to overheat', 'They are avoiding competition', 'Their diet is low in energy, requiring energy conservation'],
               correct: 3, fact: 'Eucalyptus leaves are low in energy, so koalas conserve energy by resting.' }
           ],
@@ -2200,8 +2202,9 @@
               },
               stageOptions: {
                 1: ['A. Kangaroo', 'B. Grass', 'C. Tree', 'D. Rock'],
+                2: ['A. No, dingoes change colour every day', 'B. Yes, because it glows in the dark', 'C. No, its colour makes it easy to see everywhere', 'D. Yes, its colour helps it blend into the bush'],
               },
-              stageCorrect: { 1: 0 },
+              stageCorrect: { 1: 0, 2: 3 },
               options: ['They are herbivores that eat only plants', 'They are apex predators that help regulate prey populations', 'They have no ecological role', 'They are introduced pests'],
               correct: 1, fact: 'Dingoes are apex predators in Australia and help regulate populations of kangaroos and other animals, supporting ecosystem balance.' }
           ],
@@ -6933,11 +6936,6 @@
                               <div style={{ fontSize:'0.85rem', fontWeight:600, color:'#888', textTransform:'uppercase', letterSpacing:'0.05em' }}>Avg Quiz Score</div>
                             </div>
                             
-                            <div className="animate-scale-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', animationDelay:'0.2s' }}>
-                              <div style={{ fontSize:'2.5rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem', lineHeight:1 }}>{averageObservationScore}</div>
-                              <div style={{ fontSize:'0.85rem', fontWeight:600, color:'#888', textTransform:'uppercase', letterSpacing:'0.05em' }}>Avg Observation</div>
-                            </div>
-                            
                             <div className="animate-scale-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', animationDelay:'0.25s' }}>
                               <div style={{ fontSize:'2.5rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem', lineHeight:1 }}>{totalUnlocksDisplay}</div>
                               <div style={{ fontSize:'0.85rem', fontWeight:600, color:'#888', textTransform:'uppercase', letterSpacing:'0.05em' }}>Total Unlocks</div>
@@ -9317,12 +9315,18 @@
                                   if (!qText && !wText) return null;
                                   return (
                                     <div key={sm.key} style={{ padding:'0.55rem 0.85rem', borderTop: si > 0 ? '1px solid #F0F4F0' : 'none', background: si % 2 === 0 ? 'white' : '#FAFBFA' }}>
-                                      <div style={{ display:'flex', alignItems:'center', gap:'0.5rem', marginBottom:'0.2rem' }}>
-                                        <span style={{ fontSize:'0.6rem', fontWeight:700, background:sm.bg, border:`1px solid ${sm.border}`, color:sm.color, borderRadius:'4px', padding:'0.05rem 0.4rem', textTransform:'uppercase', letterSpacing:'0.04em' }}>{sm.label}</span>
-                                        <span style={{ fontSize:'0.6rem', color:'#bbb' }}>{sm.tag}</span>
-                                      </div>
-                                      {qText && <p style={{ fontSize:'0.78rem', color:'#374151', margin:'0 0 0.1rem', lineHeight:1.5, fontWeight:500 }}>🔲 {qText}</p>}
-                                      {wText && <p style={{ fontSize:'0.72rem', color:'#6B7280', margin:0, lineHeight:1.4, fontStyle:'italic' }}>✍️ {wText}</p>}
+                                      {qText && (
+                                        <div style={{ display:'flex', alignItems:'baseline', gap:'0.45rem', marginBottom: wText ? '0.15rem' : 0, flexWrap:'wrap' }}>
+                                          <span style={{ fontSize:'0.62rem', fontWeight:700, background:sm.bg, border:`1px solid ${sm.border}`, color:sm.color, borderRadius:'4px', padding:'0.05rem 0.4rem', letterSpacing:'0.03em', whiteSpace:'nowrap', flexShrink:0 }}>{sm.label}</span>
+                                          <p style={{ fontSize:'0.78rem', color:'#374151', margin:0, lineHeight:1.5, fontWeight:500 }}>🔲 {qText}</p>
+                                        </div>
+                                      )}
+                                      {wText && (
+                                        <div style={{ display:'flex', alignItems:'baseline', gap:'0.45rem', flexWrap:'wrap' }}>
+                                          {!qText && <span style={{ fontSize:'0.62rem', fontWeight:700, background:sm.bg, border:`1px solid ${sm.border}`, color:sm.color, borderRadius:'4px', padding:'0.05rem 0.4rem', letterSpacing:'0.03em', whiteSpace:'nowrap', flexShrink:0 }}>{sm.label}</span>}
+                                          <p style={{ fontSize:'0.72rem', color:'#6B7280', margin:0, lineHeight:1.4, fontStyle:'italic' }}>✍️ {wText}</p>
+                                        </div>
+                                      )}
                                     </div>
                                   );
                                 })}
