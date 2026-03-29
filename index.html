@@ -379,11 +379,9 @@
 
       const focusAreaOptions = [
         'Behaviour',
-        'Observation',
-        'Scientific Language',
-        'Writing',
-        'Evidence Use',
-        'Data Interpretation'
+        'Use of Evidence',
+        'Literacy',
+        'Knowledge & understanding'
       ];
 
       const SYLLABUS_OUTCOMES = [
@@ -1602,6 +1600,10 @@
       const mapFocusAreaToCategory = (focusArea) => {
         const map = {
           'Behaviour': 'behaviour',
+          'Use of Evidence': 'detail',
+          'Literacy': 'writing',
+          'Knowledge & understanding': 'quiz',
+          // legacy mappings for backwards compatibility
           'Observation': 'behaviour',
           'Scientific Language': 'writing',
           'Writing': 'writing',
@@ -1633,7 +1635,12 @@
               const mappedFocusAreas = resource.focusAreas
                 .map(f => mapFocusAreaToCategory(f))
                 .filter(Boolean);
+              // Support: match weakest focus area
               if (mappedFocusAreas.includes(mapFocusAreaToCategory(weakestFocusArea))) {
+                score += 2;
+              }
+              // Extension: high quiz performance → boost Knowledge & understanding extension resources
+              if (difficultyBand === 'extension' && mappedFocusAreas.includes('quiz')) {
                 score += 2;
               }
             }
@@ -4966,32 +4973,32 @@
 
         if (s <= 2) {
           // Stage 1–2: correct behaviour → floor at 3; no behaviour → cap at 2
-          if (behaviourDetected)  b = Math.max(b, 3);
+          if (behaviourDetected && !isLowQuality)  b = Math.max(b, 3);
           else                    b = Math.min(b, 2);
-          if (detailCount >= 1)   d = Math.max(d, 3);
+          if (detailCount >= 1 && !isLowQuality)   d = Math.max(d, 3);
           else                    d = Math.min(d, 2);
-          if (wordCount > 3)      w = Math.max(w, 3);
+          if (wordCount > 3 && !isLowQuality)      w = Math.max(w, 3);
         }
 
         if (s === 3) {
           // Stage 3: behaviour detected → floor at 3; not detected → cap at 2
-          if (behaviourDetected)  b = Math.max(b, 3);
+          if (behaviourDetected && !isLowQuality)  b = Math.max(b, 3);
           else                    b = Math.min(b, 2);
-          if (detailCount >= 1)   d = Math.max(d, 3);
+          if (detailCount >= 1 && !isLowQuality)   d = Math.max(d, 3);
           else                    d = Math.min(d, 2);
-          if (wordCount >= 5)     w = Math.max(w, 3);
+          if (wordCount >= 5 && !isLowQuality)     w = Math.max(w, 3);
         }
 
         if (s === 4) {
           // Stage 4: valid behaviour → floor at 3; no behaviour → cap at 2
-          if (behaviourDetected)  b = Math.max(b, 3);
+          if (behaviourDetected && !isLowQuality)  b = Math.max(b, 3);
           else                    b = Math.min(b, 2);
-          if (detailCount >= 1)   d = Math.max(d, 3);
-          if (wordCount >= 8 && !isLowQuality)  w = Math.max(w, 3);
+          if (detailCount >= 1 && !isLowQuality)   d = Math.max(d, 3);
+          if (wordCount >= 8 && !isLowQuality)     w = Math.max(w, 3);
         }
 
-        // Final protection: low-quality responses cannot exceed 2 for writing
-        if (isLowQuality) w = Math.min(w, 2);
+        // Final protection: low-quality responses hard-capped across all domains
+        if (isLowQuality) { b = Math.min(b, 2); d = Math.min(d, 1); w = Math.min(w, 2); }
 
         // Clamp all to 0–5
         return {
@@ -8806,8 +8813,8 @@
 
             let weakestFocusArea = 'Behaviour';
             let lowestValue = behaviourAverage;
-            if (detailAverage < lowestValue) { lowestValue = detailAverage; weakestFocusArea = 'Scientific Language'; }
-            if (literacyAverage < lowestValue) { lowestValue = literacyAverage; weakestFocusArea = 'Data & Evidence'; }
+            if (detailAverage < lowestValue) { lowestValue = detailAverage; weakestFocusArea = 'Use of Evidence'; }
+            if (literacyAverage < lowestValue) { lowestValue = literacyAverage; weakestFocusArea = 'Literacy'; }
 
             let difficultyBand = 'intervention';
             if (quizAverage >= 80) { difficultyBand = 'extension'; }
