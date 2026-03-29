@@ -1620,20 +1620,26 @@
 
         submittedClasses.forEach(cls => {
           const derivedStage = cls.stage != null ? cls.stage : deriveStageFromYear(cls.yearGroup || cls.year);
+          // Normalise stage to 'Stage X' string to match resource.stage / resource.stages format
+          const normalisedStage = derivedStage != null ? `Stage ${derivedStage}` : null;
           const weakestFocusArea = cls.weakestFocusArea;
           const difficultyBand = cls.difficultyBand;
           if (!difficultyBand) {
             console.warn('[Recommendations] Skipping class', cls.id, '— difficultyBand missing. Submit session to generate recommendations.');
             return;
           }
+          console.log('[Recommendations] cls.stage:', cls.stage, '| normalisedStage:', normalisedStage, '| weakestFocusArea:', weakestFocusArea, '| difficultyBand:', difficultyBand);
 
           const scoredResources = teacherResources.map(resource => {
             let score = 0;
 
-            if ((Array.isArray(resource.stages) && resource.stages.includes(derivedStage)) ||
-                (resource.stage != null && resource.stage === derivedStage)) {
-              score += 3;
-            }
+            // Stage matching: normalise resource.stage / resource.stages to same 'Stage X' format
+            const resStages = Array.isArray(resource.stages) ? resource.stages
+              : resource.stage != null ? (Array.isArray(resource.stage) ? resource.stage : [String(resource.stage)])
+              : [];
+            const stageMatch = normalisedStage != null && resStages.some(s => String(s) === normalisedStage);
+            if (stageMatch) { score += 3; }
+            console.log('[Recommendations]', resource.title, '| resStages:', resStages, '| stageMatch:', stageMatch);
 
             if (Array.isArray(resource.focusAreas)) {
               const mappedFocusAreas = resource.focusAreas
@@ -1653,6 +1659,7 @@
               score += 1;
             }
 
+            console.log('[Recommendations]', resource.title, '| final score:', score);
             return { ...resource, _score: score };
           })
           .filter(r => r._score > 0)
@@ -8819,10 +8826,13 @@
             let lowestValue = behaviourAverage;
             if (detailAverage < lowestValue) { lowestValue = detailAverage; weakestFocusArea = 'Use of Evidence'; }
             if (literacyAverage < lowestValue) { lowestValue = literacyAverage; weakestFocusArea = 'Literacy'; }
+            // Poor quiz → override weakest to knowledge domain
+            if (quizAverage < 60) { weakestFocusArea = 'Knowledge & understanding'; }
 
             let difficultyBand = 'intervention';
             if (quizAverage >= 80) { difficultyBand = 'extension'; }
             else if (quizAverage >= 60) { difficultyBand = 'consolidation'; }
+            console.log('[SubmitAll] weakestFocusArea:', weakestFocusArea, '| difficultyBand:', difficultyBand, '| quizAverage:', quizAverage);
             // ---------- END AGGREGATE ----------
 
             snapshot.docs.forEach(doc => {
