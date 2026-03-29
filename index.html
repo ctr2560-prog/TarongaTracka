@@ -4561,9 +4561,9 @@
                   savedAt:        new Date().toISOString(),
                 },
                 reviewFlag: {
-                  flagged: overrideData.flagged === true || !!(overrideData.flagReason || overrideData.note),
-                  note:    overrideData.flagReason || overrideData.note || '',
-                  reason:  overrideData.flagReason || '',
+                  flagged: true,
+                  note:    overrideData.note || '',
+                  reason:  overrideData.reason || '',
                   timestamp: new Date().toISOString(),
                 },
               },
@@ -8173,12 +8173,6 @@
                                                 <input type="text" value={form.note || ''} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], note: e.target.value } }))} placeholder="e.g. Verbal explanation observed"
                                                   style={{ width:'100%', padding:'0.3rem 0.4rem', borderRadius:'5px', border:'1px solid #D1D5DB', fontSize:'0.75rem', boxSizing:'border-box' }} />
                                               </div>
-                                            <div style={{ marginBottom:'0.5rem' }}>
-                                              <label style={{ display:'flex', alignItems:'center', gap:'0.4rem', fontSize:'0.7rem', color:'#374151', cursor:'pointer' }}>
-                                                <input type="checkbox" checked={form.flagged || false} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], flagged: e.target.checked } }))} />
-                                                Flag this response for review
-                                              </label>
-                                            </div>
                                           <div style={{ display:'flex', gap:'0.4rem' }}>
                                             <button onClick={async () => {
                                               setOverrideSaving(bKey);
@@ -9548,10 +9542,6 @@
                                                   style={{ width:'100%', marginBottom:'0.35rem', padding:'0.25rem 0.35rem', borderRadius:'4px', border:'1px solid #D1D5DB', fontSize:'0.73rem', boxSizing:'border-box' }} />
                                               </>
                                             )}
-                                            <label style={{ display:'flex', alignItems:'center', gap:'0.35rem', fontSize:'0.7rem', color:'#374151', cursor:'pointer', marginBottom:'0.35rem' }}>
-                                              <input type="checkbox" checked={form.flagged || false} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], flagged: e.target.checked } }))} />
-                                              Flag for review
-                                            </label>
                                             <div style={{ display:'flex', gap:'0.35rem' }}>
                                               <button onClick={async () => {
                                                 setOverrideSaving(bKey);
