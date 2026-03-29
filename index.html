@@ -1619,9 +1619,13 @@
         const results = {};
 
         submittedClasses.forEach(cls => {
-          const derivedStage = cls.stage != null ? cls.stage : deriveStageFromYear(cls.year);
+          const derivedStage = cls.stage != null ? cls.stage : deriveStageFromYear(cls.yearGroup || cls.year);
           const weakestFocusArea = cls.weakestFocusArea;
           const difficultyBand = cls.difficultyBand;
+          if (!difficultyBand) {
+            console.warn('[Recommendations] Skipping class', cls.id, '— difficultyBand missing. Submit session to generate recommendations.');
+            return;
+          }
 
           const scoredResources = teacherResources.map(resource => {
             let score = 0;
@@ -8837,6 +8841,7 @@
             batch.set(classRef, {
               sessionClosed: true,
               quizAverage: quizAverage,
+              stage: deriveStageFromYear(cls.yearGroup),
               focusAverages: {
                 behaviour: behaviourAverage,
                 scientificLanguage: detailAverage,
