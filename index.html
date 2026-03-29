@@ -4947,7 +4947,7 @@
       // Called AFTER per-animal scoring, BEFORE saving to Firestore.
       // Adjusts raw scores up/down based on stage expectations without
       // changing the underlying scoring architecture.
-      function normaliseScores({ behaviourScore, detailScore, writingScore, evidence, stage }) {
+      function normaliseScores({ behaviourScore, detailScore, writingScore, evidence, stage, isLowQuality }) {
         let b = behaviourScore, d = detailScore, w = writingScore;
         const s = stage || 4;
         const { hasExplanation, wordCount, behaviourDetected, detailCount } = {
@@ -4987,8 +4987,11 @@
           if (behaviourDetected)  b = Math.max(b, 3);
           else                    b = Math.min(b, 2);
           if (detailCount >= 1)   d = Math.max(d, 3);
-          if (wordCount >= 8)     w = Math.max(w, 3);
+          if (wordCount >= 8 && !isLowQuality)  w = Math.max(w, 3);
         }
+
+        // Final protection: low-quality responses cannot exceed 2 for writing
+        if (isLowQuality) w = Math.min(w, 2);
 
         // Clamp all to 0–5
         return {
@@ -5008,6 +5011,7 @@
           writingScore:   literacyBonus  || 0,
           evidence:       scoreRationale.extractedEvidence,
           stage:          classStage,
+          isLowQuality:   isLowQualityResponse(text),
         });
 
         const observationScore = {
