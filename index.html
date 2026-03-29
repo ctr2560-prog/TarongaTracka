@@ -8183,25 +8183,18 @@
                                               setOverrideSaving(null);
                                               if (result.ok) {
                                                 setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }));
-                                                setFirestoreStudents(prev => prev.map(s => {
-                                                  if (s.name !== observationsModal.name) return s;
-                                                  return { ...s, badges: (s.badges||[]).map(bd => {
-                                                    if (bd.animalId !== b.animalId) return bd;
-                                                    return { ...bd, observationScore: { ...(bd.observationScore||{}),
-                                                      reviewFlag: { flagged: true, note: form.note || '', reason: form.reason || '', timestamp: new Date().toISOString() },
-                                                                                                              teacherOverride: {
-                                                          applied: true,
-                                                          behaviourScore: form.b !== '' && form.b !== undefined ? Number(form.b) : (bd.observationScore?.teacherOverride?.behaviourScore ?? null),
-                                                          detailScore:    form.d !== '' && form.d !== undefined ? Number(form.d) : (bd.observationScore?.teacherOverride?.detailScore    ?? null),
-                                                          writingScore:   form.w !== '' && form.w !== undefined ? Number(form.w) : (bd.observationScore?.teacherOverride?.writingScore   ?? null),
-                                                          note:           form.note || '',
-                                                          reasonType:     form.reason || '',
-                                                          savedAt:        new Date().toISOString(),
-                                                        }
-                                                    }}
-                                                  })
-                                                };
-                                              }));
+                                                const updatedBadge = bd => bd.animalId !== b.animalId ? bd : { ...bd, observationScore: { ...(bd.observationScore||{}),
+                                                  reviewFlag: { flagged: true, note: form.note || '', reason: form.reason || '', timestamp: new Date().toISOString() },
+                                                  teacherOverride: { applied: true,
+                                                    behaviourScore: form.b !== '' && form.b !== undefined ? Number(form.b) : (bd.observationScore?.teacherOverride?.behaviourScore ?? null),
+                                                    detailScore:    form.d !== '' && form.d !== undefined ? Number(form.d) : (bd.observationScore?.teacherOverride?.detailScore    ?? null),
+                                                    writingScore:   form.w !== '' && form.w !== undefined ? Number(form.w) : (bd.observationScore?.teacherOverride?.writingScore   ?? null),
+                                                    note: form.note || '', reasonType: form.reason || '', savedAt: new Date().toISOString() }
+                                                }};
+                                                setFirestoreStudents(prev => prev.map(s => s.name !== observationsModal.name ? s
+                                                  : { ...s, badges: (s.badges||[]).map(updatedBadge) }));
+                                                setObservationsModal(prev => !prev || prev.name !== observationsModal.name ? prev
+                                                  : { ...prev, badges: (prev.badges||[]).map(updatedBadge) });
                                               }
                                             }} disabled={overrideSaving === bKey}
                                               style={{ flex:1, padding:'0.3rem', borderRadius:'5px', border:'none', background:'var(--jungle-mid)', color:'white', fontSize:'0.72rem', fontWeight:700, cursor:'pointer' }}>
@@ -9544,7 +9537,6 @@
                                                 <input type="text" value={form.note || ''} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], note: e.target.value } }))} placeholder="Feedback for Taronga Staff"
                                                   style={{ width:'100%', marginBottom:'0.35rem', padding:'0.25rem 0.35rem', borderRadius:'4px', border:'1px solid #D1D5DB', fontSize:'0.73rem', boxSizing:'border-box' }} />
                                               </>
-                                            )}
                                             <div style={{ display:'flex', gap:'0.35rem' }}>
                                               <button onClick={async () => {
                                                 setOverrideSaving(bKey);
@@ -9552,25 +9544,18 @@
                                                 setOverrideSaving(null);
                                                 if (result.ok) {
                                                 setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], open: false } }));
-                                                setFirestoreStudents(prev => prev.map(s => {
-                                                  if (s.name !== observationsModal.name) return s;
-                                                  return { ...s, badges: (s.badges||[]).map(bd => {
-                                                    if (bd.animalId !== b.animalId) return bd;
-                                                    return { ...bd, observationScore: { ...(bd.observationScore||{}),
-                                                      reviewFlag: { flagged: true, note: form.note || '', reason: form.reason || '', timestamp: new Date().toISOString() },
-                                                                                                              teacherOverride: {
-                                                          applied: true,
-                                                          behaviourScore: form.b !== '' && form.b !== undefined ? Number(form.b) : (bd.observationScore?.teacherOverride?.behaviourScore ?? null),
-                                                          detailScore:    form.d !== '' && form.d !== undefined ? Number(form.d) : (bd.observationScore?.teacherOverride?.detailScore    ?? null),
-                                                          writingScore:   form.w !== '' && form.w !== undefined ? Number(form.w) : (bd.observationScore?.teacherOverride?.writingScore   ?? null),
-                                                          note:           form.note || '',
-                                                          reasonType:     form.reason || '',
-                                                          savedAt:        new Date().toISOString(),
-                                                        }
-                                                    }}
-                                                  })
-                                                };
-                                              }));
+                                                const updatedBadge = bd => bd.animalId !== b.animalId ? bd : { ...bd, observationScore: { ...(bd.observationScore||{}),
+                                                  reviewFlag: { flagged: true, note: form.note || '', reason: form.reason || '', timestamp: new Date().toISOString() },
+                                                  teacherOverride: { applied: true,
+                                                    behaviourScore: form.b !== '' && form.b !== undefined ? Number(form.b) : (bd.observationScore?.teacherOverride?.behaviourScore ?? null),
+                                                    detailScore:    form.d !== '' && form.d !== undefined ? Number(form.d) : (bd.observationScore?.teacherOverride?.detailScore    ?? null),
+                                                    writingScore:   form.w !== '' && form.w !== undefined ? Number(form.w) : (bd.observationScore?.teacherOverride?.writingScore   ?? null),
+                                                    note: form.note || '', reasonType: form.reason || '', savedAt: new Date().toISOString() }
+                                                }};
+                                                setFirestoreStudents(prev => prev.map(s => s.name !== observationsModal.name ? s
+                                                  : { ...s, badges: (s.badges||[]).map(updatedBadge) }));
+                                                setObservationsModal(prev => !prev || prev.name !== observationsModal.name ? prev
+                                                  : { ...prev, badges: (prev.badges||[]).map(updatedBadge) });
                                               }
                                               }} disabled={overrideSaving === bKey}
                                                 style={{ flex:1, padding:'0.28rem', borderRadius:'4px', border:'none', background:'var(--jungle-mid)', color:'white', fontSize:'0.72rem', fontWeight:700, cursor:'pointer' }}>
