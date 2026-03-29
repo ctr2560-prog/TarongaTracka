@@ -1534,20 +1534,25 @@
         db.collection('teacherFeedback').orderBy('timestamp', 'desc').limit(50).get()
           .then(snap => { setTfEntries(snap.docs.map(d => ({ id: d.id, ...d.data() }))); setTfLoading(false); })
           .catch(() => setTfLoading(false));
-        // Also refresh student data so flagged items are current
+        // Refresh student data — single class if selected, else all classes
+        const mapStudent = doc => { const d = doc.data(); return { name: d.name || doc.id,
+          totalPoints: d.totalPoints || 0, badges: d.badges || [], completed: d.completed || false,
+          completedAt: d.completedAt ? d.completedAt.toDate() : null, quizPercentage: d.quizPercentage,
+          status: d.status || (d.completed ? 'complete' : 'incomplete'), conservationStatement: d.conservationStatement || '' }; };
         if (selectedAdminClass) {
           db.collection('classes').doc(selectedAdminClass).collection('students').get()
-            .then(snap => {
-              const students = snap.docs.map(doc => {
-                const d = doc.data();
-                return { name: d.name || doc.id, totalPoints: d.totalPoints || 0, badges: d.badges || [],
-                  completed: d.completed || false, completedAt: d.completedAt ? d.completedAt.toDate() : null,
-                  quizPercentage: d.quizPercentage, status: d.status || (d.completed ? 'complete' : 'incomplete'),
-                  conservationStatement: d.conservationStatement || '' };
-              });
-              setFirestoreStudents(students);
-            })
+            .then(snap => setFirestoreStudents(snap.docs.map(mapStudent)))
             .catch(e => console.error('Review tab student refresh error:', e));
+        } else {
+          db.collection('classes').get().then(async clsSnap => {
+            const all = [];
+            await Promise.all(clsSnap.docs.map(cls =>
+              db.collection('classes').doc(cls.id).collection('students').get()
+                .then(sSnap => sSnap.docs.forEach(d => all.push(mapStudent(d))))
+                .catch(() => {})
+            ));
+            setFirestoreStudents(all);
+          }).catch(e => console.error('Review tab all-classes error:', e));
         }
       }, [currentScreen, adminTab]);
 
@@ -6839,11 +6844,9 @@
                   ⚠️ Review
                   {(() => {
                     let flagCount = 0;
-                    (adminClasses || []).forEach(cls => {
-                      (cls.students || []).forEach(s => {
-                        (s.badges || []).forEach(b => {
-                          if (b.observationScore?.reviewFlag?.flagged) flagCount++;
-                        });
+                    (firestoreStudents || []).forEach(s => {
+                      (s.badges || []).forEach(b => {
+                        if (b.observationScore?.reviewFlag?.flagged) flagCount++;
                       });
                     });
                     return flagCount > 0
@@ -8185,7 +8188,7 @@
                                                   return { ...s, badges: (s.badges||[]).map(bd => {
                                                     if (bd.animalId !== b.animalId) return bd;
                                                     return { ...bd, observationScore: { ...(bd.observationScore||{}),
-                                                      reviewFlag: { flagged: true, note: form.note || form.flagReason || '', reason: form.flagReason || '', timestamp: new Date().toISOString() },
+                                                      reviewFlag: { flagged: true, note: form.note || '', reason: form.reason || '', timestamp: new Date().toISOString() },
                                                                                                               teacherOverride: {
                                                           applied: true,
                                                           behaviourScore: form.b !== '' && form.b !== undefined ? Number(form.b) : (bd.observationScore?.teacherOverride?.behaviourScore ?? null),
@@ -9554,7 +9557,7 @@
                                                   return { ...s, badges: (s.badges||[]).map(bd => {
                                                     if (bd.animalId !== b.animalId) return bd;
                                                     return { ...bd, observationScore: { ...(bd.observationScore||{}),
-                                                      reviewFlag: { flagged: true, note: form.note || form.flagReason || '', reason: form.flagReason || '', timestamp: new Date().toISOString() },
+                                                      reviewFlag: { flagged: true, note: form.note || '', reason: form.reason || '', timestamp: new Date().toISOString() },
                                                                                                               teacherOverride: {
                                                           applied: true,
                                                           behaviourScore: form.b !== '' && form.b !== undefined ? Number(form.b) : (bd.observationScore?.teacherOverride?.behaviourScore ?? null),
