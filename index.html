@@ -7241,6 +7241,18 @@
                         {/* Hardest Questions Panel */}
                         {(() => {
                           const questionStats = {};
+                          // Build a lookup: question text → stage number
+                          const questionStageMap = {};
+                          animals.forEach(a => {
+                            (a.questions || []).forEach(q => {
+                              if (q.stageVariants) {
+                                Object.entries(q.stageVariants).forEach(([stg, txt]) => {
+                                  if (txt) questionStageMap[txt.trim()] = Number(stg);
+                                });
+                              }
+                              if (q.q) questionStageMap[q.q.trim()] = questionStageMap[q.q.trim()] || null;
+                            });
+                          });
                           adminClasses.forEach(cls => {
                             if (!Array.isArray(cls.studentBadges)) return;
                             cls.studentBadges.forEach(badge => {
@@ -7268,7 +7280,14 @@
                                     <span style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--jungle-deep)', minWidth:'1.5rem' }}>{i + 1}.</span>
                                     <div style={{ flex:1 }}>
                                       {item.animal && <p style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'uppercase', letterSpacing:'0.05em', margin:'0 0 0.2rem' }}>{item.animal}</p>}
-                                      <p style={{ fontSize:'0.9rem', fontWeight:600, color:'#333', margin:0, lineHeight:1.4 }}>{item.question}</p>
+                                      <div style={{ display:'flex', alignItems:'baseline', gap:'0.4rem', flexWrap:'wrap' }}>
+                                        {questionStageMap[item.question.trim()] != null && (
+                                          <span style={{ fontSize:'0.6rem', fontWeight:700, background:'#F0F4FF', border:'1px solid #C7D2FE', color:'#3730A3', borderRadius:'4px', padding:'0.05rem 0.4rem', whiteSpace:'nowrap', flexShrink:0 }}>
+                                            Stage {questionStageMap[item.question.trim()]}
+                                          </span>
+                                        )}
+                                        <p style={{ fontSize:'0.9rem', fontWeight:600, color:'#333', margin:0, lineHeight:1.4 }}>{item.question}</p>
+                                      </div>
                                       <p style={{ fontSize:'0.8rem', color:'#888', margin:'0.2rem 0 0' }}>{item.attempts} attempt{item.attempts !== 1 ? 's' : ''}</p>
                                     </div>
                                     <span style={{ fontSize:'1rem', fontWeight:700, color: item.percentCorrect < 50 ? '#DC2626' : item.percentCorrect < 75 ? '#D97706' : 'var(--jungle-mid)', minWidth:'3.5rem', textAlign:'right' }}>
