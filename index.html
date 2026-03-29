@@ -4561,8 +4561,9 @@
                   savedAt:        new Date().toISOString(),
                 },
                 reviewFlag: {
-                  flagged: true,
-                  note:    overrideData.note || '',
+                  flagged: overrideData.flagged === true || !!(overrideData.flagReason || overrideData.note),
+                  note:    overrideData.flagReason || overrideData.note || '',
+                  reason:  overrideData.flagReason || '',
                   timestamp: new Date().toISOString(),
                 },
               },
@@ -7696,14 +7697,14 @@
                       const data = snap.docs[0].data();
                       const badges = (data.badges || []).map(b => {
                         if (b.animalId !== animalId) return b;
-                        return { ...b, observationScore: { ...(b.observationScore || {}), reviewFlag: { flagged: false, reason: '' } } };
+                        return { ...b, observationScore: { ...(b.observationScore || {}), reviewFlag: { flagged: false, note: '', reason: '', timestamp: new Date().toISOString() } } };
                       });
                       await docRef.update({ badges });
                       setFirestoreStudents(prev => prev.map(s => {
                         if (s.name !== studentName) return s;
                         return { ...s, badges: (s.badges || []).map(b =>
                           b.animalId !== animalId ? b
-                          : { ...b, observationScore: { ...(b.observationScore || {}), reviewFlag: { flagged: false, reason: '' } } }
+                          : { ...b, observationScore: { ...(b.observationScore || {}), reviewFlag: { flagged: false, note: '', reason: '', timestamp: new Date().toISOString() } } }
                         )};
                       }));
                     } catch (e) { console.error('Remove flag error:', e); }
@@ -8173,8 +8174,11 @@
                                                   style={{ width:'100%', padding:'0.3rem 0.4rem', borderRadius:'5px', border:'1px solid #D1D5DB', fontSize:'0.75rem', boxSizing:'border-box' }} />
                                               </div>
                                             <div style={{ marginBottom:'0.5rem' }}>
-                                            <label style={{ display:'flex', alignItems:'center', gap:'0.4rem', fontSize:'0.7rem', color:'#374151', cursor:'pointer' }}>                                              Flag this response for review
-                                            </label>                                          </div>
+                                              <label style={{ display:'flex', alignItems:'center', gap:'0.4rem', fontSize:'0.7rem', color:'#374151', cursor:'pointer' }}>
+                                                <input type="checkbox" checked={form.flagged || false} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], flagged: e.target.checked } }))} />
+                                                Flag this response for review
+                                              </label>
+                                            </div>
                                           <div style={{ display:'flex', gap:'0.4rem' }}>
                                             <button onClick={async () => {
                                               setOverrideSaving(bKey);
@@ -8187,7 +8191,7 @@
                                                   return { ...s, badges: (s.badges||[]).map(bd => {
                                                     if (bd.animalId !== b.animalId) return bd;
                                                     return { ...bd, observationScore: { ...(bd.observationScore||{}),
-                                                      reviewFlag: { flagged: form.flagged||false, reason: form.flagReason||'', timestamp: new Date().toISOString() },
+                                                      reviewFlag: { flagged: true, note: form.note || form.flagReason || '', reason: form.flagReason || '', timestamp: new Date().toISOString() },
                                                                                                               teacherOverride: {
                                                           applied: true,
                                                           behaviourScore: form.b !== '' && form.b !== undefined ? Number(form.b) : (bd.observationScore?.teacherOverride?.behaviourScore ?? null),
@@ -9544,7 +9548,9 @@
                                                   style={{ width:'100%', marginBottom:'0.35rem', padding:'0.25rem 0.35rem', borderRadius:'4px', border:'1px solid #D1D5DB', fontSize:'0.73rem', boxSizing:'border-box' }} />
                                               </>
                                             )}
-                                            <label style={{ display:'flex', alignItems:'center', gap:'0.35rem', fontSize:'0.7rem', color:'#374151', cursor:'pointer', marginBottom:'0.35rem' }}>                                              Flag for review
+                                            <label style={{ display:'flex', alignItems:'center', gap:'0.35rem', fontSize:'0.7rem', color:'#374151', cursor:'pointer', marginBottom:'0.35rem' }}>
+                                              <input type="checkbox" checked={form.flagged || false} onChange={e => setOverrideForms(prev => ({ ...prev, [bKey]: { ...prev[bKey], flagged: e.target.checked } }))} />
+                                              Flag for review
                                             </label>
                                             <div style={{ display:'flex', gap:'0.35rem' }}>
                                               <button onClick={async () => {
@@ -9558,7 +9564,7 @@
                                                   return { ...s, badges: (s.badges||[]).map(bd => {
                                                     if (bd.animalId !== b.animalId) return bd;
                                                     return { ...bd, observationScore: { ...(bd.observationScore||{}),
-                                                      reviewFlag: { flagged: form.flagged||false, reason: form.flagReason||'', timestamp: new Date().toISOString() },
+                                                      reviewFlag: { flagged: true, note: form.note || form.flagReason || '', reason: form.flagReason || '', timestamp: new Date().toISOString() },
                                                                                                               teacherOverride: {
                                                           applied: true,
                                                           behaviourScore: form.b !== '' && form.b !== undefined ? Number(form.b) : (bd.observationScore?.teacherOverride?.behaviourScore ?? null),
