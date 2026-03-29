@@ -1617,14 +1617,15 @@
         const results = {};
 
         submittedClasses.forEach(cls => {
-          const derivedStage = deriveStageFromYear(cls.year);
+          const derivedStage = cls.stage != null ? cls.stage : deriveStageFromYear(cls.year);
           const weakestFocusArea = cls.weakestFocusArea;
           const difficultyBand = cls.difficultyBand;
 
           const scoredResources = teacherResources.map(resource => {
             let score = 0;
 
-            if (Array.isArray(resource.stages) && resource.stages.includes(derivedStage)) {
+            if ((Array.isArray(resource.stages) && resource.stages.includes(derivedStage)) ||
+                (resource.stage != null && resource.stage === derivedStage)) {
               score += 3;
             }
 
@@ -2205,6 +2206,7 @@
                 2: ['A. No, dingoes change colour every day', 'B. Yes, because it glows in the dark', 'C. No, its colour makes it easy to see everywhere', 'D. Yes, its colour helps it blend into the bush'],
               },
               stageCorrect: { 1: 0, 2: 3 },
+              stageFacts: { 2: 'The dingo\'s colour helps it blend into the Australian bush, making it harder to see.' },
               options: ['They are herbivores that eat only plants', 'They are apex predators that help regulate prey populations', 'They have no ecological role', 'They are introduced pests'],
               correct: 1, fact: 'Dingoes are apex predators in Australia and help regulate populations of kangaroos and other animals, supporting ecosystem balance.' }
           ],
@@ -2993,9 +2995,9 @@
                 <h2 className="heading-display" style={{ fontSize:'clamp(2rem,5vh,3rem)', color: isCorrect ? '#10b981' : '#ef4444', marginBottom:'0.4rem', lineHeight:1.1 }}>{isCorrect ? 'Correct!' : 'Not Quite'}</h2>
                 {isCorrect && <p style={{ fontSize:'clamp(0.95rem,2.2vh,1.1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>Great estimation!</p>}
                 {!isCorrect && <p style={{ fontSize:'clamp(0.9rem,2vh,1rem)', color:'#555', marginBottom:'0.8rem', lineHeight:1.6 }}>Look carefully at the scale — giraffes are much taller than most animals!</p>}
-                {isCorrect && currentQuestion.fact && (
+                {isCorrect && (currentQuestion.stageFacts?.[classStage] || currentQuestion.fact) && (
                   <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'12px', padding:'clamp(1rem,2vh,1.5rem)', marginTop:'0.8rem', marginBottom:'1rem' }}>
-                    <p style={{ color:'#333', fontSize:'clamp(0.9rem,2vh,1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentQuestion.fact}</p>
+                    <p style={{ color:'#333', fontSize:'clamp(0.9rem,2vh,1.1rem)', lineHeight:1.5, fontWeight:500 }}> {(currentQuestion.stageFacts?.[classStage] || currentQuestion.fact)}</p>
                   </div>
                 )}
                 <button onClick={() => { if (isCorrect) { stopCamera(); handleNextQuestion(); } else { setIsProcessingAnswer(false); setShowResult(false); startCamera(); } }}
@@ -3112,9 +3114,9 @@
                 <h2 className="heading-display" style={{ fontSize:'clamp(2rem,5vh,3rem)', color: isCorrect ? '#10b981' : '#ef4444', marginBottom:'0.4rem', lineHeight:1.1 }}>{isCorrect ? 'Correct!' : 'Not Quite'}</h2>
                 {isCorrect && <p style={{ fontSize:'clamp(0.9rem,2vh,1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>Wide hooves spread weight and reduce pressure on soft ground.</p>}
                 {!isCorrect && <p style={{ fontSize:'clamp(0.9rem,2vh,1rem)', color:'#555', marginBottom:'0.8rem' }}>Think about how pressure works on soft surfaces.</p>}
-                {currentQuestion.fact && (
+                {(currentQuestion.stageFacts?.[classStage] || currentQuestion.fact) && (
                   <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'12px', padding:'clamp(1rem,2vh,1.5rem)', marginTop:'0.8rem', marginBottom:'1rem' }}>
-                    <p style={{ color:'#333', fontSize:'clamp(0.9rem,2vh,1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentQuestion.fact}</p>
+                    <p style={{ color:'#333', fontSize:'clamp(0.9rem,2vh,1.1rem)', lineHeight:1.5, fontWeight:500 }}> {(currentQuestion.stageFacts?.[classStage] || currentQuestion.fact)}</p>
                   </div>
                 )}
                 <button onClick={() => { if (isCorrect) { handleNextQuestion(); } else { setIsProcessingAnswer(false); setShowResult(false); } }}
@@ -3701,9 +3703,9 @@
                 <h2 className="heading-display" style={{ fontSize:'clamp(2rem,5vh,3rem)', color: isCorrect ? '#10b981' : '#ef4444', marginBottom:'0.4rem', lineHeight:1.1 }}>{isCorrect ? 'Correct!' : 'Not Quite'}</h2>
                 {isCorrect && <p style={{ fontSize:'clamp(0.9rem,2vh,1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>You understand the dingo's place in the ecosystem!</p>}
                 {!isCorrect && <p style={{ fontSize:'clamp(0.9rem,2vh,1rem)', color:'#555', marginBottom:'0.8rem' }}>Think about how dingoes affect other animal populations.</p>}
-                {currentQuestion.fact && (
+                {(currentQuestion.stageFacts?.[classStage] || currentQuestion.fact) && (
                   <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'12px', padding:'clamp(1rem,2vh,1.5rem)', marginTop:'0.8rem', marginBottom:'1rem' }}>
-                    <p style={{ color:'#333', fontSize:'clamp(0.9rem,2vh,1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentQuestion.fact}</p>
+                    <p style={{ color:'#333', fontSize:'clamp(0.9rem,2vh,1.1rem)', lineHeight:1.5, fontWeight:500 }}> {(currentQuestion.stageFacts?.[classStage] || currentQuestion.fact)}</p>
                   </div>
                 )}
                 <button onClick={() => { if (isCorrect) { handleNextQuestion(); } else { setIsProcessingAnswer(false); setShowResult(false); } }}
@@ -3843,9 +3845,9 @@
                 <h2 className="heading-display" style={{ fontSize:'clamp(2rem,5vh,3rem)', color: isCorrect ? '#10b981' : '#ef4444', marginBottom:'0.4rem', lineHeight:1.1 }}>{isCorrect ? 'Correct!' : 'Not Quite'}</h2>
                 {isCorrect && <p style={{ fontSize:'clamp(0.9rem,2vh,1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>Your observation matches your data!</p>}
                 {!isCorrect && <p style={{ fontSize:'clamp(0.9rem,2vh,1rem)', color:'#555', marginBottom:'0.8rem' }}>Check your tally — what did you record most?</p>}
-                {currentAnimal.questions[0].fact && (
+                {(currentAnimal.questions[0].stageFacts?.[classStage] || currentAnimal.questions[0].fact) && (
                   <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'12px', padding:'clamp(1rem,2vh,1.5rem)', marginTop:'0.8rem', marginBottom:'1rem' }}>
-                    <p style={{ color:'#333', fontSize:'clamp(0.9rem,2vh,1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentAnimal.questions[0].fact}</p>
+                    <p style={{ color:'#333', fontSize:'clamp(0.9rem,2vh,1.1rem)', lineHeight:1.5, fontWeight:500 }}> {(currentAnimal.questions[0].stageFacts?.[classStage] || currentAnimal.questions[0].fact)}</p>
                   </div>
                 )}
                 <button onClick={() => { if (isCorrect) { handleNextQuestion(); } else { setIsProcessingAnswer(false); setShowResult(false); } }}
@@ -3960,9 +3962,9 @@
                 <div style={{ fontSize:'clamp(3rem,8vh,4.5rem)', marginBottom:'0.5rem' }}>{isCorrect ? '✔' : ''}</div>
                 <h2 className="heading-display" style={{ fontSize:'clamp(2rem,5vh,3rem)', color: isCorrect ? '#10b981' : '#ef4444', marginBottom:'0.4rem', lineHeight:1.1 }}>{isCorrect ? 'Correct!' : 'Try Again'}</h2>
                 {isCorrect && <p style={{ fontSize:'clamp(0.95rem,2.2vh,1.1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>Great map reading!</p>}
-                {isCorrect && currentAnimal.questions[0].fact && (
+                {isCorrect && (currentAnimal.questions[0].stageFacts?.[classStage] || currentAnimal.questions[0].fact) && (
                   <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'12px', padding:'clamp(1rem,2vh,1.5rem)', marginTop:'0.8rem', marginBottom:'1rem' }}>
-                    <p style={{ color:'#333', fontSize:'clamp(0.9rem,2vh,1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentAnimal.questions[0].fact}</p>
+                    <p style={{ color:'#333', fontSize:'clamp(0.9rem,2vh,1.1rem)', lineHeight:1.5, fontWeight:500 }}> {(currentAnimal.questions[0].stageFacts?.[classStage] || currentAnimal.questions[0].fact)}</p>
                   </div>
                 )}
                 <button onClick={() => { if (isCorrect) { handleNextQuestion(); } else { setIsProcessingAnswer(false); setShowResult(false); setGorillaSelection(null); } }}
@@ -4044,9 +4046,9 @@
                 <div style={{ fontSize:'clamp(3rem,8vh,4.5rem)', marginBottom:'0.5rem' }}>{isCorrect ? '✔' : ''}</div>
                 <h2 className="heading-display" style={{ fontSize:'clamp(2rem,5vh,3rem)', color: isCorrect ? '#10b981' : '#ef4444', marginBottom:'0.4rem', lineHeight:1.1 }}>{isCorrect ? 'Correct!' : 'Try Again'}</h2>
                 {isCorrect && <p style={{ fontSize:'clamp(0.95rem,2.2vh,1.1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>Great data interpretation!</p>}
-                {isCorrect && currentAnimal.questions[0].fact && (
+                {isCorrect && (currentAnimal.questions[0].stageFacts?.[classStage] || currentAnimal.questions[0].fact) && (
                   <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'12px', padding:'clamp(1rem,2vh,1.5rem)', marginTop:'0.8rem', marginBottom:'1rem' }}>
-                    <p style={{ color:'#333', fontSize:'clamp(0.9rem,2vh,1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentAnimal.questions[0].fact}</p>
+                    <p style={{ color:'#333', fontSize:'clamp(0.9rem,2vh,1.1rem)', lineHeight:1.5, fontWeight:500 }}> {(currentAnimal.questions[0].stageFacts?.[classStage] || currentAnimal.questions[0].fact)}</p>
                   </div>
                 )}
                 <button onClick={() => { if (isCorrect) { handleNextQuestion(); } else { setIsProcessingAnswer(false); setShowResult(false); } }}
@@ -4176,9 +4178,9 @@
                 </h2>
                 {isCorrect && <p style={{ fontSize:'clamp(0.95rem, 2.2vh, 1.1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>You used magnification effectively to observe the lion.</p>}
                 {!isCorrect && <p style={{ fontSize:'clamp(0.9rem, 2vh, 1rem)', color:'#555', marginBottom:'0.8rem', lineHeight:1.6 }}>Not quite — adjust your zoom and read the question carefully.</p>}
-                {isCorrect && currentQuestion && currentQuestion.fact && (
+                {isCorrect && currentQuestion && (currentQuestion.stageFacts?.[classStage] || currentQuestion.fact) && (
                   <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'12px', padding:'clamp(1rem, 2vh, 1.5rem)', marginTop:'0.8rem', marginBottom:'1rem' }}>
-                    <p style={{ color:'#333', fontSize:'clamp(0.9rem, 2vh, 1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentQuestion.fact}</p>
+                    <p style={{ color:'#333', fontSize:'clamp(0.9rem, 2vh, 1.1rem)', lineHeight:1.5, fontWeight:500 }}> {(currentQuestion.stageFacts?.[classStage] || currentQuestion.fact)}</p>
                   </div>
                 )}
                 <button onClick={() => { if (isCorrect) { handleNextQuestion(); } else { setIsProcessingAnswer(false); setShowResult(false); startCamera(); } }}
@@ -5568,9 +5570,9 @@
                   <h2 className="heading-display" style={{ fontSize:'clamp(2rem, 5vh, 3rem)', color:isCorrect?'#10b981':'#ef4444', marginBottom:'0.4rem', lineHeight:1.1 }}>{isCorrect?'Correct!':'Try Again'}</h2>
                   {isCorrect&&(<p style={{ fontSize:'clamp(0.95rem, 2.2vh, 1.1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>{currentAnimal.correctFeedback || 'Great observation.'}</p>)}
                   {!isCorrect&&currentAnimal.incorrectFeedback&&(<p style={{ fontSize:'clamp(0.9rem, 2vh, 1rem)', color:'#555', marginBottom:'0.8rem', fontStyle:'italic' }}>{currentAnimal.incorrectFeedback}</p>)}
-                  {isCorrect&&currentQuestion.fact&&(
+                  {isCorrect&&(currentQuestion.stageFacts?.[classStage] || currentQuestion.fact)&&(
                     <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'12px', padding:'clamp(1rem, 2vh, 1.5rem)', marginTop:'0.8rem', marginBottom:'1rem' }}>
-                      <p style={{ color:'#333', fontSize:'clamp(0.9rem, 2vh, 1.1rem)', lineHeight:1.5, fontWeight:500 }}> {currentQuestion.fact}</p>
+                      <p style={{ color:'#333', fontSize:'clamp(0.9rem, 2vh, 1.1rem)', lineHeight:1.5, fontWeight:500 }}> {(currentQuestion.stageFacts?.[classStage] || currentQuestion.fact)}</p>
                     </div>
                   )}
                   <button onClick={()=>{ if(isCorrect){handleNextQuestion();}else{setIsProcessingAnswer(false);setShowResult(false);} }}
