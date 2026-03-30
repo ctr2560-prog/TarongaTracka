@@ -630,6 +630,7 @@
                 stage: d.stage || 4,
                 teacherEmail: d.teacherEmail || teacherEmail,
                 archived: d.archived || false,
+                sessionClosed: d.sessionClosed || false,
                 students: [] // Keep for local student join tracking
               };
             });
@@ -8783,8 +8784,11 @@
 
         const handleSubmitAll = async () => {
           const incompleteCount = firestoreStudents.filter(s => s.status !== 'complete').length;
-          if (incompleteCount === 0) { alert('All students are already marked complete.'); return; }
-          if (!window.confirm(`Mark ${incompleteCount} incomplete student${incompleteCount !== 1 ? 's' : ''} as complete? This cannot be undone.`)) return;
+          if (incompleteCount > 0) {
+            if (!window.confirm(`Mark ${incompleteCount} incomplete student${incompleteCount !== 1 ? 's' : ''} as complete and submit class? This cannot be undone.`)) return;
+          } else {
+            if (!window.confirm('All students are complete. Submit class to finalise and generate recommendations?')) return;
+          }
           setSubmittingAll(true);
           try {
             const snapshot = await window.db.collection('classes').doc(selectedClass).collection('students').get();
@@ -9417,11 +9421,28 @@
                         onMouseLeave={(e)=>{ e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.color='#888'; }}>
                          Archive class
                       </button>
-                      <button onClick={handleSubmitAll} disabled={submittingAll} style={{ flex:'1 1 auto', minWidth:'140px', padding:'0.6rem 1rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', background:'white', color: submittingAll ? '#bbb' : '#888', fontSize:'0.8rem', fontWeight:600, cursor: submittingAll ? 'not-allowed' : 'pointer', transition:'all 0.2s' }}
-                        onMouseEnter={(e)=>{ if (!submittingAll) { e.currentTarget.style.borderColor='var(--jungle-mid)'; e.currentTarget.style.background='var(--jungle-deep)'; e.currentTarget.style.color='white'; } }}
-                        onMouseLeave={(e)=>{ e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.background='white'; e.currentTarget.style.color= submittingAll ? '#bbb' : '#888'; }}>
-                         {submittingAll ? 'Submitting...' : 'Submit All'}
-                      </button>
+                      {(() => {
+                        const allComplete = firestoreStudents.length > 0 && firestoreStudents.every(s => s.status === 'complete');
+                        const alreadySubmitted = cls.sessionClosed;
+                        const btnLabel = submittingAll ? 'Submitting...' : alreadySubmitted ? '✓ Class Submitted' : allComplete ? 'Submit Class →' : 'Submit All';
+                        const btnColor = alreadySubmitted ? '#2e7d32' : allComplete ? 'var(--jungle-mid)' : '#888';
+                        const btnBg = alreadySubmitted ? '#F0FBF0' : allComplete ? '#EAF6EE' : 'white';
+                        return (
+                          <>
+                            {allComplete && !alreadySubmitted && (
+                              <div style={{ width:'100%', background:'#FFF8E1', border:'1px solid #FFD54F', borderRadius:'8px', padding:'0.5rem 0.75rem', fontSize:'0.78rem', color:'#7A5800', fontWeight:600, marginBottom:'0.4rem' }}>
+                                ⚡ All students complete. Submit class to generate recommendations.
+                              </div>
+                            )}
+                            <button onClick={handleSubmitAll} disabled={submittingAll || alreadySubmitted}
+                              style={{ flex:'1 1 auto', minWidth:'140px', padding:'0.6rem 1rem', borderRadius:'10px', border:`1.5px solid ${alreadySubmitted ? '#A5D6A7' : '#E5E5E5'}`, background: btnBg, color: submittingAll ? '#bbb' : btnColor, fontSize:'0.8rem', fontWeight:600, cursor: (submittingAll || alreadySubmitted) ? 'default' : 'pointer', transition:'all 0.2s' }}
+                              onMouseEnter={(e)=>{ if (!submittingAll && !alreadySubmitted) { e.currentTarget.style.borderColor='var(--jungle-mid)'; e.currentTarget.style.background='var(--jungle-deep)'; e.currentTarget.style.color='white'; } }}
+                              onMouseLeave={(e)=>{ if (!submittingAll && !alreadySubmitted) { e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.background=btnBg; e.currentTarget.style.color=btnColor; } }}>
+                              {btnLabel}
+                            </button>
+                          </>
+                        );
+                      })()}
                       {submitSuccess && (
                         <div className="fade-in" style={{ marginTop:'8px', fontSize:'0.8rem', color:'#2e7d32', fontWeight:600 }}>&#10003; Session submitted successfully.</div>
                       )}
