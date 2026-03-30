@@ -7797,7 +7797,7 @@
                           <p style={{ fontSize:'1rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>No flagged observations</p>
                           <p style={{ fontSize:'0.85rem', color:'#aaa' }}>All observations have been reviewed.</p>
                         </div>
-                      ) : flagged.map(({ studentName, badge }, idx) => {
+                      ) : flagged.map(({ studentName, badge, classId }, idx) => {
                         const obs = badge.observationScore || {};
                         const override = obs.teacherOverride || {};
                         const flag = obs.reviewFlag || {};
@@ -7855,7 +7855,7 @@
                                 style={{ fontSize:'0.72rem', padding:'0.3rem 0.7rem', borderRadius:'6px', border:'1px solid #D1D5DB', background:'#F9FAFB', cursor:'pointer', fontWeight:600, color:'#374151' }}>
                                 ✏️ Apply Override
                               </button>
-                              <button onClick={() => removeFlag(studentName, badge.animalId, item.classId)}
+                              <button onClick={() => removeFlag(studentName, badge.animalId, classId)}
                                 style={{ fontSize:'0.72rem', padding:'0.3rem 0.7rem', borderRadius:'6px', border:'1px solid #FCA5A5', background:'#FEF2F2', cursor:'pointer', fontWeight:700, color:'#DC2626' }}>
                                 ✓ Remove Flag
                               </button>
