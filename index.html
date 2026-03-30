@@ -7753,21 +7753,31 @@
                   const removeFlag = async (studentName, animalId) => {
                     try {
                       const db = firebase.firestore();
-                      const snap = await db.collection('classes').doc(selectedAdminClass || selectedClass)
-                        .collection('students').where('name', '==', studentName).limit(1).get();
-                      if (snap.empty) return;
-                      const docRef = snap.docs[0].ref;
-                      const data = snap.docs[0].data();
-                      const badges = (data.badges || []).map(b => {
-                        if (b.animalId !== animalId) return b;
-                        return { ...b, observationScore: { ...(b.observationScore || {}), reviewFlag: { flagged: false, note: '', reason: '', timestamp: new Date().toISOString() } } };
-                      });
-                      await docRef.update({ badges });
+                      const classId = selectedAdminClass || selectedClass;
+                      const safeId = studentName.trim().replace(/[\\/#.$[\]]/g, '_');
+                      // Use direct doc ID (matches how students are stored on write)
+                      const docRef = db.collection('classes').doc(classId).collection('students').doc(safeId);
+                      const snap = await docRef.get();
+                      if (!snap.exists) {
+                        // Fallback: query by name field
+                        const nameSnap = await db.collection('classes').doc(classId)
+                          .collection('students').where('name', '==', studentName).limit(1).get();
+                        if (nameSnap.empty) { console.error('Remove flag: student not found', studentName); return; }
+                        const data = nameSnap.docs[0].data();
+                        const badges = (data.badges || []).map(b => b.animalId !== animalId ? b
+                          : { ...b, observationScore: { ...(b.observationScore || {}), reviewFlag: { flagged: false } } });
+                        await nameSnap.docs[0].ref.update({ badges });
+                      } else {
+                        const data = snap.data();
+                        const badges = (data.badges || []).map(b => b.animalId !== animalId ? b
+                          : { ...b, observationScore: { ...(b.observationScore || {}), reviewFlag: { flagged: false } } });
+                        await docRef.update({ badges });
+                      }
                       setFirestoreStudents(prev => prev.map(s => {
                         if (s.name !== studentName) return s;
                         return { ...s, badges: (s.badges || []).map(b =>
                           b.animalId !== animalId ? b
-                          : { ...b, observationScore: { ...(b.observationScore || {}), reviewFlag: { flagged: false, note: '', reason: '', timestamp: new Date().toISOString() } } }
+                          : { ...b, observationScore: { ...(b.observationScore || {}), reviewFlag: { flagged: false } } }
                         )};
                       }));
                     } catch (e) { console.error('Remove flag error:', e); }
@@ -8565,7 +8575,11 @@
                 </div>
 
                 {resourceTab === 'recommended' ? (
-                  Object.keys(recommendationsByClass).length === 0 ? (
+                  <>
+                  <p style={{ fontSize:'0.8rem', color:'#888', background:'#F9FAFB', border:'1px solid #E5E7EB', borderRadius:'8px', padding:'0.6rem 0.85rem', marginBottom:'1rem', lineHeight:1.5 }}>
+                    💡 Can't see any recommendations? Make sure to submit the class to generate recommendations.
+                  </p>
+                  {Object.keys(recommendationsByClass).length === 0 ? (
                     <p style={{ color:'#bbb', fontSize:'0.85rem', fontStyle:'italic', textAlign:'center', padding:'2rem 0' }}>No recommendations available. Submit a class session to generate recommendations.</p>
                   ) : (() => {
                     const sortedRecommendations = Object.entries(recommendationsByClass)
@@ -8631,7 +8645,7 @@
                         </div>
                       </div>
                     ));
-                  })()
+                  })()}</> 
                 ) : (
                   <>
                     {/* Filters */}
