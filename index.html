@@ -1621,25 +1621,29 @@
         submittedClasses.forEach(cls => {
           const derivedStage = cls.stage != null ? cls.stage : deriveStageFromYear(cls.yearGroup || cls.year);
           // Normalise stage to 'Stage X' string to match resource.stage / resource.stages format
-          const normalisedStage = derivedStage != null ? `Stage ${derivedStage}` : null;
+          const normalisedStage = derivedStage != null
+            ? (String(derivedStage).startsWith('Stage') ? String(derivedStage) : `Stage ${derivedStage}`)
+            : null;
           const weakestFocusArea = cls.weakestFocusArea;
           const difficultyBand = cls.difficultyBand;
           if (!difficultyBand) {
             console.warn('[Recommendations] Skipping class', cls.id, '— difficultyBand missing. Submit session to generate recommendations.');
             return;
           }
-          console.log('[Recommendations] cls.stage:', cls.stage, '| normalisedStage:', normalisedStage, '| weakestFocusArea:', weakestFocusArea, '| difficultyBand:', difficultyBand);
+          console.log('[Recommendations] cls.stage:', cls.stage, '| derivedStage:', derivedStage, '| normalisedStage:', normalisedStage, '| weakestFocusArea:', weakestFocusArea, '| difficultyBand:', difficultyBand);
 
           const scoredResources = teacherResources.map(resource => {
             let score = 0;
 
             // Stage matching: normalise resource.stage / resource.stages to same 'Stage X' format
-            const resStages = Array.isArray(resource.stages) ? resource.stages
-              : resource.stage != null ? (Array.isArray(resource.stage) ? resource.stage : [String(resource.stage)])
+            const resourceStageList = Array.isArray(resource.stages) ? resource.stages
+              : Array.isArray(resource.stage) ? resource.stage
+              : resource.stage ? [resource.stage]
               : [];
-            const stageMatch = normalisedStage != null && resStages.some(s => String(s) === normalisedStage);
+            console.log('[Recommendations]', resource.title, '| resource.stage:', resource.stage, '| resource.stages:', resource.stages, '| resource.focusAreas:', resource.focusAreas);
+            const stageMatch = normalisedStage != null && resourceStageList.map(String).includes(normalisedStage);
             if (stageMatch) { score += 3; }
-            console.log('[Recommendations]', resource.title, '| resStages:', resStages, '| stageMatch:', stageMatch);
+            console.log('[Recommendations]', resource.title, '| resourceStageList:', resourceStageList, '| stageMatch:', stageMatch);
 
             if (Array.isArray(resource.focusAreas)) {
               const mappedFocusAreas = resource.focusAreas
