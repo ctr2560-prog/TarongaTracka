@@ -1665,9 +1665,9 @@
             }
 
             console.log('[Recommendations]', resource.title, '| final score:', score);
-            return { ...resource, _score: score };
+            return { ...resource, _score: score, _stageMatch: stageMatch };
           })
-          .filter(r => r._score > 0)
+          .filter(r => r._stageMatch && r._score > 0)
           .sort((a, b) => b._score - a._score);
 
           if (scoredResources.length > 0) {
@@ -8782,13 +8782,26 @@
           }
         };
 
+        const handleMarkAllComplete = async () => {
+          const incompleteStudents = firestoreStudents.filter(s => s.status !== 'complete');
+          if (incompleteStudents.length === 0) return;
+          if (!window.confirm(`Mark ${incompleteStudents.length} incomplete student${incompleteStudents.length !== 1 ? 's' : ''} as complete?`)) return;
+          setSubmittingAll(true);
+          try {
+            const snapshot = await window.db.collection('classes').doc(selectedClass).collection('students').get();
+            const batch = window.db.batch();
+            snapshot.docs.forEach(doc => {
+              if ((doc.data().status || 'incomplete') !== 'complete') {
+                batch.update(doc.ref, { status: 'complete', completed: true, completedAt: firebase.firestore.FieldValue.serverTimestamp() });
+              }
+            });
+            await batch.commit();
+          } catch (err) { console.error('Mark all complete error:', err); alert('Failed. Please try again.'); }
+          finally { setSubmittingAll(false); }
+        };
+
         const handleSubmitAll = async () => {
-          const incompleteCount = firestoreStudents.filter(s => s.status !== 'complete').length;
-          if (incompleteCount > 0) {
-            if (!window.confirm(`Mark ${incompleteCount} incomplete student${incompleteCount !== 1 ? 's' : ''} as complete and submit class? This cannot be undone.`)) return;
-          } else {
-            if (!window.confirm('All students are complete. Submit class to finalise and generate recommendations?')) return;
-          }
+          if (!window.confirm('Submit this class? This will finalise results and generate recommendations. This cannot be undone.')) return;
           setSubmittingAll(true);
           try {
             const snapshot = await window.db.collection('classes').doc(selectedClass).collection('students').get();
@@ -9423,22 +9436,31 @@
                       </button>
                       {(() => {
                         const allComplete = firestoreStudents.length > 0 && firestoreStudents.every(s => s.status === 'complete');
+                        const hasIncomplete = firestoreStudents.some(s => s.status !== 'complete');
                         const alreadySubmitted = cls.sessionClosed;
-                        const btnLabel = submittingAll ? 'Submitting...' : alreadySubmitted ? '✓ Class Submitted' : allComplete ? 'Submit Class →' : 'Submit All';
-                        const btnColor = alreadySubmitted ? '#2e7d32' : allComplete ? 'var(--jungle-mid)' : '#888';
-                        const btnBg = alreadySubmitted ? '#F0FBF0' : allComplete ? '#EAF6EE' : 'white';
+                        if (alreadySubmitted) return (
+                          <button disabled style={{ flex:'1 1 auto', minWidth:'140px', padding:'0.6rem 1rem', borderRadius:'10px', border:'1.5px solid #A5D6A7', background:'#F0FBF0', color:'#2e7d32', fontSize:'0.8rem', fontWeight:600, cursor:'default' }}>
+                            ✓ Class Submitted
+                          </button>
+                        );
+                        if (hasIncomplete) return (
+                          <button onClick={handleMarkAllComplete} disabled={submittingAll}
+                            style={{ flex:'1 1 auto', minWidth:'140px', padding:'0.6rem 1rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', background:'white', color: submittingAll ? '#bbb' : '#888', fontSize:'0.8rem', fontWeight:600, cursor: submittingAll ? 'not-allowed' : 'pointer', transition:'all 0.2s' }}
+                            onMouseEnter={(e)=>{ if (!submittingAll) { e.currentTarget.style.borderColor='var(--jungle-mid)'; e.currentTarget.style.background='var(--jungle-deep)'; e.currentTarget.style.color='white'; } }}
+                            onMouseLeave={(e)=>{ e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.background='white'; e.currentTarget.style.color=submittingAll?'#bbb':'#888'; }}>
+                            {submittingAll ? 'Marking...' : 'Mark All Complete'}
+                          </button>
+                        );
                         return (
                           <>
-                            {allComplete && !alreadySubmitted && (
-                              <div style={{ width:'100%', background:'#FFF8E1', border:'1px solid #FFD54F', borderRadius:'8px', padding:'0.5rem 0.75rem', fontSize:'0.78rem', color:'#7A5800', fontWeight:600, marginBottom:'0.4rem' }}>
-                                ⚡ All students complete. Submit class to generate recommendations.
-                              </div>
-                            )}
-                            <button onClick={handleSubmitAll} disabled={submittingAll || alreadySubmitted}
-                              style={{ flex:'1 1 auto', minWidth:'140px', padding:'0.6rem 1rem', borderRadius:'10px', border:`1.5px solid ${alreadySubmitted ? '#A5D6A7' : '#E5E5E5'}`, background: btnBg, color: submittingAll ? '#bbb' : btnColor, fontSize:'0.8rem', fontWeight:600, cursor: (submittingAll || alreadySubmitted) ? 'default' : 'pointer', transition:'all 0.2s' }}
-                              onMouseEnter={(e)=>{ if (!submittingAll && !alreadySubmitted) { e.currentTarget.style.borderColor='var(--jungle-mid)'; e.currentTarget.style.background='var(--jungle-deep)'; e.currentTarget.style.color='white'; } }}
-                              onMouseLeave={(e)=>{ if (!submittingAll && !alreadySubmitted) { e.currentTarget.style.borderColor='#E5E5E5'; e.currentTarget.style.background=btnBg; e.currentTarget.style.color=btnColor; } }}>
-                              {btnLabel}
+                            <div style={{ width:'100%', background:'#FFF8E1', border:'1px solid #FFD54F', borderRadius:'8px', padding:'0.5rem 0.75rem', fontSize:'0.78rem', color:'#7A5800', fontWeight:600, marginBottom:'0.4rem' }}>
+                              ⚡ All students complete. Submit to finalise and generate recommendations.
+                            </div>
+                            <button onClick={handleSubmitAll} disabled={submittingAll}
+                              style={{ flex:'1 1 auto', minWidth:'140px', padding:'0.6rem 1rem', borderRadius:'10px', border:'1.5px solid var(--jungle-mid)', background:'#EAF6EE', color: submittingAll ? '#bbb' : 'var(--jungle-mid)', fontSize:'0.8rem', fontWeight:600, cursor: submittingAll ? 'not-allowed' : 'pointer', transition:'all 0.2s' }}
+                              onMouseEnter={(e)=>{ if (!submittingAll) { e.currentTarget.style.background='var(--jungle-deep)'; e.currentTarget.style.color='white'; } }}
+                              onMouseLeave={(e)=>{ if (!submittingAll) { e.currentTarget.style.background='#EAF6EE'; e.currentTarget.style.color='var(--jungle-mid)'; } }}>
+                              {submittingAll ? 'Submitting...' : 'Submit Class & Generate Recommendations'}
                             </button>
                           </>
                         );
