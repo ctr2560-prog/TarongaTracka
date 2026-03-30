@@ -47,25 +47,101 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 
   <style>
-    :root {
-      --jungle-deep: #0A2F1F;
-      --jungle-mid: #1A5238;
-      --jungle-light: #2E7D55;
-      --safari-gold: #D4A574;
-      --sunset-orange: #E86A33;
-      --earth-clay: #8B5A3C;
-      --mist-light: #F5F3EE;
-      --discovery-blue: #4A9FD8;
+    /* ─── Phase 1: Taronga Tracka Design System ────────────────────────────── */
+
+    @font-face {
+      font-family: 'Taronga Headline';
+      src: url('images/TarongaHeadline-Regular.ttf') format('truetype');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
     }
 
+    :root {
+      /* Brand greens */
+      --t-forest:      #071E14;   /* deepest — headers, hero text on light */
+      --t-deep:        #0A2F1F;   /* nav backgrounds, strong surfaces */
+      --t-mid:         #1A5238;   /* primary interactive, borders */
+      --t-eucalyptus:  #2E7D55;   /* lighter actions, progress fills */
+      --t-sage:        #4A7C61;   /* icons, secondary accents */
+      --t-mist:        #A8C4B2;   /* very light borders, dividers */
+      --t-foam:        #E8F2EC;   /* hover states, subtle tints */
+
+      /* Neutrals — warm stone/sand */
+      --t-canvas:      #F7F4EF;   /* page background (non-video) */
+      --t-stone:       #EDE9E2;   /* card borders, dividers */
+      --t-parchment:   #FAF8F4;   /* card surfaces */
+      --t-chalk:       #FFFFFF;   /* pure white surfaces */
+
+      /* Text */
+      --t-ink:         #1A1A17;   /* primary body text */
+      --t-charcoal:    #3D3D38;   /* secondary text */
+      --t-slate:       #6B6B62;   /* meta, labels */
+      --t-ash:         #9E9E92;   /* placeholder, disabled */
+
+      /* Semantic */
+      --t-success:     #166534;
+      --t-success-bg:  #F0FDF4;
+      --t-warning:     #92400E;
+      --t-warning-bg:  #FFFBEB;
+      --t-danger:      #991B1B;
+      --t-danger-bg:   #FEF2F2;
+      --t-info:        #1E40AF;
+      --t-info-bg:     #EFF6FF;
+
+      /* Overlay */
+      --t-overlay-sm:  rgba(7,30,20,0.45);
+      --t-overlay-md:  rgba(7,30,20,0.65);
+      --t-overlay-lg:  rgba(7,30,20,0.82);
+
+      /* Shadows */
+      --t-shadow-xs:   0 1px 3px rgba(7,30,20,0.08);
+      --t-shadow-sm:   0 2px 8px rgba(7,30,20,0.10);
+      --t-shadow-md:   0 4px 16px rgba(7,30,20,0.12);
+      --t-shadow-lg:   0 8px 32px rgba(7,30,20,0.16);
+      --t-shadow-xl:   0 20px 60px rgba(7,30,20,0.22);
+
+      /* Radii */
+      --t-r-xs:  6px;
+      --t-r-sm:  10px;
+      --t-r-md:  14px;
+      --t-r-lg:  18px;
+      --t-r-xl:  24px;
+      --t-r-pill:9999px;
+
+      /* Spacing scale */
+      --t-sp-1: 0.25rem;
+      --t-sp-2: 0.5rem;
+      --t-sp-3: 0.75rem;
+      --t-sp-4: 1rem;
+      --t-sp-5: 1.25rem;
+      --t-sp-6: 1.5rem;
+      --t-sp-8: 2rem;
+
+      /* Legacy aliases — kept so existing inline vars still resolve */
+      --jungle-deep:       var(--t-deep);
+      --jungle-mid:        var(--t-mid);
+      --jungle-light:      var(--t-eucalyptus);
+      --safari-gold:       #C9A96E;
+      --sunset-orange:     #D4693A;
+      --earth-clay:        #7D5236;
+      --mist-light:        var(--t-canvas);
+      --discovery-blue:    #4A9FD8;
+    }
+
+    /* ─── Reset ──────────────────────────────────────────────────────────── */
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
+    /* ─── Base ───────────────────────────────────────────────────────────── */
     body {
-      font-family: 'DM Sans', sans-serif;
+      font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      color: var(--t-ink);
       overflow-x: hidden;
       touch-action: pan-y;
       overscroll-behavior: contain;
-      background: transparent;
+      background: var(--t-canvas);
       isolation: isolate;
     }
 
@@ -75,15 +151,291 @@
       height: 100%;
     }
 
+    /* ─── Typography system ──────────────────────────────────────────────── */
+
+    /* Taronga Headline font — hero / branding only */
+    .taronga-title {
+      font-family: 'Taronga Headline', 'Bebas Neue', sans-serif;
+      font-weight: 400;
+      letter-spacing: 0.05em;
+      line-height: 1.1;
+    }
+
+    /* Legacy alias */
     .heading-display {
-      font-family: 'Bebas Neue', sans-serif;
+      font-family: 'Taronga Headline', 'Bebas Neue', sans-serif;
       letter-spacing: 0.08em;
     }
 
+    .page-title {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 700;
+      color: var(--t-ink);
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+
+    .section-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--t-deep);
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--t-deep);
+      line-height: 1.3;
+    }
+
+    .meta-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--t-slate);
+    }
+
+    .body-text {
+      font-size: 0.88rem;
+      color: var(--t-charcoal);
+      line-height: 1.6;
+    }
+
     .serif-accent {
-      font-family: 'Instrument Serif', serif;
+      font-family: 'Instrument Serif', Georgia, serif;
       font-style: italic;
     }
+
+    /* ─── Card system ────────────────────────────────────────────────────── */
+
+    .t-card {
+      background: var(--t-chalk);
+      border-radius: var(--t-r-lg);
+      box-shadow: var(--t-shadow-sm);
+      border: 1px solid var(--t-stone);
+      overflow: hidden;
+    }
+
+    .t-card-sm {
+      background: var(--t-chalk);
+      border-radius: var(--t-r-md);
+      box-shadow: var(--t-shadow-xs);
+      border: 1px solid var(--t-stone);
+    }
+
+    .t-card-tinted {
+      background: var(--t-parchment);
+      border-radius: var(--t-r-lg);
+      box-shadow: var(--t-shadow-sm);
+      border: 1px solid var(--t-stone);
+    }
+
+    .t-panel {
+      background: var(--t-chalk);
+      border-radius: var(--t-r-xl);
+      box-shadow: var(--t-shadow-md);
+      overflow: hidden;
+    }
+
+    /* ─── Button system ──────────────────────────────────────────────────── */
+
+    .t-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.6rem 1.25rem;
+      border-radius: var(--t-r-sm);
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      line-height: 1;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .t-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .t-btn-primary {
+      background: var(--t-mid);
+      color: #fff;
+      border-color: var(--t-mid);
+    }
+    .t-btn-primary:not(:disabled):hover {
+      background: var(--t-deep);
+      border-color: var(--t-deep);
+    }
+
+    .t-btn-secondary {
+      background: var(--t-foam);
+      color: var(--t-mid);
+      border-color: var(--t-mist);
+    }
+    .t-btn-secondary:not(:disabled):hover {
+      background: var(--t-mid);
+      color: #fff;
+      border-color: var(--t-mid);
+    }
+
+    .t-btn-ghost {
+      background: transparent;
+      color: var(--t-mid);
+      border-color: var(--t-mist);
+    }
+    .t-btn-ghost:not(:disabled):hover {
+      background: var(--t-foam);
+    }
+
+    .t-btn-danger {
+      background: #fff;
+      color: var(--t-danger);
+      border-color: #FCA5A5;
+    }
+    .t-btn-danger:not(:disabled):hover {
+      background: var(--t-danger-bg);
+    }
+
+    /* ─── Form elements ──────────────────────────────────────────────────── */
+
+    .t-input, .t-select, .t-textarea {
+      width: 100%;
+      padding: 0.6rem 0.85rem;
+      border: 1.5px solid var(--t-stone);
+      border-radius: var(--t-r-sm);
+      font-family: inherit;
+      font-size: 0.88rem;
+      color: var(--t-ink);
+      background: var(--t-chalk);
+      transition: border-color 0.18s, box-shadow 0.18s;
+      outline: none;
+      appearance: none;
+    }
+
+    .t-input::placeholder, .t-textarea::placeholder { color: var(--t-ash); }
+
+    .t-input:focus, .t-select:focus, .t-textarea:focus {
+      border-color: var(--t-mid);
+      box-shadow: 0 0 0 3px rgba(26,82,56,0.12);
+    }
+
+    .t-textarea { resize: vertical; line-height: 1.55; min-height: 80px; }
+
+    /* ─── Video background overlay ───────────────────────────────────────── */
+
+    .t-video-shell {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .t-video-shell video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.55;
+    }
+
+    /* Cinematic layered overlay — dark vignette + gradient */
+    .t-video-shell::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg,
+          rgba(7,30,20,0.62) 0%,
+          rgba(7,30,20,0.38) 40%,
+          rgba(7,30,20,0.50) 75%,
+          rgba(7,30,20,0.70) 100%
+        ),
+        radial-gradient(ellipse at center, transparent 30%, rgba(7,30,20,0.35) 100%);
+    }
+
+    /* Readable foreground surfaces over video */
+    .t-video-foreground {
+      position: relative;
+      z-index: 1;
+    }
+
+    .t-glass-surface {
+      background: rgba(250,248,244,0.92);
+      backdrop-filter: blur(12px) saturate(1.2);
+      -webkit-backdrop-filter: blur(12px) saturate(1.2);
+      border: 1px solid rgba(255,255,255,0.6);
+      border-radius: var(--t-r-lg);
+      box-shadow: var(--t-shadow-lg);
+    }
+
+    .t-dark-surface {
+      background: rgba(7,30,20,0.72);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    /* ─── Modal / panel refinements ──────────────────────────────────────── */
+
+    .t-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(7,30,20,0.55);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      z-index: 200;
+    }
+
+    .t-modal-card {
+      background: var(--t-chalk);
+      border-radius: var(--t-r-xl);
+      box-shadow: var(--t-shadow-xl);
+      overflow: hidden;
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    /* ─── Section divider ─────────────────────────────────────────────────── */
+
+    .t-section-rule {
+      border: none;
+      border-top: 1px solid var(--t-stone);
+      margin: 1.25rem 0;
+    }
+
+    /* ─── Status chips ────────────────────────────────────────────────────── */
+
+    .t-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: var(--t-r-pill);
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    .t-chip-success { background: var(--t-success-bg); color: var(--t-success); }
+    .t-chip-warning { background: var(--t-warning-bg); color: var(--t-warning); }
+    .t-chip-danger  { background: var(--t-danger-bg);  color: var(--t-danger);  }
+    .t-chip-info    { background: var(--t-info-bg);    color: var(--t-info);    }
+
+    /* ─── Animations (preserved) ─────────────────────────────────────────── */
 
     .fade-in { opacity: 0; animation: institutionalFadeIn 180ms ease-out forwards; }
     @keyframes institutionalFadeIn { to { opacity: 1; } }
@@ -5259,69 +5611,38 @@
       if (currentScreen === 'home') {
         return (
           <div style={{ position:'relative', width:'100%', height:'100vh', overflow:'hidden', background:'transparent' }}>
-            <div style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', background:'rgba(0,0,0,0.4)', zIndex:1 }} />
-            <div style={{ position:'relative', zIndex:10, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', padding:'1rem', textAlign:'center' }}>
-              <div className="animate-fade-in-up" style={{ animationDelay:'0.2s', marginBottom:'clamp(1rem, 3vh, 2rem)' }}>
-                <img src="images/logo.png" alt="Taronga Tracka" style={{ width:'clamp(200px, 50vw, 300px)', height:'auto', display:'block' }} onError={(e)=>{ e.target.style.display='none'; }} />
+            {/* Cinematic gradient overlay — stronger than before */}
+            <div style={{ position:'absolute', inset:0,
+              background:'linear-gradient(180deg, rgba(7,30,20,0.55) 0%, rgba(7,30,20,0.3) 40%, rgba(7,30,20,0.72) 100%)',
+              zIndex:1, pointerEvents:'none' }} />
+            <div style={{ position:'relative', zIndex:10, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', padding:'2rem 1.5rem', textAlign:'center' }}>
+              {/* Logo */}
+              <div className="animate-fade-in-up" style={{ animationDelay:'0.15s', marginBottom:'clamp(1.2rem, 3.5vh, 2.2rem)' }}>
+                <img src="images/logo.png" alt="Taronga Tracka" style={{ width:'clamp(180px, 42vw, 260px)', height:'auto', display:'block', filter:'drop-shadow(0 4px 16px rgba(0,0,0,0.5))' }} onError={(e)=>{ e.target.style.display='none'; }} />
               </div>
-              <div className="animate-fade-in-up" style={{ background:'rgba(255,255,255,0.1)', backdropFilter:'blur(10px)', borderRadius:'20px', padding:'clamp(1rem, 2vh, 1.5rem)', marginBottom:'clamp(1rem, 3vh, 2rem)', border:'1px solid rgba(255,255,255,0.2)', maxWidth:'500px', width:'90%', animationDelay:'0.4s' }}>
-                <div style={{ textAlign: "center" }}>
-
-                  <h3 style={{
-                    fontSize: "26px",
-                    marginBottom: "20px",
-                    fontWeight: "600",
-                    letterSpacing: "0.5px",
-                    color: "white"
-                  }}>
-                    Step Into the Wild
-                  </h3>
-
-                  <ul style={{
-                    listStyle: "none",
-                    padding: 0,
-                    margin: 0,
-                    lineHeight: "2",
-                    fontSize: "18px",
-                    opacity: 0.95,
-                    color: "white"
-                  }}>
-                    <li>Track animals across the zoo</li>
-                    <li>Record meaningful observations</li>
-                    <li>Earn badges for your discoveries</li>
-                  </ul>
-
-                </div>
+              {/* Hero card */}
+              <div className="animate-fade-in-up" style={{ background:'rgba(7,30,20,0.55)', backdropFilter:'blur(18px) saturate(1.2)', WebkitBackdropFilter:'blur(18px) saturate(1.2)', borderRadius:'20px', padding:'clamp(1.2rem, 2.5vh, 1.8rem) clamp(1.5rem, 4vw, 2.2rem)', marginBottom:'clamp(1.2rem, 3vh, 2rem)', border:'1px solid rgba(255,255,255,0.12)', maxWidth:'460px', width:'90%', animationDelay:'0.35s' }}>
+                <h3 className="taronga-title" style={{ fontSize:'clamp(1.6rem, 4vw, 2rem)', marginBottom:'0.75rem', color:'white', letterSpacing:'0.04em', textShadow:'0 2px 8px rgba(0,0,0,0.4)' }}>Step Into the Wild</h3>
+                <ul style={{ listStyle:'none', padding:0, margin:0, display:'flex', flexDirection:'column', gap:'0.45rem' }}>
+                  {['Track animals across the zoo','Record meaningful observations','Earn badges for your discoveries'].map((line,i)=>(
+                    <li key={i} style={{ fontSize:'clamp(0.9rem, 2vw, 1.05rem)', color:'rgba(255,255,255,0.88)', display:'flex', alignItems:'center', gap:'0.5rem', justifyContent:'center' }}>
+                      <span style={{ color:'var(--t-eucalyptus)', fontSize:'0.8em' }}>▸</span>{line}
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <button onClick={()=>setCurrentScreen('public')} className="animate-scale-in" style={{ background:'linear-gradient(135deg, var(--sunset-orange) 0%, var(--earth-clay) 100%)', color:'white', border:'none', padding:'clamp(0.8rem, 2vh, 1rem) clamp(2rem, 5vw, 2.5rem)', fontSize:'clamp(0.95rem, 2.5vh, 1.3rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', boxShadow:'0 10px 30px rgba(232,106,51,0.4)', animationDelay:'0.6s', textTransform:'uppercase', letterSpacing:'0.1em', width:'min(90vw, 400px)', marginBottom:'1rem' }}>
+              {/* Primary CTA */}
+              <button onClick={()=>setCurrentScreen('public')} className="animate-scale-in"
+                style={{ background:'linear-gradient(135deg, var(--sunset-orange) 0%, var(--earth-clay) 100%)', color:'white', border:'none', padding:'clamp(0.85rem, 2vh, 1.05rem) clamp(2.5rem, 6vw, 3rem)', fontSize:'clamp(1rem, 2.2vw, 1.15rem)', fontWeight:700, borderRadius:'var(--t-r-pill)', cursor:'pointer', boxShadow:'0 8px 28px rgba(180,90,40,0.45)', animationDelay:'0.55s', textTransform:'uppercase', letterSpacing:'0.12em', width:'min(88vw, 380px)', marginBottom:'0.85rem', transition:'all 0.2s' }}
+                onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 12px 36px rgba(180,90,40,0.55)'; }}
+                onMouseLeave={e=>{ e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='0 8px 28px rgba(180,90,40,0.45)'; }}>
                 Let's Track!
               </button>
-              <button 
-                onClick={()=>setCurrentScreen('schoolEntry')}
-                style={{
-                  padding: "18px 42px",
-                  borderRadius: "30px",
-                  border: "none",
-                  background: "#1A5238",
-                  color: "white",
-                  cursor: "pointer",
-                  fontWeight: "600",
-                  minWidth: "280px",
-                  boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
-                  transition: "all 0.2s ease",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                  fontSize: "clamp(0.95rem, 2.5vh, 1.3rem)"
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.background = "#14402C";
-                  e.target.style.transform = "translateY(-2px)";
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = "#1A5238";
-                  e.target.style.transform = "translateY(0)";
-                }}
-              >
+              {/* Secondary CTA */}
+              <button onClick={()=>setCurrentScreen('schoolEntry')}
+                style={{ padding:'clamp(0.75rem, 1.8vh, 0.95rem) clamp(2rem, 5vw, 2.5rem)', borderRadius:'var(--t-r-pill)', border:'1.5px solid rgba(255,255,255,0.28)', background:'rgba(26,82,56,0.6)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', color:'white', cursor:'pointer', fontWeight:600, width:'min(88vw, 380px)', boxShadow:'0 4px 16px rgba(0,0,0,0.2)', transition:'all 0.2s', textTransform:'uppercase', letterSpacing:'0.1em', fontSize:'clamp(0.9rem, 2vw, 1rem)' }}
+                onMouseEnter={e=>{ e.currentTarget.style.background='rgba(26,82,56,0.85)'; e.currentTarget.style.transform='translateY(-1px)'; }}
+                onMouseLeave={e=>{ e.currentTarget.style.background='rgba(26,82,56,0.6)'; e.currentTarget.style.transform='translateY(0)'; }}>
                 Taronga Education
               </button>
               
@@ -5337,68 +5658,23 @@
 
       if (currentScreen === 'public') {
         return (
-          <div style={{
-            position: "relative",
-            height: "100vh",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            textAlign: "center",
-            color: "white",
-            padding: "20px"
-          }}>
-
-            {/* Cinematic Overlay */}
-            <div style={{
-              position: "absolute",
-              inset: 0,
-              background: "linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.45))",
-              zIndex: 0
-            }} />
-
-            {/* Content */}
-            <div style={{
-              position: "relative",
-              zIndex: 1,
-              maxWidth: "600px"
-            }}>
-              <h2 style={{
-                fontSize: "34px",
-                marginBottom: "20px",
-                fontWeight: "600"
-              }}>
-                 Let's Track! – Coming Soon
-              </h2>
-
-              <p style={{
-                marginBottom: "40px",
-                opacity: 0.95,
-                lineHeight: "1.7",
-                fontSize: "17px"
-              }}>
-                Taronga Tracka's <strong>public explorer experience</strong> is currently in development.
-                <br /><br />
-                Visiting with a school group? Access the full learning adventure through
-                <strong> Taronga Education</strong>.
-              </p>
-
-              <button
-                onClick={() => setCurrentScreen('home')}
-                style={{
-                  padding: "12px 28px",
-                  borderRadius: "25px",
-                  border: "none",
-                  background: "#1A5238",
-                  color: "white",
-                  cursor: "pointer",
-                  fontWeight: "600",
-                  fontSize: "15px"
-                }}
-              >
-                 Back to Home
+          <div style={{ position:'relative', height:'100vh', display:'flex', justifyContent:'center', alignItems:'center', textAlign:'center', color:'white', padding:'2rem' }}>
+            <div style={{ position:'absolute', inset:0, background:'linear-gradient(180deg, rgba(7,30,20,0.6) 0%, rgba(7,30,20,0.4) 45%, rgba(7,30,20,0.72) 100%)', zIndex:0 }} />
+            <div style={{ position:'relative', zIndex:1, maxWidth:'560px', width:'100%' }} className="animate-fade-in-up">
+              <h2 className="taronga-title" style={{ fontSize:'clamp(2rem, 5vw, 2.8rem)', marginBottom:'1rem', letterSpacing:'0.04em', textShadow:'0 2px 12px rgba(0,0,0,0.5)' }}>Let's Track – Coming Soon</h2>
+              <div style={{ background:'rgba(7,30,20,0.55)', backdropFilter:'blur(16px)', WebkitBackdropFilter:'blur(16px)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'var(--t-r-lg)', padding:'1.75rem 2rem', marginBottom:'2rem' }}>
+                <p style={{ opacity:0.92, lineHeight:1.75, fontSize:'clamp(0.9rem, 2vw, 1.05rem)' }}>
+                  Taronga Tracka's <strong>public explorer experience</strong> is currently in development.<br /><br />
+                  Visiting with a school group? Access the full learning adventure through <strong>Taronga Education</strong>.
+                </p>
+              </div>
+              <button onClick={() => setCurrentScreen('home')}
+                style={{ padding:'0.75rem 2rem', borderRadius:'var(--t-r-pill)', border:'1.5px solid rgba(255,255,255,0.3)', background:'rgba(26,82,56,0.65)', backdropFilter:'blur(10px)', color:'white', cursor:'pointer', fontWeight:600, fontSize:'0.95rem', transition:'all 0.2s' }}
+                onMouseEnter={e=>e.currentTarget.style.background='rgba(26,82,56,0.9)'}
+                onMouseLeave={e=>e.currentTarget.style.background='rgba(26,82,56,0.65)'}>
+                ← Back to Home
               </button>
             </div>
-
           </div>
         );
       }
@@ -5414,22 +5690,22 @@
                 {[...Array(60)].map((_,i)=>(<div key={i} style={{ position:'absolute', left:`${Math.random()*100}%`, top:'-20px', width:`${6+Math.random()*8}px`, height:`${6+Math.random()*8}px`, borderRadius: Math.random()>0.5 ? '50%' : '2px', background:['#FFD700','#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#A78BFA','#34D399'][Math.floor(Math.random()*7)], animation:`fall ${2.5+Math.random()*2.5}s linear forwards`, animationDelay:`${Math.random()*1.2}s` }} />))}
               </div>
   
-              <div className="animate-scale-in" style={{ position:'relative', zIndex:10, background:'white', borderRadius:'28px', padding:'clamp(1.8rem, 5vh, 2.8rem)', maxWidth:'480px', width:'100%', textAlign:'center', boxShadow:'0 24px 64px rgba(0,0,0,0.35)' }}>
-                <div style={{ width:'80px', height:'80px', borderRadius:'50%', background:'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))', margin:'0 auto 1.2rem', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'2.4rem', boxShadow:'0 6px 20px rgba(26,82,56,0.4)' }}></div>
+              <div className="animate-scale-in" style={{ position:'relative', zIndex:10, background:'var(--t-chalk)', borderRadius:'var(--t-r-xl)', padding:'clamp(1.8rem, 5vh, 2.8rem)', maxWidth:'460px', width:'100%', textAlign:'center', boxShadow:'var(--t-shadow-xl)', border:'1px solid rgba(255,255,255,0.8)' }}>
+                <div style={{ width:'76px', height:'76px', borderRadius:'50%', background:'linear-gradient(135deg, var(--t-eucalyptus), var(--t-mid))', margin:'0 auto 1.1rem', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'2.2rem', boxShadow:'0 6px 20px rgba(46,125,85,0.38)' }}>✓</div>
   
-                <h1 className="heading-display" style={{ fontSize:'clamp(1.9rem, 5vh, 2.6rem)', color:'var(--jungle-deep)', marginBottom:'0.2rem', lineHeight:1.1 }}>SUBMISSION COMPLETE</h1>
-                <p className="serif-accent" style={{ color:'var(--jungle-light)', fontSize:'clamp(0.95rem, 2.2vh, 1.15rem)', marginBottom:'1.4rem' }}>Your results have been saved</p>
+                <h1 className="taronga-title" style={{ fontSize:'clamp(1.8rem, 4.5vh, 2.4rem)', color:'var(--t-deep)', marginBottom:'0.2rem', letterSpacing:'0.04em' }}>Submission Complete</h1>
+                <p className="serif-accent" style={{ color:'var(--t-sage)', fontSize:'clamp(0.92rem, 2vh, 1.1rem)', marginBottom:'1.4rem' }}>Your results have been saved</p>
   
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'0.7rem', marginBottom:'1.4rem' }}>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'0.65rem', marginBottom:'1.4rem' }}>
                   {[
-                    { label:'Points', value: totalPoints, icon:'', color:'var(--sunset-orange)' },
-                    { label:'Badges', value: badges.length, icon:'', color:'var(--earth-clay)' },
-                    { label:'Animals', value:`${foundAnimals.size}/${animalsToRender.length}`, icon:'', color:'var(--jungle-mid)' }
+                    { label:'Points', value: totalPoints, icon:'', color:'var(--earth-clay)' },
+                    { label:'Badges', value: badges.length, icon:'', color:'var(--t-mid)' },
+                    { label:'Animals', value:`${foundAnimals.size}/${animalsToRender.length}`, icon:'', color:'var(--t-sage)' }
                   ].map(s => (
-                    <div key={s.label} style={{ background:'#F5F3EE', borderRadius:'14px', padding:'0.8rem 0.4rem' }}>
-                      <div style={{ fontSize:'1.3rem', marginBottom:'0.15rem' }}>{s.icon}</div>
-                      <div style={{ fontWeight:700, color:s.color, fontSize:'1.2rem', lineHeight:1.2 }}>{s.value}</div>
-                      <div style={{ color:'#999', fontSize:'0.68rem', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.04em' }}>{s.label}</div>
+                    <div key={s.label} style={{ background:'var(--t-foam)', borderRadius:'var(--t-r-md)', padding:'0.85rem 0.4rem', border:'1px solid var(--t-mist)' }}>
+                      <div style={{ fontSize:'1.2rem', marginBottom:'0.15rem' }}>{s.icon}</div>
+                      <div style={{ fontWeight:800, color:s.color, fontSize:'1.25rem', lineHeight:1.2 }}>{s.value}</div>
+                      <div style={{ color:'var(--t-ash)', fontSize:'0.65rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em', marginTop:'0.15rem' }}>{s.label}</div>
                     </div>
                   ))}
                 </div>
@@ -5456,18 +5732,18 @@
           );
         }
         return (
-          <div style={{ minHeight:'100vh', background:'var(--mist-light)' }}>
-            <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1.5rem 1rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', position:'sticky', top:0, zIndex:100 }}>
+          <div style={{ minHeight:'100vh', background:'var(--t-canvas)' }}>
+            <div style={{ background:'linear-gradient(135deg, var(--t-forest) 0%, var(--t-deep) 60%, var(--t-mid) 100%)', padding:'1rem 1rem', boxShadow:'var(--t-shadow-lg)', position:'sticky', top:0, zIndex:100, borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
               <div className="student-banner-mobile" style={{ maxWidth:'1400px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                 <div className="logo-title-block" style={{ display:'flex', alignItems:'center', gap:'1rem' }}>
                   <img src="images/logo.png" alt="Taronga Tracka" style={{ height:'90px', width:'auto' }} onError={(e)=>{ e.target.style.display='none'; }} />
                   <div>
-                    <h1 className="heading-display" style={{ fontSize:'clamp(1.8rem, 4vw, 2.5rem)', color:'white', marginBottom:'0.3rem' }}>DISCOVER ANIMALS</h1>
+                    <h1 className="taronga-title" style={{ fontSize:'clamp(1.6rem, 3.5vw, 2.2rem)', color:'white', marginBottom:'0.2rem', letterSpacing:'0.04em', textShadow:'0 2px 8px rgba(0,0,0,0.4)' }}>Discover Animals</h1>
                     <p className="serif-accent" style={{ color:'var(--safari-gold)', fontSize:'1rem' }}>Get within range to unlock</p>
                   </div>
                 </div>
                 {studentName && (
-                  <div className="student-name-pill" style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', borderRadius:'20px', padding:'0.4rem 0.85rem', backdropFilter:'blur(6px)' }}>
+                  <div className="student-name-pill" style={{ background:'rgba(255,255,255,0.12)', border:'1px solid rgba(255,255,255,0.22)', borderRadius:'var(--t-r-pill)', padding:'0.4rem 0.9rem', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)' }}>
                     <span style={{ color:'white', fontSize:'0.82rem', fontWeight:600 }}> {studentName}</span>
                   </div>
                 )}
@@ -5487,7 +5763,7 @@
                 </button>
               </div>
             </div>
-            <div style={{ maxWidth:'1400px', margin:'0 auto', padding:'2rem 1rem' }}>
+            <div style={{ maxWidth:'1400px', margin:'0 auto', padding:'1.5rem 1rem 3rem' }}>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))', gap:'1.5rem' }}>
                 {Array.isArray(animalsToRender) && animalsToRender.map(animal=>({...animal,...checkAnimalProximity(animal)}))
                   .sort((a,b)=>{
@@ -5507,30 +5783,42 @@
                     const compassDistance = userLat && userLon ? getDistance(userLat, userLon, animalLat, animalLng) : null;
                     return (
                       <div key={animal.id} onClick={(e)=>{if(!alreadyFound)discoverAnimal(animal,e);}} className="animate-fade-in-up"
-                        style={{ position:'relative', height:'400px', borderRadius:'16px', overflow:'hidden', cursor:alreadyFound?'default':'pointer', boxShadow:'0 8px 24px rgba(0,0,0,0.12)', transition:'all 0.4s ease', animationDelay:`${index*0.1}s`, transform:nearby&&!alreadyFound?'scale(1.03)':'scale(1)' }}
-                        onMouseEnter={(e)=>{ if(!alreadyFound){e.currentTarget.style.transform='translateY(-8px)';e.currentTarget.style.boxShadow='0 16px 40px rgba(0,0,0,0.2)';} }}
-                        onMouseLeave={(e)=>{ e.currentTarget.style.transform=nearby&&!alreadyFound?'scale(1.03)':'scale(1)'; e.currentTarget.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'; }}>
-                        <div style={{ position:'absolute', inset:0, backgroundImage:`url(${animal.image})`, backgroundSize:'cover', backgroundPosition:'center', filter:alreadyFound?'grayscale(50%)':'none', opacity:alreadyFound?0.6:1 }} />
-                        <div style={{ position:'absolute', inset:0, background:'linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.7) 100%)' }} />
-                        <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'2rem', color:'white', zIndex:10 }}>
-                          <h3 className="heading-display" style={{ fontSize:'2rem', marginBottom:'0.3rem', textShadow:'0 2px 8px rgba(0,0,0,0.3)' }}>{animal.name}</h3>
-                          <p className="serif-accent" style={{ fontSize:'1rem', opacity:0.9, marginBottom:'0.5rem' }}>{animal.scientificName}</p>
+                        style={{ position:'relative', height:'420px', borderRadius:'var(--t-r-xl)', overflow:'hidden', cursor:alreadyFound?'default':'pointer',
+                          boxShadow: nearby&&!alreadyFound ? '0 0 0 3px var(--t-eucalyptus), var(--t-shadow-lg)' : alreadyFound ? 'var(--t-shadow-sm)' : 'var(--t-shadow-md)',
+                          transition:'transform 0.35s ease, box-shadow 0.35s ease', animationDelay:`${index*0.08}s`,
+                          transform:nearby&&!alreadyFound?'scale(1.025)':'scale(1)', outline:'none' }}
+                        onMouseEnter={(e)=>{ if(!alreadyFound){e.currentTarget.style.transform='translateY(-6px) scale(1.01)'; e.currentTarget.style.boxShadow='0 20px 48px rgba(7,30,20,0.22)';} }}
+                        onMouseLeave={(e)=>{ e.currentTarget.style.transform=nearby&&!alreadyFound?'scale(1.025)':'scale(1)'; e.currentTarget.style.boxShadow=nearby&&!alreadyFound?'0 0 0 3px var(--t-eucalyptus), var(--t-shadow-lg)':alreadyFound?'var(--t-shadow-sm)':'var(--t-shadow-md)'; }}>
+                        {/* Image layer */}
+                        <div style={{ position:'absolute', inset:0, backgroundImage:`url(${animal.image})`, backgroundSize:'cover', backgroundPosition:'center',
+                          filter:alreadyFound?'grayscale(60%) brightness(0.75)':'brightness(0.95) contrast(1.05)', opacity:alreadyFound?0.7:1,
+                          transition:'filter 0.4s' }} />
+                        {/* Gradient overlay — cinematic bottom fade */}
+                        <div style={{ position:'absolute', inset:0, background:alreadyFound
+                          ? 'linear-gradient(180deg, rgba(7,30,20,0.25) 0%, rgba(7,30,20,0.8) 100%)'
+                          : 'linear-gradient(180deg, rgba(7,30,20,0.12) 0%, rgba(7,30,20,0.0) 30%, rgba(7,30,20,0.75) 100%)' }} />
+                        {/* Content */}
+                        <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'1.5rem 1.75rem 1.75rem', color:'white', zIndex:10 }}>
+                          <h3 className="taronga-title" style={{ fontSize:'clamp(1.6rem, 3.5vw, 2.1rem)', marginBottom:'0.15rem', textShadow:'0 2px 12px rgba(0,0,0,0.5)', letterSpacing:'0.03em' }}>{animal.name}</h3>
+                          <p className="serif-accent" style={{ fontSize:'0.9rem', opacity:0.8, marginBottom:'0.65rem', color:'rgba(255,255,255,0.82)' }}>{animal.scientificName}</p>
                           {compassDistance !== null && !alreadyFound && (
-                            <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'0.75rem', fontSize:'0.85rem', color:'rgba(255,255,255,0.85)' }}>
-                              <span style={{ fontSize:'16px', lineHeight:1 }}>{bearingToArrow(compassBearing)}</span>
+                            <div style={{ display:'flex', alignItems:'center', gap:'5px', marginBottom:'0.7rem', fontSize:'0.82rem', color:'rgba(255,255,255,0.78)', fontWeight:600 }}>
+                              <span style={{ fontSize:'1rem', lineHeight:1 }}>{bearingToArrow(compassBearing)}</span>
+                              <span>{compassDistance}m</span>
                             </div>
                           )}
                           {alreadyFound ? (
-                            <div style={{ display:'inline-block', background:'rgba(46,125,85,0.9)', backdropFilter:'blur(10px)', padding:'0.6rem 1.5rem', borderRadius:'30px', fontWeight:600, fontSize:'0.95rem', border:'2px solid rgba(255,255,255,0.3)' }}> Discovered</div>
+                            <div style={{ display:'inline-flex', alignItems:'center', gap:'0.4rem', background:'rgba(22,101,52,0.85)', backdropFilter:'blur(12px)', padding:'0.5rem 1.2rem', borderRadius:'var(--t-r-pill)', fontWeight:700, fontSize:'0.85rem', border:'1px solid rgba(74,173,114,0.5)', letterSpacing:'0.04em' }}>✓ Discovered</div>
                           ) : nearby ? (
-                            <div style={{ display:'inline-block', background:'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))', padding:'0.8rem 2rem', borderRadius:'30px', fontWeight:700, fontSize:'1rem', animation:'pulse 2s infinite', textTransform:'uppercase', letterSpacing:'0.08em', boxShadow:'0 4px 15px rgba(232,106,51,0.5)' }}> Tap to Discover</div>
+                            <div style={{ display:'inline-flex', alignItems:'center', gap:'0.4rem', background:'linear-gradient(135deg, var(--t-eucalyptus), #2a6e48)', padding:'0.7rem 1.75rem', borderRadius:'var(--t-r-pill)', fontWeight:700, fontSize:'0.95rem', animation:'pulse 2s infinite', textTransform:'uppercase', letterSpacing:'0.09em', boxShadow:'0 4px 18px rgba(46,125,85,0.55)' }}>▶ Tap to Discover</div>
                           ) : distance !== null ? (
-                            <div style={{ display:'inline-block', background:'rgba(74,159,216,0.2)', backdropFilter:'blur(10px)', padding:'0.6rem 1.5rem', borderRadius:'30px', fontWeight:600, fontSize:'0.95rem', border:'1px solid rgba(255,255,255,0.3)' }}>{distance}m away</div>
+                            <div style={{ display:'inline-flex', alignItems:'center', gap:'0.35rem', background:'rgba(7,30,20,0.55)', backdropFilter:'blur(12px)', padding:'0.5rem 1.2rem', borderRadius:'var(--t-r-pill)', fontWeight:600, fontSize:'0.85rem', border:'1px solid rgba(255,255,255,0.18)', color:'rgba(255,255,255,0.9)' }}>⟳ {distance}m away</div>
                           ) : (
-                            <div style={{ display:'inline-block', background:'rgba(139,90,60,0.3)', backdropFilter:'blur(10px)', padding:'0.6rem 1.5rem', borderRadius:'30px', fontWeight:600, fontSize:'0.95rem', border:'1px solid rgba(255,255,255,0.3)' }}> Locked</div>
+                            <div style={{ display:'inline-flex', alignItems:'center', gap:'0.35rem', background:'rgba(7,30,20,0.65)', backdropFilter:'blur(12px)', padding:'0.5rem 1.2rem', borderRadius:'var(--t-r-pill)', fontWeight:600, fontSize:'0.85rem', border:'1px solid rgba(255,255,255,0.12)', color:'rgba(255,255,255,0.6)' }}>🔒 Get closer</div>
                           )}
                         </div>
-                        {nearby&&!alreadyFound&&(<div style={{ position:'absolute', inset:0, border:'4px solid var(--sunset-orange)', borderRadius:'16px', animation:'pulse 2s infinite', pointerEvents:'none' }} />)}
+                        {/* Proximity ring */}
+                        {nearby&&!alreadyFound&&(<div style={{ position:'absolute', inset:0, border:'3px solid var(--t-eucalyptus)', borderRadius:'var(--t-r-xl)', animation:'pulse 2s infinite', pointerEvents:'none', boxShadow:'inset 0 0 24px rgba(46,125,85,0.25)' }} />)}
                       </div>
                     );
                   })}
@@ -5757,12 +6045,12 @@
                 )}
               </div>
             )}
-            <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)' }}>
+            <div style={{ background:'linear-gradient(135deg, var(--t-forest) 0%, var(--t-deep) 60%, var(--t-mid) 100%)', padding:'0.85rem 1rem', boxShadow:'var(--t-shadow-md)', borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
               <div style={{ maxWidth:'900px', margin:'0 auto', display:'flex', justifyContent:'center', alignItems:'center' }}>
-                <img src="images/logo.png" alt="Taronga Tracka" style={{ height:'60px', width:'auto' }} onError={(e)=>{ e.target.style.display='none'; }} />
+                <img src="images/logo.png" alt="Taronga Tracka" style={{ height:'52px', width:'auto', filter:'drop-shadow(0 2px 6px rgba(0,0,0,0.3))' }} onError={(e)=>{ e.target.style.display='none'; }} />
               </div>
             </div>
-            <div style={{ maxWidth:'900px', margin:'0 auto', padding:'3rem 2rem' }}>
+            <div style={{ maxWidth:'900px', margin:'0 auto', padding:'2rem 1.25rem 4rem' }}>
               {currentAnimal.id === 'tiger' ? (
                 <div style={{ background:'white', borderRadius:'20px', padding:'2.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)', textAlign:'center' }}>
                   <h2 className="heading-display" style={{ fontSize:'2rem', color:'var(--jungle-deep)', marginBottom:'1rem' }}>Tiger Immersion Complete</h2>
@@ -5773,7 +6061,7 @@
                   </button>
                 </div>
               ) : currentAnimal.id === 'lion' ? (
-                <div style={{ background:'white', borderRadius:'20px', padding:'2.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
+                <div style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-xl)', padding:'2rem 2.25rem', boxShadow:'var(--t-shadow-md)', border:'1px solid var(--t-stone)' }}>
                   {classStage <= 2 ? (
                     <>
                       <h2 className="heading-display" style={{ fontSize:'1.8rem', color:'var(--jungle-deep)', marginBottom:'0.6rem', textAlign:'center' }}>🦁 Why do we need to look after lions?</h2>
@@ -5847,7 +6135,7 @@
                   </button>
                 </div>
               ) : (
-                <div style={{ background:'white', borderRadius:'20px', padding:'2.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
+                <div style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-xl)', padding:'2rem 2.25rem', boxShadow:'var(--t-shadow-md)', border:'1px solid var(--t-stone)' }}>
                 {classStage <= 2 ? (
                   /* Stage 1 — simplified question preserving original concept per animal */
                   (() => {
@@ -6110,10 +6398,10 @@
                     currentAnimal.id === 'blue-mountains-bushwalk' ? 'What I heard reflects this environment because...' :
                     'Based on my observation...'
                   ) : currentAnimal.id === 'chimpanzee' ? 'I observed that...' : currentAnimal.id === 'gorilla' ? 'I noticed that the gorillas...' : currentAnimal.id === 'giraffe' ? (classStage === 3 ? 'I can see the giraffe...' : "I noticed that the giraffe's ... helps it to...") : currentAnimal.id === 'concert-lawn' ? 'The grass felt...' : currentAnimal.id === 'lemur' ? 'The lemurs are using...' : currentAnimal.id === 'dingo' ? "The dingo's fur is..." : currentAnimal.id === 'asian-water-buffalo' ? 'I can see...' : currentAnimal.id === 'sea-lion' ? 'Humans can...' : currentAnimal.id === 'blue-mountains-bushwalk' ? 'I could hear...' : 'Describe what you observe in detail...'}
-                  style={{ width:'100%', minHeight:'200px', padding:'1.5rem', borderRadius:'16px', border:'3px solid #E5E5E5', fontSize:'1.1rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', transition:'border-color 0.2s ease' }}
-                  onFocus={(e)=>e.target.style.borderColor=currentAnimal.color} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'} />
+                  style={{ width:'100%', minHeight:'200px', padding:'1.25rem 1.4rem', borderRadius:'var(--t-r-md)', border:'2px solid var(--t-stone)', fontSize:'1.05rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', transition:'border-color 0.22s ease, box-shadow 0.22s ease', lineHeight:1.65, color:'var(--t-ink)', background:'var(--t-parchment)', outline:'none' }}
+                  onFocus={e=>{ e.target.style.borderColor='var(--t-mid)'; e.target.style.boxShadow='0 0 0 3px rgba(26,82,56,0.1)'; }} onBlur={e=>{ e.target.style.borderColor='var(--t-stone)'; e.target.style.boxShadow='none'; }} />
                 {classStage <= 2 && (
-                  <div style={{ background:'#F4FAF6', border:'1px solid #C8E6D4', borderRadius:'10px', padding:'0.6rem 1rem', marginTop:'0.5rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
+                  <div style={{ background:'var(--t-foam)', border:'1px solid var(--t-mist)', borderRadius:'var(--t-r-sm)', padding:'0.6rem 1rem', marginTop:'0.6rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
                     <span style={{ fontSize:'0.85rem', color:'#555' }}>💡 Try starting with:</span>
                     <span style={{ fontSize:'0.88rem', fontWeight:600, color:'var(--jungle-deep)', fontStyle:'italic' }}>"I saw…"</span>
                   </div>
@@ -6373,8 +6661,12 @@
                     <>
                       <div style={{ marginTop:'1rem', fontSize:'1rem', color:wordCount>=minWords?'var(--jungle-light)':'#E86A33', fontWeight:600 }}>{wordCount}/{minWords} words {wordCount>=minWords?'':''}</div>
                       <button onClick={submitObservation} disabled={wordCount<minWords}
-                        style={{ width:'100%', padding:'1.5rem', borderRadius:'50px', border:'none', background:wordCount>=minWords?'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))':'#CCC', color:'white', fontSize:'1.3rem', fontWeight:700, cursor:wordCount>=minWords?'pointer':'not-allowed', transition:'all 0.3s ease', textTransform:'uppercase', letterSpacing:'0.1em', marginTop:'2rem', boxShadow:wordCount>=minWords?'0 8px 24px rgba(232,106,51,0.4)':'none' }}>
-                        {wordCount<minWords?'Write More to Continue':' Submit & Earn Badge'}
+                        style={{ width:'100%', padding:'1.1rem 2rem', borderRadius:'var(--t-r-pill)', border:'none',
+                          background:wordCount>=minWords?'linear-gradient(135deg, var(--t-eucalyptus) 0%, var(--t-mid) 100%)':'rgba(0,0,0,0.12)',
+                          color:'white', fontSize:'1.05rem', fontWeight:700, cursor:wordCount>=minWords?'pointer':'not-allowed',
+                          transition:'all 0.25s ease', textTransform:'uppercase', letterSpacing:'0.1em', marginTop:'1.75rem',
+                          boxShadow:wordCount>=minWords?'0 6px 20px rgba(26,82,56,0.4)':'none' }}>
+                        {wordCount<minWords?'Write More to Continue':'🏅 Submit & Earn Badge'}
                       </button>
                     </>
                   );
@@ -6391,7 +6683,7 @@
           <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', overflow:'auto', padding:'1rem' }}>
             <div className="collection-header-mobile" style={{ maxWidth:'900px', margin:'0 auto 2rem', display:'flex', justifyContent:'space-between', alignItems:'center', padding:'1rem' }}>
               <button className="back-btn" onClick={()=>setCurrentScreen('map')} style={{ background:'rgba(255,255,255,0.2)', border:'none', color:'white', padding:'0.6rem 1.2rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.9rem', fontWeight:600 }}> Back</button>
-              <h1 className="heading-display" style={{ fontSize:'clamp(1.8rem, 4vw, 2.5rem)', color:'white' }}>BADGE COLLECTION</h1>
+              <h1 className="taronga-title" style={{ fontSize:'clamp(1.6rem, 3.5vw, 2.2rem)', color:'white', letterSpacing:'0.05em', textShadow:'0 2px 8px rgba(0,0,0,0.3)' }}>Badge Collection</h1>
               {studentName && classCode ? (
                 <button className="submit-btn" onClick={completeActivity} disabled={activityCompleted || isSubmittingActivity}
                   style={{ background: activityCompleted ? 'rgba(46,125,85,0.5)' : 'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))', border: activityCompleted ? '1px solid rgba(255,255,255,0.3)' : 'none', color:'white', padding:'0.55rem 1rem', borderRadius:'30px', cursor: activityCompleted || isSubmittingActivity ? 'not-allowed' : 'pointer', fontSize:'0.82rem', fontWeight:700, opacity: activityCompleted || isSubmittingActivity ? 0.6 : 1, textTransform:'uppercase', letterSpacing:'0.06em', whiteSpace:'nowrap', boxShadow: activityCompleted ? 'none' : '0 4px 12px rgba(232,106,51,0.4)', transition:'all 0.2s' }}>
@@ -6404,7 +6696,7 @@
                 const earned=foundAnimals.has(animal.id);
                 const badge=badges.find(b=>b.animalId===animal.id);
                 return (
-                  <div key={animal.id} style={{ background:earned?'white':'rgba(255,255,255,0.1)', borderRadius:'16px', padding:'1.5rem', textAlign:'center', opacity:earned?1:0.4, boxShadow:earned?'0 8px 24px rgba(0,0,0,0.2)':'none' }}>
+                  <div key={animal.id} style={{ background:earned?'var(--t-chalk)':'rgba(255,255,255,0.07)', borderRadius:'var(--t-r-lg)', padding:'1.5rem', textAlign:'center', opacity:earned?1:0.45, boxShadow:earned?'var(--t-shadow-md)':'none', border:earned?'1px solid rgba(255,255,255,0.7)':'1px solid rgba(255,255,255,0.08)', transition:'transform 0.2s, box-shadow 0.2s' }}>
                     <div style={{ width:'150px', height:'150px', margin:'0 auto 1.2rem', backgroundImage:earned?`url(images/badge-${animal.id}.png)`:'none', backgroundColor:earned?'transparent':'rgba(255,255,255,0.15)', backgroundSize:'contain', backgroundRepeat:'no-repeat', backgroundPosition:'center', borderRadius:'20px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'2.5rem' }}>
                       {!earned&&''}
                     </div>
@@ -6446,20 +6738,30 @@
         if (!lastBadge) return <div style={{ padding:'2rem' }}>No badge data found.</div>;
         return (
           <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, var(--sunset-orange) 0%, var(--earth-clay) 50%, var(--jungle-mid) 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'clamp(1rem, 5vw, 2rem)', overflow:'hidden' }}>
-            <div className="animate-scale-in" style={{ background:'white', borderRadius:'24px', padding:'clamp(1.5rem, 4vh, 2.5rem)', maxWidth:'500px', width:'100%', textAlign:'center', boxShadow:'0 20px 60px rgba(0,0,0,0.3)' }}>
-              <div style={{ height:'clamp(180px, 40vh, 260px)', width:'clamp(180px, 40vh, 260px)', margin:'0 auto clamp(1.5rem, 3vh, 2rem)', backgroundImage:`url(images/badge-${lastBadge.animalId}.png)`, backgroundSize:'contain', backgroundRepeat:'no-repeat', backgroundPosition:'center' }} />
-              <h2 className="heading-display" style={{ fontSize:'clamp(1.8rem, 4vh, 2.5rem)', color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>BADGE EARNED!</h2>
-              <p className="serif-accent" style={{ fontSize:'clamp(1rem, 2.5vh, 1.3rem)', color:'var(--sunset-orange)', marginBottom:'clamp(0.8rem, 1.5vh, 1rem)' }}>{lastBadge.animal}</p>
-              <div style={{ background:'linear-gradient(135deg, #FFF9E6 0%, #FFE6B3 100%)', borderRadius:'16px', padding:'clamp(1rem, 2vh, 1.5rem)', marginBottom:'clamp(0.8rem, 1.5vh, 1rem)' }}>
-                <div style={{ fontSize:'clamp(2rem, 5vh, 3rem)', fontWeight:700, color:'var(--earth-clay)', marginBottom:'0.3rem' }}>+{calculateAnimalPoints(lastBadge)}</div>
-                <div style={{ color:'#666', fontSize:'clamp(0.8rem, 1.8vh, 0.95rem)' }}>Points</div>
+            <div className="animate-scale-in" style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-xl)', padding:'clamp(1.5rem, 4vh, 2.5rem)', maxWidth:'460px', width:'100%', textAlign:'center', boxShadow:'var(--t-shadow-xl)', border:'1px solid rgba(255,255,255,0.8)' }}>
+              {/* Badge image */}
+              <div style={{ height:'clamp(160px, 38vh, 240px)', width:'clamp(160px, 38vh, 240px)', margin:'0 auto clamp(1.2rem, 2.5vh, 1.75rem)',
+                backgroundImage:`url(images/badge-${lastBadge.animalId}.png)`, backgroundSize:'contain', backgroundRepeat:'no-repeat', backgroundPosition:'center',
+                filter:'drop-shadow(0 8px 24px rgba(7,30,20,0.22))' }} />
+              <h2 className="taronga-title" style={{ fontSize:'clamp(1.8rem, 4vh, 2.4rem)', color:'var(--t-deep)', marginBottom:'0.2rem', letterSpacing:'0.04em' }}>Badge Earned</h2>
+              <p className="serif-accent" style={{ fontSize:'clamp(1rem, 2.2vh, 1.2rem)', color:'var(--t-sage)', marginBottom:'clamp(0.9rem, 1.8vh, 1.2rem)' }}>{lastBadge.animal}</p>
+              {/* Points reward */}
+              <div style={{ background:'linear-gradient(135deg, #FBF4E3, #F5E5B8)', borderRadius:'var(--t-r-md)', padding:'clamp(0.9rem, 1.8vh, 1.3rem)', marginBottom:'clamp(0.7rem, 1.4vh, 1rem)', border:'1px solid rgba(201,169,110,0.3)' }}>
+                <div style={{ fontSize:'clamp(2rem, 4.5vh, 2.8rem)', fontWeight:800, color:'var(--earth-clay)', marginBottom:'0.15rem', letterSpacing:'-0.02em' }}>+{calculateAnimalPoints(lastBadge)}</div>
+                <div style={{ color:'var(--t-slate)', fontSize:'clamp(0.78rem, 1.6vh, 0.9rem)', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.06em' }}>Points</div>
               </div>
-              <div style={{ background:'#F5F3EE', borderRadius:'16px', padding:'clamp(1rem, 2vh, 1.5rem)', marginBottom:'clamp(0.8rem, 1.5vh, 1rem)' }}>
-                <div style={{ color:'#666', fontSize:'clamp(0.8rem, 1.8vh, 0.9rem)', marginBottom:'0.3rem' }}>Total Progress</div>
-                <div style={{ fontSize:'clamp(1.3rem, 2.8vh, 1.8rem)', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>{foundAnimals.size}/{animalsToRender.length} Animals</div>
-                <div style={{ fontSize:'clamp(1.2rem, 2.5vh, 1.5rem)', fontWeight:700, color:'var(--sunset-orange)' }}> {totalPoints} Points</div>
+              {/* Progress card */}
+              <div style={{ background:'var(--t-foam)', borderRadius:'var(--t-r-md)', padding:'clamp(0.9rem, 1.8vh, 1.2rem)', marginBottom:'clamp(0.9rem, 1.8vh, 1.3rem)', border:'1px solid var(--t-mist)' }}>
+                <div style={{ color:'var(--t-slate)', fontSize:'clamp(0.75rem, 1.5vh, 0.85rem)', marginBottom:'0.4rem', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.06em' }}>Total Progress</div>
+                <div style={{ fontSize:'clamp(1.2rem, 2.5vh, 1.6rem)', fontWeight:700, color:'var(--t-deep)', marginBottom:'0.2rem' }}>{foundAnimals.size}/{animalsToRender.length} Animals</div>
+                <div style={{ fontSize:'clamp(1.1rem, 2.2vh, 1.4rem)', fontWeight:700, color:'var(--earth-clay)' }}>{totalPoints} Points</div>
               </div>
-              <button onClick={()=>setCurrentScreen('map')} style={{ background:'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))', color:'white', border:'none', padding:'clamp(0.8rem, 1.5vh, 1rem) 2rem', fontSize:'clamp(1rem, 2vh, 1.2rem)', fontWeight:700, borderRadius:'50px', cursor:'pointer', textTransform:'uppercase' }}>Continue Exploring</button>
+              <button onClick={()=>setCurrentScreen('map')}
+                style={{ background:'linear-gradient(135deg, var(--t-mid), var(--t-eucalyptus))', color:'white', border:'none', padding:'clamp(0.8rem, 1.6vh, 1rem) 2.5rem', fontSize:'clamp(0.95rem, 1.9vh, 1.1rem)', fontWeight:700, borderRadius:'var(--t-r-pill)', cursor:'pointer', textTransform:'uppercase', letterSpacing:'0.09em', boxShadow:'0 6px 20px rgba(26,82,56,0.4)', transition:'all 0.2s' }}
+                onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 10px 28px rgba(26,82,56,0.5)'; }}
+                onMouseLeave={e=>{ e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='0 6px 20px rgba(26,82,56,0.4)'; }}>
+                Continue Exploring
+              </button>
             </div>
           </div>
         );
@@ -6475,7 +6777,7 @@
 
             <div className="animate-scale-in" style={{ position:'relative', zIndex:10, background:'white', borderRadius:'28px', padding:'clamp(1.8rem, 5vh, 2.8rem)', maxWidth:'480px', width:'100%', textAlign:'center', boxShadow:'0 24px 64px rgba(0,0,0,0.35)' }}>
               <div style={{ width:'80px', height:'80px', borderRadius:'50%', background:'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))', margin:'0 auto 1.2rem', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'2.4rem', boxShadow:'0 6px 20px rgba(26,82,56,0.4)' }}><img src="images/logo.png" alt="Taronga Tracka" style={{ width:'60%', height:'60%', objectFit:'contain' }} /></div>
-              <p className="serif-accent" style={{ color:'var(--jungle-light)', fontSize:'clamp(0.95rem, 2.2vh, 1.15rem)', marginBottom:'1.4rem' }}>Your results have been saved</p>
+              <p className="serif-accent" style={{ color:'var(--t-sage)', fontSize:'clamp(0.92rem, 2vh, 1.1rem)', marginBottom:'1.4rem' }}>Your results have been saved</p>
 
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'0.7rem', marginBottom:'1.4rem' }}>
                 {[
@@ -6517,40 +6819,39 @@
 
       if (currentScreen === 'schoolEntry') {
         return (
-          <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'clamp(1rem, 3vw, 2rem)', overflow:'auto' }}>
-            <div style={{ maxWidth:'900px', width:'100%', display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))', gap:'1.5rem' }}>
+          <div style={{ position:'fixed', inset:0, background:'linear-gradient(160deg, var(--t-forest) 0%, var(--t-deep) 55%, var(--t-mid) 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'clamp(1rem, 3vw, 2rem)', overflow:'auto' }}>
+            <div style={{ maxWidth:'860px', width:'100%', display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))', gap:'1.25rem' }}>
               {/* Student Join Card */}
-              <div className="animate-scale-in" onClick={()=>setCurrentScreen('studentJoin')} style={{ background:'white', borderRadius:'24px', padding:'clamp(2rem, 4vh, 2.5rem)', boxShadow:'0 20px 60px rgba(0,0,0,0.3)', cursor:'pointer', transition:'transform 0.2s, boxShadow 0.2s', animationDelay:'0.1s' }}
-                onMouseEnter={(e)=>{ e.currentTarget.style.transform='translateY(-4px)'; e.currentTarget.style.boxShadow='0 24px 70px rgba(0,0,0,0.35)'; }}
-                onMouseLeave={(e)=>{ e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='0 20px 60px rgba(0,0,0,0.3)'; }}>
+              <div className="animate-scale-in" onClick={()=>setCurrentScreen('studentJoin')}
+                style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-xl)', padding:'clamp(2rem, 4vh, 2.5rem)', boxShadow:'var(--t-shadow-xl)', cursor:'pointer', transition:'transform 0.22s ease, box-shadow 0.22s ease', animationDelay:'0.1s', border:'1px solid rgba(255,255,255,0.8)' }}
+                onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-5px)'; e.currentTarget.style.boxShadow='0 28px 72px rgba(7,30,20,0.28)'; }}
+                onMouseLeave={e=>{ e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='var(--t-shadow-xl)'; }}>
                 <div style={{ textAlign:'center' }}>
-                  <div style={{ fontSize:'3.5rem', marginBottom:'1rem' }}></div>
-                  <h2 className="heading-display" style={{ fontSize:'clamp(1.8rem, 4vh, 2.2rem)', color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>Student Join</h2>
-                  <p style={{ color:'#666', fontSize:'0.95rem', lineHeight:'1.5' }}>Have a class code from your teacher? Join your class adventure here.</p>
-                  <div style={{ marginTop:'1.5rem', padding:'0.8rem', background:'linear-gradient(135deg, var(--sunset-orange) 0%, var(--earth-clay) 100%)', color:'white', borderRadius:'50px', fontWeight:700, fontSize:'0.95rem', textTransform:'uppercase', letterSpacing:'0.08em' }}>
-                    Tap to Join 
-                  </div>
+                  <div style={{ width:'64px', height:'64px', borderRadius:'50%', background:'linear-gradient(135deg, var(--t-eucalyptus), var(--t-mid))', margin:'0 auto 1rem', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.8rem', boxShadow:'0 4px 16px rgba(46,125,85,0.35)' }}>🎒</div>
+                  <h2 className="taronga-title" style={{ fontSize:'clamp(1.6rem, 3.5vh, 2rem)', color:'var(--t-deep)', marginBottom:'0.5rem', letterSpacing:'0.04em' }}>Student Join</h2>
+                  <p style={{ color:'var(--t-slate)', fontSize:'0.92rem', lineHeight:1.6, marginBottom:'1.5rem' }}>Have a class code from your teacher? Join your class adventure here.</p>
+                  <div style={{ padding:'0.75rem 1rem', background:'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))', color:'white', borderRadius:'var(--t-r-pill)', fontWeight:700, fontSize:'0.88rem', textTransform:'uppercase', letterSpacing:'0.09em', boxShadow:'0 4px 14px rgba(180,90,40,0.35)' }}>Tap to Join →</div>
                 </div>
               </div>
 
               {/* Teacher Access Card */}
-              <div className="animate-scale-in" onClick={()=>setCurrentScreen('teacherLogin')} style={{ background:'white', borderRadius:'24px', padding:'clamp(2rem, 4vh, 2.5rem)', boxShadow:'0 20px 60px rgba(0,0,0,0.3)', cursor:'pointer', transition:'transform 0.2s, boxShadow 0.2s', animationDelay:'0.2s' }}
-                onMouseEnter={(e)=>{ e.currentTarget.style.transform='translateY(-4px)'; e.currentTarget.style.boxShadow='0 24px 70px rgba(0,0,0,0.35)'; }}
-                onMouseLeave={(e)=>{ e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='0 20px 60px rgba(0,0,0,0.3)'; }}>
+              <div className="animate-scale-in" onClick={()=>setCurrentScreen('teacherLogin')}
+                style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-xl)', padding:'clamp(2rem, 4vh, 2.5rem)', boxShadow:'var(--t-shadow-xl)', cursor:'pointer', transition:'transform 0.22s ease, box-shadow 0.22s ease', animationDelay:'0.18s', border:'1px solid rgba(255,255,255,0.8)' }}
+                onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-5px)'; e.currentTarget.style.boxShadow='0 28px 72px rgba(7,30,20,0.28)'; }}
+                onMouseLeave={e=>{ e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='var(--t-shadow-xl)'; }}>
                 <div style={{ textAlign:'center' }}>
-                  <div style={{ fontSize:'3.5rem', marginBottom:'1rem' }}></div>
-                  <h2 className="heading-display" style={{ fontSize:'clamp(1.8rem, 4vh, 2.2rem)', color:'var(--jungle-deep)', marginBottom:'0.5rem' }}>Teacher Access</h2>
-                  <p style={{ color:'#666', fontSize:'0.95rem', lineHeight:'1.5' }}>Create and manage classes, track student progress, and view analytics.</p>
-                  <div style={{ marginTop:'1.5rem', padding:'0.8rem', background:'linear-gradient(135deg, #1A5238, #2E7D55)', color:'white', borderRadius:'50px', fontWeight:700, fontSize:'0.95rem', textTransform:'uppercase', letterSpacing:'0.08em' }}>
-                    Tap to Access 
-                  </div>
+                  <div style={{ width:'64px', height:'64px', borderRadius:'50%', background:'linear-gradient(135deg, var(--t-mid), var(--t-deep))', margin:'0 auto 1rem', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.8rem', boxShadow:'0 4px 16px rgba(10,47,31,0.35)' }}>📋</div>
+                  <h2 className="taronga-title" style={{ fontSize:'clamp(1.6rem, 3.5vh, 2rem)', color:'var(--t-deep)', marginBottom:'0.5rem', letterSpacing:'0.04em' }}>Teacher Access</h2>
+                  <p style={{ color:'var(--t-slate)', fontSize:'0.92rem', lineHeight:1.6, marginBottom:'1.5rem' }}>Create and manage classes, track student progress, and view analytics.</p>
+                  <div style={{ padding:'0.75rem 1rem', background:'linear-gradient(135deg, var(--t-mid), var(--t-deep))', color:'white', borderRadius:'var(--t-r-pill)', fontWeight:700, fontSize:'0.88rem', textTransform:'uppercase', letterSpacing:'0.09em', boxShadow:'0 4px 14px rgba(10,47,31,0.3)' }}>Tap to Access →</div>
                 </div>
               </div>
             </div>
 
-            {/* Back to Home */}
-            <button onClick={()=>setCurrentScreen('home')} style={{ position:'absolute', top:'1.5rem', left:'1.5rem', background:'rgba(255,255,255,0.2)', border:'1px solid rgba(255,255,255,0.3)', color:'white', padding:'0.5rem 1rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.85rem', fontWeight:600, backdropFilter:'blur(6px)' }}>
-               Back
+            <button onClick={()=>setCurrentScreen('home')} style={{ position:'absolute', top:'1.25rem', left:'1.25rem', background:'rgba(255,255,255,0.12)', border:'1px solid rgba(255,255,255,0.22)', color:'white', padding:'0.45rem 1rem', borderRadius:'var(--t-r-pill)', cursor:'pointer', fontSize:'0.82rem', fontWeight:600, backdropFilter:'blur(10px)', transition:'background 0.18s' }}
+              onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.22)'}
+              onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,0.12)'}>
+              ← Back
             </button>
           </div>
         );
@@ -6619,36 +6920,39 @@
           }
         };
         return (
-          <div style={{ position:'fixed', inset:0, background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'clamp(1rem, 5vw, 2rem)', overflow:'auto' }}>
-            <div className="animate-scale-in" style={{ background:'white', borderRadius:'24px', padding:'clamp(1.5rem, 4vh, 2.5rem)', maxWidth:'420px', width:'100%', boxShadow:'0 20px 60px rgba(0,0,0,0.3)' }}>
+          <div style={{ position:'fixed', inset:0, background:'linear-gradient(160deg, var(--t-forest) 0%, var(--t-deep) 55%, var(--t-mid) 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'clamp(1rem, 5vw, 2rem)', overflow:'auto' }}>
+            <div className="animate-scale-in" style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-xl)', padding:'clamp(1.75rem, 4vh, 2.5rem)', maxWidth:'420px', width:'100%', boxShadow:'var(--t-shadow-xl)', border:'1px solid rgba(255,255,255,0.8)' }}>
               <div style={{ textAlign:'center', marginBottom:'1.5rem' }}>
-                <div style={{ fontSize:'2.8rem', marginBottom:'0.4rem' }}></div>
-                <h2 className="heading-display" style={{ fontSize:'clamp(1.6rem, 4vh, 2rem)', color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Student Join</h2>
-                <p style={{ color:'#666', fontSize:'0.9rem' }}>Enter your class code and first name to join</p>
+                <div style={{ width:'56px', height:'56px', borderRadius:'50%', background:'linear-gradient(135deg, var(--t-eucalyptus), var(--t-mid))', margin:'0 auto 0.75rem', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.5rem', boxShadow:'0 4px 14px rgba(46,125,85,0.32)' }}>🎒</div>
+                <h2 className="taronga-title" style={{ fontSize:'clamp(1.5rem, 3.5vh, 1.9rem)', color:'var(--t-deep)', marginBottom:'0.3rem', letterSpacing:'0.04em' }}>Student Join</h2>
+                <p style={{ color:'var(--t-slate)', fontSize:'0.88rem', lineHeight:1.5 }}>Enter your class code and first name to join</p>
               </div>
-              <label style={{ display:'block', fontSize:'0.82rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.35rem' }}>Class Code</label>
-              <input type="text" value={classCode} onChange={(e)=>{ setClassCode(e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6)); setStudentJoinError(''); }} placeholder="Enter 6-character code (e.g. A7K2Q9)"
-                style={{ width:'100%', padding:'0.75rem 1rem', borderRadius:'12px', border:`2px solid ${studentJoinError ? '#ef4444' : lookedUpClass ? '#22c55e' : '#E5E5E5'}`, fontSize:'1.15rem', fontFamily:'monospace', fontWeight:700, marginBottom: lookedUpClass || studentJoinError ? '0.4rem' : '1rem', boxSizing:'border-box', transition:'border-color 0.2s', letterSpacing:'0.2em', textAlign:'center' }}
-                onFocus={(e)=>{ if(!studentJoinError && !lookedUpClass) e.target.style.borderColor='var(--jungle-mid)'; }} onBlur={(e)=>{ if(!studentJoinError && !lookedUpClass) e.target.style.borderColor='#E5E5E5'; }} />
+              <label style={{ display:'block', fontSize:'0.78rem', fontWeight:700, color:'var(--t-charcoal)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.4rem' }}>Class Code</label>
+              <input type="text" value={classCode} onChange={(e)=>{ setClassCode(e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6)); setStudentJoinError(''); }} placeholder="e.g. A7K2Q9"
+                style={{ width:'100%', padding:'0.8rem 1rem', borderRadius:'var(--t-r-sm)', border:`2px solid ${studentJoinError ? '#ef4444' : lookedUpClass ? '#22c55e' : 'var(--t-stone)'}`, fontSize:'1.2rem', fontFamily:'monospace', fontWeight:700, marginBottom: lookedUpClass || studentJoinError ? '0.4rem' : '1rem', boxSizing:'border-box', transition:'border-color 0.2s', letterSpacing:'0.25em', textAlign:'center', outline:'none', color:'var(--t-ink)', background:'var(--t-parchment)' }}
+                onFocus={e=>{ if(!studentJoinError && !lookedUpClass) e.target.style.borderColor='var(--t-mid)'; }} onBlur={e=>{ if(!studentJoinError && !lookedUpClass) e.target.style.borderColor='var(--t-stone)'; }} />
               {studentJoinError && (
-                <div style={{ background:'#FEF2F2', border:'1px solid #FECACA', borderRadius:'10px', padding:'0.55rem 0.75rem', marginBottom:'0.8rem' }}>
-                  <p style={{ color:'#DC2626', fontSize:'0.8rem', fontWeight:600 }}> {studentJoinError}</p>
+                <div style={{ background:'var(--t-danger-bg)', border:'1px solid #FECACA', borderRadius:'var(--t-r-xs)', padding:'0.55rem 0.85rem', marginBottom:'0.85rem', display:'flex', alignItems:'center', gap:'0.4rem' }}>
+                  <p style={{ color:'var(--t-danger)', fontSize:'0.8rem', fontWeight:600, margin:0 }}>⚠ {studentJoinError}</p>
                 </div>
               )}
               {lookedUpClass && !studentJoinError && (
-                <div style={{ background:'#F0FDF4', border:'1px solid #BBF7D0', borderRadius:'10px', padding:'0.55rem 0.75rem', marginBottom:'0.8rem' }}>
-                  <p style={{ color:'#16A34A', fontSize:'0.8rem', fontWeight:600 }}> {lookedUpClass.className} — {lookedUpClass.yearGroup}</p>
+                <div style={{ background:'var(--t-success-bg)', border:'1px solid #BBF7D0', borderRadius:'var(--t-r-xs)', padding:'0.55rem 0.85rem', marginBottom:'0.85rem', display:'flex', alignItems:'center', gap:'0.4rem' }}>
+                  <p style={{ color:'var(--t-success)', fontSize:'0.8rem', fontWeight:600, margin:0 }}>✓ {lookedUpClass.className} — {lookedUpClass.yearGroup}</p>
                 </div>
               )}
-              <label style={{ display:'block', fontSize:'0.82rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.35rem' }}>First Name</label>
+              <label style={{ display:'block', fontSize:'0.78rem', fontWeight:700, color:'var(--t-charcoal)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.4rem' }}>First Name</label>
               <input type="text" value={studentName} onChange={(e)=>setStudentName(e.target.value)} placeholder="e.g. Alex"
-                style={{ width:'100%', padding:'0.75rem 1rem', borderRadius:'12px', border:'2px solid #E5E5E5', fontSize:'1rem', fontFamily:'DM Sans, sans-serif', marginBottom:'1.5rem', boxSizing:'border-box', transition:'border-color 0.2s' }}
-                onFocus={(e)=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'} />
+                style={{ width:'100%', padding:'0.8rem 1rem', borderRadius:'var(--t-r-sm)', border:'2px solid var(--t-stone)', fontSize:'1rem', fontFamily:'DM Sans, sans-serif', marginBottom:'1.5rem', boxSizing:'border-box', transition:'border-color 0.2s', outline:'none', color:'var(--t-ink)', background:'var(--t-parchment)' }}
+                onFocus={e=>e.target.style.borderColor='var(--t-mid)'} onBlur={e=>e.target.style.borderColor='var(--t-stone)'} />
               <button onClick={handleJoin} disabled={!classCode.trim() || !studentName.trim()}
-                style={{ width:'100%', padding:'0.85rem', borderRadius:'50px', border:'none', background:classCode.trim()&&studentName.trim()?'linear-gradient(135deg, var(--sunset-orange), var(--earth-clay))':'#CCC', color:'white', fontSize:'1.05rem', fontWeight:700, cursor:classCode.trim()&&studentName.trim()?'pointer':'not-allowed', textTransform:'uppercase', letterSpacing:'0.08em', transition:'all 0.3s ease' }}>
-                Join
+                style={{ width:'100%', padding:'0.9rem', borderRadius:'var(--t-r-pill)', border:'none', background:classCode.trim()&&studentName.trim()?'linear-gradient(135deg, var(--t-eucalyptus), var(--t-mid))':'rgba(0,0,0,0.1)', color:'white', fontSize:'1rem', fontWeight:700, cursor:classCode.trim()&&studentName.trim()?'pointer':'not-allowed', textTransform:'uppercase', letterSpacing:'0.09em', transition:'all 0.22s ease', boxShadow:classCode.trim()&&studentName.trim()?'0 4px 16px rgba(26,82,56,0.35)':'none' }}>
+                Join the Expedition
               </button>
-              <button onClick={()=>{ setStudentJoinError(''); setCurrentScreen('home'); }} style={{ display:'block', width:'100%', background:'none', border:'none', color:'#999', fontSize:'0.82rem', cursor:'pointer', marginTop:'1rem', padding:'0.4rem' }}> Back</button>
+              <button onClick={()=>{ setStudentJoinError(''); setCurrentScreen('home'); }} style={{ display:'block', width:'100%', background:'none', border:'none', color:'var(--t-ash)', fontSize:'0.82rem', cursor:'pointer', marginTop:'0.85rem', padding:'0.4rem', transition:'color 0.18s' }}
+                onMouseEnter={e=>e.currentTarget.style.color='var(--t-slate)'} onMouseLeave={e=>e.currentTarget.style.color='var(--t-ash)'}>
+                ← Back
+              </button>
             </div>
           </div>
         );
@@ -7661,7 +7965,7 @@
                     </div>
 
                     {/* Resource List */}
-                    <div style={{ background:'white', borderRadius:'16px', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', overflow:'hidden' }}>
+                    <div style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-lg)', boxShadow:'var(--t-shadow-sm)', overflow:'hidden', border:'1px solid var(--t-stone)' }}>
                       <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr 1.5fr 0.8fr 1fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
                         {['Title','Stage','Topics','Status','Actions'].map(h => (
                           <div key={h} style={{ color:'rgba(255,255,255,0.8)', fontSize:'0.72rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>{h}</div>
@@ -7996,8 +8300,8 @@
 
         return (
           <>
-          <div style={{ position:'fixed', inset:0, background:'var(--mist-light)', display:'flex', flexDirection:'column' }}>
-            <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1rem 1.5rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', flexShrink:0 }}>
+          <div style={{ position:'fixed', inset:0, background:'var(--t-canvas)', display:'flex', flexDirection:'column' }}>
+            <div style={{ background:'linear-gradient(135deg, var(--t-forest) 0%, var(--t-deep) 60%, var(--t-mid) 100%)', padding:'0.85rem 1.5rem', boxShadow:'var(--t-shadow-md)', flexShrink:0, borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
               <div style={{ maxWidth:'1200px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                 <div style={{ display:'flex', alignItems:'center', gap:'0.7rem' }}>
                   <button onClick={()=>{ setSelectedAdminClass(null); setCurrentScreen('adminDashboard'); }} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', width:'34px', height:'34px', borderRadius:'50%', cursor:'pointer', fontSize:'1.1rem', display:'flex', alignItems:'center', justifyContent:'center' }}></button>
@@ -8321,33 +8625,34 @@
       if (currentScreen === 'teacherDashboard') {
         const hasRecommendations = recommendationsByClass && Object.keys(recommendationsByClass).length > 0;
         return (
-          <div style={{ position:'fixed', inset:0, background:'var(--mist-light)', display:'flex', flexDirection:'column' }}>
-            <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1rem 1.5rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0 }}>
-              <div style={{ display:'flex', alignItems:'center', gap:'0.8rem' }}>
-                <img src="images/logo.png" alt="Taronga Tracka" style={{ height:'45px', width:'auto' }} onError={(e)=>{ e.target.style.display='none'; }} />
+          <div style={{ position:'fixed', inset:0, background:'var(--t-canvas)', display:'flex', flexDirection:'column' }}>
+            <div style={{ background:'linear-gradient(135deg, var(--t-forest) 0%, var(--t-deep) 60%, var(--t-mid) 100%)', padding:'0.85rem 1.5rem', boxShadow:'var(--t-shadow-md)', display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0, borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:'0.75rem' }}>
+                <img src="images/logo.png" alt="Taronga Tracka" style={{ height:'40px', width:'auto', filter:'drop-shadow(0 2px 6px rgba(0,0,0,0.3))' }} onError={(e)=>{ e.target.style.display='none'; }} />
                 <div>
-                  <h1 className="heading-display" style={{ fontSize:'clamp(1.2rem, 3vw, 1.6rem)', color:'white', lineHeight:1.2 }}>Teacher Dashboard</h1>
-                  <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.78rem' }}>{teacherEmail}</p>
+                  <h1 className="taronga-title" style={{ fontSize:'clamp(1.1rem, 2.5vw, 1.4rem)', color:'white', lineHeight:1.2, letterSpacing:'0.04em' }}>Teacher Dashboard</h1>
+                  <p style={{ color:'rgba(255,255,255,0.6)', fontSize:'0.75rem', fontWeight:500 }}>{teacherEmail}</p>
                 </div>
               </div>
-              <button onClick={()=>{ setTeacherEmail(''); setCurrentScreen('home'); }} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', padding:'0.45rem 0.9rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.8rem', fontWeight:600 }}>
+              <button onClick={()=>{ setTeacherEmail(''); setCurrentScreen('home'); }} style={{ background:'rgba(255,255,255,0.1)', border:'1px solid rgba(255,255,255,0.2)', color:'white', padding:'0.4rem 0.85rem', borderRadius:'var(--t-r-pill)', cursor:'pointer', fontSize:'0.78rem', fontWeight:600, transition:'background 0.18s' }}
+                onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.2)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,0.1)'}>
                 Sign Out
               </button>
             </div>
             <div style={{ flex:1, overflowY:'auto', padding:'1.5rem' }}>
               <div style={{ maxWidth:'560px', margin:'0 auto' }}>
-                <div className="animate-scale-in" style={{ background:'white', borderRadius:'20px', padding:'1.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)', marginBottom:'1.5rem' }}>
-                  <h2 className="heading-display" style={{ fontSize:'1.4rem', color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Create a Class</h2>
+                <div className="animate-scale-in" style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-xl)', padding:'1.5rem', boxShadow:'var(--t-shadow-md)', marginBottom:'1.5rem', border:'1px solid var(--t-stone)' }}>
+                  <h2 className="section-title" style={{ fontSize:'1.2rem', marginBottom:'0.3rem' }}>Create a Class</h2>
                   <p style={{ color:'#666', fontSize:'0.82rem', marginBottom:'1.2rem' }}>Students will use the generated class code to join.</p>
 
                   <label style={{ display:'block', fontSize:'0.82rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>School Name</label>
                   <input type="text" value={newSchoolName} onChange={(e)=>setNewSchoolName(e.target.value)} placeholder="e.g. Campbelltown Public School"
-                    style={{ width:'100%', padding:'0.7rem 0.9rem', borderRadius:'12px', border:'2px solid #E5E5E5', fontSize:'0.95rem', fontFamily:'DM Sans, sans-serif', marginBottom:'0.9rem', boxSizing:'border-box', transition:'border-color 0.2s' }}
+                    style={{ width:'100%', padding:'0.7rem 0.9rem', borderRadius:'var(--t-r-sm)', border:'2px solid var(--t-stone)', fontSize:'0.92rem', fontFamily:'DM Sans, sans-serif', marginBottom:'0.9rem', boxSizing:'border-box', transition:'border-color 0.2s', background:'var(--t-parchment)', color:'var(--t-ink)', outline:'none' }}
                     onFocus={(e)=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'} />
 
                   <label style={{ display:'block', fontSize:'0.82rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>NSW Stage</label>
                   <select value={newClassStage} onChange={(e) => setNewClassStage(Number(e.target.value))}
-                    style={{ width:'100%', padding:'0.7rem 0.9rem', borderRadius:'12px', border:'2px solid #E5E5E5', fontSize:'0.95rem', fontFamily:'DM Sans, sans-serif', marginBottom:'0.9rem', background:'white', color:'var(--jungle-deep)', appearance:'auto', cursor:'pointer', transition:'border-color 0.2s' }}
+                    style={{ width:'100%', padding:'0.7rem 0.9rem', borderRadius:'var(--t-r-sm)', border:'2px solid var(--t-stone)', fontSize:'0.92rem', fontFamily:'DM Sans, sans-serif', marginBottom:'0.9rem', background:'var(--t-parchment)', color:'var(--t-ink)', appearance:'auto', cursor:'pointer', transition:'border-color 0.2s', outline:'none' }}
                     onFocus={(e)=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'}>
                     <option value={1}>Stage 1 (K–2)</option>
                     <option value={2}>Stage 2 (3–4)</option>
@@ -8367,7 +8672,7 @@
                     value={accessCodeInput}
                     onChange={(e) => setAccessCodeInput(e.target.value)}
                     autoComplete="off"
-                    style={{ padding:'0.7rem 0.9rem', marginBottom:'1.2rem', width:'100%', borderRadius:'12px', border:'2px solid #E5E5E5', fontSize:'0.95rem', fontFamily:'DM Sans, sans-serif', boxSizing:'border-box', transition:'border-color 0.2s' }}
+                    style={{ padding:'0.7rem 0.9rem', marginBottom:'1.2rem', width:'100%', borderRadius:'var(--t-r-sm)', border:'2px solid var(--t-stone)', fontSize:'0.92rem', fontFamily:'DM Sans, sans-serif', boxSizing:'border-box', transition:'border-color 0.2s', background:'var(--t-parchment)', color:'var(--t-ink)', outline:'none' }}
                     onFocus={(e)=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={(e)=>e.target.style.borderColor='#E5E5E5'}
                   />
 
@@ -8396,19 +8701,19 @@
                 </div>
 
                 <div>
-                  <h3 className="heading-display" style={{ fontSize:'1.1rem', color:'var(--jungle-deep)', marginBottom:'0.7rem' }}>
+                  <h3 className="section-title" style={{ fontSize:'1rem', marginBottom:'0.65rem', letterSpacing:'-0.01em' }}>
                     Your Classes <span style={{ fontFamily:'DM Sans, sans-serif', fontWeight:600, fontSize:'0.78rem', color:'var(--jungle-light)', textTransform:'none', letterSpacing:0 }}>({teacherClasses.filter(c => c.teacherEmail === teacherEmail && !c.archived).length})</span>
                   </h3>
                   {teacherClasses.filter(c => c.teacherEmail === teacherEmail && !c.archived).length === 0 ? (
-                    <div style={{ background:'#F5F3EE', borderRadius:'14px', padding:'1.2rem', textAlign:'center' }}>
+                    <div style={{ background:'var(--t-foam)', borderRadius:'var(--t-r-md)', padding:'1.2rem', textAlign:'center', border:'1px solid var(--t-mist)' }}>
                       <p style={{ color:'#999', fontSize:'0.85rem', fontStyle:'italic' }}>No classes yet. Create one above to get started.</p>
                     </div>
                   ) : (
                     <div style={{ display:'flex', flexDirection:'column', gap:'0.7rem' }}>
                       {teacherClasses.filter(c => c.teacherEmail === teacherEmail && !c.archived).map((cls, i) => (
-                        <div key={cls.classCode} onClick={()=>{ setSelectedClass(cls.classCode); setCurrentScreen('classDetails'); }} className="animate-fade-in-up" style={{ background:'white', borderRadius:'14px', padding:'1rem 1.2rem', boxShadow:'0 4px 12px rgba(0,0,0,0.07)', display:'flex', justifyContent:'space-between', alignItems:'center', animationDelay:`${i*0.06}s`, cursor:'pointer', transition:'box-shadow 0.2s, transform 0.2s' }}
-                          onMouseEnter={(e)=>{ e.currentTarget.style.boxShadow='0 8px 24px rgba(0,0,0,0.13)'; e.currentTarget.style.transform='translateY(-2px)'; }}
-                          onMouseLeave={(e)=>{ e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,0.07)'; e.currentTarget.style.transform='translateY(0)'; }}>
+                        <div key={cls.classCode} onClick={()=>{ setSelectedClass(cls.classCode); setCurrentScreen('classDetails'); }} className="animate-fade-in-up" style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-md)', padding:'0.95rem 1.2rem', boxShadow:'var(--t-shadow-xs)', border:'1px solid var(--t-stone)', display:'flex', justifyContent:'space-between', alignItems:'center', animationDelay:`${i*0.06}s`, cursor:'pointer', transition:'box-shadow 0.2s, transform 0.2s, border-color 0.2s' }}
+                          onMouseEnter={(e)=>{ e.currentTarget.style.boxShadow='var(--t-shadow-md)'; e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.borderColor='var(--t-mist)'; }}
+                          onMouseLeave={(e)=>{ e.currentTarget.style.boxShadow='var(--t-shadow-xs)'; e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.borderColor='var(--t-stone)'; }}>
                           <div>
                             <p style={{ fontWeight:700, color:'var(--jungle-deep)', fontSize:'0.95rem', marginBottom:'0.15rem' }}>{cls.className}</p>
                             {cls.schoolName && (
@@ -8535,180 +8840,224 @@
         const allTopics     = [...new Set(teacherResources.flatMap(r => r.topics    || []))].sort();
         const allFocusAreas = [...new Set(teacherResources.flatMap(r => r.focusAreas|| []))].sort();
 
-        const selectStyle = { padding:'0.5rem 0.75rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', fontSize:'0.82rem', fontFamily:'DM Sans, sans-serif', background:'white', cursor:'pointer' };
-
-        const tagStyle = (color) => ({
-          display:'inline-block', fontSize:'0.68rem', fontWeight:600,
-          padding:'0.15rem 0.45rem', borderRadius:'5px', marginRight:'0.25rem', marginBottom:'0.2rem',
-          background: color === 'green' ? '#F0FDF4' : color === 'blue' ? '#EFF6FF' : '#FFF7ED',
-          color: color === 'green' ? '#16A34A' : color === 'blue' ? '#2563EB' : '#C2410C'
+        // Premium tag system using Phase 1 tokens
+        const tagStyle = (variant) => ({
+          display:'inline-flex', alignItems:'center',
+          fontSize:'0.67rem', fontWeight:700,
+          padding:'0.2rem 0.5rem', borderRadius:'var(--t-r-pill)',
+          marginRight:'0.25rem', marginBottom:'0.25rem',
+          letterSpacing:'0.03em',
+          background: variant === 'stage'   ? 'var(--t-foam)' :
+                      variant === 'topic'   ? 'var(--t-info-bg)' : 'var(--t-warning-bg)',
+          color:       variant === 'stage'   ? 'var(--t-mid)' :
+                       variant === 'topic'   ? 'var(--t-info)' : 'var(--t-warning)',
+          border:      variant === 'stage'   ? '1px solid var(--t-mist)' :
+                       variant === 'topic'   ? '1px solid #BFDBFE' : '1px solid #FED7AA',
         });
 
-        return (
-          <div style={{ position:'fixed', inset:0, background:'var(--mist-light)', display:'flex', flexDirection:'column' }}>
-            {/* Header */}
-            <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1rem 1.5rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0 }}>
-              <div style={{ display:'flex', alignItems:'center', gap:'0.8rem' }}>
-                <button onClick={()=>setCurrentScreen('teacherDashboard')} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', width:'34px', height:'34px', borderRadius:'50%', cursor:'pointer', fontSize:'1.1rem', display:'flex', alignItems:'center', justifyContent:'center' }}>&#8592;</button>
-                <div>
-                  <h1 className="heading-display" style={{ fontSize:'clamp(1.1rem, 2.8vw, 1.45rem)', color:'white', lineHeight:1.2 }}>Resource Hub</h1>
-                  <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.75rem' }}>Curriculum-aligned teaching resources</p>
+        const selectStyle = {
+          padding:'0.5rem 0.85rem', borderRadius:'var(--t-r-sm)',
+          border:'1.5px solid var(--t-stone)', fontSize:'0.82rem',
+          fontFamily:'DM Sans, sans-serif', background:'var(--t-chalk)',
+          color:'var(--t-ink)', cursor:'pointer', outline:'none',
+          transition:'border-color 0.18s',
+        };
+
+        // Shared resource card renderer — used in both tabs
+        const ResourceCard = ({ r, accentColor }) => (
+          <div className="fade-in" style={{
+            background:'var(--t-chalk)', borderRadius:'var(--t-r-lg)',
+            boxShadow:'var(--t-shadow-sm)', overflow:'hidden',
+            border:'1px solid var(--t-stone)',
+            borderLeft: accentColor ? `4px solid ${accentColor}` : '1px solid var(--t-stone)',
+            transition:'box-shadow 0.22s, transform 0.22s',
+          }}
+            onMouseEnter={e=>{ e.currentTarget.style.boxShadow='var(--t-shadow-md)'; e.currentTarget.style.transform='translateY(-1px)'; }}
+            onMouseLeave={e=>{ e.currentTarget.style.boxShadow='var(--t-shadow-sm)'; e.currentTarget.style.transform='translateY(0)'; }}>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 200px', gap:0, alignItems:'stretch' }}>
+              <div style={{ padding:'1.2rem 1.4rem' }}>
+                {r.type && (
+                  <span style={{ fontSize:'0.65rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:'var(--t-sage)', display:'inline-block', marginBottom:'0.35rem' }}>
+                    {r.type}
+                  </span>
+                )}
+                <h3 style={{ fontWeight:700, color:'var(--t-deep)', fontSize:'0.97rem', marginBottom:'0.35rem', lineHeight:1.35 }}>{r.title}</h3>
+                {r.description && (
+                  <p style={{ color:'var(--t-charcoal)', fontSize:'0.8rem', lineHeight:1.6, marginBottom:'0.7rem' }}>{r.description}</p>
+                )}
+                <div style={{ display:'flex', flexWrap:'wrap', gap:0, marginBottom:'0.3rem' }}>
+                  {(r.stage      || []).map(s => <span key={s} style={tagStyle('stage')}>{s}</span>)}
+                  {(r.topics     || []).map(t => <span key={t} style={tagStyle('topic')}>{t}</span>)}
+                  {(r.focusAreas || []).map(f => <span key={f} style={tagStyle('focus')}>{f.replace(/_/g,' ')}</span>)}
                 </div>
+                {(r.syllabusLinks || []).length > 0 && (
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:'0.25rem', marginTop:'0.35rem' }}>
+                    {(r.syllabusLinks || []).map(l => (
+                      <span key={l.code} title={l.description?.replace(/\'9[67]/g, '').replace(/\b7/g, '')}
+                        style={{ fontSize:'0.65rem', fontWeight:700, color:'var(--t-mid)', background:'var(--t-foam)', padding:'0.15rem 0.5rem', borderRadius:'var(--t-r-xs)', border:'1px solid var(--t-mist)', cursor:'default' }}>
+                        {l.code}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div style={{ background:'var(--t-parchment)', borderLeft:'1px solid var(--t-stone)', display:'flex', flexDirection:'column', gap:'0.75rem', padding:'1rem', alignItems:'stretch' }}>
+                {renderResourceGraphic(r.type)}
+                <a href={r.url} target="_blank" rel="noopener noreferrer"
+                  style={{ display:'block', width:'100%', padding:'0.6rem 0', borderRadius:'var(--t-r-sm)', background:'linear-gradient(135deg, var(--t-deep), var(--t-mid))', color:'white', fontSize:'0.8rem', fontWeight:700, textDecoration:'none', textAlign:'center', boxSizing:'border-box', letterSpacing:'0.03em', transition:'opacity 0.18s' }}
+                  onMouseEnter={e=>e.currentTarget.style.opacity='0.88'}
+                  onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
+                  Open Resource →
+                </a>
               </div>
             </div>
-            <div style={{ flex:1, overflowY:'auto', padding:'1.5rem' }}>
-              <div style={{ maxWidth:'820px', margin:'0 auto' }}>
+          </div>
+        );
 
-                {/* Tab Switcher */}
-                <div style={{ display:'flex', gap:'0.5rem', marginBottom:'1.25rem' }}>
-                  <button onClick={()=>setResourceTab('library')}
-                    style={{ padding:'0.5rem 1.1rem', borderRadius:'50px', border:'1.5px solid', borderColor: resourceTab === 'library' ? 'var(--jungle-deep)' : '#E5E5E5', background: resourceTab === 'library' ? 'var(--jungle-deep)' : 'white', color: resourceTab === 'library' ? 'white' : '#888', fontSize:'0.82rem', fontWeight:700, cursor:'pointer', transition:'all 0.2s' }}>
-                    Library
+        return (
+          <div style={{ position:'fixed', inset:0, background:'var(--t-canvas)', display:'flex', flexDirection:'column' }}>
+
+            {/* ── Library Header ─────────────────────────────────────── */}
+            <div style={{ background:'linear-gradient(135deg, var(--t-forest) 0%, var(--t-deep) 60%, var(--t-mid) 100%)', padding:'0.85rem 1.5rem', boxShadow:'var(--t-shadow-md)', flexShrink:0, borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
+              <div style={{ maxWidth:'900px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:'0.85rem' }}>
+                  <button onClick={()=>setCurrentScreen('teacherDashboard')}
+                    style={{ background:'rgba(255,255,255,0.10)', border:'1px solid rgba(255,255,255,0.2)', color:'white', width:'32px', height:'32px', borderRadius:'50%', cursor:'pointer', fontSize:'1rem', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, transition:'background 0.18s' }}
+                    onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.2)'}
+                    onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,0.10)'}>
+                    ←
                   </button>
-                  <button onClick={()=>setResourceTab('recommended')}
-                    style={{ padding:'0.5rem 1.1rem', borderRadius:'50px', border:'1.5px solid', borderColor: resourceTab === 'recommended' ? 'var(--jungle-deep)' : '#E5E5E5', background: resourceTab === 'recommended' ? 'var(--jungle-deep)' : 'white', color: resourceTab === 'recommended' ? 'white' : '#888', fontSize:'0.82rem', fontWeight:700, cursor:'pointer', transition:'all 0.2s' }}>
-                    Recommended
-                  </button>
+                  <div>
+                    <h1 className="taronga-title" style={{ fontSize:'clamp(1.1rem, 2.4vw, 1.35rem)', color:'white', lineHeight:1.15, letterSpacing:'0.04em' }}>Resource Library</h1>
+                    <p style={{ color:'rgba(255,255,255,0.6)', fontSize:'0.7rem', marginTop:'0.1rem' }}>Curriculum-aligned resources for Taronga education sessions</p>
+                  </div>
                 </div>
+                <span style={{ background:'rgba(255,255,255,0.12)', border:'1px solid rgba(255,255,255,0.18)', color:'rgba(255,255,255,0.82)', fontSize:'0.7rem', fontWeight:600, padding:'0.22rem 0.7rem', borderRadius:'var(--t-r-pill)' }}>
+                  {teacherResources.length} {teacherResources.length === 1 ? 'resource' : 'resources'}
+                </span>
+              </div>
+            </div>
 
-                {resourceTab === 'recommended' ? (
+            {/* ── Tab + filter toolbar ────────────────────────────────── */}
+            <div style={{ background:'var(--t-chalk)', borderBottom:'1px solid var(--t-stone)', flexShrink:0, boxShadow:'0 1px 4px rgba(7,30,20,0.05)' }}>
+              <div style={{ maxWidth:'900px', margin:'0 auto', padding:'0.65rem 1.5rem', display:'flex', flexDirection:'column', gap:'0.55rem' }}>
+                <div style={{ display:'flex', gap:'0.2rem', borderBottom:'1px solid var(--t-stone)', paddingBottom:'0.55rem' }}>
+                  {[{id:'library',label:'Browse Library'},{id:'recommended',label:'Recommended'}].map(tab => (
+                    <button key={tab.id} onClick={()=>setResourceTab(tab.id)}
+                      style={{ padding:'0.4rem 1rem', borderRadius:'var(--t-r-pill)', border:'1.5px solid',
+                        borderColor: resourceTab === tab.id ? 'var(--t-mid)' : 'transparent',
+                        background: resourceTab === tab.id ? 'var(--t-foam)' : 'transparent',
+                        color: resourceTab === tab.id ? 'var(--t-mid)' : 'var(--t-slate)',
+                        fontSize:'0.8rem', fontWeight:700, cursor:'pointer', transition:'all 0.18s' }}>
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+                {resourceTab === 'library' && (
+                  <div style={{ display:'flex', gap:'0.55rem', flexWrap:'wrap', alignItems:'center' }}>
+                    <select value={filterStage} onChange={e=>setFilterStage(e.target.value)} style={selectStyle}>
+                      <option value="">All Stages</option>
+                      {allStages.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <select value={filterTopic} onChange={e=>setFilterTopic(e.target.value)} style={selectStyle}>
+                      <option value="">All Topics</option>
+                      {allTopics.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                    <select value={filterFocusArea} onChange={e=>setFilterFocusArea(e.target.value)} style={selectStyle}>
+                      <option value="">All Focus Areas</option>
+                      {allFocusAreas.map(f => <option key={f} value={f}>{f.replace(/_/g,' ')}</option>)}
+                    </select>
+                    {(filterStage || filterTopic || filterFocusArea) && (
+                      <button onClick={()=>{ setFilterStage(''); setFilterTopic(''); setFilterFocusArea(''); }}
+                        style={{ padding:'0.4rem 0.8rem', borderRadius:'var(--t-r-pill)', border:'1.5px solid var(--t-mist)', background:'var(--t-foam)', color:'var(--t-sage)', fontSize:'0.76rem', fontWeight:600, cursor:'pointer' }}>
+                        ✕ Clear
+                      </button>
+                    )}
+                    {filteredResources.length < teacherResources.length && (
+                      <span style={{ marginLeft:'auto', fontSize:'0.7rem', color:'var(--t-ash)', fontWeight:600 }}>
+                        {filteredResources.length} of {teacherResources.length} shown
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ── Scrollable content ──────────────────────────────────── */}
+            <div style={{ flex:1, overflowY:'auto', padding:'1.25rem 1.5rem' }}>
+              <div style={{ maxWidth:'900px', margin:'0 auto' }}>
+
+                {/* Recommended tab */}
+                {resourceTab === 'recommended' && (
                   <>
-                  <p style={{ fontSize:'0.8rem', color:'#888', background:'#F9FAFB', border:'1px solid #E5E7EB', borderRadius:'8px', padding:'0.6rem 0.85rem', marginBottom:'1rem', lineHeight:1.5 }}>
-                    💡 Can't see any recommendations? Make sure to submit the class to generate recommendations.
-                  </p>
-                  {Object.keys(recommendationsByClass).length === 0 ? (
-                    <p style={{ color:'#bbb', fontSize:'0.85rem', fontStyle:'italic', textAlign:'center', padding:'2rem 0' }}>No recommendations available. Submit a class session to generate recommendations.</p>
-                  ) : (() => {
-                    const sortedRecommendations = Object.entries(recommendationsByClass)
-                      .sort((a, b) => {
-                        const aFocus = Math.min(
-                          a[1].classData.focusAverages?.behaviour ?? 100,
-                          a[1].classData.focusAverages?.scientificLanguage ?? 100,
-                          a[1].classData.focusAverages?.dataEvidence ?? 100
-                        );
-                        const bFocus = Math.min(
-                          b[1].classData.focusAverages?.behaviour ?? 100,
-                          b[1].classData.focusAverages?.scientificLanguage ?? 100,
-                          b[1].classData.focusAverages?.dataEvidence ?? 100
-                        );
-                        return aFocus - bFocus;
-                      });
-                    return sortedRecommendations.map(([classId, data]) => (
-                      <div key={classId} style={{ marginBottom:'2rem' }}>
-                        <div style={{ marginBottom:'0.75rem', paddingBottom:'0.5rem', borderBottom:'1.5px solid #E5E5E5' }}>
-                          <h4 style={{ fontWeight:700, color:'var(--jungle-deep)', fontSize:'0.95rem', marginBottom:'0.15rem' }}>{data.classData.className || classId} {data.classData.stage ? `— ${data.classData.stage}` : ''}</h4>
-                          <p style={{ fontSize:'0.78rem', color:'#888' }}>Focus: <strong style={{ color:'var(--jungle-mid)' }}>{data.classData.weakestFocusArea}</strong> &nbsp;·&nbsp; Band: <strong style={{ color:'var(--jungle-mid)', textTransform:'capitalize' }}>{data.classData.difficultyBand}</strong></p>
-                        </div>
-                        <div style={{ background:'#F4F8F6', padding:'0.85rem 1.1rem', borderRadius:'10px', marginBottom:'1rem', fontSize:'0.85rem', color:'#1B5E20' }}>
-                          <div style={{ marginBottom:'0.35rem' }}><strong>Quiz Average:</strong> {data.classData.quizAverage ?? 0}%</div>
-                          <div style={{ marginBottom:'0.35rem' }}><strong>Area of Growth:</strong> {data.classData.weakestFocusArea}</div>
-                          <div style={{ opacity:0.85 }}>
-                            Behaviour: {data.classData.focusAverages?.behaviour ?? 0}% |
-                            Writing: {data.classData.focusAverages?.scientificLanguage ?? 0}% |
-                            Detail: {data.classData.focusAverages?.dataEvidence ?? 0}%
-                          </div>
-                        </div>
-                        <div style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
-                          {data.resources.map(r => (
-                            <div key={r.id} style={{ border:'1px solid #E0EFE6', borderLeft:'4px solid #2E7D32', background:'#FCFEFD', borderRadius:'8px', padding:'0.5rem', marginBottom:'1rem' }}>
-                              <div className="fade-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem 1.5rem', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', display:'grid', gridTemplateColumns:'1fr 220px', gap:'1.25rem', alignItems:'start' }}>
-                                <div>
-                                  <p style={{ fontWeight:700, color:'var(--jungle-deep)', fontSize:'1rem', marginBottom:'0.15rem' }}>{r.title}</p>
-                                  {r.type && <span style={{ fontSize:'0.7rem', color:'#999', textTransform:'capitalize', marginBottom:'0.5rem', display:'inline-block' }}>{r.type}</span>}
-                                  {r.description && <p style={{ color:'#666', fontSize:'0.82rem', lineHeight:1.55, marginBottom:'0.7rem' }}>{r.description}</p>}
-                                  <div style={{ display:'flex', flexWrap:'wrap', gap:'0.1rem', marginBottom:'0.4rem' }}>
-                                    {(r.stage      || []).map(s => <span key={s} style={tagStyle('green')}>{s}</span>)}
-                                    {(r.topics     || []).map(t => <span key={t} style={tagStyle('blue')}>{t}</span>)}
-                                    {(r.focusAreas || []).map(f => <span key={f} style={tagStyle('orange')}>{f.replace(/_/g,' ')}</span>)}
-                                  </div>
-                                  {(r.syllabusLinks || []).length > 0 && (
-                                    <div style={{ display:'flex', flexWrap:'wrap', gap:'0.25rem', marginTop:'0.25rem' }}>
-                                      {(r.syllabusLinks || []).map(l => (
-                                        <span key={l.code} title={l.description?.replace(/\\'9[67]/g, '').replace(/\\b7/g, '')} style={{ fontSize:'0.68rem', fontWeight:700, color:'var(--jungle-mid)', background:'#F0FDF4', padding:'0.15rem 0.45rem', borderRadius:'5px', cursor:'default' }}>{l.code}</span>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                                <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem' }}>
-                                  {renderResourceGraphic(r.type)}
-                                  <a href={r.url} target="_blank" rel="noopener noreferrer"
-                                    style={{ display:'block', width:'100%', padding:'0.65rem 0', borderRadius:'10px', background:'linear-gradient(135deg, var(--jungle-deep), var(--jungle-mid))', color:'white', fontSize:'0.85rem', fontWeight:700, textDecoration:'none', textAlign:'center', boxSizing:'border-box' }}>
-                                    Open Resource
-                                  </a>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                    <div style={{ background:'var(--t-foam)', border:'1px solid var(--t-mist)', borderRadius:'var(--t-r-md)', padding:'0.85rem 1.1rem', marginBottom:'1.25rem', display:'flex', alignItems:'flex-start', gap:'0.6rem' }}>
+                      <span style={{ fontSize:'1rem', flexShrink:0, marginTop:'0.05rem' }}>💡</span>
+                      <div>
+                        <p style={{ fontSize:'0.78rem', color:'var(--t-deep)', fontWeight:700, margin:'0 0 0.2rem' }}>How recommendations work</p>
+                        <p style={{ fontSize:'0.76rem', color:'var(--t-charcoal)', lineHeight:1.55, margin:0 }}>Resources are matched to submitted classes by stage, focus area, and difficulty band. Submit a class to generate recommendations.</p>
                       </div>
-                    ));
-                  })()}</> 
-                ) : (
-                  <>
-                    {/* Filters */}
-                    <div style={{ display:'flex', gap:'0.75rem', flexWrap:'wrap', marginBottom:'1.25rem', alignItems:'center' }}>
-                      <select value={filterStage} onChange={e=>setFilterStage(e.target.value)} style={selectStyle}>
-                        <option value="">All Stages</option>
-                        {allStages.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                      <select value={filterTopic} onChange={e=>setFilterTopic(e.target.value)} style={selectStyle}>
-                        <option value="">All Topics</option>
-                        {allTopics.map(t => <option key={t} value={t}>{t}</option>)}
-                      </select>
-                      <select value={filterFocusArea} onChange={e=>setFilterFocusArea(e.target.value)} style={selectStyle}>
-                        <option value="">All Focus Areas</option>
-                        {allFocusAreas.map(f => <option key={f} value={f}>{f.replace(/_/g,' ')}</option>)}
-                      </select>
-                      {(filterStage || filterTopic || filterFocusArea) && (
-                        <button onClick={()=>{ setFilterStage(''); setFilterTopic(''); setFilterFocusArea(''); }}
-                          style={{ padding:'0.5rem 0.75rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', background:'white', color:'#888', fontSize:'0.78rem', fontWeight:600, cursor:'pointer' }}>
-                          Clear filters
-                        </button>
-                      )}
                     </div>
-
-                    {/* Loading / Empty / List */}
-                    {resourceLoading ? (
-                      <p style={{ color:'#aaa', fontSize:'0.85rem', fontStyle:'italic', textAlign:'center', padding:'2rem 0' }}>Loading resources...</p>
-                    ) : filteredResources.length === 0 ? (
-                      <p style={{ color:'#bbb', fontSize:'0.85rem', fontStyle:'italic', textAlign:'center', padding:'2rem 0' }}>No resources available for the selected filters.</p>
-                    ) : (
-                      <div style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
-                        {filteredResources.map(r => (
-                          <div key={r.id} className="fade-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem 1.5rem', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', display:'grid', gridTemplateColumns:'1fr 220px', gap:'1.25rem', alignItems:'start' }}>
-
-                            {/* Left column — 70% */}
+                    {Object.keys(recommendationsByClass).length === 0 ? (
+                      <div style={{ background:'var(--t-chalk)', border:'1px solid var(--t-stone)', borderRadius:'var(--t-r-lg)', padding:'2.5rem', textAlign:'center' }}>
+                        <p style={{ fontSize:'2rem', marginBottom:'0.7rem' }}>📚</p>
+                        <p style={{ fontWeight:700, color:'var(--t-deep)', fontSize:'0.95rem', marginBottom:'0.3rem' }}>No recommendations yet</p>
+                        <p style={{ color:'var(--t-slate)', fontSize:'0.8rem', lineHeight:1.6 }}>Submit a completed class session to generate personalised resource recommendations.</p>
+                      </div>
+                    ) : (() => {
+                      const sortedRecommendations = Object.entries(recommendationsByClass)
+                        .sort((a, b) => {
+                          const aFocus = Math.min(
+                            a[1].classData.focusAverages?.behaviour ?? 100,
+                            a[1].classData.focusAverages?.scientificLanguage ?? 100,
+                            a[1].classData.focusAverages?.dataEvidence ?? 100
+                          );
+                          const bFocus = Math.min(
+                            b[1].classData.focusAverages?.behaviour ?? 100,
+                            b[1].classData.focusAverages?.scientificLanguage ?? 100,
+                            b[1].classData.focusAverages?.dataEvidence ?? 100
+                          );
+                          return aFocus - bFocus;
+                        });
+                      return sortedRecommendations.map(([classId, data]) => (
+                        <div key={classId} style={{ marginBottom:'2.25rem' }}>
+                          <div style={{ background:'var(--t-chalk)', border:'1px solid var(--t-stone)', borderRadius:'var(--t-r-md)', padding:'0.9rem 1.2rem', marginBottom:'0.85rem', display:'flex', justifyContent:'space-between', alignItems:'flex-start', flexWrap:'wrap', gap:'0.5rem' }}>
                             <div>
-                              <p style={{ fontWeight:700, color:'var(--jungle-deep)', fontSize:'1rem', marginBottom:'0.15rem' }}>{r.title}</p>
-                              {r.type && <span style={{ fontSize:'0.7rem', color:'#999', textTransform:'capitalize', marginBottom:'0.5rem', display:'inline-block' }}>{r.type}</span>}
-                              {r.description && <p style={{ color:'#666', fontSize:'0.82rem', lineHeight:1.55, marginBottom:'0.7rem' }}>{r.description}</p>}
-                              <div style={{ display:'flex', flexWrap:'wrap', gap:'0.1rem', marginBottom:'0.4rem' }}>
-                                {(r.stage      || []).map(s => <span key={s} style={tagStyle('green')}>{s}</span>)}
-                                {(r.topics     || []).map(t => <span key={t} style={tagStyle('blue')}>{t}</span>)}
-                                {(r.focusAreas || []).map(f => <span key={f} style={tagStyle('orange')}>{f.replace(/_/g,' ')}</span>)}
+                              <h4 style={{ fontWeight:700, color:'var(--t-deep)', fontSize:'0.95rem', marginBottom:'0.25rem' }}>{data.classData.className || classId} {data.classData.stage ? `— ${data.classData.stage}` : ''}</h4>
+                              <div style={{ display:'flex', gap:'0.4rem', flexWrap:'wrap' }}>
+                                <span style={{ fontSize:'0.7rem', fontWeight:700, background:'var(--t-warning-bg)', color:'var(--t-warning)', border:'1px solid #FED7AA', borderRadius:'var(--t-r-pill)', padding:'0.15rem 0.55rem' }}>Focus: {data.classData.weakestFocusArea}</span>
+                                <span style={{ fontSize:'0.7rem', fontWeight:700, background:'var(--t-info-bg)', color:'var(--t-info)', border:'1px solid #BFDBFE', borderRadius:'var(--t-r-pill)', padding:'0.15rem 0.55rem', textTransform:'capitalize' }}>{data.classData.difficultyBand}</span>
                               </div>
-                              {(r.syllabusLinks || []).length > 0 && (
-                                <div style={{ display:'flex', flexWrap:'wrap', gap:'0.25rem', marginTop:'0.25rem' }}>
-                                  {(r.syllabusLinks || []).map(l => (
-                                    <span key={l.code} title={l.description?.replace(/\\'9[67]/g, '').replace(/\\b7/g, '')} style={{ fontSize:'0.68rem', fontWeight:700, color:'var(--jungle-mid)', background:'#F0FDF4', padding:'0.15rem 0.45rem', borderRadius:'5px', cursor:'default' }}>{l.code}</span>
-                                  ))}
-                                </div>
-                              )}
                             </div>
-
-                            {/* Right column — 30% */}
-                            <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem' }}>
-                              {/* Resource Type Graphic */}
-                              {renderResourceGraphic(r.type)}
-                              {/* Open button */}
-                              <a href={r.url} target="_blank" rel="noopener noreferrer"
-                                style={{ display:'block', width:'100%', padding:'0.65rem 0', borderRadius:'10px', background:'linear-gradient(135deg, var(--jungle-deep), var(--jungle-mid))', color:'white', fontSize:'0.85rem', fontWeight:700, textDecoration:'none', textAlign:'center', boxSizing:'border-box' }}>
-                                Open Resource
-                              </a>
+                            <div style={{ background:'var(--t-foam)', border:'1px solid var(--t-mist)', borderRadius:'var(--t-r-sm)', padding:'0.45rem 0.8rem', fontSize:'0.72rem', color:'var(--t-charcoal)', lineHeight:1.65 }}>
+                              <div><strong style={{ color:'var(--t-deep)' }}>Quiz Avg:</strong> {data.classData.quizAverage ?? 0}%</div>
+                              <div style={{ color:'var(--t-slate)', fontSize:'0.68rem' }}>B: {data.classData.focusAverages?.behaviour ?? 0}% · W: {data.classData.focusAverages?.scientificLanguage ?? 0}% · D: {data.classData.focusAverages?.dataEvidence ?? 0}%</div>
                             </div>
-
                           </div>
-                        ))}
+                          <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem' }}>
+                            {data.resources.map(r => <ResourceCard key={r.id} r={r} accentColor="var(--t-eucalyptus)" />)}
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </>
+                )}
+
+                {/* Library tab */}
+                {resourceTab === 'library' && (
+                  <>
+                    {resourceLoading ? (
+                      <div style={{ background:'var(--t-chalk)', border:'1px solid var(--t-stone)', borderRadius:'var(--t-r-lg)', padding:'2.5rem', textAlign:'center' }}>
+                        <p style={{ color:'var(--t-ash)', fontSize:'0.85rem', fontStyle:'italic' }}>Loading resources…</p>
+                      </div>
+                    ) : filteredResources.length === 0 ? (
+                      <div style={{ background:'var(--t-chalk)', border:'1px solid var(--t-stone)', borderRadius:'var(--t-r-lg)', padding:'2.5rem', textAlign:'center' }}>
+                        <p style={{ fontSize:'2rem', marginBottom:'0.7rem' }}>🔍</p>
+                        <p style={{ fontWeight:700, color:'var(--t-deep)', fontSize:'0.95rem', marginBottom:'0.3rem' }}>No resources match these filters</p>
+                        <p style={{ color:'var(--t-slate)', fontSize:'0.8rem' }}>Try adjusting the stage, topic, or focus area filter above.</p>
+                      </div>
+                    ) : (
+                      <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem' }}>
+                        {filteredResources.map(r => <ResourceCard key={r.id} r={r} />)}
                       </div>
                     )}
                   </>
@@ -8916,13 +9265,13 @@
         };
 
         return (
-          <div style={{ position:'fixed', inset:0, background:'var(--mist-light)', display:'flex', flexDirection:'column' }}>
-            <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1rem 1.5rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', flexShrink:0 }}>
+          <div style={{ position:'fixed', inset:0, background:'var(--t-canvas)', display:'flex', flexDirection:'column' }}>
+            <div style={{ background:'linear-gradient(135deg, var(--t-forest) 0%, var(--t-deep) 60%, var(--t-mid) 100%)', padding:'0.85rem 1.5rem', boxShadow:'var(--t-shadow-md)', flexShrink:0, borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
               <div style={{ maxWidth:'720px', margin:'0 auto', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                 <div style={{ display:'flex', alignItems:'center', gap:'0.7rem' }}>
                   <button onClick={()=>setCurrentScreen('teacherDashboard')} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', width:'34px', height:'34px', borderRadius:'50%', cursor:'pointer', fontSize:'1.1rem', display:'flex', alignItems:'center', justifyContent:'center' }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg></button>
                   <div>
-                    <h1 className="heading-display" style={{ fontSize:'clamp(1.1rem, 2.8vw, 1.45rem)', color:'white', lineHeight:1.2 }}>{cls.className?.replace(/\\b7/g, '')}</h1>
+                    <h1 className="taronga-title" style={{ fontSize:'clamp(1.1rem, 2.5vw, 1.35rem)', color:'white', lineHeight:1.2, letterSpacing:'0.04em' }}>{cls.className?.replace(/\b7/g, '')}</h1>
                     <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.75rem' }}>{cls.yearGroup} · Code: <span style={{ fontFamily:'monospace', fontWeight:700 }}>{cls.classCode}</span></p>
                   </div>
                 </div>
@@ -8956,7 +9305,7 @@
                       { label:'Completed', value:completedCount, icon:'' },
                       { label:'Avg Quiz %', value:`${avgQuizPercentage}%`, icon:'', highlight:true }
                     ].map(stat => (
-                      <div key={stat.label} style={{ background: stat.highlight ? 'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))' : 'white', borderRadius:'12px', padding:'0.7rem 0.5rem', textAlign:'center', boxShadow:'0 2px 8px rgba(0,0,0,0.06)' }}>
+                      <div key={stat.label} style={{ background: stat.highlight ? 'linear-gradient(135deg, var(--t-mid), var(--t-eucalyptus))' : 'var(--t-chalk)', borderRadius:'var(--t-r-md)', padding:'0.75rem 0.5rem', textAlign:'center', boxShadow: stat.highlight ? 'var(--t-shadow-sm)' : 'var(--t-shadow-xs)', border: stat.highlight ? 'none' : '1px solid var(--t-stone)' }}>
                         <div style={{ fontSize:'1.3rem', marginBottom:'0.15rem' }}>{stat.icon}</div>
                         <div style={{ fontWeight:700, color: stat.highlight ? 'white' : 'var(--jungle-deep)', fontSize:'1.1rem', lineHeight:1.2 }}>{stat.value}</div>
                         <div style={{ color: stat.highlight ? 'rgba(255,255,255,0.85)' : '#999', fontSize:'0.68rem', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.04em' }}>{stat.label}</div>
@@ -9027,11 +9376,11 @@
 
                       return (
                         <div style={{ marginBottom:'1rem' }}>
-                          <h3 style={{ fontSize:'1rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.75rem' }}>📊 Class Insights</h3>
+                          <h3 className="section-title" style={{ fontSize:'0.95rem', marginBottom:'0.75rem', color:'var(--t-deep)', letterSpacing:'-0.01em' }}>Class Insights</h3>
 
                             {/* Most Visited Animals */}
-                            <div style={{ background:'white', borderRadius:'12px', padding:'1.1rem 1.2rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:'0.75rem' }}>
-                              <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.75rem' }}>Most Visited Animals</p>
+                            <div style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-md)', padding:'1rem 1.15rem', boxShadow:'var(--t-shadow-xs)', marginBottom:'0.7rem', border:'1px solid var(--t-stone)' }}>
+                              <p style={{ fontSize:'0.68rem', fontWeight:700, color:'var(--t-slate)', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:'0.7rem' }}>Most Visited Animals</p>
                               {topAnimals.length === 0
                                 ? <p style={{ fontSize:'0.78rem', color:'#bbb' }}>No data yet</p>
                                 : topAnimals.map(([name, count]) => (
@@ -9049,8 +9398,8 @@
                             </div>
 
                             {/* Quiz Distribution */}
-                            <div style={{ background:'white', borderRadius:'12px', padding:'1.1rem 1.2rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:'0.75rem' }}>
-                              <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.75rem' }}>Quiz Distribution</p>
+                            <div style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-md)', padding:'1rem 1.15rem', boxShadow:'var(--t-shadow-xs)', marginBottom:'0.7rem', border:'1px solid var(--t-stone)' }}>
+                              <p style={{ fontSize:'0.68rem', fontWeight:700, color:'var(--t-slate)', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:'0.7rem' }}>Quiz Distribution</p>
                               <div style={{ display:'flex', alignItems:'flex-end', gap:'0.6rem', height:'110px', paddingBottom:'0.2rem' }}>
                                 {Object.entries(quizBuckets).map(([label, val]) => (
                                   <div key={label} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'0.25rem' }}>
@@ -9155,18 +9504,20 @@
                               return (
                                 <>
                                   {/* Teaching Takeaways — primary section */}
-                                  <div style={{ borderTop:'2px solid var(--jungle-light)', paddingTop:'0.6rem', marginBottom:'0.65rem' }}>
-                                    <p style={{ fontSize:'0.65rem', fontWeight:700, color:'var(--jungle-mid)', textTransform:'uppercase', letterSpacing:'0.08em', margin:0 }}>Teaching Takeaways</p>
+                                  <div style={{ display:'flex', alignItems:'center', gap:'0.75rem', marginBottom:'0.75rem', paddingTop:'0.25rem' }}>
+                                    <div style={{ flex:1, height:'2px', background:'linear-gradient(90deg, var(--t-eucalyptus), transparent)', borderRadius:'2px' }} />
+                                    <p style={{ fontSize:'0.65rem', fontWeight:800, color:'var(--t-mid)', textTransform:'uppercase', letterSpacing:'0.1em', margin:0, whiteSpace:'nowrap' }}>Teaching Takeaways</p>
+                                    <div style={{ flex:1, height:'2px', background:'linear-gradient(270deg, var(--t-eucalyptus), transparent)', borderRadius:'2px' }} />
                                   </div>
 
                                   {/* Strength + Focus */}
                                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.6rem', marginBottom:'0.75rem' }}>
-                                    <div style={{ background:'#F0FDF4', border:'1px solid #BBF7D0', borderRadius:'12px', padding:'0.9rem 1rem' }}>
+                                    <div style={{ background:'var(--t-success-bg)', border:'1px solid #BBF7D0', borderRadius:'var(--t-r-md)', padding:'0.9rem 1rem' }}>
                                       <p style={{ fontSize:'0.65rem', fontWeight:700, color:'#15803D', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>✅ Strength</p>
                                       <p style={{ fontSize:'0.8rem', fontWeight:700, color:'#14532D', margin:'0 0 0.2rem' }}>{strongest.icon} {strongest.label} ({strongest.avg}/5)</p>
                                       <p style={{ fontSize:'0.72rem', color:'#166534', margin:0, lineHeight:1.4 }}>Students are performing well at {strongest.desc}.</p>
                                     </div>
-                                    <div style={{ background:'#FFF7ED', border:'1px solid #FED7AA', borderRadius:'12px', padding:'0.9rem 1rem' }}>
+                                    <div style={{ background:'var(--t-warning-bg)', border:'1px solid #FED7AA', borderRadius:'var(--t-r-md)', padding:'0.9rem 1rem' }}>
                                       <p style={{ fontSize:'0.65rem', fontWeight:700, color:'#C2410C', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>⚠️ Focus Area</p>
                                       <p style={{ fontSize:'0.8rem', fontWeight:700, color:'#7C2D12', margin:'0 0 0.2rem' }}>{weakest.icon} {weakest.label} ({weakest.avg}/5)</p>
                                       <p style={{ fontSize:'0.72rem', color:'#9A3412', margin:0, lineHeight:1.4 }}>Students need to improve {weakest.desc}.</p>
@@ -9174,15 +9525,15 @@
                                   </div>
 
                                   {/* Teaching action */}
-                                  <div style={{ background:'linear-gradient(135deg, #EFF6FF, #DBEAFE)', border:'1px solid #BFDBFE', borderRadius:'12px', padding:'0.9rem 1.1rem', marginBottom:'0.75rem' }}>
+                                  <div style={{ background:'var(--t-info-bg)', border:'1px solid #BFDBFE', borderRadius:'var(--t-r-md)', padding:'0.95rem 1.15rem', marginBottom:'0.75rem', boxShadow:'var(--t-shadow-xs)' }}>
                                     <p style={{ fontSize:'0.65rem', fontWeight:700, color:'#1D4ED8', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.3rem' }}>💡 Suggested Next Step</p>
                                     <p style={{ fontSize:'0.75rem', color:'#1E3A5F', margin:'0 0 0.3rem', lineHeight:1.5, fontStyle:'italic' }}>{stagePrefix}</p>
                                     <p style={{ fontSize:'0.78rem', color:'#1E40AF', fontWeight:600, margin:0, lineHeight:1.5 }}>{actions[weakest.key]}</p>
                                   </div>
 
                                   {/* Domain averages — secondary */}
-                                  <div style={{ background:'white', borderRadius:'12px', padding:'1.1rem 1.2rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:'0.75rem' }}>
-                                    <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.75rem' }}>Domain Averages</p>
+                                  <div style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-md)', padding:'1rem 1.15rem', boxShadow:'var(--t-shadow-xs)', marginBottom:'0.7rem', border:'1px solid var(--t-stone)' }}>
+                                    <p style={{ fontSize:'0.68rem', fontWeight:700, color:'var(--t-slate)', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:'0.7rem' }}>Domain Averages</p>
                                     {domainList.map(d => (
                                       <div key={d.key} style={{ marginBottom:'0.55rem' }}>
                                         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'0.2rem' }}>
@@ -9198,7 +9549,7 @@
 
                                   {/* Common issues */}
                                   {obsCount >= 3 && (
-                                    <div style={{ background:'white', borderRadius:'12px', padding:'0.9rem 1.1rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:'0.75rem' }}>
+                                    <div style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-md)', padding:'0.9rem 1.1rem', boxShadow:'var(--t-shadow-xs)', marginBottom:'0.7rem', border:'1px solid var(--t-stone)' }}>
                                       <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.5rem' }}>Common Issues</p>
                                       {(() => {
                                         const issues = [
@@ -9286,7 +9637,7 @@
                           <h3 style={{ fontSize:'1rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.75rem' }}>👥 Student Groups</h3>
 
                           {/* Overall performance groups */}
-                          <div style={{ background:'white', borderRadius:'12px', padding:'1.1rem 1.2rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:'0.75rem' }}>
+                          <div style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-md)', padding:'1rem 1.15rem', boxShadow:'var(--t-shadow-xs)', marginBottom:'0.7rem', border:'1px solid var(--t-stone)' }}>
                             <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.65rem' }}>Overall Performance</p>
                             {overallGroups.map(g => (
                               <div key={g.key} style={{ marginBottom:'0.5rem' }}>
@@ -9312,7 +9663,7 @@
 
                           {/* Domain-specific groups */}
                           {domainGroups.length > 0 && (
-                            <div style={{ background:'white', borderRadius:'12px', padding:'1.1rem 1.2rem', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', marginBottom:'0.75rem' }}>
+                            <div style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-md)', padding:'1rem 1.15rem', boxShadow:'var(--t-shadow-xs)', marginBottom:'0.7rem', border:'1px solid var(--t-stone)' }}>
                               <p style={{ fontSize:'0.72rem', fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.65rem' }}>Domain Support Needs</p>
                               {domainGroups.map(g => (
                                 <div key={g.key} style={{ marginBottom:'0.5rem' }}>
@@ -9339,9 +9690,9 @@
                       );
                     })()}
 
-                    <div style={{ marginBottom:'1rem', borderRadius:'14px', border:'1.5px solid #D4E8DC', background:'white', boxShadow:'0 2px 10px rgba(26,82,56,0.06)', overflow:'hidden' }}>
+                    <div style={{ marginBottom:'1rem', borderRadius:'var(--t-r-md)', border:'1px solid var(--t-mist)', background:'var(--t-chalk)', boxShadow:'var(--t-shadow-xs)', overflow:'hidden' }}>
                       <button onClick={() => setMarkingCardOpen(o => !o)}
-                        style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.55rem 1.2rem', background:'linear-gradient(135deg, #F0F7F4 0%, #E8F4EE 100%)', border:'none', cursor:'pointer', textAlign:'left' }}>
+                        style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.55rem 1.2rem', background:'linear-gradient(135deg, var(--t-foam) 0%, #E4EFE8 100%)', border:'none', cursor:'pointer', textAlign:'left' }}>
                         <span style={{ fontWeight:700, fontSize:'0.9rem', color:'var(--jungle-deep)' }}>📊 How Student Responses Are Marked</span>
                         <span style={{ fontSize:'1.1rem', color:'var(--jungle-mid)', transition:'transform 0.2s', display:'inline-block', transform: markingCardOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
                       </button>
@@ -9383,8 +9734,8 @@
                       )}
                     </div>
 
-                    <div style={{ background:'white', borderRadius:'16px', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', overflow:'hidden' }}>
-                      <div style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 1.4fr 0.85fr', background:'var(--jungle-deep)', padding:'0.65rem 1rem' }}>
+                    <div style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-lg)', boxShadow:'var(--t-shadow-sm)', overflow:'hidden', border:'1px solid var(--t-stone)' }}>
+                      <div style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 1.4fr 0.85fr', background:'var(--t-forest)', padding:'0.6rem 1rem' }}>
                         {['Student','Points','Badges','Quiz %','Observations','Conservation Statement','Status'].map(h => (
                           <div key={h} style={{ color:'rgba(255,255,255,0.8)', fontSize:'0.72rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>{h}</div>
                         ))}
@@ -9403,7 +9754,7 @@
                           const hasObservations = (s.badges || []).some(b => b.observation);
                           const badgeCount = Array.isArray(s.badges) ? new Set(s.badges.map(b => b.animalId).filter(Boolean)).size : 0;
                           return (
-                            <div key={s.name} style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 1.4fr 0.85fr', padding:'0.7rem 1rem', borderTop:'1px solid #F0EDE8', alignItems:'center', background: i % 2 === 0 ? 'white' : '#FAFAF8' }}>
+                            <div key={s.name} style={{ display:'grid', gridTemplateColumns:'1.4fr 0.6fr 0.6fr 0.6fr 0.85fr 1.4fr 0.85fr', padding:'0.7rem 1rem', borderTop:'1px solid var(--t-stone)', alignItems:'center', background: i % 2 === 0 ? 'var(--t-chalk)' : 'var(--t-parchment)' }}>
                               <div style={{ display:'flex', alignItems:'center', gap:'0.55rem' }}>
                                 <div style={{ width:'28px', height:'28px', borderRadius:'50%', background: s.completed ? 'linear-gradient(135deg, var(--jungle-mid), var(--jungle-light))' : 'linear-gradient(135deg, #aaa, #ccc)', display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontSize:'0.72rem', fontWeight:700, flexShrink:0 }}>
                                   {s.name.charAt(0).toUpperCase()}
