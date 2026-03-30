@@ -1547,7 +1547,7 @@
             const all = [];
             await Promise.all(clsSnap.docs.map(cls =>
               db.collection('classes').doc(cls.id).collection('students').get()
-                .then(sSnap => sSnap.docs.forEach(d => all.push(mapStudent(d))))
+                .then(sSnap => sSnap.docs.forEach(d => all.push({ ...mapStudent(d), _classId: cls.id })))
                 .catch(() => {})
             ));
             setFirestoreStudents(all);
@@ -7744,41 +7744,38 @@
                   firestoreStudents.forEach(s => {
                     (s.badges || []).forEach(b => {
                       if (b.observationScore?.reviewFlag?.flagged) {
-                        flagged.push({ studentName: s.name, badge: b });
+                        flagged.push({ studentName: s.name, badge: b, classId: s._classId || selectedAdminClass });
                       }
                     });
                   });
                   console.log('REVIEW TAB — firestoreStudents:', firestoreStudents.length, '| flagged:', flagged.length, flagged.map(f => f.studentName + '/' + f.badge.animalId));
 
-                  const removeFlag = async (studentName, animalId) => {
+                  const removeFlag = async (studentName, animalId, classId) => {
                     try {
                       const db = firebase.firestore();
-                      const classId = selectedAdminClass || selectedClass;
+                      const targetClass = classId || selectedAdminClass;
+                      if (!targetClass) { console.error('Remove flag: no classId available for', studentName); return; }
                       const safeId = studentName.trim().replace(/[\\/#.$[\]]/g, '_');
-                      // Use direct doc ID (matches how students are stored on write)
-                      const docRef = db.collection('classes').doc(classId).collection('students').doc(safeId);
+                      // Try direct doc ID first (matches how students are written)
+                      const docRef = db.collection('classes').doc(targetClass).collection('students').doc(safeId);
                       const snap = await docRef.get();
-                      if (!snap.exists) {
-                        // Fallback: query by name field
-                        const nameSnap = await db.collection('classes').doc(classId)
-                          .collection('students').where('name', '==', studentName).limit(1).get();
-                        if (nameSnap.empty) { console.error('Remove flag: student not found', studentName); return; }
-                        const data = nameSnap.docs[0].data();
-                        const badges = (data.badges || []).map(b => b.animalId !== animalId ? b
-                          : { ...b, observationScore: { ...(b.observationScore || {}), reviewFlag: { flagged: false } } });
-                        await nameSnap.docs[0].ref.update({ badges });
+                      let ref;
+                      let data;
+                      if (snap.exists) {
+                        ref = docRef; data = snap.data();
                       } else {
-                        const data = snap.data();
-                        const badges = (data.badges || []).map(b => b.animalId !== animalId ? b
-                          : { ...b, observationScore: { ...(b.observationScore || {}), reviewFlag: { flagged: false } } });
-                        await docRef.update({ badges });
+                        // Fallback: query by name field
+                        const nameSnap = await db.collection('classes').doc(targetClass)
+                          .collection('students').where('name', '==', studentName).limit(1).get();
+                        if (nameSnap.empty) { console.error('Remove flag: student not found', studentName, 'in class', targetClass); return; }
+                        ref = nameSnap.docs[0].ref; data = nameSnap.docs[0].data();
                       }
-                      setFirestoreStudents(prev => prev.map(s => {
-                        if (s.name !== studentName) return s;
-                        return { ...s, badges: (s.badges || []).map(b =>
-                          b.animalId !== animalId ? b
-                          : { ...b, observationScore: { ...(b.observationScore || {}), reviewFlag: { flagged: false } } }
-                        )};
+                      const updatedBadges = (data.badges || []).map(b => b.animalId !== animalId ? b
+                        : { ...b, observationScore: { ...(b.observationScore || {}), reviewFlag: { flagged: false } } });
+                      await ref.update({ badges: updatedBadges });
+                      setFirestoreStudents(prev => prev.map(s => s.name !== studentName ? s : {
+                        ...s, badges: (s.badges || []).map(b => b.animalId !== animalId ? b
+                          : { ...b, observationScore: { ...(b.observationScore || {}), reviewFlag: { flagged: false } } })
                       }));
                     } catch (e) { console.error('Remove flag error:', e); }
                   };
@@ -7858,7 +7855,7 @@
                                 style={{ fontSize:'0.72rem', padding:'0.3rem 0.7rem', borderRadius:'6px', border:'1px solid #D1D5DB', background:'#F9FAFB', cursor:'pointer', fontWeight:600, color:'#374151' }}>
                                 ✏️ Apply Override
                               </button>
-                              <button onClick={() => removeFlag(studentName, badge.animalId)}
+                              <button onClick={() => removeFlag(studentName, badge.animalId, item.classId)}
                                 style={{ fontSize:'0.72rem', padding:'0.3rem 0.7rem', borderRadius:'6px', border:'1px solid #FCA5A5', background:'#FEF2F2', cursor:'pointer', fontWeight:700, color:'#DC2626' }}>
                                 ✓ Remove Flag
                               </button>
