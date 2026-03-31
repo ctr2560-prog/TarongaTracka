@@ -7068,26 +7068,17 @@
 
       if (currentScreen === 'adminDashboard') {
         return (
-          <div style={{ position:'fixed', inset:0, background:'var(--mist-light)', display:'flex', flexDirection:'column' }}>
-            <div style={{ background:'linear-gradient(135deg, var(--jungle-deep) 0%, var(--jungle-mid) 100%)', padding:'1rem 1.5rem', boxShadow:'0 4px 20px rgba(0,0,0,0.1)', display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0 }}>
-              <div style={{ display:'flex', alignItems:'center', gap:'0.8rem' }}>
-                <img src="images/logo.png" alt="Taronga Tracka" style={{ height:'45px', width:'auto' }} onError={(e)=>{ e.target.style.display='none'; }} />
+          <div style={{ position:'fixed', inset:0, background:'var(--t-canvas)', display:'flex', flexDirection:'column' }}>
+            <div style={{ background:'linear-gradient(135deg, var(--t-forest) 0%, var(--t-deep) 60%, var(--t-mid) 100%)', padding:'0.85rem 1.5rem', boxShadow:'var(--t-shadow-md)', display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0, borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:'0.85rem' }}>
+                <img src="images/logo.png" alt="Taronga Tracka" style={{ height:'40px', width:'auto', filter:'drop-shadow(0 2px 6px rgba(0,0,0,0.3))' }} onError={(e)=>{ e.target.style.display='none'; }} />
                 <div>
-                  <h1 className="heading-display" style={{ fontSize:'clamp(1.2rem, 3vw, 1.6rem)', color:'white', lineHeight:1.2 }}>Admin Dashboard</h1>
-                  <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.78rem' }}>Staff Portal</p>
+                  <h1 className="taronga-title" style={{ fontSize:'clamp(1.1rem, 2.5vw, 1.35rem)', color:'white', lineHeight:1.15, letterSpacing:'0.04em' }}>Taronga Staff Portal</h1>
+                  <p style={{ color:'rgba(255,255,255,0.55)', fontSize:'0.7rem', marginTop:'0.1rem', letterSpacing:'0.02em' }}>Educational insights & program management</p>
                 </div>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:'1rem' }}>
-                <div style={{
-                  background: "#1A5238",
-                  padding: "8px 14px",
-                  borderRadius: "20px",
-                  color: "white",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                  fontSize: "14px"
-                }}>
+                <div style={{ background:'rgba(255,255,255,0.10)', border:'1px solid rgba(255,255,255,0.18)', padding:'0.4rem 0.85rem', borderRadius:'var(--t-r-pill)', color:'white', display:'flex', alignItems:'center', gap:'0.6rem', fontSize:'0.78rem', fontWeight:600, letterSpacing:'0.02em' }}>
                    Daily Code: {dailyCode ? (
                     <>
                       <strong>{dailyCode.id}</strong>
@@ -7120,77 +7111,48 @@
                 {codeDeactivated && (
                   <div className="fade-in" style={{ fontSize:'0.75rem', color:'#2e7d32', fontWeight:600, alignSelf:'center' }}>&#10003; Code deactivated.</div>
                 )}
-                <button onClick={()=>{ setAdminAccessCode(''); setCurrentScreen('home'); }} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', padding:'0.45rem 0.9rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.8rem', fontWeight:600 }}>
+                <button onClick={()=>{ setAdminAccessCode(''); setCurrentScreen('home'); }} style={{ background:'rgba(255,255,255,0.10)', border:'1px solid rgba(255,255,255,0.2)', color:'rgba(255,255,255,0.88)', padding:'0.4rem 0.85rem', borderRadius:'var(--t-r-pill)', cursor:'pointer', fontSize:'0.78rem', fontWeight:600, transition:'background 0.18s' }}
+                  onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.2)'}
+                  onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,0.10)'}>
                   Sign Out
                 </button>
               </div>
             </div>
 
-            <div style={{ background:'white', borderBottom:'2px solid #F0EDE8', padding:'0 1.5rem', flexShrink:0 }}>
-              <div style={{ maxWidth:'960px', margin:'0 auto', display:'flex', gap:'0.5rem' }}>
-                <button 
-                  onClick={() => setAdminTab('overview')}
-                  style={{ 
-                    padding:'1rem 1.5rem', 
-                    background:'none', 
-                    border:'none', 
-                    borderBottom: adminTab === 'overview' ? '3px solid var(--jungle-mid)' : '3px solid transparent',
-                    color: adminTab === 'overview' ? 'var(--jungle-deep)' : '#999',
-                    fontSize:'0.95rem', 
-                    fontWeight: adminTab === 'overview' ? 700 : 600,
-                    cursor:'pointer',
-                    transition:'all 0.2s',
-                    fontFamily:'DM Sans, sans-serif'
-                  }}>
+            <div style={{ background:'var(--t-chalk)', borderBottom:'1px solid var(--t-stone)', padding:'0 1.5rem', flexShrink:0, boxShadow:'0 1px 4px rgba(7,30,20,0.05)' }}>
+              <div style={{ maxWidth:'960px', margin:'0 auto', display:'flex', gap:'0' }}>
+                <button onClick={() => setAdminTab('overview')}
+                  style={{ padding:'0.85rem 1.25rem', background:'none', border:'none',
+                    borderBottom: adminTab === 'overview' ? '2.5px solid var(--t-mid)' : '2.5px solid transparent',
+                    color: adminTab === 'overview' ? 'var(--t-deep)' : 'var(--t-slate)',
+                    fontSize:'0.85rem', fontWeight: adminTab === 'overview' ? 700 : 500,
+                    cursor:'pointer', transition:'color 0.18s, border-color 0.18s', fontFamily:'DM Sans, sans-serif', letterSpacing:'0.01em' }}>
                   Overview
                 </button>
-                <button 
-                  onClick={() => setAdminTab('analytics')}
-                  style={{ 
-                    padding:'1rem 1.5rem', 
-                    background:'none', 
-                    border:'none', 
-                    borderBottom: adminTab === 'analytics' ? '3px solid var(--jungle-mid)' : '3px solid transparent',
-                    color: adminTab === 'analytics' ? 'var(--jungle-deep)' : '#999',
-                    fontSize:'0.95rem', 
-                    fontWeight: adminTab === 'analytics' ? 700 : 600,
-                    cursor:'pointer',
-                    transition:'all 0.2s',
-                    fontFamily:'DM Sans, sans-serif'
-                  }}>
+                <button onClick={() => setAdminTab('analytics')}
+                  style={{ padding:'0.85rem 1.25rem', background:'none', border:'none',
+                    borderBottom: adminTab === 'analytics' ? '2.5px solid var(--t-mid)' : '2.5px solid transparent',
+                    color: adminTab === 'analytics' ? 'var(--t-deep)' : 'var(--t-slate)',
+                    fontSize:'0.85rem', fontWeight: adminTab === 'analytics' ? 700 : 500,
+                    cursor:'pointer', transition:'color 0.18s, border-color 0.18s', fontFamily:'DM Sans, sans-serif', letterSpacing:'0.01em' }}>
                   Analytics
                 </button>
-                <button
-                  onClick={() => setAdminTab('resources')}
-                  style={{
-                    padding:'1rem 1.5rem',
-                    background:'none',
-                    border:'none',
-                    borderBottom: adminTab === 'resources' ? '3px solid var(--jungle-mid)' : '3px solid transparent',
-                    color: adminTab === 'resources' ? 'var(--jungle-deep)' : '#999',
-                    fontSize:'0.95rem',
-                    fontWeight: adminTab === 'resources' ? 700 : 600,
-                    cursor:'pointer',
-                    transition:'all 0.2s',
-                    fontFamily:'DM Sans, sans-serif'
-                  }}>
+                <button onClick={() => setAdminTab('resources')}
+                  style={{ padding:'0.85rem 1.25rem', background:'none', border:'none',
+                    borderBottom: adminTab === 'resources' ? '2.5px solid var(--t-mid)' : '2.5px solid transparent',
+                    color: adminTab === 'resources' ? 'var(--t-deep)' : 'var(--t-slate)',
+                    fontSize:'0.85rem', fontWeight: adminTab === 'resources' ? 700 : 500,
+                    cursor:'pointer', transition:'color 0.18s, border-color 0.18s', fontFamily:'DM Sans, sans-serif', letterSpacing:'0.01em' }}>
                   Resources
                 </button>
                 <button
                   onClick={() => setAdminTab('review')}
-                  style={{
-                    padding:'1rem 1.5rem',
-                    background:'none',
-                    border:'none',
-                    borderBottom: adminTab === 'review' ? '3px solid #DC2626' : '3px solid transparent',
-                    color: adminTab === 'review' ? '#DC2626' : '#999',
-                    fontSize:'0.95rem',
-                    fontWeight: adminTab === 'review' ? 700 : 600,
-                    cursor:'pointer',
-                    transition:'all 0.2s',
-                    fontFamily:'DM Sans, sans-serif',
-                    display:'flex', alignItems:'center', gap:'0.35rem'
-                  }}>
+                  style={{ padding:'0.85rem 1.25rem', background:'none', border:'none',
+                    borderBottom: adminTab === 'review' ? '2.5px solid var(--t-danger)' : '2.5px solid transparent',
+                    color: adminTab === 'review' ? 'var(--t-danger)' : 'var(--t-slate)',
+                    fontSize:'0.85rem', fontWeight: adminTab === 'review' ? 700 : 500,
+                    cursor:'pointer', transition:'color 0.18s, border-color 0.18s', fontFamily:'DM Sans, sans-serif',
+                    display:'flex', alignItems:'center', gap:'0.35rem', letterSpacing:'0.01em' }}>
                   ⚠️ Review
                   {(() => {
                     let flagCount = 0;
@@ -7207,7 +7169,7 @@
               </div>
             </div>
 
-            <div style={{ flex:1, overflowY:'auto', padding:'1.5rem' }}>
+            <div style={{ flex:1, overflowY:'auto', padding:'1.25rem 1.5rem' }}>
               <div style={{ maxWidth:'960px', margin:'0 auto' }}>
                 
                 {adminTab === 'overview' && (
@@ -7268,29 +7230,29 @@
                         <>
                           {/* KPI Cards Row */}
                           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(160px, 1fr))', gap:'1rem', marginBottom:'1.5rem' }}>
-                            <div className="animate-scale-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', animationDelay:'0.05s' }}>
-                              <div style={{ fontSize:'2.5rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem', lineHeight:1 }}>{totalClasses}</div>
-                              <div style={{ fontSize:'0.85rem', fontWeight:600, color:'#888', textTransform:'uppercase', letterSpacing:'0.05em' }}>Total Classes</div>
+                            <div className="animate-scale-in" style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-md)', padding:'1.2rem', boxShadow:'var(--t-shadow-sm)', border:'1px solid var(--t-stone)', animationDelay:'0.05s' }}>
+                              <div style={{ fontSize:'2.2rem', fontWeight:800, color:'var(--t-deep)', marginBottom:'0.25rem', lineHeight:1, letterSpacing:'-0.02em' }}>{totalClasses}</div>
+                              <div style={{ fontSize:'0.68rem', fontWeight:700, color:'var(--t-ash)', textTransform:'uppercase', letterSpacing:'0.07em' }}>Total Classes</div>
                             </div>
                             
-                            <div className="animate-scale-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', animationDelay:'0.1s' }}>
-                              <div style={{ fontSize:'2.5rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem', lineHeight:1 }}>{totalStudents}</div>
-                              <div style={{ fontSize:'0.85rem', fontWeight:600, color:'#888', textTransform:'uppercase', letterSpacing:'0.05em' }}>Total Students</div>
+                            <div className="animate-scale-in" style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-md)', padding:'1.2rem', boxShadow:'var(--t-shadow-sm)', border:'1px solid var(--t-stone)', animationDelay:'0.1s' }}>
+                              <div style={{ fontSize:'2.2rem', fontWeight:800, color:'var(--t-deep)', marginBottom:'0.25rem', lineHeight:1, letterSpacing:'-0.02em' }}>{totalStudents}</div>
+                              <div style={{ fontSize:'0.68rem', fontWeight:700, color:'var(--t-ash)', textTransform:'uppercase', letterSpacing:'0.07em' }}>Total Students</div>
                             </div>
                             
-                            <div className="animate-scale-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', animationDelay:'0.15s' }}>
-                              <div style={{ fontSize:'2.5rem', fontWeight:700, color:'var(--jungle-mid)', marginBottom:'0.3rem', lineHeight:1 }}>{averageQuizPercentage}%</div>
-                              <div style={{ fontSize:'0.85rem', fontWeight:600, color:'#888', textTransform:'uppercase', letterSpacing:'0.05em' }}>Avg Quiz Score</div>
+                            <div className="animate-scale-in" style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-md)', padding:'1.2rem', boxShadow:'var(--t-shadow-sm)', border:'1px solid var(--t-stone)', animationDelay:'0.15s' }}>
+                              <div style={{ fontSize:'2.2rem', fontWeight:800, color:'var(--t-eucalyptus)', marginBottom:'0.25rem', lineHeight:1, letterSpacing:'-0.02em' }}>{averageQuizPercentage}%</div>
+                              <div style={{ fontSize:'0.68rem', fontWeight:700, color:'var(--t-ash)', textTransform:'uppercase', letterSpacing:'0.07em' }}>Avg Quiz Score</div>
                             </div>
                             
-                            <div className="animate-scale-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', animationDelay:'0.25s' }}>
-                              <div style={{ fontSize:'2.5rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem', lineHeight:1 }}>{totalUnlocksDisplay}</div>
-                              <div style={{ fontSize:'0.85rem', fontWeight:600, color:'#888', textTransform:'uppercase', letterSpacing:'0.05em' }}>Total Unlocks</div>
+                            <div className="animate-scale-in" style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-md)', padding:'1.2rem', boxShadow:'var(--t-shadow-sm)', border:'1px solid var(--t-stone)', animationDelay:'0.25s' }}>
+                              <div style={{ fontSize:'2.2rem', fontWeight:800, color:'var(--t-deep)', marginBottom:'0.25rem', lineHeight:1, letterSpacing:'-0.02em' }}>{totalUnlocksDisplay}</div>
+                              <div style={{ fontSize:'0.68rem', fontWeight:700, color:'var(--t-ash)', textTransform:'uppercase', letterSpacing:'0.07em' }}>Total Unlocks</div>
                             </div>
                             
-                            <div className="animate-scale-in" style={{ background:'white', borderRadius:'16px', padding:'1.25rem', boxShadow:'0 4px 16px rgba(0,0,0,0.08)', animationDelay:'0.3s' }}>
-                              <div style={{ fontSize:'2.5rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem', lineHeight:1 }}>{uniqueSchools}</div>
-                              <div style={{ fontSize:'0.85rem', fontWeight:600, color:'#888', textTransform:'uppercase', letterSpacing:'0.05em' }}>Unique Schools</div>
+                            <div className="animate-scale-in" style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-md)', padding:'1.2rem', boxShadow:'var(--t-shadow-sm)', border:'1px solid var(--t-stone)', animationDelay:'0.3s' }}>
+                              <div style={{ fontSize:'2.2rem', fontWeight:800, color:'var(--t-deep)', marginBottom:'0.25rem', lineHeight:1, letterSpacing:'-0.02em' }}>{uniqueSchools}</div>
+                              <div style={{ fontSize:'0.68rem', fontWeight:700, color:'var(--t-ash)', textTransform:'uppercase', letterSpacing:'0.07em' }}>Unique Schools</div>
                             </div>
                           </div>
                         </>
@@ -7393,17 +7355,9 @@
                                 {filteredClasses.map((cls, i) => (
                                   <div key={cls.classCode} 
                                     onClick={() => { setSelectedAdminClass(cls.classCode); setCurrentScreen('adminClassView'); }}
-                                    style={{ 
-                                      background:'white', 
-                                      borderRadius:'16px', 
-                                      padding:'1.25rem', 
-                                      boxShadow:'0 4px 16px rgba(0,0,0,0.08)', 
-                                      cursor:'pointer',
-                                      transition:'all 0.2s',
-                                      border:'2px solid transparent'
-                                    }}
-                                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--jungle-mid)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)'; }}
-                                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; }}>
+                                    style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-md)', padding:'1.1rem 1.15rem', boxShadow:'var(--t-shadow-xs)', cursor:'pointer', transition:'all 0.22s', border:'1px solid var(--t-stone)' }}
+                                    onMouseEnter={e=>{ e.currentTarget.style.borderColor='var(--t-mid)'; e.currentTarget.style.boxShadow='var(--t-shadow-md)'; e.currentTarget.style.transform='translateY(-1px)'; }}
+                                    onMouseLeave={e=>{ e.currentTarget.style.borderColor='var(--t-stone)'; e.currentTarget.style.boxShadow='var(--t-shadow-xs)'; e.currentTarget.style.transform='translateY(0)'; }}>
                                     
                                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'start', marginBottom:'0.75rem' }}>
                                       <div>
@@ -7419,19 +7373,12 @@
                                           </p>
                                         )}
                                       </div>
-                                      <div style={{ 
-                                        background: cls.completionPercent === 100 ? 'var(--jungle-light)' : 'var(--safari-gold)', 
-                                        color:'white', 
-                                        padding:'0.3rem 0.6rem', 
-                                        borderRadius:'8px', 
-                                        fontSize:'0.75rem', 
-                                        fontWeight:700 
-                                      }}>
+                                      <div style={{ background: cls.completionPercent === 100 ? 'var(--t-success-bg)' : 'var(--t-warning-bg)', color: cls.completionPercent === 100 ? 'var(--t-success)' : 'var(--t-warning)', border:`1px solid ${cls.completionPercent === 100 ? '#BBF7D0' : '#FED7AA'}`, padding:'0.2rem 0.55rem', borderRadius:'var(--t-r-pill)', fontSize:'0.7rem', fontWeight:700, letterSpacing:'0.02em' }}>
                                         {cls.completionPercent}%
                                       </div>
                                     </div>
 
-                                    <div style={{ borderTop:'1px solid #F5F3EE', paddingTop:'0.75rem', display:'flex', justifyContent:'space-between', fontSize:'0.85rem' }}>
+                                    <div style={{ borderTop:'1px solid var(--t-stone)', paddingTop:'0.7rem', display:'flex', justifyContent:'space-between', fontSize:'0.82rem', marginTop:'0.35rem' }}>
                                       <div>
                                         <div style={{ color:'#999', fontSize:'0.75rem', marginBottom:'0.2rem' }}>Year Group</div>
                                         <div style={{ color:'var(--jungle-deep)', fontWeight:600 }}>{cls.yearGroup}</div>
@@ -7476,18 +7423,11 @@
                     ) : (
                       <>
                         {/* Date Range Filter */}
-                        <div style={{ display:'flex', gap:'1rem', alignItems:'center', marginBottom:'1rem' }}>
+                        <div style={{ display:'flex', gap:'0.75rem', alignItems:'center', marginBottom:'1rem' }}>
                           <select
                             value={adminDateRange}
                             onChange={(e) => setAdminDateRange(e.target.value)}
-                            style={{
-                              padding: '0.5rem 1rem',
-                              borderRadius: '20px',
-                              border: '1px solid #ccc',
-                              fontFamily: "'DM Sans', sans-serif",
-                              fontSize: '0.9rem',
-                              cursor: 'pointer'
-                            }}
+                            style={{ padding:'0.5rem 0.85rem', borderRadius:'var(--t-r-sm)', border:'1.5px solid var(--t-stone)', fontFamily:"'DM Sans', sans-serif", fontSize:'0.82rem', cursor:'pointer', background:'var(--t-chalk)', color:'var(--t-ink)', outline:'none' }}
                           >
                             <option value="all">All Time</option>
                             <option value="7">Last 7 Days</option>
@@ -7498,34 +7438,17 @@
                           {/* CSV Export Button */}
                           <button
                             onClick={exportAnalyticsCSV}
-                            style={{
-                              background: "linear-gradient(135deg, #1A5238, #2E7D55)",
-                              color: "white",
-                              border: "none",
-                              padding: "0.6rem 1.2rem",
-                              borderRadius: "30px",
-                              cursor: "pointer",
-                              fontWeight: 600,
-                              fontSize: "0.95rem",
-                              boxShadow: "0 4px 12px rgba(26, 82, 56, 0.2)",
-                              transition: "transform 0.2s, box-shadow 0.2s"
-                            }}
-                            onMouseEnter={(e) => {
-                              e.target.style.transform = "translateY(-2px)";
-                              e.target.style.boxShadow = "0 6px 16px rgba(26, 82, 56, 0.3)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.target.style.transform = "translateY(0)";
-                              e.target.style.boxShadow = "0 4px 12px rgba(26, 82, 56, 0.2)";
-                            }}
+                            style={{ background:'linear-gradient(135deg, var(--t-deep), var(--t-mid))', color:'white', border:'none', padding:'0.5rem 1.1rem', borderRadius:'var(--t-r-sm)', cursor:'pointer', fontWeight:600, fontSize:'0.82rem', boxShadow:'var(--t-shadow-sm)', transition:'opacity 0.18s' }}
+                            onMouseEnter={e=>e.currentTarget.style.opacity='0.88'}
+                            onMouseLeave={e=>e.currentTarget.style.opacity='1'}
                           >
-                             Export Analytics CSV
+                            Export Analytics CSV
                           </button>
                         </div>
 
                         {/* Chart 1: Most Visited Animals */}
                         <div style={{ marginBottom:'2rem' }}>
-                          <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
+                          <h2 style={{ fontSize:'1rem', fontWeight:700, color:'var(--t-deep)', marginBottom:'0.85rem', letterSpacing:'-0.01em' }}>
                             Most Visited Animals
                           </h2>
                           <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
@@ -7540,7 +7463,7 @@
 
                         {/* Chart 2: Quiz Mastery Distribution */}
                         <div style={{ marginBottom:'2rem' }}>
-                          <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
+                          <h2 style={{ fontSize:'1rem', fontWeight:700, color:'var(--t-deep)', marginBottom:'0.85rem', letterSpacing:'-0.01em' }}>
                             Quiz Mastery Distribution
                           </h2>
                           <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
@@ -7555,7 +7478,7 @@
 
                         {/* Chart 3: Observation Skill Breakdown (Radar) */}
                         <div style={{ marginBottom:'2rem' }}>
-                          <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
+                          <h2 style={{ fontSize:'1rem', fontWeight:700, color:'var(--t-deep)', marginBottom:'0.85rem', letterSpacing:'-0.01em' }}>
                             Observation Skill Breakdown
                           </h2>
                           <div className="fade-in" style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
@@ -7620,7 +7543,7 @@
                           if (insights.length === 0) return null;
                           return (
                             <div style={{ marginBottom:'2rem' }}>
-                              <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>Hardest Questions</h2>
+                              <h2 style={{ fontSize:'1rem', fontWeight:700, color:'var(--t-deep)', marginBottom:'0.85rem', letterSpacing:'-0.01em' }}>Hardest Questions</h2>
                               <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
                                 {insights.map((item, i) => (
                                   <div key={i} style={{ display:'flex', alignItems:'center', gap:'1rem', padding:'0.75rem 0', borderBottom: i < insights.length - 1 ? '1px solid #F0EDE8' : 'none' }}>
@@ -7709,7 +7632,7 @@
                           
                           return (
                             <div style={{ marginBottom:'2rem' }}>
-                              <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
+                              <h2 style={{ fontSize:'1rem', fontWeight:700, color:'var(--t-deep)', marginBottom:'0.85rem', letterSpacing:'-0.01em' }}>
                                 School Performance
                               </h2>
                               <div style={{ background:'white', borderRadius:'20px', padding:'2rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)', overflowX:'auto' }}>
@@ -7779,7 +7702,7 @@
 
                         {/* Global Conservation Statements Feed */}
                         <div style={{ marginBottom:'2rem' }}>
-                          <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'1rem' }}>
+                          <h2 style={{ fontSize:'1rem', fontWeight:700, color:'var(--t-deep)', marginBottom:'0.85rem', letterSpacing:'-0.01em' }}>
                             🌱 Conservation Statements
                           </h2>
                           <div style={{ background:'white', borderRadius:'20px', padding:'1.5rem', boxShadow:'0 8px 32px rgba(0,0,0,0.1)' }}>
@@ -7812,33 +7735,33 @@
 
                 {adminTab === 'resources' && (
                   <div style={{ paddingBottom:'2rem' }}>
-                    <h2 style={{ fontSize:'1.4rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.25rem' }}>Resource Management</h2>
+                    <h2 className="section-title" style={{ marginBottom:'0.25rem' }}>Resource Management</h2>
                     <p style={{ color:'#888', fontSize:'0.85rem', marginBottom:'1.5rem' }}>Create and manage educational resources for the Taronga program.</p>
 
                     {/* Creation Form */}
-                    <div style={{ background:'white', borderRadius:'16px', padding:'1.5rem', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', marginBottom:'2rem' }}>
+                    <div style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-lg)', padding:'1.5rem', boxShadow:'var(--t-shadow-sm)', border:'1px solid var(--t-stone)', marginBottom:'2rem' }}>
                       <p style={{ fontSize:'0.72rem', fontWeight:700, color:'var(--jungle-deep)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:'1rem' }}>New Resource</p>
                       <div style={{ display:'flex', flexDirection:'column', gap:'0.85rem' }}>
 
                         <div>
                           <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Title *</label>
                           <input value={resourceTitle} onChange={e=>setResourceTitle(e.target.value)} placeholder="Resource title"
-                            style={{ width:'100%', padding:'0.6rem 0.85rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', fontSize:'0.9rem', fontFamily:'DM Sans, sans-serif', boxSizing:'border-box' }}
-                            onFocus={e=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={e=>e.target.style.borderColor='#E5E5E5'} />
+                            style={{ width:'100%', padding:'0.6rem 0.85rem', borderRadius:'var(--t-r-sm)', border:'1.5px solid var(--t-stone)', fontSize:'0.88rem', fontFamily:'DM Sans, sans-serif', boxSizing:'border-box', background:'var(--t-parchment)', color:'var(--t-ink)', outline:'none', transition:'border-color 0.18s' }}
+                            onFocus={e=>e.target.style.borderColor='var(--t-mid)'} onBlur={e=>e.target.style.borderColor='var(--t-stone)'} />
                         </div>
 
                         <div>
                           <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Description</label>
                           <textarea value={resourceDescription} onChange={e=>setResourceDescription(e.target.value)} placeholder="Brief description of the resource" rows={3}
-                            style={{ width:'100%', padding:'0.6rem 0.85rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', fontSize:'0.9rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', boxSizing:'border-box' }}
-                            onFocus={e=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={e=>e.target.style.borderColor='#E5E5E5'} />
+                            style={{ width:'100%', padding:'0.6rem 0.85rem', borderRadius:'var(--t-r-sm)', border:'1.5px solid var(--t-stone)', fontSize:'0.88rem', fontFamily:'DM Sans, sans-serif', resize:'vertical', boxSizing:'border-box', background:'var(--t-parchment)', color:'var(--t-ink)', outline:'none', transition:'border-color 0.18s' }}
+                            onFocus={e=>e.target.style.borderColor='var(--t-mid)'} onBlur={e=>e.target.style.borderColor='var(--t-stone)'} />
                         </div>
 
                         <div>
                           <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>URL *</label>
                           <input value={resourceUrl} onChange={e=>setResourceUrl(e.target.value)} placeholder="https://" type="url"
-                            style={{ width:'100%', padding:'0.6rem 0.85rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', fontSize:'0.9rem', fontFamily:'DM Sans, sans-serif', boxSizing:'border-box' }}
-                            onFocus={e=>e.target.style.borderColor='var(--jungle-mid)'} onBlur={e=>e.target.style.borderColor='#E5E5E5'} />
+                            style={{ width:'100%', padding:'0.6rem 0.85rem', borderRadius:'var(--t-r-sm)', border:'1.5px solid var(--t-stone)', fontSize:'0.88rem', fontFamily:'DM Sans, sans-serif', boxSizing:'border-box', background:'var(--t-parchment)', color:'var(--t-ink)', outline:'none', transition:'border-color 0.18s' }}
+                            onFocus={e=>e.target.style.borderColor='var(--t-mid)'} onBlur={e=>e.target.style.borderColor='var(--t-stone)'} />
                         </div>
 
 
@@ -7847,7 +7770,7 @@
                           <div>
                             <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Type</label>
                             <select value={resourceType} onChange={e=>setResourceType(e.target.value)}
-                              style={{ width:'100%', padding:'0.6rem 0.85rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', fontSize:'0.9rem', fontFamily:'DM Sans, sans-serif', background:'white' }}>
+                              style={{ width:'100%', padding:'0.6rem 0.85rem', borderRadius:'var(--t-r-sm)', border:'1.5px solid var(--t-stone)', fontSize:'0.88rem', fontFamily:'DM Sans, sans-serif', background:'var(--t-chalk)', color:'var(--t-ink)', outline:'none' }}>
                               <option value="">Select type</option>
                               <option value="lesson">Lesson</option>
                               <option value="worksheet">Worksheet</option>
@@ -7859,7 +7782,7 @@
                           <div>
                             <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Venue</label>
                             <select value={resourceVenue} onChange={e=>setResourceVenue(e.target.value)}
-                              style={{ width:'100%', padding:'0.6rem 0.85rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', fontSize:'0.9rem', fontFamily:'DM Sans, sans-serif', background:'white' }}>
+                              style={{ width:'100%', padding:'0.6rem 0.85rem', borderRadius:'var(--t-r-sm)', border:'1.5px solid var(--t-stone)', fontSize:'0.88rem', fontFamily:'DM Sans, sans-serif', background:'var(--t-chalk)', color:'var(--t-ink)', outline:'none' }}>
                               <option value="">Select venue</option>
                               <option value="Taronga Sydney">Taronga Sydney</option>
                               <option value="Taronga Western Plains">Taronga Western Plains</option>
@@ -7932,7 +7855,7 @@
                         <div>
                           <label style={{ display:'block', fontSize:'0.78rem', fontWeight:600, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>Difficulty Level <span style={{ fontWeight:400, color:'#aaa' }}>(Optional)</span></label>
                           <select value={resourceDifficulty} onChange={e=>setResourceDifficulty(e.target.value)}
-                            style={{ width:'100%', padding:'0.6rem 0.85rem', borderRadius:'10px', border:'1.5px solid #E5E5E5', fontSize:'0.9rem', fontFamily:'DM Sans, sans-serif', background:'white' }}>
+                            style={{ width:'100%', padding:'0.6rem 0.85rem', borderRadius:'var(--t-r-sm)', border:'1.5px solid var(--t-stone)', fontSize:'0.88rem', fontFamily:'DM Sans, sans-serif', background:'var(--t-chalk)', color:'var(--t-ink)', outline:'none' }}>
                             <option value="">None</option>
                             <option value="intervention">Intervention</option>
                             <option value="consolidation">Consolidation</option>
@@ -8096,7 +8019,7 @@
                       <p style={{ color:'#888', fontSize:'0.85rem', marginBottom:'1.5rem' }}>Observations flagged for review. Remove flags once actioned.</p>
 
                       {flagged.length === 0 ? (
-                        <div style={{ background:'white', borderRadius:'16px', padding:'3rem', textAlign:'center', boxShadow:'0 4px 16px rgba(0,0,0,0.06)' }}>
+                        <div style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-lg)', padding:'2.5rem', textAlign:'center', boxShadow:'var(--t-shadow-xs)', border:'1px solid var(--t-stone)' }}>
                           <div style={{ fontSize:'2.5rem', marginBottom:'0.75rem' }}>✅</div>
                           <p style={{ fontSize:'1rem', fontWeight:700, color:'var(--jungle-deep)', marginBottom:'0.3rem' }}>No flagged observations</p>
                           <p style={{ fontSize:'0.85rem', color:'#aaa' }}>All observations have been reviewed.</p>
@@ -8108,12 +8031,12 @@
                         const bKey = `review-${studentName}-${badge.animalId}`;
                         const isExpanded = expandedBreakdown === bKey;
                         return (
-                          <div key={idx} style={{ background:'white', borderRadius:'14px', padding:'1.1rem 1.25rem', boxShadow:'0 4px 16px rgba(0,0,0,0.07)', borderLeft:'4px solid #DC2626', marginBottom:'0.75rem' }}>
+                          <div key={idx} style={{ background:'var(--t-chalk)', borderRadius:'var(--t-r-md)', padding:'1.1rem 1.25rem', boxShadow:'var(--t-shadow-sm)', border:'1px solid var(--t-stone)', borderLeft:'3px solid var(--t-danger)', marginBottom:'0.75rem' }}>
                             <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'0.75rem', marginBottom:'0.6rem' }}>
                               <div>
                                 <div style={{ display:'flex', alignItems:'center', gap:'0.5rem', flexWrap:'wrap' }}>
                                   <span style={{ fontSize:'0.85rem', fontWeight:700, color:'var(--jungle-deep)' }}>{studentName}</span>
-                                  <span style={{ fontSize:'0.7rem', background:'#FEF2F2', color:'#DC2626', borderRadius:'6px', padding:'0.1rem 0.4rem', fontWeight:700 }}>⚠️ Needs Review</span>
+                                  <span style={{ fontSize:'0.68rem', background:'var(--t-danger-bg)', color:'var(--t-danger)', borderRadius:'var(--t-r-xs)', padding:'0.15rem 0.45rem', fontWeight:700, letterSpacing:'0.02em' }}>⚠ Review Required</span>
                                   {override.applied && <span style={{ fontSize:'0.68rem', background:'#FEF3C7', color:'#92400E', borderRadius:'4px', padding:'0.1rem 0.35rem', fontWeight:700 }}>🟡 Override</span>}
                                 </div>
                                 <div style={{ display:'flex', alignItems:'center', gap:'0.4rem', marginTop:'0.2rem' }}>
@@ -8122,7 +8045,7 @@
                                 </div>
                                 {flag.reason && <p style={{ fontSize:'0.7rem', color:'#888', margin:'0.2rem 0 0', fontStyle:'italic' }}>Reason: {flag.reason}</p>}
                                 {(flag.note) && (
-                                  <div style={{ marginTop:'0.35rem', background:'#FEF9C3', borderRadius:'6px', padding:'0.35rem 0.55rem', border:'1px solid #FDE68A' }}>
+                                  <div style={{ marginTop:'0.4rem', background:'var(--t-warning-bg)', borderRadius:'var(--t-r-xs)', padding:'0.4rem 0.65rem', border:'1px solid #FDE68A' }}>
                                     <p style={{ fontSize:'0.72rem', color:'#92400E', margin:0, lineHeight:1.5 }}>
                                       <strong>📝 Teacher note:</strong> {flag.note}
                                     </p>
@@ -8146,21 +8069,21 @@
                               })()}
                             </div>
                             {badge.observation && (
-                              <div style={{ background:'#F9FAFB', borderRadius:'8px', padding:'0.65rem 0.85rem', marginBottom:'0.65rem', border:'1px solid #F0F0F0' }}>
+                              <div style={{ background:'var(--t-parchment)', borderRadius:'var(--t-r-xs)', padding:'0.7rem 0.9rem', marginBottom:'0.7rem', border:'1px solid var(--t-stone)' }}>
                                 <p style={{ fontSize:'0.84rem', color:'#444', lineHeight:1.55, margin:0 }}>{badge.observation}</p>
                               </div>
                             )}
                             <div style={{ display:'flex', gap:'0.5rem', flexWrap:'wrap' }}>
                               <button onClick={() => setExpandedBreakdown(isExpanded ? null : bKey)}
-                                style={{ fontSize:'0.72rem', padding:'0.3rem 0.7rem', borderRadius:'6px', border:'1px solid #D1D5DB', background:'#F9FAFB', cursor:'pointer', fontWeight:600, color:'#374151' }}>
+                                style={{ fontSize:'0.72rem', padding:'0.35rem 0.75rem', borderRadius:'var(--t-r-xs)', border:'1px solid var(--t-stone)', background:'var(--t-chalk)', cursor:'pointer', fontWeight:600, color:'var(--t-charcoal)', transition:'background 0.15s' }}>
                                 {isExpanded ? 'Hide Detail ▴' : 'View Full Observation ▾'}
                               </button>
                               <button onClick={() => setOverrideForms(prev => ({ ...prev, [bKey]: { open:true, b: override.behaviourScore ?? obs.behaviour ?? '', d: override.detailScore ?? obs.detail ?? '', w: override.writingScore ?? obs.writing ?? '', note: override.note || '', reason: override.reasonType || '', active: override.applied || false } }))}
-                                style={{ fontSize:'0.72rem', padding:'0.3rem 0.7rem', borderRadius:'6px', border:'1px solid #D1D5DB', background:'#F9FAFB', cursor:'pointer', fontWeight:600, color:'#374151' }}>
+                                style={{ fontSize:'0.72rem', padding:'0.35rem 0.75rem', borderRadius:'var(--t-r-xs)', border:'1px solid var(--t-stone)', background:'var(--t-chalk)', cursor:'pointer', fontWeight:600, color:'var(--t-charcoal)', transition:'background 0.15s' }}>
                                 ✏️ Apply Override
                               </button>
                               <button onClick={() => removeFlag(studentName, badge.animalId, classId)}
-                                style={{ fontSize:'0.72rem', padding:'0.3rem 0.7rem', borderRadius:'6px', border:'1px solid #FCA5A5', background:'#FEF2F2', cursor:'pointer', fontWeight:700, color:'#DC2626' }}>
+                                style={{ fontSize:'0.72rem', padding:'0.35rem 0.75rem', borderRadius:'var(--t-r-xs)', border:'1px solid #FCA5A5', background:'var(--t-danger-bg)', cursor:'pointer', fontWeight:700, color:'var(--t-danger)', letterSpacing:'0.01em', transition:'background 0.15s' }}>
                                 ✓ Remove Flag
                               </button>
                             </div>
@@ -8310,7 +8233,9 @@
                     <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.78rem' }}>{adminClassData.classCode}</p>
                   </div>
                 </div>
-                <button onClick={()=>{ setAdminAccessCode(''); setSelectedAdminClass(null); setCurrentScreen('home'); }} style={{ background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)', color:'white', padding:'0.45rem 0.9rem', borderRadius:'20px', cursor:'pointer', fontSize:'0.8rem', fontWeight:600 }}>
+                <button onClick={()=>{ setAdminAccessCode(''); setSelectedAdminClass(null); setCurrentScreen('home'); }} style={{ background:'rgba(255,255,255,0.10)', border:'1px solid rgba(255,255,255,0.2)', color:'rgba(255,255,255,0.88)', padding:'0.4rem 0.85rem', borderRadius:'var(--t-r-pill)', cursor:'pointer', fontSize:'0.78rem', fontWeight:600, transition:'background 0.18s' }}
+                  onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.2)'}
+                  onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,0.10)'}>
                   Sign Out
                 </button>
               </div>
