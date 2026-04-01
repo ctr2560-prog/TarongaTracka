@@ -759,6 +759,24 @@
         { subject:'Science', stage:'Stage 5', code:'SC5-GEV-01', description:'Genetics and evolutionary change – describes relationship between diversity and evolution' }
       ];
       const [currentScreen, setCurrentScreen] = useState(savedProgress?.currentScreen || 'home');
+
+      // ── PUBLIC MODE STATE ─────────────────────────────────────────────────
+      // appMode separates school and public flows completely.
+      // School screens never read appMode. Public screens only render when appMode === 'public'.
+      const [appMode, setAppMode] = useState(() => {
+        try { return localStorage.getItem('tarongaAppMode') || 'school'; } catch(e) { return 'school'; }
+      });
+
+      // Public user identity — loaded from tarongaPublicSession; separate from school keys.
+      const _savedPub = (() => {
+        try { const s = localStorage.getItem('tarongaPublicSession'); return s ? JSON.parse(s) : null; } catch(e) { return null; }
+      })();
+      const [pubName,      setPubName]      = useState(_savedPub?.pubName      || '');
+      const [pubEmail,     setPubEmail]     = useState(_savedPub?.pubEmail     || '');
+      const [pubUserId,    setPubUserId]    = useState(_savedPub?.pubUserId    || '');
+      const [pubSessionId, setPubSessionId] = useState(_savedPub?.pubSessionId || '');
+      const [pubPoints,    setPubPoints]    = useState(_savedPub?.pubPoints    || 0);
+      // ─────────────────────────────────────────────────────────────────────
       const [userLocation, setUserLocation] = useState(null);
       const [locationEnabled, setLocationEnabled] = useState(savedProgress?.locationEnabled || false);
       const [foundAnimals, setFoundAnimals] = useState(new Set(savedProgress?.foundAnimals || []));
@@ -928,6 +946,12 @@
 
       useEffect(() => { localStorage.setItem('tarongaStudentName', JSON.stringify(studentName)); }, [studentName]);
       useEffect(() => { localStorage.setItem('tarongaClassCode', JSON.stringify(classCode)); }, [classCode]);
+
+      // Public Mode persistence — separate keys, never touch school keys
+      useEffect(() => { localStorage.setItem('tarongaAppMode', appMode); }, [appMode]);
+      useEffect(() => {
+        localStorage.setItem('tarongaPublicSession', JSON.stringify({ pubName, pubEmail, pubUserId, pubSessionId, pubPoints }));
+      }, [pubName, pubEmail, pubUserId, pubSessionId, pubPoints]);
 
       // Check if student session is already completed
       useEffect(() => {
@@ -5632,7 +5656,7 @@
                 </ul>
               </div>
               {/* Primary CTA */}
-              <button onClick={()=>setCurrentScreen('public')} className="animate-scale-in"
+              <button onClick={()=>{ setAppMode('public'); setCurrentScreen('publicEntry'); }} className="animate-scale-in"
                 style={{ background:'linear-gradient(135deg, var(--sunset-orange) 0%, var(--earth-clay) 100%)', color:'white', border:'none', padding:'clamp(0.85rem, 2vh, 1.05rem) clamp(2.5rem, 6vw, 3rem)', fontSize:'clamp(1rem, 2.2vw, 1.15rem)', fontWeight:700, borderRadius:'var(--t-r-pill)', cursor:'pointer', boxShadow:'0 8px 28px rgba(180,90,40,0.45)', animationDelay:'0.55s', textTransform:'uppercase', letterSpacing:'0.12em', width:'min(88vw, 380px)', marginBottom:'0.85rem', transition:'all 0.2s' }}
                 onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 12px 36px rgba(180,90,40,0.55)'; }}
                 onMouseLeave={e=>{ e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='0 8px 28px rgba(180,90,40,0.45)'; }}>
@@ -9956,6 +9980,251 @@
           </div>
         );
       }
+
+
+      // ── PUBLIC MODE SCREENS ───────────────────────────────────────────────
+      // These screens only activate when appMode === 'public'.
+      // They are entirely separate from school flow.
+      // School state (studentName, classCode, badges, etc.) is never read here.
+      //
+      // Firestore collections used by public mode (school collections untouched):
+      //   publicUsers/{pubUserId}        — participant identity + lifetime totals
+      //   publicSessions/{pubSessionId}  — individual zoo visit / submission record
+      //   publicLeaderboard/{entryId}    — ranked public leaderboard entries
+      //
+      // Data shapes (MVP):
+      //   publicUsers:     { name, email, totalPoints, visitCount, createdAt, lastVisit }
+      //   publicSessions:  { userId, name, email, points, animalsFound, badges, submittedAt }
+      //   publicLeaderboard: { userId, name, points, rank, period: 'allTime'|'monthly', updatedAt }
+
+      // ── PUBLIC MODE HELPERS ──────────────────────────────────────────────
+      const genPubId = (prefix) =>
+        `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+      // ─────────────────────────────────────────────────────────────────────
+
+      if (appMode === 'public' && currentScreen === 'publicEntry') {
+        // ── publicEntry: name + email onboarding ─────────────────────────
+        const [pubEntryError, setPubEntryError] = React.useState('');
+        const [pubSaving,     setPubSaving]     = React.useState(false);
+
+        const isValidEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+
+        const handlePublicStart = async () => {
+          const trimName  = pubName.trim();
+          const trimEmail = pubEmail.trim();
+          if (!trimName)              { setPubEntryError('Please enter your name.');          return; }
+          if (!trimEmail)             { setPubEntryError('Please enter your email.');         return; }
+          if (!isValidEmail(trimEmail)){ setPubEntryError('Please enter a valid email address.'); return; }
+          setPubEntryError('');
+          setPubSaving(true);
+          try {
+            const db = window.db;
+            const ts = firebase.firestore.FieldValue.serverTimestamp();
+
+            // Reuse persisted userId if available; otherwise mint a new one.
+            const uid = pubUserId || genPubId('pub');
+            const sid = genPubId('ses');
+
+            // Write publicUsers doc (merge so returning visitors keep totals)
+            await db.collection('publicUsers').doc(uid).set({
+              displayName: trimName,
+              email: trimEmail,
+              lastActiveAt: ts,
+              totalPoints: 0,
+              missionsCompleted: 0,
+              leaderboardEligible: true,
+              certificateSent: false,
+              miniReportSent: false,
+              homeExtensionStarted: false,
+              homeExtensionCompleted: false,
+              mode: 'public'
+            }, { merge: true });
+
+            // If brand new user, set createdAt once
+            if (!pubUserId) {
+              await db.collection('publicUsers').doc(uid).set(
+                { createdAt: ts }, { merge: true }
+              );
+            }
+
+            // Write new publicSessions doc
+            await db.collection('publicSessions').doc(sid).set({
+              publicUserId: uid,
+              displayName: trimName,
+              email: trimEmail,
+              startedAt: ts,
+              submittedAt: null,
+              totalPoints: 0,
+              missionsCompleted: [],
+              photos: [],
+              observations: [],
+              quizResults: [],
+              badgeResults: [],
+              leaderboardSynced: false,
+              certificateGenerated: false,
+              miniReportGenerated: false,
+              mode: 'public'
+            });
+
+            // Update public state — persistence hooks write to localStorage automatically
+            setPubName(trimName);
+            setPubEmail(trimEmail);
+            setPubUserId(uid);
+            setPubSessionId(sid);
+            setPubPoints(0);
+            setCurrentScreen('publicHome');
+          } catch (err) {
+            console.error('[Public] Entry save error:', err);
+            setPubEntryError('Could not connect — please try again.');
+          } finally {
+            setPubSaving(false);
+          }
+        };
+
+        return (
+          <div style={{ position:'fixed', inset:0,
+            background:'linear-gradient(160deg, var(--t-forest) 0%, var(--t-deep) 55%, var(--t-mid) 100%)',
+            display:'flex', alignItems:'center', justifyContent:'center',
+            padding:'clamp(1rem, 5vw, 2rem)', overflow:'auto' }}>
+
+            <div className="animate-scale-in" style={{
+              background:'var(--t-chalk)', borderRadius:'var(--t-r-xl)',
+              padding:'clamp(1.75rem, 4vh, 2.5rem)', maxWidth:'420px', width:'100%',
+              boxShadow:'var(--t-shadow-xl)', border:'1px solid rgba(255,255,255,0.8)' }}>
+
+              {/* Header */}
+              <div style={{ textAlign:'center', marginBottom:'1.5rem' }}>
+                <div style={{ width:'56px', height:'56px', borderRadius:'50%',
+                  background:'linear-gradient(135deg, var(--t-eucalyptus), var(--t-mid))',
+                  margin:'0 auto 0.75rem', display:'flex', alignItems:'center',
+                  justifyContent:'center', fontSize:'1.5rem',
+                  boxShadow:'0 4px 14px rgba(46,125,85,0.32)' }}>🐾</div>
+                <h2 className="taronga-title" style={{ fontSize:'clamp(1.5rem, 3.5vh, 1.9rem)',
+                  color:'var(--t-deep)', marginBottom:'0.4rem', letterSpacing:'0.04em' }}>
+                  Taronga Tracka
+                </h2>
+                <p style={{ color:'var(--t-slate)', fontSize:'0.88rem', lineHeight:1.55 }}>
+                  Explore the zoo, complete wildlife missions, and earn your explorer badge.
+                </p>
+              </div>
+
+              {/* Name */}
+              <label style={{ display:'block', fontSize:'0.78rem', fontWeight:700,
+                color:'var(--t-charcoal)', textTransform:'uppercase',
+                letterSpacing:'0.05em', marginBottom:'0.4rem' }}>Your Name</label>
+              <input type="text" value={pubName}
+                onChange={e=>{ setPubName(e.target.value); setPubEntryError(''); }}
+                placeholder="e.g. Jamie"
+                style={{ width:'100%', padding:'0.8rem 1rem', borderRadius:'var(--t-r-sm)',
+                  border:'2px solid var(--t-stone)', fontSize:'1rem',
+                  fontFamily:'DM Sans, sans-serif', marginBottom:'1rem',
+                  boxSizing:'border-box', transition:'border-color 0.2s',
+                  outline:'none', color:'var(--t-ink)', background:'var(--t-parchment)' }}
+                onFocus={e=>e.target.style.borderColor='var(--t-mid)'}
+                onBlur={e=>e.target.style.borderColor='var(--t-stone)'} />
+
+              {/* Email */}
+              <label style={{ display:'block', fontSize:'0.78rem', fontWeight:700,
+                color:'var(--t-charcoal)', textTransform:'uppercase',
+                letterSpacing:'0.05em', marginBottom:'0.4rem' }}>Email Address</label>
+              <input type="email" value={pubEmail}
+                onChange={e=>{ setPubEmail(e.target.value); setPubEntryError(''); }}
+                placeholder="e.g. jamie@email.com"
+                style={{ width:'100%', padding:'0.8rem 1rem', borderRadius:'var(--t-r-sm)',
+                  border:'2px solid var(--t-stone)', fontSize:'1rem',
+                  fontFamily:'DM Sans, sans-serif', marginBottom: pubEntryError ? '0.6rem' : '1.5rem',
+                  boxSizing:'border-box', transition:'border-color 0.2s',
+                  outline:'none', color:'var(--t-ink)', background:'var(--t-parchment)' }}
+                onFocus={e=>e.target.style.borderColor='var(--t-mid)'}
+                onBlur={e=>e.target.style.borderColor='var(--t-stone)'}
+                onKeyDown={e=>{ if (e.key === 'Enter') handlePublicStart(); }} />
+
+              {/* Error */}
+              {pubEntryError && (
+                <div style={{ background:'var(--t-danger-bg)', border:'1px solid #FECACA',
+                  borderRadius:'var(--t-r-xs)', padding:'0.5rem 0.85rem',
+                  marginBottom:'1rem', display:'flex', alignItems:'center', gap:'0.4rem' }}>
+                  <p style={{ color:'var(--t-danger)', fontSize:'0.8rem', fontWeight:600, margin:0 }}>
+                    ⚠ {pubEntryError}
+                  </p>
+                </div>
+              )}
+
+              {/* Start button */}
+              <button onClick={handlePublicStart} disabled={pubSaving}
+                style={{ width:'100%', padding:'0.9rem',
+                  borderRadius:'var(--t-r-pill)', border:'none',
+                  background: pubSaving ? 'rgba(0,0,0,0.1)'
+                    : 'linear-gradient(135deg, var(--t-eucalyptus), var(--t-mid))',
+                  color:'white', fontSize:'1rem', fontWeight:700,
+                  cursor: pubSaving ? 'not-allowed' : 'pointer',
+                  textTransform:'uppercase', letterSpacing:'0.09em',
+                  transition:'all 0.22s ease',
+                  boxShadow: pubSaving ? 'none' : '0 4px 16px rgba(26,82,56,0.35)' }}>
+                {pubSaving ? 'Starting…' : 'Start Exploring →'}
+              </button>
+
+              {/* Back */}
+              <button onClick={()=>{ setAppMode('school'); setCurrentScreen('home'); }}
+                style={{ display:'block', width:'100%', background:'none', border:'none',
+                  color:'var(--t-ash)', fontSize:'0.82rem', cursor:'pointer',
+                  marginTop:'0.85rem', padding:'0.4rem', transition:'color 0.18s' }}
+                onMouseEnter={e=>e.currentTarget.style.color='var(--t-slate)'}
+                onMouseLeave={e=>e.currentTarget.style.color='var(--t-ash)'}>
+                ← Back to Home
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+
+      if (appMode === 'public' && currentScreen === 'publicHome') {
+        // publicHome placeholder — missions grid built in Public-3
+        return (
+          <div style={{ position:'fixed', inset:0,
+            background:'linear-gradient(160deg, var(--t-forest) 0%, var(--t-deep) 55%, var(--t-mid) 100%)',
+            display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+            padding:'2rem', textAlign:'center', color:'white' }}>
+            <p style={{ fontSize:'2rem', marginBottom:'1rem' }}>🐾</p>
+            <h2 className="taronga-title" style={{ fontSize:'2rem', marginBottom:'0.5rem', letterSpacing:'0.04em' }}>Welcome, {pubName}!</h2>
+            <p style={{ opacity:0.75, fontSize:'0.95rem', marginBottom:'2rem' }}>Your expedition begins here. Missions coming soon.</p>
+            <button onClick={()=>{ setAppMode('school'); setCurrentScreen('home'); }}
+              style={{ padding:'0.7rem 1.75rem', borderRadius:'var(--t-r-pill)',
+                border:'1.5px solid rgba(255,255,255,0.3)',
+                background:'rgba(255,255,255,0.12)', color:'white',
+                cursor:'pointer', fontWeight:600, fontSize:'0.9rem' }}>
+              ← Back
+            </button>
+          </div>
+        );
+      }
+
+      if (appMode === 'public' && currentScreen === 'publicAnimal') {
+        // Step 3 stub — individual animal mission screen
+        return null; // TODO: Phase Public-2
+      }
+
+      if (appMode === 'public' && currentScreen === 'publicMission') {
+        // Step 4 stub — MCQ / observation / activity screen (reuses mechanics, not school logic)
+        return null; // TODO: Phase Public-2
+      }
+
+      if (appMode === 'public' && currentScreen === 'publicCompletion') {
+        // Step 5 stub — submission confirmation + digital certificate trigger
+        return null; // TODO: Phase Public-2
+      }
+
+      if (appMode === 'public' && currentScreen === 'publicLeaderboard') {
+        // Step 6 stub — public ranked leaderboard
+        return null; // TODO: Phase Public-2
+      }
+
+      if (appMode === 'public' && currentScreen === 'publicHomeExtension') {
+        // Step 7 stub — post-visit at-home extension activities
+        return null; // TODO: Phase Public-2
+      }
+      // ─────────────────────────────────────────────────────────────────────
 
 
       // Global review flag modal — renders on any screen
