@@ -776,6 +776,8 @@
       const [pubUserId,    setPubUserId]    = useState(_savedPub?.pubUserId    || '');
       const [pubSessionId, setPubSessionId] = useState(_savedPub?.pubSessionId || '');
       const [pubPoints,    setPubPoints]    = useState(_savedPub?.pubPoints    || 0);
+      const [pubEntryError, setPubEntryError] = useState('');   // public entry form error
+      const [pubSaving,     setPubSaving]     = useState(false); // public entry saving flag
       // ─────────────────────────────────────────────────────────────────────
       const [userLocation, setUserLocation] = useState(null);
       const [locationEnabled, setLocationEnabled] = useState(savedProgress?.locationEnabled || false);
@@ -10004,9 +10006,6 @@
 
       if (appMode === 'public' && currentScreen === 'publicEntry') {
         // ── publicEntry: name + email onboarding ─────────────────────────
-        const [pubEntryError, setPubEntryError] = React.useState('');
-        const [pubSaving,     setPubSaving]     = React.useState(false);
-
         const isValidEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
         const handlePublicStart = async () => {
